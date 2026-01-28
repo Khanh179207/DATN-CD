@@ -1,0 +1,23 @@
+/* src/style.css - Dán đè đoạn này vào */
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  overflow-x: hidden; /* 🔥 QUAN TRỌNG NHẤT: Cắt bỏ thanh trượt ngang */
+}
+
+/* 2. Đảm bảo tính toán kích thước bao gồm cả padding/border */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+#app {
+  width: 100%;
+  overflow-x: hidden; /* Chắc chắn app không bị tràn */
+}
