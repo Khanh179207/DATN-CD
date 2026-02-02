@@ -1,0 +1,32 @@
+⚡️ QUY TRÌNH GIT (GOMET TEAM)
+🛑 NGUYÊN TẮC VÀNG
+KHÔNG code trực tiếp trên main hoặc develop.
+
+LUÔN tạo nhánh mới (feature/...) khi bắt đầu làm việc.
+
+LUÔN Pull code về trước khi Push.
+
+1️⃣ BẮT ĐẦU code TÍNH NĂNG MỚI (Bắt buộc làm đầu tiên)
+git checkout develop             
+git pull origin develop          
+git checkout -b feature/ten-chuc-nang  
+2️⃣ LẤY CODE MỚI VỀ (chỉ làm sau khi đã tạo nhánh riêng)
+Chọn 1 trong 2 trường hợp sau:
+
+✅ TH1: Chưa code gì cả (Máy sạch)
+
+git pull origin develop
+
+⚠️ TH2: Đang code dở (Đã sửa file)
+
+git add .
+git commit -m "Luu tam code truoc khi pull"  
+git pull origin develop                      
+# -> Nếu báo Conflict (đỏ): Mở file sửa lỗi -> Lưu -> git add . -> git commit
+3️⃣ Khi code xong (PUSH & PR)
+
+git add .
+git commit -m "Hoan thien chuc nang ABC"
+git push origin feature/ten-chuc-nang
+
+👉 Sau đó: Lên GitHub -> Tạo Pull Request vào develop.

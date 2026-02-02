@@ -3,65 +3,102 @@
     <Sidebar />
 
     <div class="main-content">
-      
       <header class="content-header">
-        <div class="header-right">
-          <button class="btn-login-header" @click="showAuthModal = true">
-            👤 Đăng nhập
-          </button>
+        
+        <div class="header-search">
+          <span class="search-icon">🔍</span>
+          <input type="text" placeholder="Tìm kiếm công thức, nguyên liệu..." />
+        </div>
 
-          <button class="btn-write">📝 Viết món mới</button>
+        <div class="header-right">
+          <button class="btn-login" @click="showAuthModal = true">
+            Đăng nhập
+          </button>
+          
+          <button class="btn-signup" @click="showAuthModal = true">
+            Đăng ký
+          </button>
         </div>
       </header>
 
       <div class="page-body">
         <router-view />
       </div>
-
     </div>
 
     <Teleport to="body">
-      <AuthModal v-if="showAuthModal" @close="showAuthModal = false" />
+       <AuthModal v-if="showAuthModal" @close="showAuthModal = false" />
     </Teleport>
-
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-// Import Sidebar cũ
+import { ref } from 'vue' // 👈 QUAN TRỌNG: Phải có dòng này
 import Sidebar from '@/components/sidebar/Sidebar.vue'
-// 👇 Import Component Modal mới tạo
 import AuthModal from '@/components/auth/AuthModal.vue'
 
-// Biến trạng thái điều khiển việc ẩn/hiện Popup (mặc định là false - ẩn)
+// 👇 QUAN TRỌNG: Khai báo biến điều khiển Modal
 const showAuthModal = ref(false)
+
 </script>
 
 <style scoped>
-/* Giữ nguyên style cũ của Layout */
-.app-container { display: flex; min-height: 100vh; background-color: white; }
-.main-content { flex: 1; display: flex; flex-direction: column; }
-.content-header { padding: 10px 30px; display: flex; justify-content: flex-end; align-items: center; border-bottom: 1px solid #f3f4f6; }
-.header-right { display: flex; align-items: center; gap: 15px; }
-.btn-write { background-color: #F97316; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-.btn-write:hover { background-color: #ea580c; }
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&display=swap');
 
-/* Style cho nút Đăng nhập mới trên Header */
-.btn-login-header {
-  background: transparent;
-  border: 1px solid #F97316;
-  color: #F97316;
-  padding: 8px 16px;
-  border-radius: 20px; /* Bo tròn kiểu nút */
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  transition: all 0.2s;
+.app-container { 
+  display: flex; 
+  min-height: 100vh; 
+  background-color: #fff; 
+  font-family: 'Quicksand', sans-serif;
 }
-.btn-login-header:hover {
-  background: #fff7ed;
+
+.main-content { 
+  flex: 1; 
+  display: flex; 
+  flex-direction: column; 
+}
+
+/* Header Style */
+.content-header {
+  padding: 15px 30px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: white;
+  position: sticky; top: 0; z-index: 100;
+  gap: 20px;
+}
+
+/* Thanh tìm kiếm to bản */
+.header-search {
+  flex: 1; /* Chiếm hết khoảng trống ở giữa */
+  max-width: 800px; /* Giới hạn độ rộng tối đa */
+  background: #f1f1f1;
+  border-radius: 24px;
+  padding: 12px 20px;
+  display: flex; align-items: center; gap: 10px;
+  transition: 0.2s;
+}
+.header-search:focus-within { background: #e0e0e0; box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.1); }
+.header-search input {
+  border: none; background: transparent; width: 100%; outline: none;
+  font-size: 1rem; color: #333; font-family: inherit;
+}
+
+/* Buttons */
+.header-right { display: flex; gap: 10px; }
+
+.btn-login {
+  padding: 10px 20px; border-radius: 24px; font-weight: 700; cursor: pointer; border: none;
+  background: #F97316; color: white; transition: 0.2s;
+}
+.btn-login:hover { background: #ea580c; }
+
+.btn-signup {
+  padding: 10px 20px; border-radius: 24px; font-weight: 700; cursor: pointer;
+  background: #f3f4f6; color: #111; border: none; transition: 0.2s;
+}
+.btn-signup:hover { background: #e5e7eb; }
+
+.page-body {
+  padding: 20px;
 }
 </style>

@@ -6,7 +6,7 @@
       <router-link to="/home" class="btn-explore">Khám phá ngay</router-link>
     </div>
 
-    <div class="yellow-bottom-bar" @click="scrollToNextSection">
+    <div class="yellow-bottom-bar" @click="scrollToSignup">
       <span class="bar-text">Đăng ký tài khoản ngay</span>
       <span class="arrow-icon">﹀</span>
     </div>
@@ -16,12 +16,12 @@
 
 <script setup>
 // Hàm xử lý: Khi bấm vào thanh vàng thì trượt xuống 1 màn hình
-const scrollToNextSection = () => {
-  window.scrollTo({
-    top: window.innerHeight, // Trượt xuống đúng bằng chiều cao màn hình
-    behavior: 'smooth'       // Trượt mượt mà
-  });
-}
+const scrollToSignup = () => {
+  const element = document.getElementById("section-dang-ky");
+  if (element) {
+    element.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+};
 </script>
 
 <style scoped>

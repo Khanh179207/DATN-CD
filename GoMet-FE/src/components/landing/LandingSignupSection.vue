@@ -1,5 +1,5 @@
 <template>
-  <section class="signup-section">
+  <section class="signup-section" id="section-dang-ky">
     <div class="container main-layout">
       <div class="info-side">
         <div class="brand-header">
@@ -119,7 +119,7 @@ const activeTab = ref('login')
 .signup-section {
   min-height: 100vh;
   display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(135deg, #fffbf7 0%, #fff 100%);
+  background: linear-gradient(135deg, #e27a24 0%, #fff 100%);
   padding: 40px 20px;
 }
 .container { width: 100%; max-width: 1100px; margin: 0 auto; }
