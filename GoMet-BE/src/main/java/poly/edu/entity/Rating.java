@@ -6,6 +6,7 @@ import lombok.*;
 @Entity
 @Table(name = "Rating")
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Rating {

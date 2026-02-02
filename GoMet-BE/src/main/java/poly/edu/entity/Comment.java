@@ -6,6 +6,7 @@ import lombok.*;
 @Entity
 @Table(name = "Comment")
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Comment {

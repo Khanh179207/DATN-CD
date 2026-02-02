@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "History")
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class History {

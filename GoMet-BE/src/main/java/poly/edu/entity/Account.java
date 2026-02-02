@@ -9,6 +9,7 @@ import java.util.List;
 @Entity
 @Table(name = "Account")
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Account {

@@ -12,4 +12,6 @@ public interface PostDAO extends JpaRepository<Post, Integer> {
     List<Post> findByAccount_AccountID(Integer accountID);
 
     List<Post> findByCategory_CategoryID(Integer categoryID);
+
+
 }
