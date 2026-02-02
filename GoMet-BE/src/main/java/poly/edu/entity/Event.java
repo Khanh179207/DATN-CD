@@ -9,6 +9,7 @@ import java.util.List;
 @Entity
 @Table(name = "Event")
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Event {
