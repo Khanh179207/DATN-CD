@@ -21,7 +21,8 @@
 <script setup>
 import { ref } from 'vue'
 import LandingHeader from '@/components/landing/LandingHeader.vue'
-import AuthModal from '@/components/auth/AuthModal.vue'
+// ✅ Dòng mới (đúng đường dẫn)
+import AuthModal from '@/components/modals/AuthModal.vue'
 
 // Biến điều khiển Popup
 const showModal = ref(false)

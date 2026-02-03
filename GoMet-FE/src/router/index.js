@@ -7,18 +7,25 @@ import LandingLayout from '@/layouts/LandingLayout.vue'
 import AdminLayout from '@/layouts/AdminLayout.vue'
 
 // --- 2. IMPORT VIEWS (Trang nội dung) ---
-// Home & Intro
 import HomeView from '@/pages/home/HomeView.vue'
+import SearchPage from '@/pages/search/SearchPage.vue'
+import PostDetail from '@/pages/home/PostDetail.vue'
 
-// Admin Pages (Đã thêm mới)
+// --- ADMIN PAGES ---
 import AdminDashboard from '@/pages/admin/Dashboard.vue'
-import PostManagement from '@/pages/admin/PostManagement.vue'       // 👈 Mới
-import CategoryManagement from '@/pages/admin/CategoryManagement.vue' // 👈 Mới
-import UserManagement from '@/pages/admin/UserManagement.vue'       // 👈 Mới
+import PostManagement from '@/pages/admin/PostManagement.vue'
+import CategoryManagement from '@/pages/admin/CategoryManagement.vue'
+import UserManagement from '@/pages/admin/UserManagement.vue'
+import EventManagement from '@/pages/admin/EventManagement.vue'
+import CommentManagement from '@/pages/admin/CommentManagement.vue'
+import ReportManagement from '@/pages/admin/ReportManagement.vue'
+import NotificationManagement from '@/pages/admin/NotificationManagement.vue'
+import AchievementManagement from '@/pages/admin/AchievementManagement.vue'
+import Statistics from '@/pages/admin/Statistics.vue'
 
 const routes = [
   // =======================================================
-  // 1. LANDING PAGE (Trang khách vào đầu tiên)
+  // 1. LANDING PAGE (Trang giới thiệu)
   // URL: http://localhost:5173/
   // =======================================================
   {
@@ -28,26 +35,38 @@ const routes = [
       {
         path: '',
         name: 'IntroPage',
-        // Nếu chưa có file IntroPage, trỏ tạm về HomeView để test
         component: () => import('@/pages/intro/IntroPage.vue') 
       }
     ]
   },
 
   // =======================================================
-  // 2. MAIN APP (Trang chủ Gomet - Giao diện Pinterest)
-  // URL: http://localhost:5173/home
+  // 2. MAIN APP (Có Header + Sidebar + Footer)
+  // URL: /home, /search, /post/123
   // =======================================================
   {
-    path: '/home',
-    component: DefaultLayout, // Có Sidebar + Header tìm kiếm
+    path: '/', // Dùng chung layout cho các trang con
+    component: DefaultLayout,
     children: [
+      // Trang chủ
       {
-        path: '', 
+        path: 'home', 
         name: 'Home',
         component: HomeView
       },
-      // Các trang con khác
+      // 👇 Trang tìm kiếm (Đưa vào đây để có Header)
+      {
+        path: 'search',
+        name: 'Search',
+        component: SearchPage
+      },
+      // 👇 Trang chi tiết bài viết
+      {
+        path: 'post/:id',
+        name: 'PostDetail',
+        component: PostDetail
+      },
+      // Các trang khác (nếu có)
       {
         path: 'recipes',
         name: 'Recipes',
@@ -61,72 +80,32 @@ const routes = [
     ]
   },
 
-  // =======================================================
-  // 3. AUTHENTICATION (Đăng nhập / Đăng ký)
-  // URL: http://localhost:5173/auth/login
-  // =======================================================
-  {
-    path: '/auth',
-    component: AuthLayout,
-    children: [
-      {
-        path: 'login',
-        name: 'Login',
-        component: () => import('@/pages/auth/LoginPage.vue')
-      },
-      {
-        path: 'register',
-        name: 'Register',
-        component: () => import('@/pages/auth/RegisterPage.vue')
-      }
-    ]
-  },
+  
 
   // =======================================================
-  // 4. ADMIN DASHBOARD (Trang quản trị)
-  // URL: http://localhost:5173/admin
+  // 4. ADMIN DASHBOARD
+  // URL: /admin/dashboard
   // =======================================================
   {
     path: '/admin',
     component: AdminLayout,
+    redirect: '/admin/dashboard',
     children: [
-      {
-        path: '', // Mặc định vào Dashboard
-        name: 'AdminDashboard',
-        component: AdminDashboard
-      },
-      
-      // --- CÁC TRANG QUẢN LÝ CHÍNH (Đã kết nối file thật) ---
-      {
-        path: 'posts',
-        name: 'AdminPosts',
-        component: PostManagement // Quản lý bài đăng (Duyệt/Xóa)
-      },
-      {
-        path: 'categories',
-        name: 'AdminCategories',
-        component: CategoryManagement // Quản lý danh mục (Thêm/Sửa/Xóa)
-      },
-      {
-        path: 'users',
-        name: 'AdminUsers',
-        component: UserManagement // Quản lý tài khoản (Ban/Unban)
-      },
-
-      // --- CÁC TRANG PHỤ (Tái sử dụng mẫu giao diện có sẵn) ---
-      // Dùng tạm PostManagement cho các trang có tính chất "Duyệt/Danh sách"
-      { path: 'comments', component: PostManagement }, 
-      { path: 'reports', component: PostManagement },
-
-      // Dùng tạm CategoryManagement cho các trang có tính chất "Thêm/Sửa/Xóa đơn giản"
-      { path: 'events', component: CategoryManagement },
-      { path: 'achievements', component: CategoryManagement },
-      { path: 'notifications', component: CategoryManagement },
+      { path: 'dashboard', name: 'AdminDashboard', component: AdminDashboard },
+      { path: 'statistics', name: 'AdminStatistics', component: Statistics },
+      { path: 'posts', name: 'AdminPosts', component: PostManagement },
+      { path: 'categories', name: 'AdminCategories', component: CategoryManagement },
+      { path: 'users', name: 'AdminUsers', component: UserManagement },
+      { path: 'events', name: 'AdminEvents', component: EventManagement },
+      { path: 'comments', name: 'AdminComments', component: CommentManagement },
+      { path: 'reports', name: 'AdminReports', component: ReportManagement },
+      { path: 'achievements', name: 'AdminAchievements', component: AchievementManagement },
+      { path: 'notifications', name: 'AdminNotifications', component: NotificationManagement }
     ]
   },
 
   // =======================================================
-  // 5. NOT FOUND (Trang 404)
+  // 5. NOT FOUND (404)
   // =======================================================
   {
     path: '/:pathMatch(.*)*',
@@ -138,8 +117,8 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
-  // Tự động cuộn lên đầu trang khi chuyển route
   scrollBehavior(to, from, savedPosition) {
+    // Luôn cuộn lên đầu trang khi chuyển route
     return { top: 0 }
   }
 })
