@@ -1,66 +1,199 @@
 <template>
   <section class="section-plan">
     <div class="container plan-layout">
-      <div class="plan-image">
-        <img src="https://images.unsplash.com/photo-1498837167922-ddd27525d352?q=80&w=1200&auto=format&fit=crop" alt="Lên thực đơn">
-        <div class="floating-box">
-          <span>📅</span> Đã lên lịch tuần này!
+      
+      <div class="plan-visual fade-in-right">
+        <div class="image-wrapper">
+          <div class="circle-bg"></div>
+          
+          <img src="https://images.unsplash.com/photo-1498837167922-ddd27525d352?q=80&w=800&auto=format&fit=crop" alt="Meal Prep" class="main-img">
+          
+          <div class="float-card calendar-card">
+            <div class="icon-box">📅</div>
+            <div class="text-box">
+              <span class="label">Kế hoạch tuần</span>
+              <span class="value">Đã hoàn tất</span>
+            </div>
+            <div class="check-mark">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+          </div>
+
+          <div class="float-card calories-card">
+            <span class="icon">🥗</span>
+            <div class="text-box">
+              <span class="label">Dinh dưỡng</span>
+              <span class="value">Heathly & Balance</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="plan-text">
-        <h2 class="plan-title">Gạt bỏ nỗi lo <br>"Hôm nay ăn gì?"</h2>
+      <div class="plan-content fade-in-left">
+        <span class="sub-tag">Smart Meal Planner</span>
+        <h2 class="plan-title">
+          Gạt Bỏ Nỗi Lo <br>
+          <span class="highlight-text">"Hôm Nay Ăn Gì?"</span>
+        </h2>
         <p class="plan-desc">
-          Công cụ <strong>Lên Thực Đơn</strong> thông minh của Gomet giúp bạn sắp xếp bữa ăn cho cả tuần chỉ trong vài phút. Tiết kiệm thời gian, chi tiêu hợp lý.
+          Công cụ <strong>Lên Thực Đơn</strong> thông minh của Gomet giúp bạn sắp xếp bữa ăn cho cả tuần chỉ trong vài phút. Tiết kiệm thời gian, chi tiêu hợp lý và đảm bảo dinh dưỡng cho cả gia đình.
         </p>
-        <ul class="plan-features">
-          <li>✅ Gợi ý thực đơn theo sở thích</li>
-          <li>✅ Tự động tạo danh sách đi chợ</li>
-          <li>✅ Tính toán calo dinh dưỡng</li>
-        </ul>
-        <button class="btn-try">Thử ngay miễn phí</button>
+
+        <div class="features-list">
+          <div class="feature-item">
+            <div class="f-icon">✨</div>
+            <div class="f-text">
+              <h4>Gợi ý thông minh</h4>
+              <p>Đề xuất món ăn dựa trên sở thích của bạn.</p>
+            </div>
+          </div>
+          <div class="feature-item">
+            <div class="f-icon">🛒</div>
+            <div class="f-text">
+              <h4>Danh sách đi chợ</h4>
+              <p>Tự động tổng hợp nguyên liệu cần mua.</p>
+            </div>
+          </div>
+          <div class="feature-item">
+            <div class="f-icon">🔥</div>
+            <div class="f-text">
+              <h4>Kiểm soát Calo</h4>
+              <p>Tính toán dinh dưỡng cho từng bữa ăn.</p>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-try">
+          Tạo thực đơn ngay
+          <span class="arrow">→</span>
+        </button>
       </div>
+
     </div>
   </section>
 </template>
 
 <style scoped>
-/* 👇 SỬA Ở ĐÂY: Thêm min-height và Flex để căn giữa dọc */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Quicksand:wght@500;600;700&display=swap');
+
 .section-plan { 
-  background-color: #FFCCBC; 
-  padding: 40px 0; /* Giảm padding một chút vì đã có flex căn giữa */
-  
-  /* Quan trọng: Bắt buộc cao ít nhất bằng 1 màn hình */
+  background-color: white; /* Nền trắng sạch sẽ */
+  padding: 80px 0; 
   min-height: 100vh;
-  
-  /* Căn giữa nội dung theo chiều dọc */
-  display: flex;
-  flex-direction: column;
-  justify-content: center; 
+  display: flex; flex-direction: column; justify-content: center;
+  font-family: 'Quicksand', sans-serif;
+  overflow: hidden;
 }
 
-/* Layout rộng 1440px */
-.plan-layout { display: flex; align-items: center; gap: 100px; max-width: 1440px; margin: 0 auto; padding: 0 40px; }
+.container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 30px; }
 
-.plan-image { flex: 1; position: relative; }
-.plan-image img { width: 100%; border-radius: 60px 0 60px 0; box-shadow: 24px 24px 0 rgba(255,255,255,0.4); }
+.plan-layout { 
+  display: flex; align-items: center; gap: 80px; 
+}
 
-.floating-box { position: absolute; bottom: 40px; right: -30px; background: white; padding: 20px 30px; border-radius: 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.15); font-weight: 700; font-size: 1.1rem; color: #333; display: flex; align-items: center; gap: 12px; animation: float 3s ease-in-out infinite; }
-@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+/* --- VISUAL SIDE (LEFT) --- */
+.plan-visual { flex: 1; display: flex; justify-content: center; }
 
-.plan-text { flex: 1; }
-.plan-title { font-size: 4rem; color: #BF360C; line-height: 1.1; margin-bottom: 30px; font-weight: 800; letter-spacing: -1px; }
-.plan-desc { font-size: 1.25rem; color: #3E2723; margin-bottom: 40px; line-height: 1.6; }
-.plan-features { list-style: none; padding: 0; margin-bottom: 40px; }
-.plan-features li { margin-bottom: 16px; font-size: 1.2rem; color: #3E2723; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+.image-wrapper { position: relative; width: 450px; height: 550px; }
 
-.btn-try { background-color: #BF360C; color: white; border: none; padding: 18px 40px; border-radius: 12px; font-weight: 700; font-size: 1.1rem; cursor: pointer; transition: 0.3s; }
-.btn-try:hover { background-color: #870000; transform: scale(1.05); }
+.circle-bg {
+  position: absolute; top: -40px; left: -40px; width: 300px; height: 300px;
+  background: #FEF3C7; border-radius: 50%; z-index: 0; opacity: 0.7;
+}
 
-@media (max-width: 1024px) { 
-  .plan-layout { flex-direction: column-reverse; gap: 60px; text-align: center; } 
-  .plan-image img { width: 100%; max-width: 600px; margin: 0 auto; display: block; } 
-  .plan-features li { justify-content: center; }
-  .floating-box { right: 10%; } 
+.main-img {
+  width: 100%; height: 100%; object-fit: cover; border-radius: 40px;
+  box-shadow: 20px 20px 0px #F97316; /* Bóng cứng màu cam style Magazine */
+  position: relative; z-index: 1; transition: 0.5s;
+}
+.image-wrapper:hover .main-img { transform: translateY(-10px); box-shadow: 20px 30px 0px #F97316; }
+
+/* Floating Cards */
+.float-card {
+  position: absolute; background: white; padding: 15px 20px; border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.15); z-index: 2;
+  display: flex; align-items: center; gap: 15px;
+  animation: float 4s ease-in-out infinite; border: 1px solid #F3F4F6;
+}
+
+.calendar-card { top: 60px; right: -40px; animation-delay: 0s; }
+.calories-card { bottom: 60px; left: -40px; animation-delay: 2s; }
+
+.icon-box, .float-card .icon { 
+  width: 40px; height: 40px; background: #FFF7ED; border-radius: 12px; 
+  display: flex; align-items: center; justify-content: center; font-size: 1.2rem; 
+}
+.text-box { display: flex; flex-direction: column; }
+.text-box .label { font-size: 0.75rem; color: #9CA3AF; font-weight: 600; text-transform: uppercase; }
+.text-box .value { font-size: 0.95rem; color: #1F2937; font-weight: 700; }
+
+.check-mark {
+  width: 24px; height: 24px; background: #10B981; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; margin-left: 10px;
+}
+
+/* --- CONTENT SIDE (RIGHT) --- */
+.plan-content { flex: 1; }
+
+.sub-tag {
+  font-size: 0.85rem; font-weight: 700; color: #F97316; text-transform: uppercase; letter-spacing: 2px;
+  margin-bottom: 15px; display: block;
+}
+
+.plan-title {
+  font-family: 'Playfair Display', serif; font-size: 3.5rem; color: #1C1917; 
+  line-height: 1.15; margin-bottom: 25px;
+}
+.highlight-text { 
+  color: #F97316; position: relative; white-space: nowrap;
+}
+.highlight-text::after {
+  content: ''; position: absolute; bottom: 5px; left: 0; width: 100%; height: 10px;
+  background: rgba(249, 115, 22, 0.2); z-index: -1; transform: rotate(-1deg);
+}
+
+.plan-desc {
+  font-size: 1.1rem; color: #57534E; line-height: 1.6; margin-bottom: 40px;
+}
+
+/* Feature List */
+.features-list { display: flex; flex-direction: column; gap: 25px; margin-bottom: 40px; }
+
+.feature-item { display: flex; align-items: flex-start; gap: 20px; }
+.f-icon {
+  width: 50px; height: 50px; background: #FFF7ED; border-radius: 16px;
+  display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
+  color: #F97316; flex-shrink: 0; transition: 0.3s;
+}
+.feature-item:hover .f-icon { background: #F97316; color: white; transform: rotate(10deg); }
+
+.f-text h4 { font-size: 1.1rem; font-weight: 700; color: #1C1917; margin: 0 0 5px; }
+.f-text p { font-size: 0.95rem; color: #6B7280; margin: 0; line-height: 1.4; }
+
+/* Button */
+.btn-try {
+  background: #1C1917; color: white; padding: 16px 40px; border-radius: 50px;
+  font-weight: 700; font-size: 1rem; border: none; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 10px; transition: 0.3s;
+}
+.btn-try:hover { background: #F97316; padding-right: 30px; }
+.arrow { transition: 0.3s; }
+.btn-try:hover .arrow { transform: translateX(5px); }
+
+/* Animation */
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+.fade-in-left { animation: fadeInLeft 1s ease-out; }
+.fade-in-right { animation: fadeInRight 1s ease-out; }
+@keyframes fadeInLeft { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes fadeInRight { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .plan-layout { flex-direction: column-reverse; text-align: center; gap: 60px; }
+  .features-list { align-items: center; text-align: left; }
+  .image-wrapper { width: 100%; max-width: 400px; height: 400px; margin: 0 auto; }
+  .main-img { box-shadow: 15px 15px 0px #F97316; }
+  .calendar-card { right: -10px; }
+  .calories-card { left: -10px; }
 }
 </style>

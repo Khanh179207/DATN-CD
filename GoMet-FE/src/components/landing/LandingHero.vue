@@ -1,95 +1,285 @@
 <template>
-  <section class="hero-text-section">
-    <div class="hero-content-card">
-      <h1 class="hero-title">MẠNG XÃ HỘI VỀ ẨM THỰC </h1>
-      <p class="hero-subtitle">Lưu và chia sẻ công thức nấu ăn mỗi ngày</p>
-      <router-link to="/home" class="btn-explore">Khám phá ngay</router-link>
+  <section class="hero-section">
+    
+    <div class="marquee-container">
+      <div class="marquee-row scroll-left">
+        <div class="marquee-track">
+          <img v-for="n in 6" :key="'r1-'+n" :src="getImage(n)" alt="Food">
+          <img v-for="n in 6" :key="'r1-dup-'+n" :src="getImage(n)" alt="Food">
+        </div>
+      </div>
+      <div class="marquee-row scroll-right">
+        <div class="marquee-track">
+          <img v-for="n in 6" :key="'r2-'+n" :src="getImage(n+6)" alt="Food">
+          <img v-for="n in 6" :key="'r2-dup-'+n" :src="getImage(n+6)" alt="Food">
+        </div>
+      </div>
+      <div class="marquee-row scroll-left">
+        <div class="marquee-track">
+          <img v-for="n in 6" :key="'r3-'+n" :src="getImage(n+12)" alt="Food">
+          <img v-for="n in 6" :key="'r3-dup-'+n" :src="getImage(n+12)" alt="Food">
+        </div>
+      </div>
     </div>
 
-    <div class="yellow-bottom-bar" @click="scrollToSignup">
-      <span class="bar-text">Đăng ký tài khoản ngay</span>
-      <span class="arrow-icon">﹀</span>
+    <div class="hero-mask"></div>
+
+    <div class="hero-content">
+      <div class="badge-pill">✨ Mạng xã hội Ẩm thực số 2 Việt Nam</div>
+      
+      <h1 class="hero-title">
+        Kết Nối Đam Mê <br>
+        <span class="text-gradient">Ẩm Thực Việt</span>
+      </h1>
+      
+      <p class="hero-desc">
+        Khám phá hơn <strong>10,000+ công thức</strong> độc quyền. 
+        Lưu giữ khoảnh khắc, chia sẻ bí quyết và trở thành đầu bếp tại gia ngay hôm nay.
+      </p>
+
+      <div class="cta-group">
+        <router-link to="/home" class="btn-primary-xl">
+          Bắt đầu ngay
+          <span class="arrow-icon">→</span>
+        </router-link>
+        
+        <div class="social-proof">
+          <div class="avatars">
+            <img src="https://i.pravatar.cc/100?img=12">
+            <img src="https://i.pravatar.cc/100?img=32">
+            <img src="https://i.pravatar.cc/100?img=43">
+            <div class="more-avt">+50k</div>
+          </div>
+          <span class="proof-text">Thành viên đã tham gia</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="scroll-mouse" @click="scrollToSignup">
+      <div class="wheel"></div>
     </div>
 
   </section>
 </template>
 
 <script setup>
-// Hàm xử lý: Khi bấm vào thanh vàng thì trượt xuống 1 màn hình
+// Danh sách ảnh món ăn chất lượng cao (Đã chọn lọc)
+const foodImages = [
+  'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&q=80', // Món thịt
+  'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=400&q=80', // Salad
+  'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&q=80', // Pizza
+  'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=400&q=80', // Pancake
+  'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80', // Healthy
+  'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?w=400&q=80', // Sandwich
+  'https://images.unsplash.com/photo-1484723091739-30a097e8f929?w=400&q=80', // Toast
+  'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=400&q=80', // Pasta
+  'https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?w=400&q=80', // Sushi
+  'https://images.unsplash.com/photo-1499028344343-cd173ffc68a9?w=400&q=80', // Burger
+  'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&q=80', // BBQ
+  'https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=400&q=80', // Curry
+  'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&q=80', // Salad 2
+  'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=400&q=80', // Cake
+  'https://images.unsplash.com/photo-1467003909585-2f8a7270028d?w=400&q=80'  // Healthy 3
+];
+
+// Hàm lấy ảnh an toàn (tránh lỗi undefined nếu index quá lớn)
+const getImage = (i) => {
+  return foodImages[i % foodImages.length];
+}
+
 const scrollToSignup = () => {
   const element = document.getElementById("section-dang-ky");
-  if (element) {
-    element.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
+  if (element) element.scrollIntoView({ behavior: "smooth", block: "start" });
 };
 </script>
 
 <style scoped>
-.hero-text-section {
-  /* Quan trọng: relative để thanh vàng có thể định vị absolute theo nó */
-  position: relative; 
-  min-height: 100vh;
-  display: flex; align-items: center; justify-content: center;
-}
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Quicksand:wght@500;600;700&display=swap');
 
-/* --- Style Card nội dung cũ --- */
-.hero-content-card {
-  text-align: center; max-width: 700px; padding: 50px;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(15px);
-  border-radius: 40px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-  border: 1px solid rgba(255,255,255,0.5);
-  animation: fadeIn 1s ease-out;
-  /* Đẩy card lên một chút để không bị thanh vàng che mất */
-  margin-bottom: 60px; 
-}
-
-.hero-title { font-size: 3.5rem; font-weight: 800; color: #222; margin-bottom: 15px; line-height: 1.1; }
-.hero-subtitle { font-size: 1.2rem; color: #555; margin-bottom: 35px; }
-.btn-explore {
-  display: inline-block; background: #F97316; color: white;
-  padding: 15px 40px; border-radius: 50px; text-decoration: none;
-  font-weight: bold; font-size: 1.1rem;
-  box-shadow: 0 10px 25px rgba(249, 115, 22, 0.4); transition: 0.3s;
-}
-.btn-explore:hover { transform: translateY(-3px) scale(1.05); background: #ea580c; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-
-/* --- 👇 STYLE CHO THANH MÀU VÀNG --- */
-.yellow-bottom-bar {
-  position: absolute;
-  bottom: 0;
-  left: 0;
+.hero-section {
+  position: relative;
+  height: 100vh;
   width: 100%;
-  background-color: #fffd92; /* Màu vàng chuẩn Pinterest */
-  padding: 5px 0;
-  text-align: center;
-  font-weight: 700;
-  color: #111;
-  cursor: pointer;
-  z-index: 50; /* Nổi lên trên cùng */
+  overflow: hidden;
   display: flex;
-  flex-direction: column; /* Xếp chữ trên, mũi tên dưới */
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  transition: background 0.2s;
+  background-color: #FFF7ED; /* Nền kem rất nhạt */
+  font-family: 'Quicksand', sans-serif;
 }
 
-.yellow-bottom-bar:hover {
-  background-color: #fffb7d; /* Đậm hơn chút khi hover */
+/* --- 1. MARQUEE BACKGROUND --- */
+.marquee-container {
+  position: absolute;
+  inset: -10% -10%; /* Mở rộng ra ngoài để khi xoay không bị hở */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 20px;
+  transform: rotate(-6deg) scale(1.1); /* Xoay nghiêng tạo nghệ thuật */
+  opacity: 0.6; /* Làm mờ ảnh để không tranh chấp với chữ */
+  z-index: 0;
+  pointer-events: none;
 }
 
-.arrow-icon {
+.marquee-row {
+  display: flex;
+  overflow: hidden;
+  width: 100%;
+}
+
+.marquee-track {
+  display: flex;
+  gap: 20px;
+  /* Animation sẽ được gán bên dưới */
+}
+
+.marquee-track img {
+  width: 280px;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  filter: grayscale(20%); /* Giảm màu một chút cho sang */
+}
+
+/* Animation chạy vô tận */
+.scroll-left .marquee-track { animation: scrollLeft 40s linear infinite; }
+.scroll-right .marquee-track { animation: scrollRight 45s linear infinite; }
+
+@keyframes scrollLeft { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+@keyframes scrollRight { 0% { transform: translateX(-50%); } 100% { transform: translateX(0); } }
+
+/* --- 2. HERO MASK (CỰC KỲ QUAN TRỌNG) --- */
+.hero-mask {
+  position: absolute; inset: 0; z-index: 1;
+  /* Gradient tỏa tròn: Ở giữa màu đặc (che ảnh), ra ngoài trong suốt (thấy ảnh) */
+  background: radial-gradient(
+    circle, 
+    rgba(255, 247, 237, 1) 0%, 
+    rgba(255, 247, 237, 0.95) 40%, 
+    rgba(255, 247, 237, 0.4) 80%,
+    transparent 100%
+  );
+}
+
+/* --- 3. CONTENT --- */
+.hero-content {
+  position: relative; z-index: 10;
+  text-align: center;
+  max-width: 900px;
+  padding: 0 20px;
+  animation: fadeUp 1s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.badge-pill {
+  display: inline-block;
+  background: #FFFFFF;
+  color: #F97316;
+  font-weight: 700;
+  padding: 8px 24px;
+  border-radius: 50px;
+  margin-bottom: 25px;
+  box-shadow: 0 4px 15px rgba(249, 115, 22, 0.15);
+  font-size: 0.9rem;
+  border: 1px solid #FFEDD5;
+}
+
+.hero-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 5.5rem;
+  font-weight: 900;
+  line-height: 1.1;
+  color: #1C1917;
+  margin-bottom: 25px;
+  letter-spacing: -2px;
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #F97316 0%, #EA580C 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
+.hero-desc {
+  font-size: 1.25rem;
+  color: #57534E;
+  margin: 0 auto 45px;
+  max-width: 600px;
+  line-height: 1.6;
+}
+
+/* CTA Group */
+.cta-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 30px;
+}
+
+.btn-primary-xl {
+  background: #1C1917;
+  color: white;
+  text-decoration: none;
+  font-weight: 700;
   font-size: 1.2rem;
-  animation: bounce 1.5s infinite; /* Hiệu ứng mũi tên nhún nhảy */
+  padding: 18px 60px;
+  border-radius: 50px;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
 }
 
-/* Animation nhún nhảy */
-@keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(5px); }
+.btn-primary-xl:hover {
+  background: #F97316;
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(249, 115, 22, 0.3);
+}
+
+.arrow-icon { transition: 0.3s; }
+.btn-primary-xl:hover .arrow-icon { transform: translateX(5px); }
+
+/* Social Proof */
+.social-proof { display: flex; align-items: center; gap: 15px; }
+.avatars { display: flex; align-items: center; }
+.avatars img, .more-avt {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 3px solid #FFF7ED;
+  margin-left: -12px;
+  object-fit: cover;
+}
+.avatars img:first-child { margin-left: 0; }
+.more-avt {
+  background: #FED7AA; color: #9A3412; font-size: 0.75rem; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+}
+.proof-text { font-weight: 600; color: #78716C; font-size: 0.95rem; }
+
+/* Scroll Mouse */
+.scroll-mouse {
+  position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 10;
+  width: 26px; height: 42px; border: 2px solid #A8A29E; border-radius: 20px;
+  display: flex; justify-content: center; cursor: pointer; opacity: 0.6; transition: 0.3s;
+}
+.scroll-mouse:hover { opacity: 1; border-color: #F97316; }
+.wheel {
+  width: 4px; height: 8px; background: #F97316; border-radius: 2px;
+  margin-top: 6px; animation: scrollWheel 2s infinite;
+}
+
+@keyframes fadeUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes scrollWheel { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(12px); } }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hero-title { font-size: 3.5rem; }
+  .marquee-track img { width: 200px; height: 130px; }
+  .hero-mask {
+    background: radial-gradient(circle, rgba(255,247,237,1) 40%, rgba(255,247,237,0.7) 100%);
+  }
 }
 </style>
