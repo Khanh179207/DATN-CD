@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import poly.edu.dao.AccountDAO;
+import poly.edu.dto.LoginRequest;
+import poly.edu.dto.LoginResponse;
 import poly.edu.dto.RegisterRequest;
 import poly.edu.entity.Account;
 
@@ -17,6 +19,7 @@ public class AuthService {
     private final AccountDAO accountDAO;
     private final PasswordEncoder passwordEncoder;
 
+    // ================= REGISTER =================
     public void register(RegisterRequest req) {
 
         // 1. Check confirm password
@@ -37,7 +40,7 @@ public class AuthService {
 
         acc.setAvatar(null);
 
-        // ✅ QUAN TRỌNG: token KHÔNG được null
+        // ✅ token KHÔNG null
         acc.setToken("REGISTER_" + UUID.randomUUID());
 
         acc.setPoint(0);
@@ -47,5 +50,31 @@ public class AuthService {
         acc.setCreatedAt(LocalDate.now());
 
         accountDAO.save(acc);
+    }
+
+    // ================= LOGIN =================
+    public LoginResponse login(LoginRequest req) {
+
+        Account acc = accountDAO.findByEmail(req.getEmail())
+                .orElseThrow(() -> new RuntimeException("Email không tồn tại"));
+
+        if (!passwordEncoder.matches(req.getPassword(), acc.getPassword())) {
+            throw new RuntimeException("Sai mật khẩu");
+        }
+
+        if (acc.getIsActive() == 0) {
+            throw new RuntimeException("Tài khoản đã bị khóa");
+        }
+
+        // Sinh token mới
+        String token = "LOGIN_" + UUID.randomUUID();
+        acc.setToken(token);
+        accountDAO.save(acc);
+
+        return new LoginResponse(
+                token,
+                acc.getUsername(),
+                acc.getEmail()
+        );
     }
 }

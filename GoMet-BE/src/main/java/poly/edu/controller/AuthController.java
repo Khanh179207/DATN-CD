@@ -4,8 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import poly.edu.dto.RegisterRequest;
-import poly.edu.dto.ApiResponse;
+import poly.edu.dto.*;
 import poly.edu.service.AuthService;
 
 @RestController
@@ -24,5 +23,11 @@ public class AuthController {
                 new ApiResponse(true, "Đăng ký thành công")
         );
     }
-}
 
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(
+            @RequestBody @Valid LoginRequest req) {
+
+        return ResponseEntity.ok(authService.login(req));
+    }
+}
