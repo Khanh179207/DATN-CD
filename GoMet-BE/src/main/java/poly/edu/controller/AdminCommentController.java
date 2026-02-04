@@ -3,7 +3,7 @@ package poly.edu.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dto.AdminCommentDTO;
-import poly.edu.service.AdminCommentService;
+import poly.edu.service.CommentService;
 import java.util.List;
 
 @RestController
@@ -12,15 +12,15 @@ import java.util.List;
 @CrossOrigin
 public class AdminCommentController {
 
-    private final AdminCommentService adminCommentService;
+    private final CommentService commentService;
 
     @GetMapping
     public List<AdminCommentDTO> getAll() {
-        return adminCommentService.findAll();
+        return commentService.findAll();
     }
 
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Integer id) {
-        adminCommentService.delete(id);
+        commentService.delete(id);
     }
 }

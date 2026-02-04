@@ -3,7 +3,7 @@ package poly.edu.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dto.AdminPostDTO;
-import poly.edu.service.AdminPostService;
+import poly.edu.service.PostService;
 
 import java.util.List;
 
@@ -13,29 +13,29 @@ import java.util.List;
 @CrossOrigin
 public class AdminPostController {
 
-    private final AdminPostService adminPostService;
+    private final PostService postService;
 
     // Tab Tất cả
     @GetMapping
     public List<AdminPostDTO> getAll() {
-        return adminPostService.findAll();
+        return postService.findAll();
     }
 
     // Tab Đã duyệt / Chờ duyệt
     @GetMapping("/approved/{status}")
     public List<AdminPostDTO> getByApproved(@PathVariable Integer status) {
-        return adminPostService.findByApproved(status);
+        return postService.findByApproved(status);
     }
 
     // Duyệt bài
     @PutMapping("/approve/{id}")
     public void approve(@PathVariable Integer id) {
-        adminPostService.approvePost(id);
+        postService.approvePost(id);
     }
 
     // Deactive bài
     @PutMapping("/deactive/{id}")
     public void deactive(@PathVariable Integer id) {
-        adminPostService.deactivePost(id);
+        postService.deactivePost(id);
     }
 }
