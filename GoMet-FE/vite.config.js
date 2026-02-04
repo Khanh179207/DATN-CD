@@ -10,4 +10,17 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'), // <--- Thêm đoạn này để hiểu @ là src
     },
   },
+  server: {
+    host: true,
+    cors: true,
+    proxy: {
+      // Gửi các request `/api/*` tới backend Spring Boot mặc định chạy ở 8080
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
+  },
 })
