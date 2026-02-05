@@ -30,6 +30,14 @@ public class Account {
 
     private String avatar;
 
+    // OTP
+    @Transient
+    private String otp;
+
+    @Transient
+    private LocalDate otpExpiredAt;
+
+
     // ✅ Token chỉ có sau LOGIN → cho phép null
     @Column
     private String token;
