@@ -21,22 +21,34 @@
 <script setup>
 import { ref } from 'vue'
 import LandingHeader from '@/components/landing/LandingHeader.vue'
-// ✅ Dòng mới (đúng đường dẫn)
 import AuthModal from '@/components/modals/AuthModal.vue'
 
-// Biến điều khiển Popup
 const showModal = ref(false)
-const currentAuthView = ref('login') // Mặc định mở login
+const currentAuthView = ref('login')
 
-// Hàm xử lý khi bấm nút trên Header
 const handleOpenAuth = (viewName) => {
-  currentAuthView.value = viewName // Cập nhật muốn mở view nào (login/register)
-  showModal.value = true           // Bật popup lên
+  currentAuthView.value = viewName
+  showModal.value = true
 }
 </script>
 
 <style scoped>
-/* (CSS giữ nguyên) */
-.landing-layout { min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
-.landing-content { flex: 1; width: 100%; }
+.landing-layout { 
+  /* 👇 1. Đảm bảo layout có thể cuộn tự nhiên (Quan trọng để bám section) */
+  min-height: 100vh; 
+  display: flex; 
+  flex-direction: column; 
+  overflow-x: hidden; 
+  background-color: #fdfdfd;
+  
+  /* 👇 2. Cưỡng chế cuộn mượt ở cấp độ layout */
+  scroll-behavior: smooth; 
+}
+
+.landing-content { 
+  flex: 1; 
+  width: 100%; 
+  /* 👇 3. Đảm bảo không có thuộc tính nào chặn (block) việc cuộn của con */
+  position: relative;
+}
 </style>
