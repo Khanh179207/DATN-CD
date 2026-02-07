@@ -2,7 +2,7 @@
   <div class="not-found-container">
     <h1>MÀY BỊ VỘI À</h1>
     <p>TỪ TỪ RỒI TAO LÀM.</p>
-    <button @click="$router.push('/')" class="btn-home">
+    <button @click="$router.push('/home')" class="btn-home">
       Về trang chủ
     </button>
   </div>

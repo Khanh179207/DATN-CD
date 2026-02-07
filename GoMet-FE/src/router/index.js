@@ -1,15 +1,22 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-// --- 1. IMPORT LAYOUTS (Bộ khung) ---
+// --- 1. IMPORT LAYOUTS ---
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
-import AuthLayout from '@/layouts/AuthLayout.vue'
 import LandingLayout from '@/layouts/LandingLayout.vue'
 import AdminLayout from '@/layouts/AdminLayout.vue'
 
-// --- 2. IMPORT VIEWS (Trang nội dung) ---
+// --- 2. IMPORT VIEWS ---
 import HomeView from '@/pages/home/HomeView.vue'
 import SearchPage from '@/pages/search/SearchPage.vue'
 import PostDetail from '@/pages/home/PostDetail.vue'
+import CreatePost from '@/pages/CreatePost.vue'
+
+// --- 3. IMPORT CÁC TRANG MỚI ---
+
+import ProfilePage from '@/pages/profile/ProfilePage.vue'
+import EventList from '@/pages/events/EventList.vue'
+import EventDetail from '@/pages/events/EventDetail.vue'
+import ComparePage from '@/pages/compare/ComparePage.vue'
 
 // --- ADMIN PAGES ---
 import AdminDashboard from '@/pages/admin/Dashboard.vue'
@@ -24,10 +31,7 @@ import AchievementManagement from '@/pages/admin/AchievementManagement.vue'
 import Statistics from '@/pages/admin/Statistics.vue'
 
 const routes = [
-  // =======================================================
-  // 1. LANDING PAGE (Trang giới thiệu)
-  // URL: http://localhost:5173/
-  // =======================================================
+  // 1. LANDING PAGE
   {
     path: '/',
     component: LandingLayout,
@@ -40,52 +44,42 @@ const routes = [
     ]
   },
 
-  // =======================================================
-  // 2. MAIN APP (Có Header + Sidebar + Footer)
-  // URL: /home, /search, /post/123
-  // =======================================================
+  // 2. MAIN APP (Default Layout)
   {
-    path: '/', // Dùng chung layout cho các trang con
+    path: '/', 
     component: DefaultLayout,
     children: [
-      // Trang chủ
-      {
-        path: 'home', 
-        name: 'Home',
-        component: HomeView
+      { path: 'home', name: 'Home', component: HomeView },
+      { path: 'search', name: 'Search', component: SearchPage },
+      { path: 'post/:id', name: 'PostDetail', component: PostDetail, props: true },
+      
+      // ✅ Route Sự Kiện
+      { path: 'events', name: 'Events', component: EventList },
+      { path: 'events/:id', name: 'EventDetail', component: EventDetail },
+      
+      { 
+        path: 'create-post', 
+        name: 'CreatePost', 
+        component: CreatePost 
       },
-      // 👇 Trang tìm kiếm (Đưa vào đây để có Header)
+
+      // ✅ Route Trang cá nhân
       {
-        path: 'search',
-        name: 'Search',
-        component: SearchPage
+        path: 'profile',
+        name: 'Profile',
+        component: ProfilePage
       },
-      // 👇 Trang chi tiết bài viết
+
+      // ✅ Route So Sánh (Đưa vào trong children của DefaultLayout)
       {
-        path: 'post/:id',
-        name: 'PostDetail',
-        component: PostDetail
-      },
-      // Các trang khác (nếu có)
-      {
-        path: 'recipes',
-        name: 'Recipes',
-        component: () => import('@/pages/recipes/RecipeList.vue')
-      },
-      {
-        path: 'events',
-        name: 'Events',
-        component: () => import('@/pages/events/EventList.vue')
+        path: 'compare',
+        name: 'Compare',
+        component: ComparePage
       }
     ]
   },
 
-  
-
-  // =======================================================
-  // 4. ADMIN DASHBOARD
-  // URL: /admin/dashboard
-  // =======================================================
+  // 3. ADMIN DASHBOARD
   {
     path: '/admin',
     component: AdminLayout,
@@ -104,9 +98,7 @@ const routes = [
     ]
   },
 
-  // =======================================================
-  // 5. NOT FOUND (404)
-  // =======================================================
+  // 4. NOT FOUND
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
@@ -118,8 +110,9 @@ const router = createRouter({
   history: createWebHistory(),
   routes,
   scrollBehavior(to, from, savedPosition) {
-    // Luôn cuộn lên đầu trang khi chuyển route
-    return { top: 0 }
+    if (savedPosition) return savedPosition
+    if (to.hash) return { el: to.hash, behavior: 'smooth', top: 80 }
+    return { top: 0, behavior: 'smooth' }
   }
 })
 

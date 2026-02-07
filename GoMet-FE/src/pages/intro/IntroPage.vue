@@ -67,7 +67,9 @@
 
       <LandingIdeaSection3 /> 
       
-      <LandingSignupSection />
+      <section id="sectionsigninlanding">
+        <LandingSignupSection />
+      </section>
       
       <LandingFooter />
       
@@ -77,14 +79,36 @@
 </template>
 
 <script setup>
+import { onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import LandingHero from '@/components/landing/LandingHero.vue'
 import LandingSignupSection from '@/components/landing/LandingSignupSection.vue'
 import LandingFooter from '@/components/landing/LandingFooter.vue'
-
-
 import LandingIdeaSection from '@/components/landing/LandingIdeaSection.vue'
 import LandingIdeaSection2 from '@/components/landing/LandingIdeaSection2.vue'
 import LandingIdeaSection3 from '@/components/landing/LandingIdeaSection3.vue'
+
+const route = useRoute()
+
+// Hàm scroll đến element theo hash
+const scrollToSection = (hash) => {
+  if (!hash) return
+  
+  // Chờ component render xong
+  setTimeout(() => {
+    const element = document.getElementById(hash.replace('#', ''))
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, 300)
+}
+
+// Chạy khi component mount
+onMounted(() => {
+  if (route.hash) {
+    scrollToSection(route.hash)
+  }
+})
 </script>
 
 <style scoped>
