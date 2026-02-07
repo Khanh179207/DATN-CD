@@ -3,7 +3,7 @@ package poly.edu.dto;
 import lombok.Data;
 
 @Data
-public class EventPostDTO {
+public class AdminEventPostDTO {
     private Integer eventPostID;
     private Integer postID;
     private String postTitle;

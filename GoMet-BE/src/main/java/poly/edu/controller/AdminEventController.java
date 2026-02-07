@@ -2,8 +2,8 @@ package poly.edu.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import poly.edu.dto.EventDTO;
-import poly.edu.dto.EventPostDTO;
+import poly.edu.dto.AdminEventDTO;
+import poly.edu.dto.AdminEventPostDTO;
 import poly.edu.service.AdminEventService;
 import java.util.List;
 
@@ -17,23 +17,23 @@ public class AdminEventController {
 
     // CRUD Event
     @GetMapping
-    public List<EventDTO> getAll() {
+    public List<AdminEventDTO> getAll() {
         return adminEventService.findAllEvents();
     }
 
     @GetMapping("/{id}")
-    public EventDTO getOne(@PathVariable Integer id) {
+    public AdminEventDTO getOne(@PathVariable Integer id) {
         return adminEventService.findEventById(id);
     }
 
     @PostMapping
-    public EventDTO create(@RequestBody EventDTO dto) {
+    public AdminEventDTO create(@RequestBody AdminEventDTO dto) {
         return adminEventService.saveEvent(dto);
     }
 
     @PutMapping("/{id}")
-    public EventDTO update(@PathVariable Integer id,
-                           @RequestBody EventDTO dto) {
+    public AdminEventDTO update(@PathVariable Integer id,
+                                @RequestBody AdminEventDTO dto) {
         dto.setEventID(id);
         return adminEventService.saveEvent(dto);
     }
@@ -45,7 +45,7 @@ public class AdminEventController {
 
     // ===== Event Detail =====
     @GetMapping("/{id}/posts")
-    public List<EventPostDTO> getPosts(@PathVariable Integer id) {
+    public List<AdminEventPostDTO> getPosts(@PathVariable Integer id) {
         return adminEventService.getPostsOfEvent(id);
     }
 

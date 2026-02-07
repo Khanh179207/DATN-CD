@@ -4,7 +4,7 @@ import lombok.Data;
 import java.time.LocalDate;
 
 @Data
-public class EventDTO {
+public class AdminEventDTO {
     private Integer eventID;
     private String eventName;
     private Integer winner;
