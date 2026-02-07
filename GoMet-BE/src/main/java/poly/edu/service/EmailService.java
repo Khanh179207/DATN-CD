@@ -19,4 +19,15 @@ public class EmailService {
 
         mailSender.send(mail);
     }
+
+    public void sendResetPassword(String toEmail, String resetLink) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(toEmail);
+        message.setSubject("Đặt lại mật khẩu");
+        message.setText(
+                "Nhấn vào link sau để đặt lại mật khẩu:\n" + resetLink
+        );
+
+        mailSender.send(message);
+    }
 }

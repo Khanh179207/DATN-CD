@@ -47,4 +47,31 @@ public class AuthController {
                 authService.login(req)
         );
     }
+
+    // ================= LOGIN GOOGLE =================
+    @PostMapping("/login/google")
+    public ResponseEntity<LoginResponse> loginGoogle(
+            @RequestBody @Valid GoogleLoginRequest req) {
+
+        return ResponseEntity.ok(
+                authService.loginGoogle(req.getIdToken())
+        );
+    }
+
+    // ================= FORGOT-PASSWORD =================
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest req) {
+
+        authService.forgotPassword(req);
+        return ResponseEntity.ok("Đã gửi email đặt lại mật khẩu");
+    }
+    // ================= RESET-PASSWORD =================
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest req) {
+
+        authService.resetPassword(req);
+        return ResponseEntity.ok("Đặt lại mật khẩu thành công");
+    }
 }
