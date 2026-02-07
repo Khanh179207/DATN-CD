@@ -8,6 +8,7 @@ import java.util.List;
 @Entity
 @Table(name = "Category")
 @Data
+@Getter @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

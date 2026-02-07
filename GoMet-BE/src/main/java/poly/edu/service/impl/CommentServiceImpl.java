@@ -5,13 +5,13 @@ import org.springframework.stereotype.Service;
 import poly.edu.dao.CommentDAO;
 import poly.edu.dto.AdminCommentDTO;
 import poly.edu.entity.Comment;
-import poly.edu.service.AdminCommentService;
+import poly.edu.service.CommentService;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class AdminCommentServiceImpl implements AdminCommentService {
+public class CommentServiceImpl implements CommentService {
 
     private final CommentDAO commentDAO;
 
