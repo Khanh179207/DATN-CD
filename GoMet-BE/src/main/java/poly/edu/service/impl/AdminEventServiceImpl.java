@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import poly.edu.dao.EventDAO;
 import poly.edu.dao.EventPostsDAO;
-import poly.edu.dto.EventDTO;
-import poly.edu.dto.EventPostDTO;
+import poly.edu.dto.AdminEventDTO;
+import poly.edu.dto.AdminEventPostDTO;
 import poly.edu.entity.Event;
 import poly.edu.service.AdminEventService;
 
@@ -19,8 +19,8 @@ public class AdminEventServiceImpl implements AdminEventService {
     private final EventPostsDAO eventPostsDAO;
 
     // ===== Mapping =====
-    private EventDTO toDTO(Event e) {
-        EventDTO dto = new EventDTO();
+    private AdminEventDTO toDTO(Event e) {
+        AdminEventDTO dto = new AdminEventDTO();
         dto.setEventID(e.getEventID());
         dto.setEventName(e.getEventName());
         dto.setWinner(e.getWinner());
@@ -29,7 +29,7 @@ public class AdminEventServiceImpl implements AdminEventService {
         return dto;
     }
 
-    private Event toEntity(EventDTO dto) {
+    private Event toEntity(AdminEventDTO dto) {
         return Event.builder()
                 .eventID(dto.getEventID())
                 .eventName(dto.getEventName())
@@ -41,17 +41,17 @@ public class AdminEventServiceImpl implements AdminEventService {
 
     // ===== CRUD Event =====
     @Override
-    public List<EventDTO> findAllEvents() {
+    public List<AdminEventDTO> findAllEvents() {
         return eventDAO.findAll().stream().map(this::toDTO).toList();
     }
 
     @Override
-    public EventDTO findEventById(Integer id) {
+    public AdminEventDTO findEventById(Integer id) {
         return toDTO(eventDAO.findById(id).orElseThrow());
     }
 
     @Override
-    public EventDTO saveEvent(EventDTO dto) {
+    public AdminEventDTO saveEvent(AdminEventDTO dto) {
         return toDTO(eventDAO.save(toEntity(dto)));
     }
 
@@ -62,11 +62,11 @@ public class AdminEventServiceImpl implements AdminEventService {
 
     // ===== Event Detail =====
     @Override
-    public List<EventPostDTO> getPostsOfEvent(Integer eventID) {
+    public List<AdminEventPostDTO> getPostsOfEvent(Integer eventID) {
         return eventPostsDAO.findByEvent_EventID(eventID)
                 .stream()
                 .map(ep -> {
-                    EventPostDTO dto = new EventPostDTO();
+                    AdminEventPostDTO dto = new AdminEventPostDTO();
                     dto.setEventPostID(ep.getEventPostID());
                     dto.setPostID(ep.getPost().getPostID());
                     dto.setPostTitle(ep.getPost().getTitle());
