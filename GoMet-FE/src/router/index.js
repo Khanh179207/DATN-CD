@@ -11,12 +11,17 @@ import SearchPage from '@/pages/search/SearchPage.vue'
 import PostDetail from '@/pages/home/PostDetail.vue'
 import CreatePost from '@/pages/CreatePost.vue'
 
-// --- 3. IMPORT CÁC TRANG MỚI ---
-
+// --- 3. IMPORT CÁC TRANG MỚI (EDITORIAL LUXURY) ---
 import ProfilePage from '@/pages/profile/ProfilePage.vue'
 import EventList from '@/pages/events/EventList.vue'
 import EventDetail from '@/pages/events/EventDetail.vue'
 import ComparePage from '@/pages/compare/ComparePage.vue'
+
+// 🚀 CÁC TÍNH NĂNG PREMIUM SẾP VỪA THÊM
+import Leaderboard from '@/pages/Leaderboard.vue'
+// Lưu ý: Nếu Sếp chưa tạo 2 file dưới đây, hãy tạo file trống trong thư mục pages để không bị lỗi import
+import Suggestions from '@/pages/suggestions/SuggestionsPage.vue' 
+import MealPlan from '@/pages/mealplan/MealPlanPage.vue'
 
 // --- ADMIN PAGES ---
 import AdminDashboard from '@/pages/admin/Dashboard.vue'
@@ -44,7 +49,7 @@ const routes = [
     ]
   },
 
-  // 2. MAIN APP (Default Layout)
+  // 2. MAIN APP (Default Layout) - TẬP TRUNG TÍNH NĂNG NGƯỜI DÙNG
   {
     path: '/', 
     component: DefaultLayout,
@@ -63,18 +68,40 @@ const routes = [
         component: CreatePost 
       },
 
-      // ✅ Route Trang cá nhân
+      // ✅ Route Trang cá nhân & Lưu trữ
       {
         path: 'profile',
         name: 'Profile',
         component: ProfilePage
       },
+      {
+        path: 'storage',
+        name: 'Storage',
+        component: () => import('@/pages/storage/StoragePage.vue') // Lazy load cho nhẹ app
+      },
 
-      // ✅ Route So Sánh (Đưa vào trong children của DefaultLayout)
+      // ✅ Route So Sánh
       {
         path: 'compare',
         name: 'Compare',
         component: ComparePage
+      },
+
+      // ✨✨✨ CÁC ROUTE PREMIUM MỚI (ĐÃ ĐỒNG BỘ VỚI SIDEBAR) ✨✨✨
+      {
+        path: 'leaderboard',
+        name: 'Leaderboard',
+        component: Leaderboard
+      },
+      {
+        path: 'suggestions',
+        name: 'Suggestions',
+        component: Suggestions
+      },
+      {
+        path: 'meal-plan',
+        name: 'MealPlan',
+        component: MealPlan
       }
     ]
   },
@@ -98,7 +125,7 @@ const routes = [
     ]
   },
 
-  // 4. NOT FOUND
+  // 4. NOT FOUND (Trang 404 sang chảnh)
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',

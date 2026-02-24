@@ -7,7 +7,7 @@ import poly.edu.service.AccountService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/admin/accounts")
+@RequestMapping("/admin/accounts")
 @RequiredArgsConstructor
 @CrossOrigin
 public class AdminAccountController {

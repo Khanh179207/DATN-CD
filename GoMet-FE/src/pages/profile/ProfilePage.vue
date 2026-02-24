@@ -1,127 +1,122 @@
 <template>
-  <div class="profile-page-wrapper">
+  <div class="gomet-profile-full">
     
-    <div class="hero-backdrop" :style="{ backgroundImage: `url(${user.cover})` }"></div>
-    <div class="hero-overlay"></div>
+    <div class="bg-layer">
+      <div class="grid-mesh"></div>
+      <div class="noise-texture"></div>
+    </div>
 
-    <div class="profile-container">
+    <div class="profile-layout-wide">
       
-      <div class="profile-card-glass anime-fade-up">
-        
-        <div class="card-cover" :style="{ backgroundImage: `url(${user.cover})` }">
-          <button class="btn-edit-cover">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-            <span>Đổi ảnh bìa</span>
-          </button>
-        </div>
-
-        <div class="card-body">
-          <div class="profile-layout">
+      <aside class="col-left">
+        <div class="sticky-wrapper">
+          <div class="id-card">
+            <div class="avatar-box">
+              <img :src="user.avatar" class="avatar-img" alt="Chef">
+              <div class="verify-badge">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+            </div>
             
-            <div class="profile-left">
-              <div class="avatar-wrapper">
-                <div class="avatar-frame">
-                  <img :src="user.avatar" class="user-avatar" alt="Avatar">
-                </div>
-                <div class="status-indicator" title="Online"></div>
-              </div>
-              
-              <div class="identity-group mobile-only">
-                <h1 class="user-name">{{ user.name }} <span class="verified-icon">✔</span></h1>
-                <p class="user-handle">@{{ user.handle }}</p>
-              </div>
+            <h1 class="user-name">{{ user.name }}</h1>
+            <p class="user-handle">@{{ user.handle }}</p>
+            
+            <div class="bio-box">
+              <p>{{ user.bio }}</p>
             </div>
 
-            <div class="profile-right">
-              <div class="header-actions">
-                <div class="identity-group desktop-only">
-                  <h1 class="user-name">{{ user.name }} <span class="verified-icon">✔</span></h1>
-                  <p class="user-handle">@{{ user.handle }}</p>
-                </div>
-                
-                <div class="btn-group">
-                  <button class="btn-action secondary">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                  </button>
-                  <button class="btn-action primary">Chỉnh sửa hồ sơ</button>
-                </div>
-              </div>
+            <div class="action-stack">
+              <button class="btn-primary">CHỈNH SỬA</button>
+              <button class="btn-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+              </button>
+            </div>
 
-              <div class="stats-bar">
-                <div class="stat">
-                  <span class="num">{{ user.postsCount }}</span>
-                  <span class="lbl">Bài viết</span>
-                </div>
-                <div class="stat">
-                  <span class="num">{{ user.followers }}</span>
-                  <span class="lbl">Người theo dõi</span>
-                </div>
-                <div class="stat">
-                  <span class="num">{{ user.following }}</span>
-                  <span class="lbl">Đang theo dõi</span>
-                </div>
-              </div>
-
-              <div class="bio-section">
-                <p>{{ user.bio }}</p>
-                <a href="#" class="bio-link">🔗 gomet.vn/chef/khanh</a>
-              </div>
+            <div class="social-links">
+              <a href="#" class="s-link">Website</a>
+              <a href="#" class="s-link">Instagram</a>
+              <a href="#" class="s-link">Facebook</a>
             </div>
           </div>
         </div>
+      </aside>
 
-        <div class="profile-tabs">
-          <button 
-            v-for="tab in tabs" 
-            :key="tab.id"
-            class="tab-item"
-            :class="{ active: currentTab === tab.id }"
-            @click="currentTab = tab.id"
-          >
-            {{ tab.label }}
-            <div class="active-line" v-if="currentTab === tab.id"></div>
-          </button>
+      <main class="col-center">
+        
+        <div class="content-header">
+          <h2 class="section-title">Masterpieces <span class="count">{{ posts.length }}</span></h2>
+          <div class="filter-tabs">
+            <span class="tab active">Tất cả</span>
+            <span class="tab">Món Âu</span>
+            <span class="tab">Món Á</span>
+          </div>
         </div>
-      </div>
 
-      <div class="content-section anime-fade-up-delay">
-        <transition name="fade-slide" mode="out-in">
+        <div class="recipe-feed">
+          <RecipeCard 
+            v-for="post in posts" 
+            :key="post.id" 
+            :post="post" 
+            class="feed-item"
+          />
+        </div>
+
+      </main>
+
+      <aside class="col-right">
+        <div class="sticky-wrapper">
           
-          <div v-if="currentTab === 'posts'" class="recipe-grid">
-            <RecipeCard 
-              v-for="post in posts" 
-              :key="post.id" 
-              :post="post" 
-              class="profile-recipe-item"
-            />
-          </div>
-
-          <div v-else-if="currentTab === 'saved'" class="empty-state">
-            <div class="icon-empty">🔖</div>
-            <h3>Bộ sưu tập còn trống</h3>
-            <p>Hãy khám phá và lưu lại những công thức tuyệt vời.</p>
-          </div>
-
-          <div v-else class="about-grid">
-            <div class="info-box">
-              <h3>Thông tin cá nhân</h3>
-              <ul>
-                <li>📍 Sống tại: <b>Hà Nội</b></li>
-                <li>🎂 Sinh nhật: <b>20/10/1995</b></li>
-                <li>🍳 Sở trường: <b>Món Âu</b></li>
-              </ul>
-            </div>
-            <div class="info-box">
-              <h3>Thành tựu</h3>
-              <div class="achievements">
-                <span class="badge-achieve">🏆 Top Chef 2023</span>
-                <span class="badge-achieve">🌟 100k Likes</span>
+          <div class="widget-box">
+            <h3 class="w-title">THỐNG KÊ</h3>
+            <div class="stat-grid">
+              <div class="stat-cell">
+                <span class="val">{{ user.postsCount }}</span>
+                <span class="lbl">Bài viết</span>
+              </div>
+              <div class="stat-cell">
+                <span class="val">{{ user.followers }}</span>
+                <span class="lbl">Followers</span>
+              </div>
+              <div class="stat-cell">
+                <span class="val">{{ user.following }}</span>
+                <span class="lbl">Following</span>
+              </div>
+              <div class="stat-cell">
+                <span class="val">1.2M</span>
+                <span class="lbl">Total Likes</span>
               </div>
             </div>
           </div>
 
-        </transition>
-      </div>
+          <div class="widget-box">
+            <h3 class="w-title">THÀNH TỰU</h3>
+            <ul class="award-list">
+              <li>
+                <span class="icon">🏆</span>
+                <div class="award-info">
+                  <strong>Top Chef 2023</strong>
+                  <span>Giải thưởng Gomet năm</span>
+                </div>
+              </li>
+              <li>
+                <span class="icon">🌟</span>
+                <div class="award-info">
+                  <strong>Creator of Month</strong>
+                  <span>Tháng 12/2025</span>
+                </div>
+              </li>
+              <li>
+                <span class="icon">🍳</span>
+                <div class="award-info">
+                  <strong>500 Công thức</strong>
+                  <span>Cột mốc cống hiến</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+        </div>
+      </aside>
 
     </div>
   </div>
@@ -129,180 +124,144 @@
 
 <script setup>
 import { ref } from 'vue'
-import RecipeCard from '@/components/common/RecipeCard.vue' // Đảm bảo import đúng đường dẫn
+import RecipeCard from '@/components/common/RecipeCard.vue'
 
 const user = ref({
   name: 'Nguyễn Khánh',
   handle: 'khanh_chef',
-  avatar: 'https://i.pravatar.cc/400?u=khanh',
-  cover: 'https://images.unsplash.com/photo-1556910103-1c02745a30bf?q=80&w=2070&auto=format&fit=crop',
-  bio: '👨‍🍳 Bếp trưởng Gomet. Chuyên chia sẻ công thức healthy & eat clean. "Nấu ăn là nghệ thuật, người nấu ăn là nghệ sĩ".',
+  avatar: 'https://images.unsplash.com/photo-1583394838336-acd977736f90?w=800&auto=format&fit=crop&q=60', 
+  bio: 'Creative Chef tại Gomet. Theo đuổi phong cách ẩm thực tối giản, tôn trọng nguyên bản của từng nguyên liệu. "Less is more".',
   postsCount: 128,
   followers: '45.2k',
   following: 320
 })
 
-const tabs = [
-  { id: 'posts', label: 'BÀI VIẾT' },
-  { id: 'saved', label: 'ĐÃ LƯU' },
-  { id: 'about', label: 'GIỚI THIỆU' },
-]
-const currentTab = ref('posts')
-
-// Mock Data Bài viết
 const posts = ref([
-  { id: 1, title: 'Bò Wagyu áp chảo sốt tiêu đen', image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800&auto=format&fit=crop', author: { name: 'Nguyễn Khánh', avatar: user.value.avatar }, likes: 1250, time: '45p', difficulty: 'Khó' },
-  { id: 2, title: 'Salad ức gà sốt chanh leo', image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&auto=format&fit=crop', author: { name: 'Nguyễn Khánh', avatar: user.value.avatar }, likes: 890, time: '20p', difficulty: 'Dễ' },
-  { id: 3, title: 'Mỳ Ý hải sản sốt kem', image: 'https://images.unsplash.com/photo-1563379926898-05f4575a45d8?w=800&auto=format&fit=crop', author: { name: 'Nguyễn Khánh', avatar: user.value.avatar }, likes: 2100, time: '35p', difficulty: 'Trung bình' },
-  { id: 4, title: 'Bánh mì nướng bơ tỏi', image: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=800&auto=format&fit=crop', author: { name: 'Nguyễn Khánh', avatar: user.value.avatar }, likes: 500, time: '15p', difficulty: 'Dễ' },
+  { id: 1, title: 'Bò Wagyu A5 Sốt Tiêu Đen', image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800', author: { name: 'Nguyễn Khánh', avatar: user.value.avatar }, likes: 1200, time: '45p', difficulty: 'Khó' },
+  { id: 2, title: 'Salad Địa Trung Hải', image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800', author: { name: 'Nguyễn Khánh', avatar: user.value.avatar }, likes: 890, time: '15p', difficulty: 'Dễ' },
+  { id: 3, title: 'Mỳ Ý Hải Sản Sốt Kem', image: 'https://images.unsplash.com/photo-1563379926898-05f4575a45d8?w=800', author: { name: 'Nguyễn Khánh', avatar: user.value.avatar }, likes: 2100, time: '30p', difficulty: 'Vừa' },
+  { id: 4, title: 'Bánh Mì Nướng Bơ Tỏi', image: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=800', author: { name: 'Nguyễn Khánh', avatar: user.value.avatar }, likes: 500, time: '10p', difficulty: 'Dễ' },
+  { id: 5, title: 'Cá Hồi Áp Chảo', image: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800', author: { name: 'Nguyễn Khánh', avatar: user.value.avatar }, likes: 1500, time: '25p', difficulty: 'Vừa' },
 ])
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Manrope:wght@400;500;600;700;800&display=swap');
 
-.profile-page-wrapper {
-  font-family: 'Inter', sans-serif; color: #1C1917;
-  min-height: 100vh; position: relative;
-  background-color: #FAFAF9;
+/* --- 1. CORE LAYOUT --- */
+.gomet-profile-full {
+  width: 100%; 
+  /* KHÔNG set height: 100vh để cho phép body cuộn */
+  background: #FBF6F1; color: #1E293B;
+  font-family: 'Manrope', sans-serif;
+  position: relative;
 }
 
-/* Background mờ phía sau tạo mood */
-.hero-backdrop {
-  position: absolute; top: 0; left: 0; right: 0; height: 400px;
-  background-size: cover; background-position: center;
-  filter: blur(60px); opacity: 0.4; z-index: 0;
-  mask-image: linear-gradient(to bottom, black, transparent);
+/* Background */
+.bg-layer { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+.grid-mesh {
+  position: absolute; inset: 0;
+  background-image: linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+.noise-texture {
+  position: absolute; inset: 0; opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-.profile-container {
-  max-width: 1000px; margin: 0 auto; width: 100%;
-  padding: 40px 20px 80px; position: relative; z-index: 1;
+/* --- 2. 3-COLUMN LAYOUT --- */
+.profile-layout-wide {
+  display: flex; gap: 40px;
+  max-width: 1600px; margin: 0 auto; padding: 40px;
+  position: relative; z-index: 10;
 }
 
-/* === 1. PROFILE CARD GLASS (Điểm nhấn chính) === */
-.profile-card-glass {
-  background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px);
-  border: 1px solid rgba(255,255,255,0.6);
-  border-radius: 24px; overflow: hidden;
-  box-shadow: 0 20px 50px -10px rgba(0,0,0,0.1);
-  margin-bottom: 40px;
+/* --- LEFT COLUMN: IDENTITY --- */
+.col-left { width: 300px; flex-shrink: 0; }
+.sticky-wrapper { position: sticky; top: 100px; display: flex; flex-direction: column; gap: 30px; }
+
+.id-card { text-align: center; }
+.avatar-box { position: relative; width: 180px; height: 180px; margin: 0 auto 20px; }
+.avatar-img {
+  width: 100%; height: 100%; object-fit: cover; border-radius: 50%;
+  border: 4px solid #FFF; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+.verify-badge {
+  position: absolute; bottom: 10px; right: 10px; background: #EA580C; color: #FFF;
+  width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  border: 3px solid #FFF;
 }
 
-.card-cover {
-  height: 250px; background-size: cover; background-position: center; position: relative;
+.user-name { font-family: 'Playfair Display', serif; font-size: 2rem; margin: 0 0 5px; line-height: 1.1; }
+.user-handle { color: #64748B; font-weight: 600; font-size: 0.9rem; margin-bottom: 20px; }
+
+.bio-box { font-size: 0.9rem; color: #334155; line-height: 1.6; margin-bottom: 25px; }
+
+.action-stack { display: flex; gap: 10px; justify-content: center; margin-bottom: 30px; }
+.btn-primary {
+  flex: 1; background: #1E293B; color: #FFF; border: none; padding: 12px; border-radius: 8px;
+  font-weight: 700; cursor: pointer; transition: 0.3s;
 }
-.btn-edit-cover {
-  position: absolute; bottom: 15px; right: 15px;
-  background: rgba(0,0,0,0.6); color: white; border: none;
-  padding: 8px 16px; border-radius: 20px; cursor: pointer;
-  display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600;
-  transition: 0.2s; backdrop-filter: blur(4px);
+.btn-primary:hover { background: #EA580C; }
+.btn-icon {
+  width: 44px; background: #FFF; border: 1px solid #E2E8F0; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center; cursor: pointer; color: #1E293B;
 }
-.btn-edit-cover:hover { background: rgba(0,0,0,0.8); }
+.btn-icon:hover { border-color: #EA580C; color: #EA580C; }
 
-.card-body { padding: 0 40px 30px; position: relative; }
+.social-links { display: flex; flex-direction: column; gap: 10px; align-items: center; border-top: 1px solid #E2E8F0; padding-top: 20px; }
+.s-link { font-size: 0.8rem; font-weight: 700; color: #64748B; text-decoration: none; transition: 0.2s; text-transform: uppercase; letter-spacing: 1px; }
+.s-link:hover { color: #EA580C; }
 
-.profile-layout { display: flex; gap: 30px; }
+/* --- CENTER COLUMN: CONTENT --- */
+.col-center { flex: 1; }
 
-/* Cột Trái: Avatar */
-.profile-left { flex-shrink: 0; width: 160px; position: relative; margin-top: -80px; }
-.avatar-wrapper { position: relative; width: 160px; height: 160px; }
-.avatar-frame {
-  width: 100%; height: 100%; border-radius: 50%;
-  border: 6px solid white; overflow: hidden;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-  background: white;
-}
-.user-avatar { width: 100%; height: 100%; object-fit: cover; }
-.status-indicator {
-  position: absolute; bottom: 12px; right: 12px; width: 22px; height: 22px;
-  background: #22C55E; border: 4px solid white; border-radius: 50%;
-}
+.content-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 30px; border-bottom: 2px solid #E2E8F0; padding-bottom: 15px; }
+.section-title { font-family: 'Playfair Display', serif; font-size: 2.5rem; margin: 0; line-height: 1; }
+.count { font-family: 'Manrope', sans-serif; font-size: 1rem; color: #EA580C; vertical-align: super; }
 
-/* Cột Phải: Info */
-.profile-right { flex: 1; padding-top: 15px; }
+.filter-tabs { display: flex; gap: 20px; }
+.tab { font-size: 0.9rem; font-weight: 700; color: #94A3B8; cursor: pointer; transition: 0.2s; }
+.tab.active { color: #1E293B; }
+.tab:hover { color: #EA580C; }
 
-.header-actions { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
-.user-name { font-family: 'Playfair Display', serif; font-size: 2rem; margin: 0; color: #1C1917; display: flex; align-items: center; gap: 8px; }
-.verified-icon { font-size: 0.8rem; background: #0EA5E9; color: white; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-.user-handle { color: #6B7280; font-weight: 500; font-size: 1rem; }
-
-.btn-group { display: flex; gap: 10px; }
-.btn-action { height: 40px; padding: 0 20px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; border: none; display: flex; align-items: center; justify-content: center; }
-.btn-action.primary { background: #1C1917; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-.btn-action.primary:hover { background: #EA580C; transform: translateY(-2px); }
-.btn-action.secondary { background: #F3F4F6; color: #1C1917; width: 40px; padding: 0; }
-.btn-action.secondary:hover { background: #E5E7EB; }
-
-.stats-bar { display: flex; gap: 40px; margin-bottom: 20px; }
-.stat { display: flex; flex-direction: column; }
-.stat .num { font-size: 1.2rem; font-weight: 800; color: #1C1917; }
-.stat .lbl { font-size: 0.85rem; color: #6B7280; }
-
-.bio-section p { color: #44403C; line-height: 1.5; margin-bottom: 8px; }
-.bio-link { color: #EA580C; font-weight: 600; text-decoration: none; font-size: 0.9rem; }
-.bio-link:hover { text-decoration: underline; }
-
-/* Tabs */
-.profile-tabs {
-  display: flex; border-top: 1px solid #F3F4F6; padding: 0 40px;
-}
-.tab-item {
-  background: none; border: none; padding: 18px 25px;
-  font-size: 0.9rem; font-weight: 700; color: #9CA3AF;
-  cursor: pointer; position: relative; transition: 0.2s;
-  letter-spacing: 0.5px;
-}
-.tab-item:hover { color: #4B5563; }
-.tab-item.active { color: #1C1917; }
-.active-line {
-  position: absolute; bottom: 0; left: 0; width: 100%; height: 3px;
-  background: #1C1917; border-radius: 3px 3px 0 0;
+.recipe-feed {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px;
 }
 
-/* === 2. CONTENT AREA === */
-.content-section { min-height: 400px; }
+/* --- RIGHT COLUMN: STATS --- */
+.col-right { width: 280px; flex-shrink: 0; }
 
-/* Recipe Grid */
-.recipe-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 25px;
+.widget-box {
+  background: #FFF; border: 1px solid rgba(0,0,0,0.05); padding: 25px; border-radius: 16px; margin-bottom: 30px;
+}
+.w-title { font-size: 0.7rem; font-weight: 800; color: #94A3B8; letter-spacing: 2px; margin: 0 0 20px; border-bottom: 1px solid #F1F5F9; padding-bottom: 10px; }
+
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.stat-cell { display: flex; flex-direction: column; }
+.stat-cell .val { font-size: 1.2rem; font-weight: 800; color: #1E293B; }
+.stat-cell .lbl { font-size: 0.75rem; color: #64748B; margin-top: 4px; }
+
+.award-list { list-style: none; padding: 0; margin: 0; }
+.award-list li { display: flex; gap: 15px; margin-bottom: 20px; align-items: center; }
+.award-list li:last-child { margin-bottom: 0; }
+.award-list .icon { font-size: 1.5rem; background: #FFF7ED; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 8px; }
+.award-info { display: flex; flex-direction: column; }
+.award-info strong { font-size: 0.9rem; color: #1E293B; }
+.award-info span { font-size: 0.75rem; color: #64748B; }
+
+/* RESPONSIVE */
+@media (max-width: 1200px) {
+  .profile-layout-wide { flex-direction: column; }
+  .col-left, .col-right { width: 100%; }
+  .sticky-wrapper { position: static; flex-direction: row; gap: 40px; flex-wrap: wrap; }
+  .id-card { text-align: left; display: flex; gap: 30px; align-items: flex-start; flex: 1; }
+  .recipe-feed { grid-template-columns: repeat(3, 1fr); }
 }
 
-/* Empty State */
-.empty-state { text-align: center; padding: 60px 0; color: #6B7280; }
-.icon-empty { font-size: 3rem; margin-bottom: 15px; opacity: 0.5; }
-.btn-outline-pro { margin-top: 20px; padding: 10px 24px; border: 2px solid #1C1917; background: transparent; border-radius: 30px; font-weight: 700; cursor: pointer; transition: 0.2s; }
-.btn-outline-pro:hover { background: #1C1917; color: white; }
-
-/* About Grid */
-.about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
-.info-box { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); }
-.info-box h3 { margin-top: 0; font-family: 'Playfair Display', serif; border-bottom: 1px solid #F3F4F6; padding-bottom: 10px; margin-bottom: 15px; }
-.info-box ul { list-style: none; padding: 0; }
-.info-box li { padding: 8px 0; border-bottom: 1px dashed #F3F4F6; color: #4B5563; }
-.achievements { display: flex; flex-wrap: wrap; gap: 10px; }
-.badge-achieve { background: #FEF3C7; color: #D97706; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; }
-
-/* Animations */
-.anime-fade-up { animation: fadeInUp 0.6s ease forwards; }
-.anime-fade-up-delay { opacity: 0; animation: fadeInUp 0.6s ease 0.3s forwards; }
-@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-/* Mobile Responsive */
-.mobile-only { display: none; }
 @media (max-width: 768px) {
-  .desktop-only { display: none; }
-  .mobile-only { display: block; text-align: center; margin-top: 10px; }
-  .card-body { padding: 0 20px 20px; }
-  .profile-layout { flex-direction: column; align-items: center; gap: 10px; }
-  .profile-left { margin-top: -60px; width: auto; display: flex; flex-direction: column; align-items: center; }
-  .avatar-wrapper { width: 120px; height: 120px; }
-  .profile-right { width: 100%; text-align: center; padding-top: 0; }
-  .header-actions { justify-content: center; margin-bottom: 20px; }
-  .stats-bar { justify-content: center; gap: 20px; margin-bottom: 20px; }
-  .about-grid { grid-template-columns: 1fr; }
-  .profile-tabs { padding: 0 10px; justify-content: center; }
+  .id-card { flex-direction: column; }
+  .recipe-feed { grid-template-columns: 1fr; }
+  .sticky-wrapper { flex-direction: column; }
 }
 </style>

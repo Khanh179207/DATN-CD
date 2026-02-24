@@ -1,10 +1,10 @@
 <template>
-  <header class="admin-header">
+  <header class="header-admin-sovereign">
     
     <div class="h-left">
-      <div class="breadcrumb">
+      <div class="breadcrumb-lux">
         <span class="crumb-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
         </span>
         <span class="divider">/</span>
         <span class="current-route">{{ route.name || 'Dashboard' }}</span>
@@ -14,54 +14,54 @@
     <div class="h-right">
       
       <div class="action-item" v-click-outside="closeNoti">
-        <button class="icon-btn" :class="{ active: showNoti }" @click="toggleNoti">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-          <span class="badge">3</span>
+        <button class="icon-btn-lux" :class="{ active: showNoti }" @click="toggleNoti">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+          <span class="badge-pulse">3</span>
         </button>
 
-        <transition name="fade-down">
-          <div v-if="showNoti" class="dropdown-menu noti-menu">
-            <div class="dd-header">
-              <span class="title">Thông báo</span>
-              <button class="mark-read">Đã đọc tất cả</button>
+        <transition name="zoom-fade">
+          <div v-if="showNoti" class="dropdown-panel noti-panel">
+            <div class="panel-header">
+              <span class="title">Thông báo mới</span>
+              <button class="mark-read">Đã đọc hết</button>
             </div>
-            <div class="dd-body custom-scroll">
-              <div class="noti-item unread" @click="handleNotiClick(1)">
-                <div class="icon-box warning">⚠️</div>
+            <div class="panel-body custom-scroll">
+              <div class="noti-card unread" @click="handleNotiClick(1)">
+                <div class="status-icon warning">⚠️</div>
                 <div class="content">
-                  <p class="msg">Có báo cáo vi phạm mới</p>
+                  <p class="msg">Có báo cáo vi phạm từ User #882</p>
                   <span class="time">5 phút trước</span>
                 </div>
               </div>
-              <div class="noti-item" @click="handleNotiClick(2)">
-                <div class="icon-box success">✅</div>
+              <div class="noti-card" @click="handleNotiClick(2)">
+                <div class="status-icon success">✅</div>
                 <div class="content">
-                  <p class="msg">Bài viết #920 được duyệt</p>
+                  <p class="msg">Bài viết "Mỳ Ý" đã được duyệt</p>
                   <span class="time">1 giờ trước</span>
                 </div>
               </div>
             </div>
-            <div class="dd-footer">
-              <button @click="$router.push('/admin/notifications')">Xem tất cả</button>
+            <div class="panel-footer">
+              <button @click="$router.push('/admin/notifications')">Xem tất cả hoạt động</button>
             </div>
           </div>
         </transition>
       </div>
 
       <div class="action-item" v-click-outside="closeUser">
-        <div class="user-trigger" @click="toggleUser">
+        <div class="user-trigger-lux" @click="toggleUser">
           <div class="text-info">
             <span class="name">Khánh Admin</span>
             <span class="role">Super Admin</span>
           </div>
-          <div class="avatar-wrapper">
+          <div class="avatar-ring">
              <img src="https://ui-avatars.com/api/?name=Khanh+Nguyen&background=EA580C&color=fff&size=128" alt="Admin">
           </div>
         </div>
 
-        <transition name="fade-down">
-          <div v-if="showUser" class="dropdown-menu user-menu">
-            <div class="user-header">
+        <transition name="zoom-fade">
+          <div v-if="showUser" class="dropdown-panel user-panel">
+            <div class="user-cover-header">
                <img src="https://ui-avatars.com/api/?name=Khanh+Nguyen&background=EA580C&color=fff&size=128" alt="Admin">
                <div class="u-detail">
                  <strong>Khánh Admin</strong>
@@ -72,19 +72,19 @@
             <div class="menu-list">
               <button class="menu-link" @click="goToProfile">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                Trang cá nhân
+                Hồ sơ cá nhân
               </button>
               
               <button class="menu-link" @click="goToSettings">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                Cài đặt
+                Cài đặt hệ thống
               </button>
 
               <div class="divider"></div>
 
               <button class="menu-link danger" @click="handleLogout">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                Đăng xuất
+                Đăng xuất an toàn
               </button>
             </div>
           </div>
@@ -104,7 +104,7 @@ const router = useRouter()
 const showNoti = ref(false)
 const showUser = ref(false)
 
-// Click Outside Directive
+// GIỮ NGUYÊN LOGIC CŨ CỦA SẾP
 const vClickOutside = {
   mounted(el, binding) {
     el.clickOutsideEvent = (event) => {
@@ -120,141 +120,146 @@ const closeNoti = () => { showNoti.value = false }
 const toggleUser = () => { showUser.value = !showUser.value; showNoti.value = false }
 const closeUser = () => { showUser.value = false }
 
-// Actions
-const goToProfile = () => {
-  router.push('/admin/profile')
-  closeUser()
-}
-const goToSettings = () => {
-  // router.push('/admin/settings') 
-  closeUser()
-}
-const handleLogout = () => {
-  if(confirm('Bạn có chắc muốn đăng xuất?')) {
-    localStorage.removeItem('token') // Xóa token
-    router.push('/login')
-  }
-}
-const handleNotiClick = (id) => {
-  alert(`Đã click thông báo ${id}`)
-  closeNoti()
-}
+const goToProfile = () => { router.push('/profile'); closeUser() }
+const goToSettings = () => { closeUser() }
+const handleLogout = () => { if(confirm('Bạn có chắc muốn đăng xuất?')) { localStorage.removeItem('token'); router.push('/login') } }
+const handleNotiClick = (id) => { alert(`Đã click thông báo ${id}`); closeNoti() }
 </script>
 
 <style scoped>
-/* CONFIG */
-.admin-header {
-  height: 70px; /* Chiều cao chuẩn */
-  padding: 0 30px;
-  background: white;
-  border-bottom: 1px solid #E2E8F0;
+@import url('https://fonts.googleapis.com/css2?family=Mulish:wght@400;600;700;800&display=swap');
+
+/* --- 🏛️ HEADER: GLASSMORPHISM --- */
+.header-admin-sovereign {
+  height: 85px; /* Tăng chiều cao để thoáng */
+  padding: 0 40px;
+  /* Kính mờ thay vì nền trắng đục */
+  background: rgba(255, 255, 255, 0.85); 
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(234, 88, 12, 0.1); /* Viền cam rất nhạt */
   display: flex; align-items: center; justify-content: space-between;
+  /* Giữ nguyên sticky */
   position: sticky; top: 0; z-index: 50;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.02); /* Bóng nhẹ giống header thường */
-  font-family: 'Quicksand', sans-serif;
+  font-family: 'Mulish', sans-serif;
+  transition: all 0.3s ease;
 }
 
-/* LEFT */
-.h-left { display: flex; align-items: center; }
-.breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 1rem; color: #64748B; font-weight: 600; }
-.crumb-icon { color: #94A3B8; display: flex; }
-.divider { color: #CBD5E1; }
-.current-route { color: #0F172A; font-weight: 700; }
+/* --- LEFT: BREADCRUMB --- */
+.breadcrumb-lux { display: flex; align-items: center; gap: 10px; font-size: 1.1rem; color: #64748B; }
+.crumb-icon { color: #EA580C; display: flex; }
+.divider { color: #CBD5E1; font-weight: 300; }
+.current-route { color: #0F172A; font-weight: 800; letter-spacing: 0.5px; }
 
-/* RIGHT */
-.h-right { display: flex; align-items: center; gap: 20px; }
+/* --- RIGHT: ACTIONS --- */
+.h-right { display: flex; align-items: center; gap: 25px; }
 .action-item { position: relative; }
 
-/* NOTIFICATION BUTTON */
-.icon-btn {
-  width: 44px; height: 44px;
-  border: 1px solid #F1F5F9; background: white;
-  border-radius: 50%; /* Tròn giống header user */
+/* NOTIFICATION BUTTON (NÂNG CẤP) */
+.icon-btn-lux {
+  width: 48px; height: 48px;
+  border: 1px solid #E2E8F0; background: white;
+  border-radius: 14px; /* Bo góc vuông mềm thay vì tròn */
   display: flex; align-items: center; justify-content: center;
   color: #64748B; cursor: pointer; position: relative;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.03);
 }
-.icon-btn:hover, .icon-btn.active { background: #FFF7ED; color: #EA580C; border-color: #FFEDD5; }
-.badge {
-  position: absolute; top: 0; right: 0;
+.icon-btn-lux:hover, .icon-btn-lux.active { 
+  background: #FFF7ED; color: #EA580C; border-color: #FDBA74; transform: translateY(-2px);
+}
+
+/* Badge Pulse Animation */
+.badge-pulse {
+  position: absolute; top: -5px; right: -5px;
   background: #EF4444; color: white;
-  font-size: 0.7rem; font-weight: 700;
-  width: 18px; height: 18px; border-radius: 50%;
+  font-size: 0.65rem; font-weight: 800;
+  width: 20px; height: 20px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   border: 2px solid white;
+  animation: pulseRed 2s infinite;
 }
+@keyframes pulseRed { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
 
-/* USER TRIGGER */
-.user-trigger {
-  display: flex; align-items: center; gap: 12px; cursor: pointer;
-  padding: 4px; border-radius: 30px; transition: 0.2s;
+/* USER TRIGGER (NÂNG CẤP) */
+.user-trigger-lux {
+  display: flex; align-items: center; gap: 14px; cursor: pointer;
+  padding: 6px 8px; border-radius: 40px; transition: 0.3s;
+  border: 1px solid transparent;
 }
-.user-trigger:hover { background: #F8FAFC; }
+.user-trigger-lux:hover { background: white; border-color: #E2E8F0; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+
 .text-info { text-align: right; display: flex; flex-direction: column; }
-.name { font-weight: 700; color: #0F172A; font-size: 0.9rem; }
-.role { font-size: 0.75rem; color: #64748B; }
+.name { font-weight: 800; color: #0F172A; font-size: 0.95rem; }
+.role { font-size: 0.75rem; color: #EA580C; font-weight: 700; letter-spacing: 0.5px; }
 
-.avatar-wrapper img {
-  width: 40px; height: 40px; border-radius: 50%;
-  border: 2px solid #F1F5F9; object-fit: cover;
+.avatar-ring img {
+  width: 45px; height: 45px; border-radius: 50%;
+  border: 2px solid white; box-shadow: 0 0 0 2px #E2E8F0; /* Vòng ring kép */
+  object-fit: cover; transition: 0.3s;
 }
+.user-trigger-lux:hover .avatar-ring img { box-shadow: 0 0 0 2px #EA580C; }
 
-/* DROPDOWN MENUS */
-.dropdown-menu {
-  position: absolute; top: 55px; right: 0;
-  background: white; width: 260px;
-  border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+/* --- DROPDOWN PANELS (NÂNG CẤP) --- */
+.dropdown-panel {
+  position: absolute; top: 65px; right: 0;
+  background: white; width: 340px;
+  border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,0.15); /* Bóng đổ sâu hơn */
   border: 1px solid #F1F5F9; overflow: hidden; z-index: 100;
+  transform-origin: top right;
 }
-.noti-menu { width: 320px; }
+.user-panel { width: 280px; }
 
-/* Header của Dropdown */
-.dd-header {
-  padding: 12px 16px; border-bottom: 1px solid #F1F5F9;
+/* Header Panel */
+.panel-header {
+  padding: 16px 20px; border-bottom: 1px solid #F1F5F9;
   display: flex; justify-content: space-between; align-items: center;
+  background: #FAFAFA;
 }
-.dd-header .title { font-weight: 700; }
-.mark-read { font-size: 0.75rem; color: #EA580C; background: none; border: none; cursor: pointer; font-weight: 600; }
+.panel-header .title { font-weight: 800; color: #334155; font-size: 0.95rem; }
+.mark-read { font-size: 0.75rem; color: #EA580C; background: none; border: none; cursor: pointer; font-weight: 700; }
 
-.dd-body { max-height: 300px; overflow-y: auto; }
-.noti-item {
-  display: flex; gap: 12px; padding: 12px 16px; cursor: pointer;
+/* NOTI CARD */
+.panel-body { max-height: 350px; overflow-y: auto; }
+.noti-card {
+  display: flex; gap: 14px; padding: 16px 20px; cursor: pointer;
   border-bottom: 1px solid #F8FAFC; transition: 0.2s;
 }
-.noti-item:hover { background: #F8FAFC; }
-.noti-item.unread { background: #FFFBF7; }
-.icon-box { font-size: 1.2rem; }
-.msg { margin: 0; font-size: 0.9rem; font-weight: 600; color: #334155; }
-.time { font-size: 0.75rem; color: #94A3B8; }
-.dd-footer button {
-  width: 100%; padding: 12px; border: none; background: white;
-  font-weight: 700; color: #64748B; cursor: pointer;
-}
-.dd-footer button:hover { color: #EA580C; background: #F8FAFC; }
+.noti-card:hover { background: #FFF7ED; }
+.noti-card.unread { background: #FFFCF5; border-left: 3px solid #EA580C; }
 
-/* USER MENU STYLES */
-.user-menu .user-header {
-  padding: 20px; border-bottom: 1px solid #F1F5F9;
+.status-icon { font-size: 1.2rem; background: #fff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+.msg { margin: 0; font-size: 0.9rem; font-weight: 700; color: #1E293B; line-height: 1.4; }
+.time { font-size: 0.75rem; color: #94A3B8; font-weight: 500; }
+
+.panel-footer button {
+  width: 100%; padding: 14px; border: none; background: white;
+  font-weight: 800; color: #64748B; cursor: pointer; font-size: 0.85rem;
+  transition: 0.2s;
+}
+.panel-footer button:hover { color: #EA580C; background: #F8FAFC; letter-spacing: 0.5px; }
+
+/* USER MENU HEADER */
+.user-cover-header {
+  padding: 25px; border-bottom: 1px solid #F1F5F9;
   display: flex; flex-direction: column; align-items: center; text-align: center;
-  background: #FFF7ED; /* Nền cam nhạt */
+  background: linear-gradient(135deg, #FFF7ED 0%, #FFF 100%);
 }
-.user-menu .user-header img { width: 60px; height: 60px; border-radius: 50%; margin-bottom: 8px; border: 3px solid white; }
-.u-detail strong { display: block; font-size: 1rem; color: #0F172A; }
-.u-detail span { font-size: 0.8rem; color: #64748B; }
+.user-cover-header img { width: 70px; height: 70px; border-radius: 50%; margin-bottom: 12px; border: 4px solid white; box-shadow: 0 5px 15px rgba(234, 88, 12, 0.15); }
+.u-detail strong { display: block; font-size: 1.1rem; color: #0F172A; font-weight: 800; }
+.u-detail span { font-size: 0.85rem; color: #64748B; font-weight: 500; }
 
-.menu-list { padding: 8px; display: flex; flex-direction: column; gap: 2px; }
+.menu-list { padding: 10px; }
 .menu-link {
-  width: 100%; display: flex; align-items: center; gap: 10px;
-  padding: 10px 12px; border: none; background: transparent;
-  color: #475569; font-weight: 600; font-size: 0.9rem; border-radius: 8px;
+  width: 100%; display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; border: none; background: transparent;
+  color: #475569; font-weight: 600; font-size: 0.92rem; border-radius: 10px;
   cursor: pointer; transition: 0.2s; text-align: left;
 }
-.menu-link:hover { background: #F1F5F9; color: #0F172A; }
+.menu-link:hover { background: #F1F5F9; color: #0F172A; transform: translateX(5px); }
 .menu-link.danger { color: #EF4444; }
-.menu-link.danger:hover { background: #FEF2F2; }
-.divider { height: 1px; background: #E2E8F0; margin: 4px 0; }
+.menu-link.danger:hover { background: #FEF2F2; transform: translateX(5px); }
 
-/* ANIMATION */
-.fade-down-enter-active, .fade-down-leave-active { transition: all 0.2s ease; }
-.fade-down-enter-from, .fade-down-leave-to { opacity: 0; transform: translateY(10px); }
+/* ANIMATION ZOOM */
+.zoom-fade-enter-active, .zoom-fade-leave-active { transition: all 0.25s cubic-bezier(0.19, 1, 0.22, 1); }
+.zoom-fade-enter-from, .zoom-fade-leave-to { opacity: 0; transform: translateY(10px) scale(0.95); }
 </style>
