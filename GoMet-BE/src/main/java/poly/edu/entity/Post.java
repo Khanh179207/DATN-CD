@@ -2,13 +2,13 @@ package poly.edu.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.LocalDate;
 import java.util.List;
 
 @Entity
 @Table(name = "Post")
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Post {

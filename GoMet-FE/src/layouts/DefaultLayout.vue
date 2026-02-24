@@ -1,104 +1,182 @@
 <template>
   <div class="app-container">
-    <Sidebar />
+    
+    <Sidebar 
+      class="fixed-sidebar" 
+      @open-premium="showPremium = true" 
+      @logout="handleLogout" 
+    />
 
-    <div class="main-content">
-      <header class="content-header">
-        
-        <div class="header-search">
-          <span class="search-icon">🔍</span>
-          <input type="text" placeholder="Tìm kiếm công thức, nguyên liệu..." />
-        </div>
-
-        <div class="header-right">
-          <button class="btn-login" @click="showAuthModal = true">
-            Đăng nhập
-          </button>
-          
-          <button class="btn-signup" @click="showAuthModal = true">
-            Đăng ký
-          </button>
-        </div>
-      </header>
+    <div class="main-content" id="main-scroll-container">
+      <Header 
+        @open-premium="showPremium = true" 
+        @open-login="openAuth('login')" 
+        @open-register="openAuth('register')" 
+        @logout="handleLogout"
+      />
 
       <div class="page-body">
-        <router-view />
+        <router-view v-slot="{ Component, route }">
+          <transition name="page-fade" mode="out-in">
+            <component :is="Component" :key="route.fullPath" />
+          </transition>
+        </router-view>
       </div>
+
+      <TheFooter />
     </div>
 
+    <MiniChatBox />
+    <CompareFloatingBar />
+
+    <button 
+      v-if="!isAiChatting"
+      class="float-ai-btn" 
+      @click="openAiChat"
+      title="Chat với Gomet AI"
+    >
+      <div class="ai-icon-bg">
+        <span class="icon">✨</span>
+      </div>
+      <span class="label">Trợ lý GoMet</span>
+    </button>
+
     <Teleport to="body">
-       <AuthModal v-if="showAuthModal" @close="showAuthModal = false" />
+       <AuthModal 
+         v-if="showAuthModal" 
+         :initial-view="modalTab"
+         @close="showAuthModal = false" 
+       />
+       <PremiumModal 
+         :is-open="showPremium" 
+         @close="showPremium = false" 
+       />
     </Teleport>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue' // 👈 QUAN TRỌNG: Phải có dòng này
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useChatStore } from '@/stores/chat' 
+
 import Sidebar from '@/components/sidebar/Sidebar.vue'
-import AuthModal from '@/components/auth/AuthModal.vue'
+import Header from '@/components/topbar/Header.vue' 
+import AuthModal from '@/components/modals/AuthModal.vue'
+import PremiumModal from '@/components/modals/PremiumModal.vue'
+import MiniChatBox from '@/components/modals/MiniChatBox.vue'
+import TheFooter from '@/components/footer/TheFooter.vue'
+import CompareFloatingBar from '@/components/common/CompareFloatingBar.vue'
 
-// 👇 QUAN TRỌNG: Khai báo biến điều khiển Modal
+const router = useRouter()
+const chatStore = useChatStore() 
+
 const showAuthModal = ref(false)
+const showPremium = ref(false)
+const modalTab = ref('login')
 
+const isAiChatting = computed(() => chatStore.activeChat?.id === 'gomet-ai')
+
+const openAiChat = () => {
+  const aiBot = {
+    id: 'gomet-ai',
+    name: 'Gomet AI 🤖',
+    avatar: 'https://cdn-icons-png.flaticon.com/512/4712/4712027.png', 
+    isOnline: true,
+    lastMessage: 'Chào bạn, tôi có thể giúp gì?'
+  }
+  chatStore.openChat(aiBot)
+}
+
+const openAuth = (tab) => { 
+  modalTab.value = tab
+  showAuthModal.value = true 
+}
+
+const handleLogout = async () => {
+  localStorage.removeItem('user')
+  localStorage.removeItem('token')
+  await router.push({ path: '/', hash: '#sectionsigninlanding' });
+}
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&display=swap');
-
 .app-container { 
   display: flex; 
-  min-height: 100vh; 
-  background-color: #fff; 
-  font-family: 'Quicksand', sans-serif;
+  height: 100vh; 
+  overflow: hidden; /* Cấm body cuộn, tránh 2 thanh cuộn */
+  background-color: #FFFFFF; 
+  font-family: 'Quicksand', sans-serif; 
+  color: #1C1917; 
+  position: relative; 
 }
+
+.fixed-sidebar { flex-shrink: 0; z-index: 2000; }
 
 .main-content { 
   flex: 1; 
   display: flex; 
   flex-direction: column; 
+  height: 100%; 
+  overflow-y: auto; /* Chỉ cho phép cuộn ở đây */
+  scroll-behavior: smooth; 
+  position: relative;
 }
 
-/* Header Style */
-.content-header {
-  padding: 15px 30px;
-  display: flex; align-items: center; justify-content: space-between;
+.page-body { 
+  padding: 0; 
+  flex: 1; 
+  position: relative; 
+  width: 100%;
+}
+
+.page-fade-enter-active, .page-fade-leave-active { transition: opacity 0.3s ease, transform 0.3s ease; }
+.page-fade-enter-from { opacity: 0; transform: translateY(10px); }
+.page-fade-leave-to { opacity: 0; transform: translateY(-10px); }
+
+/* === STYLE NÚT GOMET AI LƠ LỬNG === */
+.float-ai-btn {
+  position: fixed;
+  bottom: 30px;
+  right: 30px; 
+  z-index: 1900; 
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 20px 8px 8px;
   background: white;
-  position: sticky; top: 0; z-index: 100;
-  gap: 20px;
+  border: 1px solid #E5E7EB;
+  border-radius: 50px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Thanh tìm kiếm to bản */
-.header-search {
-  flex: 1; /* Chiếm hết khoảng trống ở giữa */
-  max-width: 800px; /* Giới hạn độ rộng tối đa */
-  background: #f1f1f1;
-  border-radius: 24px;
-  padding: 12px 20px;
-  display: flex; align-items: center; gap: 10px;
-  transition: 0.2s;
-}
-.header-search:focus-within { background: #e0e0e0; box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.1); }
-.header-search input {
-  border: none; background: transparent; width: 100%; outline: none;
-  font-size: 1rem; color: #333; font-family: inherit;
+.float-ai-btn:hover {
+  transform: translateY(-5px) scale(1.05);
+  box-shadow: 0 12px 30px rgba(234, 88, 12, 0.25);
+  border-color: #FED7AA;
 }
 
-/* Buttons */
-.header-right { display: flex; gap: 10px; }
-
-.btn-login {
-  padding: 10px 20px; border-radius: 24px; font-weight: 700; cursor: pointer; border: none;
-  background: #F97316; color: white; transition: 0.2s;
+.ai-icon-bg {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #EA580C, #F59E0B);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.2rem;
+  box-shadow: 0 4px 10px rgba(234, 88, 12, 0.3);
 }
-.btn-login:hover { background: #ea580c; }
 
-.btn-signup {
-  padding: 10px 20px; border-radius: 24px; font-weight: 700; cursor: pointer;
-  background: #f3f4f6; color: #111; border: none; transition: 0.2s;
-}
-.btn-signup:hover { background: #e5e7eb; }
-
-.page-body {
-  padding: 20px;
+.label {
+  font-weight: 800;
+  color: #1C1917;
+  font-size: 1rem;
+  background: linear-gradient(to right, #C2410C, #EA580C);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 </style>

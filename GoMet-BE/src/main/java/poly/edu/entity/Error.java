@@ -8,6 +8,7 @@ import java.time.LocalDate;
 @Entity
 @Table(name = "Error")
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Error {

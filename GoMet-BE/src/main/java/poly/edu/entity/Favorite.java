@@ -6,6 +6,7 @@ import lombok.*;
 @Entity
 @Table(name = "Favorite")
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Favorite {

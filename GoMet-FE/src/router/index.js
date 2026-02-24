@@ -1,26 +1,42 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-// --- 1. IMPORT LAYOUTS (Bộ khung) ---
+// --- 1. IMPORT LAYOUTS ---
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
-import AuthLayout from '@/layouts/AuthLayout.vue'
 import LandingLayout from '@/layouts/LandingLayout.vue'
 import AdminLayout from '@/layouts/AdminLayout.vue'
 
-// --- 2. IMPORT VIEWS (Trang nội dung) ---
-// Home & Intro
+// --- 2. IMPORT VIEWS ---
 import HomeView from '@/pages/home/HomeView.vue'
+import SearchPage from '@/pages/search/SearchPage.vue'
+import PostDetail from '@/pages/home/PostDetail.vue'
+import CreatePost from '@/pages/CreatePost.vue'
 
-// Admin Pages (Đã thêm mới)
+// --- 3. IMPORT CÁC TRANG MỚI (EDITORIAL LUXURY) ---
+import ProfilePage from '@/pages/profile/ProfilePage.vue'
+import EventList from '@/pages/events/EventList.vue'
+import EventDetail from '@/pages/events/EventDetail.vue'
+import ComparePage from '@/pages/compare/ComparePage.vue'
+
+// 🚀 CÁC TÍNH NĂNG PREMIUM SẾP VỪA THÊM
+import Leaderboard from '@/pages/Leaderboard.vue'
+// Lưu ý: Nếu Sếp chưa tạo 2 file dưới đây, hãy tạo file trống trong thư mục pages để không bị lỗi import
+import Suggestions from '@/pages/suggestions/SuggestionsPage.vue' 
+import MealPlan from '@/pages/mealplan/MealPlanPage.vue'
+
+// --- ADMIN PAGES ---
 import AdminDashboard from '@/pages/admin/Dashboard.vue'
-import PostManagement from '@/pages/admin/PostManagement.vue'       // 👈 Mới
-import CategoryManagement from '@/pages/admin/CategoryManagement.vue' // 👈 Mới
-import UserManagement from '@/pages/admin/UserManagement.vue'       // 👈 Mới
+import PostManagement from '@/pages/admin/PostManagement.vue'
+import CategoryManagement from '@/pages/admin/CategoryManagement.vue'
+import UserManagement from '@/pages/admin/UserManagement.vue'
+import EventManagement from '@/pages/admin/EventManagement.vue'
+import CommentManagement from '@/pages/admin/CommentManagement.vue'
+import ReportManagement from '@/pages/admin/ReportManagement.vue'
+import NotificationManagement from '@/pages/admin/NotificationManagement.vue'
+import AchievementManagement from '@/pages/admin/AchievementManagement.vue'
+import Statistics from '@/pages/admin/Statistics.vue'
 
 const routes = [
-  // =======================================================
-  // 1. LANDING PAGE (Trang khách vào đầu tiên)
-  // URL: http://localhost:5173/
-  // =======================================================
+  // 1. LANDING PAGE
   {
     path: '/',
     component: LandingLayout,
@@ -28,106 +44,88 @@ const routes = [
       {
         path: '',
         name: 'IntroPage',
-        // Nếu chưa có file IntroPage, trỏ tạm về HomeView để test
         component: () => import('@/pages/intro/IntroPage.vue') 
       }
     ]
   },
 
-  // =======================================================
-  // 2. MAIN APP (Trang chủ Gomet - Giao diện Pinterest)
-  // URL: http://localhost:5173/home
-  // =======================================================
+  // 2. MAIN APP (Default Layout) - TẬP TRUNG TÍNH NĂNG NGƯỜI DÙNG
   {
-    path: '/home',
-    component: DefaultLayout, // Có Sidebar + Header tìm kiếm
+    path: '/', 
+    component: DefaultLayout,
     children: [
-      {
-        path: '', 
-        name: 'Home',
-        component: HomeView
+      { path: 'home', name: 'Home', component: HomeView },
+      { path: 'search', name: 'Search', component: SearchPage },
+      { path: 'post/:id', name: 'PostDetail', component: PostDetail, props: true },
+      
+      // ✅ Route Sự Kiện
+      { path: 'events', name: 'Events', component: EventList },
+      { path: 'events/:id', name: 'EventDetail', component: EventDetail },
+      
+      { 
+        path: 'create-post', 
+        name: 'CreatePost', 
+        component: CreatePost 
       },
-      // Các trang con khác
+
+      // ✅ Route Trang cá nhân & Lưu trữ
       {
-        path: 'recipes',
-        name: 'Recipes',
-        component: () => import('@/pages/recipes/RecipeList.vue')
+        path: 'profile',
+        name: 'Profile',
+        component: ProfilePage
       },
       {
-        path: 'events',
-        name: 'Events',
-        component: () => import('@/pages/events/EventList.vue')
+        path: 'storage',
+        name: 'Storage',
+        component: () => import('@/pages/storage/StoragePage.vue') // Lazy load cho nhẹ app
+      },
+
+      // ✅ Route So Sánh
+      {
+        path: 'compare',
+        name: 'Compare',
+        component: ComparePage
+      },
+
+      // ✨✨✨ CÁC ROUTE PREMIUM MỚI (ĐÃ ĐỒNG BỘ VỚI SIDEBAR) ✨✨✨
+      {
+        path: 'leaderboard',
+        name: 'Leaderboard',
+        component: Leaderboard
+      },
+      {
+        path: 'suggestions',
+        name: 'Suggestions',
+        component: Suggestions
+      },
+      {
+        path: 'meal-plan',
+        name: 'MealPlan',
+        component: MealPlan
       }
     ]
   },
 
-  // =======================================================
-  // 3. AUTHENTICATION (Đăng nhập / Đăng ký)
-  // URL: http://localhost:5173/auth/login
-  // =======================================================
-  {
-    path: '/auth',
-    component: AuthLayout,
-    children: [
-      {
-        path: 'login',
-        name: 'Login',
-        component: () => import('@/pages/auth/LoginPage.vue')
-      },
-      {
-        path: 'register',
-        name: 'Register',
-        component: () => import('@/pages/auth/RegisterPage.vue')
-      }
-    ]
-  },
-
-  // =======================================================
-  // 4. ADMIN DASHBOARD (Trang quản trị)
-  // URL: http://localhost:5173/admin
-  // =======================================================
+  // 3. ADMIN DASHBOARD
   {
     path: '/admin',
     component: AdminLayout,
+    redirect: '/admin/dashboard',
     children: [
-      {
-        path: '', // Mặc định vào Dashboard
-        name: 'AdminDashboard',
-        component: AdminDashboard
-      },
-      
-      // --- CÁC TRANG QUẢN LÝ CHÍNH (Đã kết nối file thật) ---
-      {
-        path: 'posts',
-        name: 'AdminPosts',
-        component: PostManagement // Quản lý bài đăng (Duyệt/Xóa)
-      },
-      {
-        path: 'categories',
-        name: 'AdminCategories',
-        component: CategoryManagement // Quản lý danh mục (Thêm/Sửa/Xóa)
-      },
-      {
-        path: 'users',
-        name: 'AdminUsers',
-        component: UserManagement // Quản lý tài khoản (Ban/Unban)
-      },
-
-      // --- CÁC TRANG PHỤ (Tái sử dụng mẫu giao diện có sẵn) ---
-      // Dùng tạm PostManagement cho các trang có tính chất "Duyệt/Danh sách"
-      { path: 'comments', component: PostManagement }, 
-      { path: 'reports', component: PostManagement },
-
-      // Dùng tạm CategoryManagement cho các trang có tính chất "Thêm/Sửa/Xóa đơn giản"
-      { path: 'events', component: CategoryManagement },
-      { path: 'achievements', component: CategoryManagement },
-      { path: 'notifications', component: CategoryManagement },
+      { path: 'dashboard', name: 'AdminDashboard', component: AdminDashboard },
+      { path: 'statistics', name: 'AdminStatistics', component: Statistics },
+      { path: 'posts', name: 'AdminPosts', component: PostManagement },
+      { path: 'categories', name: 'AdminCategories', component: CategoryManagement },
+      { path: 'users', name: 'AdminUsers', component: UserManagement },
+      { path: 'events', name: 'AdminEvents', component: EventManagement },
+      { path: 'comments', name: 'AdminComments', component: CommentManagement },
+      { path: 'reports', name: 'AdminReports', component: ReportManagement },
+      { path: 'achievements', name: 'AdminAchievements', component: AchievementManagement },
+      { path: 'notifications', name: 'AdminNotifications', component: NotificationManagement }
     ]
   },
 
-  // =======================================================
-  // 5. NOT FOUND (Trang 404)
-  // =======================================================
+  // 4. NOT FOUND (Trang 404 sang chảnh)
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
@@ -138,9 +136,10 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
-  // Tự động cuộn lên đầu trang khi chuyển route
   scrollBehavior(to, from, savedPosition) {
-    return { top: 0 }
+    if (savedPosition) return savedPosition
+    if (to.hash) return { el: to.hash, behavior: 'smooth', top: 80 }
+    return { top: 0, behavior: 'smooth' }
   }
 })
 

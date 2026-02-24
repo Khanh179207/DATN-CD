@@ -1,23 +1,51 @@
-/* src/style.css - Dán đè đoạn này vào */
+/* --- ✨ HỆ THỐNG THANH CUỘN GOMET LIGHT (GLOBAL) --- */
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  --gomet-orange: #EA580C; /* Màu cam chủ đạo */
+  --bg-light: #fdfdfd;
+  --gray-light: #f3f4f6;
 }
 
-html, body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  overflow-x: hidden; /* 🔥 QUAN TRỌNG NHẤT: Cắt bỏ thanh trượt ngang */
+html {
+  overflow-y: scroll; /* Luôn giữ chỗ cho thanh cuộn để tránh nhảy khung hình */
+  scroll-behavior: smooth;
+  /* Cho Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: var(--gomet-orange) var(--bg-light);
 }
 
-/* 2. Đảm bảo tính toán kích thước bao gồm cả padding/border */
-*, *::before, *::after {
-  box-sizing: border-box;
+/* Tinh chỉnh cho Chrome, Safari, Edge */
+::-webkit-scrollbar {
+  width: 6px; /* Thanh mảnh hơn để tinh tế */
+  height: 6px; 
 }
 
-#app {
-  width: 100%;
-  overflow-x: hidden; /* Chắc chắn app không bị tràn */
+/* Nền thanh cuộn: Trắng xám nhẹ để không bị lộ */
+::-webkit-scrollbar-track {
+  background: var(--bg-light);
+  border-left: 1px solid var(--gray-light);
+}
+
+/* Tay kéo: Cam rực rỡ đồng bộ với nút bấm */
+::-webkit-scrollbar-thumb {
+  background: var(--gomet-orange);
+  border-radius: 100px;
+  /* Tạo khoảng trắng nhỏ xung quanh để nhìn sang hơn */
+  border: 1.5px solid var(--bg-light);
+}
+
+/* Hiệu ứng khi di chuột vào thanh cuộn */
+::-webkit-scrollbar-thumb:hover {
+  background: #c2410c; /* Cam đậm hơn một chút khi tương tác */
+  box-shadow: 0 0 10px rgba(234, 88, 12, 0.3);
+}
+
+/* Thanh cuộn ngang cho các vùng nội dung đặc biệt như Top 10 */
+.horizontal-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+.horizontal-scroll::-webkit-scrollbar-thumb {
+  background: #e5e7eb; /* Để màu xám nhạt cho thanh cuộn ngang để đỡ rối mắt */
+}
+.horizontal-scroll:hover::-webkit-scrollbar-thumb {
+  background: var(--gomet-orange); /* Chỉ hiện cam khi người dùng tương tác vùng đó */
 }

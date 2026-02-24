@@ -8,6 +8,7 @@ import java.util.List;
 @Entity
 @Table(name = "Achievement")
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Achievement {
