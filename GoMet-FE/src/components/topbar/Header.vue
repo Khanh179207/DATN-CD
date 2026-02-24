@@ -294,7 +294,19 @@ const goToAdmin = () => {
   router.push('/admin/dashboard') 
 }
 
-const handleLogout = async () => { closeAllDropdowns(); localStorage.removeItem('user'); localStorage.removeItem('token'); authStore.user = null; authStore.isAuthenticated = false; await router.push('/') }
+const handleLogout = async () => { 
+  // 1. Đóng các menu đang mở
+  closeAllDropdowns(); 
+
+  // 2. Xóa dữ liệu đăng nhập
+  localStorage.removeItem('user'); 
+  localStorage.removeItem('token'); 
+  authStore.user = null; 
+  authStore.isAuthenticated = false; 
+
+  // 3. CHỈNH SỬA TẠI ĐÂY: Chuyển hướng kèm theo Hash ID của section đăng ký
+  await router.push({ path: '/', hash: '#sectionsigninlanding' }); 
+}
 const handleCreatePost = () => authStore.isAuthenticated ? router.push('/create-post') : emit('open-login')
 const handleSearch = () => { if (searchKeyword.value.trim()) router.push({ name: 'Search', query: { q: searchKeyword.value } }) }
 const goToProfile = () => { closeAllDropdowns(); router.push('/profile') }

@@ -1,6 +1,61 @@
 <template>
   <section class="signup-section" id="section-dang-ky">
-    <div class="bg-overlay"></div>
+    
+    <div class="background-layer">
+      <div class="bg-overlay"></div>
+      
+      <div class="bg-column col-slow">
+        <div class="scroll-track">
+          <img src="@/assets/images/intro/bun.jpg" alt="Food">
+          <img src="@/assets/images/intro/bunbo.jpg" alt="Food">
+          <img src="@/assets/images/intro/banhmi.jpg" alt="Food">
+          <img src="@/assets/images/intro/com.jpg" alt="Food">
+          <img src="@/assets/images/intro/bun.jpg" alt="Food">
+          <img src="@/assets/images/intro/bunbo.jpg" alt="Food">
+          <img src="@/assets/images/intro/banhmi.jpg" alt="Food">
+          <img src="@/assets/images/intro/com.jpg" alt="Food">
+        </div>
+      </div>
+
+      <div class="bg-column col-fast offset-down">
+        <div class="scroll-track reverse">
+          <img src="@/assets/images/intro/banh.jpg" alt="Food">
+          <img src="@/assets/images/intro/goi.jpg" alt="Food">
+          <img src="@/assets/images/intro/bun.jpg" alt="Food">
+          <img src="@/assets/images/intro/bunbo.jpg" alt="Food">
+          <img src="@/assets/images/intro/banh.jpg" alt="Food">
+          <img src="@/assets/images/intro/goi.jpg" alt="Food">
+          <img src="@/assets/images/intro/bun.jpg" alt="Food">
+          <img src="@/assets/images/intro/bunbo.jpg" alt="Food">
+        </div>
+      </div>
+
+      <div class="bg-column col-medium">
+        <div class="scroll-track">
+          <img src="@/assets/images/intro/banhmi.jpg" alt="Food">
+          <img src="@/assets/images/intro/com.jpg" alt="Food">
+          <img src="@/assets/images/intro/banh.jpg" alt="Food">
+          <img src="@/assets/images/intro/goi.jpg" alt="Food">
+          <img src="@/assets/images/intro/banhmi.jpg" alt="Food">
+          <img src="@/assets/images/intro/com.jpg" alt="Food">
+          <img src="@/assets/images/intro/banh.jpg" alt="Food">
+          <img src="@/assets/images/intro/goi.jpg" alt="Food">
+        </div>
+      </div>
+
+      <div class="bg-column col-fast offset-down mobile-hidden">
+        <div class="scroll-track reverse">
+          <img src="@/assets/images/intro/bun.jpg" alt="Food">
+          <img src="@/assets/images/intro/goi.jpg" alt="Food">
+          <img src="@/assets/images/intro/banh.jpg" alt="Food">
+          <img src="@/assets/images/intro/com.jpg" alt="Food">
+          <img src="@/assets/images/intro/bun.jpg" alt="Food">
+          <img src="@/assets/images/intro/goi.jpg" alt="Food">
+          <img src="@/assets/images/intro/banh.jpg" alt="Food">
+          <img src="@/assets/images/intro/com.jpg" alt="Food">
+        </div>
+      </div>
+    </div>
 
     <div class="container main-layout">
       
@@ -139,7 +194,7 @@
 
 <script setup>
 import { ref, reactive } from 'vue'
-import OtpModal from '@/components/modals/OtpModal.vue' // Đảm bảo đường dẫn đúng
+import OtpModal from '@/components/modals/OtpModal.vue' 
 
 const activeTab = ref('login')
 const showOtpModal = ref(false)
@@ -160,14 +215,11 @@ const handleSubmit = () => {
       alert('Mật khẩu xác nhận không khớp!')
       return
     }
-    // Chỉ hiện OTP khi nhấn nút "Đăng Ký Miễn Phí" (Submit Form)
     showOtpModal.value = true
   }
 }
 
-// Hàm xử lý riêng cho Google
 const loginWithGoogle = () => {
-  // Logic đăng nhập Google (Không cần OTP)
   alert('Đang chuyển hướng đến Google Login...')
 }
 
@@ -186,26 +238,56 @@ const handleVerifyOtp = () => {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Quicksand:wght@500;600;700&display=swap');
 
+/* --- LAYOUT CHÍNH --- */
 .signup-section {
   min-height: 100vh;
   display: flex; align-items: center; justify-content: center;
-  background-image: url('https://images.unsplash.com/photo-1556910103-1c02745a30bf?q=80&w=2070&auto=format&fit=crop'); 
-  background-size: cover;
-  background-position: center;
+  position: relative; overflow: hidden;
   padding: 60px 20px;
   font-family: 'Quicksand', sans-serif;
-  position: relative; overflow: hidden;
+  background-color: #1C1917; /* Màu nền dự phòng khi ảnh chưa load */
+}
+
+/* --- BACKGROUND LAYER (ẢNH CHẠY) --- */
+.background-layer {
+  position: absolute; /* Thay fixed bằng absolute để chỉ nằm trong section này */
+  top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 0;
+  display: flex; gap: 20px; padding: 0 20px;
+  /* Mask làm mờ 2 đầu */
+  -webkit-mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
 }
 
 .bg-overlay {
   position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(0, 0, 0, 0.85); /* Tăng độ tối lên 0.85 để nền chìm hẳn xuống */
+  backdrop-filter: blur(4px);
   z-index: 1;
 }
 
+.bg-column { flex: 1; position: relative; overflow: hidden; }
+.offset-down { margin-top: -100px; }
+
+.scroll-track { display: flex; flex-direction: column; gap: 20px; animation: scrollUp 40s linear infinite; }
+.scroll-track.reverse { animation: scrollDown 45s linear infinite; }
+
+.col-slow .scroll-track { animation-duration: 60s; }
+.col-medium .scroll-track { animation-duration: 50s; }
+.col-fast .scroll-track { animation-duration: 40s; }
+
+.scroll-track img {
+  width: 100%; border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3); opacity: 0.6; display: block;
+}
+
+@keyframes scrollUp { 0% { transform: translateY(0); } 100% { transform: translateY(-50%); } }
+@keyframes scrollDown { 0% { transform: translateY(-50%); } 100% { transform: translateY(0); } }
+
+/* --- CONTENT CHÍNH --- */
 .container { 
   width: 100%; max-width: 1100px; margin: 0 auto; 
-  position: relative; z-index: 2;
+  position: relative; z-index: 2; /* Nổi lên trên background */
 }
 .main-layout { display: flex; align-items: center; justify-content: space-between; gap: 80px; }
 
@@ -215,12 +297,8 @@ const handleVerifyOtp = () => {
 .logo-text { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700; letter-spacing: 2px; }
 .logo-dot { width: 8px; height: 8px; background: #F97316; border-radius: 50%; }
 
-/* CẬP NHẬT 1: Tăng line-height lên 1.4 để tách dòng */
 .main-title {
-  font-family: 'Playfair Display', serif; 
-  font-size: 3.5rem; 
-  line-height: 1.4; /* Đã tăng từ 1.1 lên 1.4 */
-  margin-bottom: 20px;
+  font-family: 'Playfair Display', serif; font-size: 3.5rem; line-height: 1.4; margin-bottom: 20px;
 }
 .highlight-text { color: #F97316; font-style: italic; }
 
@@ -231,11 +309,7 @@ const handleVerifyOtp = () => {
 
 /* --- FORM SIDE (RIGHT) --- */
 .form-side { flex: 0 0 450px; width: 450px; }
-
-/* CẬP NHẬT 2: Đẩy form xuống thấp hơn */
-.push-down {
-  margin-top: 50px; /* Kéo khung xuống thấp 50px */
-}
+.push-down { margin-top: 50px; }
 
 .auth-card { background: white; border-radius: 24px; padding: 24px 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
 
@@ -244,7 +318,7 @@ const handleVerifyOtp = () => {
 .tab-btn.active { background: white; color: #1C1917; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
 .form-title { font-size: 1.25rem; color: #1C1917; margin-bottom: 18px; font-weight: 700; text-align: center; }
 
-/* Inputs */
+/* Inputs & Buttons giữ nguyên như cũ */
 .input-group { margin-bottom: 12px; }
 .input-group label { display: block; font-size: 0.8rem; color: #44403C; margin-bottom: 5px; font-weight: 600; }
 .input-field { width: 100%; padding: 10px 12px; border: 1px solid #E7E5E4; border-radius: 10px; outline: none; font-size: 0.9rem; color: #1C1917; transition: 0.2s; background: #FAFAF9; }
@@ -254,47 +328,29 @@ const handleVerifyOtp = () => {
 .forgot-pass { color: #F97316; text-decoration: none; font-weight: 600; }
 .remember { color: #57534E; cursor: pointer; display: flex; align-items: center; gap: 5px; }
 
-/* Submit Button */
 .btn-submit { width: 100%; padding: 12px; border: none; border-radius: 12px; background: #1C1917; color: white; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: 0.3s; }
 .btn-submit:hover { background: #F97316; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(249, 115, 22, 0.3); }
 
-/* Divider */
 .divider { display: flex; align-items: center; text-align: center; color: #A8A29E; font-size: 0.75rem; margin: 18px 0; }
 .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid #E7E5E4; }
 .divider span { padding: 0 8px; }
 
-/* Social Buttons */
 .social-buttons { display: flex; gap: 15px; }
-/* Nút Google full width vì chỉ còn 1 nút */
-.social-btn {
-  width: 100%; 
-  padding: 10px; background: white; 
-  border: 1px solid #E7E5E4; border-radius: 12px;
-  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
-  transition: 0.2s; 
-  color: #1C1917; font-weight: 600; font-size: 0.9rem; font-family: 'Quicksand', sans-serif;
-}
+.social-btn { width: 100%; padding: 10px; background: white; border: 1px solid #E7E5E4; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; color: #1C1917; font-weight: 600; font-size: 0.9rem; font-family: 'Quicksand', sans-serif; }
 .social-icon { width: 18px; height: 18px; color: #1C1917; transition: 0.2s; }
-
 .social-btn:hover { background: #1C1917; color: white; border-color: #1C1917; }
 .social-btn:hover .social-icon { color: white; }
 
 .form-footer { text-align: center; margin-top: 15px; font-size: 0.75rem; color: #E7E5E4; opacity: 0.8; }
 
-/* Animation và Responsive giữ nguyên */
-.fade-in-left { animation: fadeInLeft 1s ease-out; }
-.fade-in-right { animation: fadeInRight 1s ease-out; }
-.fade-in-anim { animation: fadeIn 0.3s ease-out; }
-@keyframes fadeInLeft { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
-@keyframes fadeInRight { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
+/* Responsive */
 @media (max-width: 900px) {
   .main-layout { flex-direction: column; gap: 50px; }
   .info-side { text-align: center; }
   .stats-grid { justify-content: center; }
   .description { margin: 0 auto 40px; }
   .form-side { width: 100%; max-width: 450px; }
-  .push-down { margin-top: 0; } /* Mobile thì không cần đẩy xuống */
+  .push-down { margin-top: 0; }
+  .mobile-hidden { display: none; }
 }
 </style>

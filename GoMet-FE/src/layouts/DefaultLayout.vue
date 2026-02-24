@@ -7,7 +7,7 @@
       @logout="handleLogout" 
     />
 
-    <div class="main-content">
+    <div class="main-content" id="main-scroll-container">
       <Header 
         @open-premium="showPremium = true" 
         @open-login="openAuth('login')" 
@@ -27,7 +27,6 @@
     </div>
 
     <MiniChatBox />
-
     <CompareFloatingBar />
 
     <button 
@@ -66,7 +65,6 @@ import Header from '@/components/topbar/Header.vue'
 import AuthModal from '@/components/modals/AuthModal.vue'
 import PremiumModal from '@/components/modals/PremiumModal.vue'
 import MiniChatBox from '@/components/modals/MiniChatBox.vue'
-// 👇 IMPORT FOOTER
 import TheFooter from '@/components/footer/TheFooter.vue'
 import CompareFloatingBar from '@/components/common/CompareFloatingBar.vue'
 
@@ -96,7 +94,6 @@ const openAuth = (tab) => {
 }
 
 const handleLogout = async () => {
-  console.log("Logout triggered");
   localStorage.removeItem('user')
   localStorage.removeItem('token')
   await router.push({ path: '/', hash: '#sectionsigninlanding' });
@@ -104,10 +101,35 @@ const handleLogout = async () => {
 </script>
 
 <style scoped>
-.app-container { display: flex; height: 100vh; overflow: hidden; background-color: #FAFAF9; font-family: 'Quicksand', sans-serif; color: #1C1917; position: relative; }
+.app-container { 
+  display: flex; 
+  height: 100vh; 
+  overflow: hidden; /* Cấm body cuộn, tránh 2 thanh cuộn */
+  background-color: #FFFFFF; 
+  font-family: 'Quicksand', sans-serif; 
+  color: #1C1917; 
+  position: relative; 
+}
+
 .fixed-sidebar { flex-shrink: 0; z-index: 2000; }
-.main-content { flex: 1; display: flex; flex-direction: column; height: 100%; overflow-y: auto; scroll-behavior: smooth; }
-.page-body { padding: 30px 40px; flex: 1; position: relative; }
+
+.main-content { 
+  flex: 1; 
+  display: flex; 
+  flex-direction: column; 
+  height: 100%; 
+  overflow-y: auto; /* Chỉ cho phép cuộn ở đây */
+  scroll-behavior: smooth; 
+  position: relative;
+}
+
+.page-body { 
+  padding: 0; 
+  flex: 1; 
+  position: relative; 
+  width: 100%;
+}
+
 .page-fade-enter-active, .page-fade-leave-active { transition: opacity 0.3s ease, transform 0.3s ease; }
 .page-fade-enter-from { opacity: 0; transform: translateY(10px); }
 .page-fade-leave-to { opacity: 0; transform: translateY(-10px); }
@@ -118,12 +140,10 @@ const handleLogout = async () => {
   bottom: 30px;
   right: 30px; 
   z-index: 1900; 
-  
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 8px 20px 8px 8px;
-  
   background: white;
   border: 1px solid #E5E7EB;
   border-radius: 50px;

@@ -62,7 +62,7 @@
 .dashboard-footer {
   background-color: #FAFAF9;
   /* 👇 FIX LỖI Ở ĐÂY: Đẩy nội dung xuống 200px để nhường chỗ cho Newsletter 👇 */
-  padding: 220px 0 40px; 
+  padding: 100px 0 40px; 
   /* ---------------------------------------------------------------------- */
   border-top: 1px solid #F3F4F6;
   font-family: 'Mulish', sans-serif;
