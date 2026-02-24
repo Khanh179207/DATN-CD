@@ -5,13 +5,13 @@ import org.springframework.stereotype.Service;
 import poly.edu.dao.PostDAO;
 import poly.edu.dto.AdminPostDTO;
 import poly.edu.entity.Post;
-import poly.edu.service.AdminPostService;
+import poly.edu.service.PostService;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class AdminPostServiceImpl implements AdminPostService {
+public class PostServiceImpl implements PostService {
 
     private final PostDAO postDAO;
 
