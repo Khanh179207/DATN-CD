@@ -29,6 +29,9 @@ public class Account {
 
     private String avatar;
 
+    @Column(columnDefinition = "NVARCHAR(500)")
+    private String bio;
+
     @Column(nullable = false)
     private String token;
 

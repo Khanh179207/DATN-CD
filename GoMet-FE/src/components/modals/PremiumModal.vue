@@ -1,9 +1,10 @@
 <template>
   <transition name="modal-fade">
-    <div v-if="isOpen" class="modal-backdrop" @click.self="closeModal">
+    <div v-if="isOpen" ref="backdropRef" class="modal-backdrop" @click.self="closeModal" @keydown.esc.prevent="closeModal"
+        role="dialog" aria-modal="true" aria-labelledby="premium-title" tabindex="-1">
       <div class="modal-container">
         
-        <button class="btn-close-simple" @click="closeModal">
+        <button class="btn-close-simple" @click="closeModal" aria-label="Đóng modal">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
 
@@ -14,7 +15,7 @@
           </div>
           <div class="header-text">
             <div class="badge-premium">GOMET PREMIUM</div>
-            <h2 class="title">Đánh thức tiềm năng đầu bếp</h2>
+            <h2 class="title" id="premium-title">Đánh thức tiềm năng đầu bếp</h2>
             <p class="subtitle">Nâng cấp đặc quyền - Tận hưởng trọn bộ tính năng thông minh nhất</p>
           </div>
         </header>
@@ -99,11 +100,20 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 
 defineProps({ isOpen: Boolean })
 const emit = defineEmits(['close'])
+const backdropRef = ref(null)
 const closeModal = () => emit('close')
+
+onMounted(() => {
+  document.body.style.overflow = 'hidden'
+  nextTick(() => backdropRef.value?.focus())
+})
+onUnmounted(() => {
+  document.body.style.overflow = ''
+})
 
 const selectedPlan = ref('yearly')
 const plans = [
@@ -126,15 +136,29 @@ const handlePay = () => alert('Đang kết nối thanh toán...')
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700;800&display=swap');
-
 /* Reset toàn bộ font về Quicksand cho hiện đại */
-* { font-family: 'Quicksand', sans-serif; }
+* { font-family: var(--font-body); }
+
+/* Modal entrance animation */
+.modal-fade-enter-active { transition: opacity var(--duration-normal) var(--ease-out); }
+.modal-fade-leave-active { transition: opacity var(--duration-fast) var(--ease-exit); }
+.modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
+.modal-fade-enter-active .modal-container { transition: transform var(--duration-normal) var(--ease-spring); }
+.modal-fade-enter-from .modal-container { transform: translateY(20px) scale(0.97); }
 
 .modal-backdrop {
-  position: fixed; inset: 0; z-index: 9999;
+  position: fixed; inset: 0; z-index: var(--z-modal);
   background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px);
   display: flex; align-items: center; justify-content: center; padding: 20px;
+  outline: none; /* remove focus ring on backdrop itself */
+}
+
+/* Mobile bottom sheet */
+@media (max-width: 640px) {
+  .modal-backdrop { align-items: flex-end; padding: 0; }
+  .modal-container { border-radius: var(--radius-xl) var(--radius-xl) 0 0; max-height: 95dvh; }
+  .modal-fade-enter-active .modal-container { transition: transform var(--duration-normal) var(--ease-spring); }
+  .modal-fade-enter-from .modal-container { transform: translateY(100%); }
 }
 
 .modal-container {
@@ -146,11 +170,14 @@ const handlePay = () => alert('Đang kết nối thanh toán...')
 .modal-scroll-body { overflow-y: auto; flex: 1; }
 
 .btn-close-simple {
-  position: absolute; top: 15px; right: 15px; z-index: 100;
+  position: absolute; top: 12px; right: 12px; z-index: 100;
   background: rgba(255,255,255,0.2); color: #fff; border: none;
-  width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
+  width: 44px; height: 44px; border-radius: 50%; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
+  transition: background var(--duration-fast) var(--ease-out);
 }
+.btn-close-simple:hover { background: rgba(255,255,255,0.35); }
+.btn-close-simple:focus-visible { outline: var(--focus-ring) solid 2px; outline-offset: 2px; }
 
 /* Header */
 .modal-header-simple { height: 180px; position: relative; display: flex; align-items: center; justify-content: center; text-align: center; }
@@ -183,7 +210,10 @@ const handlePay = () => alert('Đang kết nối thanh toán...')
 .plan-card {
   border: 1.5px solid #e5e7eb; border-radius: 12px; padding: 14px;
   display: flex; justify-content: space-between; align-items: center;
-  cursor: pointer; margin-bottom: 12px; position: relative; transition: 0.2s;
+  cursor: pointer; margin-bottom: 12px; position: relative;
+  transition: border-color var(--duration-fast) var(--ease-out),
+              background  var(--duration-fast) var(--ease-out);
+  min-height: 44px;
 }
 .plan-card.active { border-color: #f59e0b; background: #fffbeb; }
 .save-pill { position: absolute; top: -10px; right: 15px; background: #10b981; color: #fff; font-size: 0.6rem; font-weight: 800; padding: 2px 8px; border-radius: 5px; }
@@ -202,8 +232,9 @@ const handlePay = () => alert('Đang kết nối thanh toán...')
 .inputs-container { background: #f9fafb; padding: 15px; border-radius: 10px; margin-top: 15px; }
 .v-input { width: 100%; padding: 10px; border: 1.5px solid #e5e7eb; border-radius: 6px; margin-bottom: 8px; font-size: 0.85rem; outline: none; }
 .row-inputs { display: flex; gap: 10px; }
-.btn-submit-premium { width: 100%; padding: 15px; background: #1c1917; color: #fff; border: none; border-radius: 10px; margin-top: 15px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+.btn-submit-premium { width: 100%; padding: 15px; background: #1c1917; color: #fff; border: none; border-radius: 10px; margin-top: 15px; font-weight: 700; cursor: pointer; transition: background var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out); will-change: transform; min-height: 44px; }
 .btn-submit-premium:hover { background: #f97316; transform: translateY(-2px); }
+.btn-submit-premium:active { transform: translateY(0) scale(0.98); }
 .footer-note { text-align: center; font-size: 0.65rem; color: #9ca3af; margin-top: 10px; }
 
 @media (max-width: 800px) { .premium-grid { grid-template-columns: 1fr; padding: 20px; } .feature-table { border-right: none; } }

@@ -44,7 +44,9 @@
           </TransitionGroup>
 
           <div v-else class="empty-state">
-            <span class="empty-icon">🍽️</span>
+            <span class="empty-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>
+            </span>
             <p>Chưa có bài viết liên quan nào.</p>
           </div>
         </template>
@@ -65,8 +67,6 @@ defineEmits(['click-post', 'see-all'])
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Mulish:wght@400;600;700;800&family=Playfair+Display:wght@700&display=swap');
-
 /* --- LAYOUT CHÍNH --- */
 .related-wrapper { 
   position: relative;

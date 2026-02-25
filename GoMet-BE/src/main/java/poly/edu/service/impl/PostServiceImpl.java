@@ -26,9 +26,13 @@ public class PostServiceImpl implements PostService {
         dto.setViews(post.getViews());
         dto.setIsActive(post.getIsActive());
         dto.setIsApproved(post.getIsApproved());
+        dto.setCreatedAt(post.getCreatedAt());
 
         dto.setUsername(post.getAccount().getUsername());
+        dto.setAccountID(post.getAccount().getAccountID());
+        dto.setAccountAvatar(post.getAccount().getAvatar());
         dto.setCategoryName(post.getCategory().getCategoryName());
+        dto.setCategoryID(post.getCategory().getCategoryID());
 
         return dto;
     }
@@ -61,5 +65,10 @@ public class PostServiceImpl implements PostService {
         Post post = postDAO.findById(id).orElseThrow();
         post.setIsActive(0);
         postDAO.save(post);
+    }
+
+    @Override
+    public void deletePost(Integer id) {
+        postDAO.deleteById(id);
     }
 }

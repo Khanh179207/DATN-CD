@@ -8,7 +8,7 @@
           <span class="brand-name">GOMET<span>.</span></span>
         </div>
         <p class="brand-desc">
-          Mạng xã hội chia sẻ công thức nấu ăn lớn nhất dành cho sinh viên.
+          The largest recipe-sharing social network for food lovers and culinary enthusiasts.
         </p>
         
         <div class="socials">
@@ -19,25 +19,25 @@
       </div>
 
       <div class="footer-col">
-        <h4>Khám phá</h4>
+        <h4>Explore</h4>
         <ul class="footer-links">
-          <li><a href="#">Công thức mới</a></li>
-          <li><a href="#">Bảng xếp hạng</a></li>
-          <li><a href="#">Thử thách tuần</a></li>
+          <li><a href="#">New Recipes</a></li>
+          <li><a href="#">Leaderboard</a></li>
+          <li><a href="#">Weekly Challenge</a></li>
         </ul>
       </div>
 
       <div class="footer-col">
-        <h4>Hỗ trợ</h4>
+        <h4>Support</h4>
         <ul class="footer-links">
-          <li><a href="#">Góp ý</a></li>
-          <li><a href="#">Điều khoản</a></li>
-          <li><a href="#">Trợ giúp</a></li>
+          <li><a href="#">Feedback</a></li>
+          <li><a href="#">Terms of Use</a></li>
+          <li><a href="#">Help Center</a></li>
         </ul>
       </div>
 
       <div class="footer-col contact-col">
-        <h4>Liên hệ</h4>
+        <h4>Contact</h4>
         <div class="contact-item">
           <span class="label">Email</span>
           <span class="value">contact@gomet.vn</span>
@@ -57,16 +57,13 @@
 </template>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Mulish:wght@500;600;700;800&family=Playfair+Display:wght@800&display=swap');
-
 .dashboard-footer {
-  background-color: #FAFAF9;
-  /* 👇 FIX LỖI Ở ĐÂY: Đẩy nội dung xuống 200px để nhường chỗ cho Newsletter 👇 */
-  padding: 100px 0 40px; 
-  /* ---------------------------------------------------------------------- */
-  border-top: 1px solid #F3F4F6;
-  font-family: 'Mulish', sans-serif;
-  color: #1C1917;
+  background-color: var(--color-neutral-0);
+  background-image: radial-gradient(circle at 100% 0%, rgba(234, 88, 12, 0.04) 0%, transparent 45%);
+  padding: 80px 0 40px;
+  border-top: 1px solid var(--color-neutral-100);
+  font-family: var(--font-ui);
+  color: var(--color-neutral-900);
   position: relative;
   z-index: 1;
 }
@@ -81,29 +78,32 @@
 /* Brand */
 .brand-wrapper { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; }
 .brand-logo { width: 45px; height: 45px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-.brand-name { font-family: 'Playfair Display', serif; font-size: 1.8rem; font-weight: 800; }
-.brand-name span { color: #EA580C; }
-.brand-desc { color: #6B7280; line-height: 1.6; font-size: 0.9rem; margin-bottom: 20px; }
+.brand-name { font-family: var(--font-display); font-size: 1.8rem; font-weight: 800; }
+.brand-name span { color: var(--color-primary-600); }
+.brand-desc { color: var(--color-neutral-500); line-height: 1.6; font-size: 0.9rem; margin-bottom: 20px; }
 
 /* Socials */
 .socials { display: flex; gap: 10px; }
 .social-link {
-  width: 36px; height: 36px; border-radius: 10px; background: white; border: 1px solid #E5E7EB;
-  display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; color: #1C1917; transition: 0.3s;
+  width: 44px; height: 44px; border-radius: var(--radius-md); background: var(--color-neutral-0); border: 1px solid var(--color-neutral-200);
+  display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; color: var(--color-neutral-900);
+  transition: background var(--duration-fast) var(--ease-out),
+              color     var(--duration-fast) var(--ease-out),
+              border-color var(--duration-fast) var(--ease-out);
 }
-.social-link:hover { background: #EA580C; color: white; border-color: #EA580C; }
+.social-link:hover { background: var(--color-primary-600); color: var(--color-neutral-0); border-color: var(--color-primary-600); }
 
 /* Links */
 h4 { font-size: 1rem; font-weight: 800; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.5px; }
 .footer-links { list-style: none; padding: 0; }
 .footer-links li { margin-bottom: 10px; }
-.footer-links a { text-decoration: none; color: #6B7280; font-size: 0.9rem; font-weight: 600; transition: 0.2s; }
-.footer-links a:hover { color: #EA580C; }
+.footer-links a { text-decoration: none; color: var(--color-neutral-500); font-size: 0.9rem; font-weight: 600; transition: color var(--duration-fast) var(--ease-out); }
+.footer-links a:hover { color: var(--color-primary-600); }
 
 /* Contact */
 .contact-item { margin-bottom: 15px; display: flex; flex-direction: column; }
-.contact-item .label { font-size: 0.75rem; color: #9CA3AF; font-weight: 700; text-transform: uppercase; }
-.contact-item .value { font-size: 0.95rem; font-weight: 700; color: #1C1917; }
+.contact-item .label { font-size: 0.75rem; color: var(--color-neutral-400); font-weight: 700; text-transform: uppercase; }
+.contact-item .value { font-size: 0.95rem; font-weight: 700; color: var(--color-neutral-900); }
 
 /* Bottom */
 .footer-bottom { 
@@ -113,7 +113,7 @@ h4 { font-size: 1rem; font-weight: 800; margin-bottom: 20px; text-transform: upp
 
 /* Responsive */
 @media (max-width: 900px) {
-  .dashboard-footer { padding-top: 180px; } /* Mobile có thể giảm chút */
+  .dashboard-footer { padding-top: 80px; } /* Mobile — reduce top padding */
   .footer-content { grid-template-columns: 1fr 1fr; }
   .brand-col { grid-column: span 2; }
 }

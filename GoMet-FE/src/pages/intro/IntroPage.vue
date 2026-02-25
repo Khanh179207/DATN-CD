@@ -16,7 +16,7 @@
 </template>
 
 <script setup>
-// Giữ lại script xử lý scroll to hash
+// Keep script for handling scroll to hash
 import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import LandingHero from '@/components/landing/LandingHero.vue'
@@ -46,7 +46,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Không cần style gì phức tạp nữa vì background đã chuyển đi */
+/* No complex styles needed here since background has been moved */
 .intro-page {
   width: 100%;
 }

@@ -1,10 +1,13 @@
 package poly.edu.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dto.AdminAccountDTO;
 import poly.edu.service.AccountService;
+
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/admin/accounts")
@@ -34,6 +37,20 @@ public class AdminAccountController {
                                   @RequestBody AdminAccountDTO dto) {
         dto.setAccountID(id);
         return accountService.save(dto);
+    }
+
+    /** Ban an account (set isActive = 0) */
+    @PatchMapping("/{id}/ban")
+    public ResponseEntity<?> ban(@PathVariable Integer id) {
+        accountService.ban(id);
+        return ResponseEntity.ok(Map.of("message", "Account banned successfully"));
+    }
+
+    /** Unban an account (set isActive = 1) */
+    @PatchMapping("/{id}/unban")
+    public ResponseEntity<?> unban(@PathVariable Integer id) {
+        accountService.unban(id);
+        return ResponseEntity.ok(Map.of("message", "Account unbanned successfully"));
     }
 
     @DeleteMapping("/{id}")

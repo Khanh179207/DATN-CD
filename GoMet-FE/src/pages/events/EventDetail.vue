@@ -1,19 +1,22 @@
 <template>
   <div class="event-detail-page">
     
+    <div v-if="loading" class="post-loading"><div class="spinner-ring"></div></div>
+
+    <template v-else-if="eventData">
     <div class="event-hero">
       <div class="hero-bg" :style="{ backgroundImage: `url(${eventData.cover})` }"></div>
       <div class="hero-overlay"></div>
       
       <div class="hero-content container">
         <span class="status-badge" :class="eventData.status">
-          {{ eventData.status === 'ongoing' ? '🔥 Đang diễn ra' : '🏁 Đã kết thúc' }}
+          {{ eventData.status === 'ongoing' ? $t('event_detail.status_ongoing') : $t('event_detail.status_ended') }}
         </span>
         <h1 class="event-title">{{ eventData.title }}</h1>
         <div class="event-meta">
           <span>📅 {{ eventData.date }}</span>
           <span>📍 {{ eventData.location }}</span>
-          <span>👥 {{ eventData.participants }} người tham gia</span>
+          <span>👥 {{ eventData.participants }} {{ $t('event_detail.participants') }}</span>
         </div>
 
         <div class="hero-actions">
@@ -22,14 +25,14 @@
             class="btn-register"
             @click="handleRegister"
           >
-            Đăng ký tham gia ngay
+            {{ $t('event_detail.register_now') }}
           </button>
           <button 
             v-else 
             class="btn-submit-entry"
             @click="openSubmitModal"
           >
-            <span class="icon">📤</span> Gửi bài dự thi
+            <span class="icon">📤</span> {{ $t('event_detail.submit_entry') }}
           </button>
         </div>
       </div>
@@ -55,37 +58,39 @@
           
           <div class="info-main">
             <div class="card-box">
-              <h3>📖 Giới thiệu</h3>
+              <h3>{{ $t('event_detail.intro') }}</h3>
               <p>{{ eventData.description }}</p>
               
-              <h3>📜 Thể lệ cuộc thi</h3>
+              <h3>{{ $t('event_detail.rules') }}</h3>
               <ul class="rules-list">
                 <li v-for="(rule, i) in eventData.rules" :key="i">
-                  <span class="bullet">✅</span> {{ rule }}
+                  <span class="bullet">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  </span> {{ rule }}
                 </li>
               </ul>
             </div>
 
             <div class="card-box prizes-section">
-              <h3>🏆 Cơ cấu giải thưởng</h3>
+              <h3>{{ $t('event_detail.prizes') }}</h3>
               <div class="prizes-grid">
                 <div class="prize-card gold">
                   <div class="prize-icon">🥇</div>
-                  <h4>Giải Nhất</h4>
-                  <p>10.000.000 VNĐ</p>
-                  <span>+ Set dụng cụ bếp cao cấp</span>
+                  <h4>{{ $t('event_detail.prize_1st') }}</h4>
+                  <p>10,000,000 VND</p>
+                  <span>{{ $t('event_detail.prize_1_bonus') }}</span>
                 </div>
                 <div class="prize-card silver">
                   <div class="prize-icon">🥈</div>
-                  <h4>Giải Nhì</h4>
-                  <p>5.000.000 VNĐ</p>
-                  <span>+ Voucher mua sắm</span>
+                  <h4>{{ $t('event_detail.prize_2nd') }}</h4>
+                  <p>5,000,000 VND</p>
+                  <span>{{ $t('event_detail.prize_2_bonus') }}</span>
                 </div>
                 <div class="prize-card bronze">
                   <div class="prize-icon">🥉</div>
-                  <h4>Giải Ba</h4>
-                  <p>2.000.000 VNĐ</p>
-                  <span>+ Tạp dề Gomet</span>
+                  <h4>{{ $t('event_detail.prize_3rd') }}</h4>
+                  <p>2,000,000 VND</p>
+                  <span>{{ $t('event_detail.prize_3_bonus') }}</span>
                 </div>
               </div>
             </div>
@@ -93,7 +98,7 @@
 
           <div class="info-sidebar">
             <div class="card-box">
-              <h3>👨‍🍳 Ban giám khảo</h3>
+              <h3>{{ $t('event_detail.judges') }}</h3>
               <div class="judges-list">
                 <div class="judge-item" v-for="judge in eventData.judges" :key="judge.name">
                   <img :src="judge.avatar" class="judge-avt">
@@ -110,10 +115,10 @@
         <div v-else class="entries-layout">
           
           <div class="filter-bar">
-            <h3>🔥 Bài dự thi nổi bật</h3>
+            <h3>{{ $t('event_detail.featured') }}</h3>
             <div class="sort-options">
-              <button class="active">Nhiều Vote nhất</button>
-              <button>Mới nhất</button>
+              <button class="active">{{ $t('event_detail.most_voted') }}</button>
+              <button>{{ $t('event_detail.newest') }}</button>
             </div>
           </div>
 
@@ -122,7 +127,7 @@
               <div class="entry-image">
                 <img :src="entry.image">
                 <div class="rank-badge" v-if="entry.rank <= 3">
-                  Top {{ entry.rank }} 👑
+                  {{ $t('event_detail.top_rank') }} {{ entry.rank }} 👑
                 </div>
               </div>
               <div class="entry-body">
@@ -139,10 +144,10 @@
                     @click="handleVote(entry)"
                   >
                     <span class="icon">{{ entry.isVoted ? '💖' : '🤍' }}</span>
-                    {{ entry.isVoted ? 'Đã Vote' : 'Bình chọn' }}
+                    {{ entry.isVoted ? $t('event_detail.voted') : $t('event_detail.vote') }}
                   </button>
                   <div class="vote-count">
-                    <b>{{ entry.votes }}</b> votes
+                    <b>{{ entry.votes }}</b> {{ $t('event_detail.votes_sfx') }}
                   </div>
                 </div>
               </div>
@@ -154,70 +159,75 @@
       </transition>
     </div>
 
+    </template>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { getEventById } from '@/services/eventService'
+import { toast } from '@/composables/useToast'
 
-// Mock Data cho Sự kiện "Bánh Chưng"
-const eventData = ref({
-  title: 'Thử Thách: Bánh Chưng Ngày Tết 2024',
-  cover: 'https://images.unsplash.com/photo-1549547587-573e1c64eb3c?q=80&w=2070&auto=format&fit=crop', // Ảnh tết
-  status: 'ongoing',
-  date: '01/01/2024 - 10/02/2024',
-  location: 'Online',
-  participants: 1240,
-  description: 'Tết này bạn nấu bánh chưng kiểu gì? Hãy chia sẻ công thức độc đáo của bạn, từ bánh chưng truyền thống đến các biến tấu healthy, chay hay nhân lạ miệng. Cùng Gomet lan tỏa hương vị Tết Việt!',
-  rules: [
-    'Bài dự thi phải có hình ảnh/video thực tế do chính bạn thực hiện.',
-    'Công thức phải chi tiết, rõ ràng các bước.',
-    'Không sao chép hình ảnh từ internet.',
-    'Mỗi tài khoản có thể gửi tối đa 3 bài dự thi.'
-  ],
-  judges: [
-    { name: 'Chef Luke Nguyen', role: 'Giám khảo khách mời', avatar: 'https://i.pravatar.cc/150?u=luke' },
-    { name: 'Admin Gomet', role: 'Ban tổ chức', avatar: 'https://i.pravatar.cc/150?u=admin' },
-  ]
-})
+const route = useRoute()
+const { t } = useI18n()
 
-const tabs = [
-  { id: 'info', label: 'Giới thiệu & Thể lệ' },
-  { id: 'entries', label: 'Bài dự thi' },
-]
+const eventData = ref(null)
+const loading = ref(true)
+
+const tabs = computed(() => [
+  { id: 'info',    label: t('event_detail.tab_info') },
+  { id: 'entries', label: t('event_detail.tab_entries') },
+])
 const currentTab = ref('info')
 const isRegistered = ref(false)
+const entries = ref([])
 
-// Danh sách bài thi
-const entries = ref([
-  { 
-    id: 1, rank: 1, title: 'Bánh Chưng Nếp Cẩm Nhân Thịt', image: 'https://images.unsplash.com/photo-1613409191394-0df527063d6f?w=800&auto=format&fit=crop', 
-    author: { name: 'Mẹ Bắp', avatar: 'https://i.pravatar.cc/150?u=1' }, votes: 1250, isVoted: false 
-  },
-  { 
-    id: 2, rank: 2, title: 'Bánh Chưng Chay Thực Dưỡng', image: 'https://images.unsplash.com/photo-1582559385860-23743325c9b7?w=800&auto=format&fit=crop', 
-    author: { name: 'Lan Healthy', avatar: 'https://i.pravatar.cc/150?u=2' }, votes: 980, isVoted: true 
-  },
-  { 
-    id: 3, rank: 3, title: 'Bánh Chưng Gấc Đỏ May Mắn', image: 'https://images.unsplash.com/photo-1612929633738-8fe44f7ec841?w=800&auto=format&fit=crop', 
-    author: { name: 'Bếp Của Ngoại', avatar: 'https://i.pravatar.cc/150?u=3' }, votes: 850, isVoted: false 
-  },
-  { 
-    id: 4, rank: 4, title: 'Bánh Chưng Mini Cho Bé', image: 'https://images.unsplash.com/photo-1549547587-573e1c64eb3c?w=800&auto=format&fit=crop', 
-    author: { name: 'Tú Vi', avatar: 'https://i.pravatar.cc/150?u=4' }, votes: 320, isVoted: false 
-  },
-])
+onMounted(async () => {
+  const id = route.params.id
+  try {
+    const data = await getEventById(id)
+    eventData.value = {
+      title: data.eventName || 'GoMet Event',
+      cover: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?q=80&w=2032&auto=format&fit=crop',
+      status: data.status || 'upcoming',
+      date: `${data.startAt || '?'} → ${data.endAt || '?'}`,
+      location: 'Online',
+      participants: Number(data.participantCount) || 0,
+      description: 'Share your recipe and join the GoMet community!',
+      rules: [
+        'Entries must include real photos/videos you created yourself.',
+        'The recipe must have detailed, clear step-by-step instructions.',
+        'Do not copy images from the internet.',
+        'Each account may submit up to 3 entries.'
+      ],
+      judges: [
+        { name: 'Admin Gomet', role: 'Organizers', avatar: 'https://ui-avatars.com/api/?name=Admin&background=EA580C&color=fff' }
+      ],
+      winnerPostTitle: data.winnerPostTitle || null
+    }
+  } catch (err) {
+    console.warn('EventDetail: load error', err)
+    // Fallback to placeholder
+    eventData.value = {
+      title: 'This event does not exist',
+      cover: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?q=80&w=2032&auto=format&fit=crop',
+      status: 'ended', date: '---', location: '---', participants: 0,
+      description: '', rules: [], judges: [], winnerPostTitle: null
+    }
+  } finally {
+    loading.value = false
+  }
+})
 
-// Actions
 const handleRegister = () => {
-  // Call API đăng ký...
   isRegistered.value = true
-  alert('Đăng ký thành công! Hãy chuẩn bị nguyên liệu nhé 🥘')
+  toast.success('Registration successful! Get your ingredients ready')
 }
 
 const openSubmitModal = () => {
-  alert('Mở form đăng bài (Giống trang CreatePost nhưng gắn tag Sự kiện)')
+  alert('Open submission form (Similar to CreatePost but tagged with Event)')
 }
 
 const handleVote = (entry) => {
@@ -227,8 +237,6 @@ const handleVote = (entry) => {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Mulish:wght@400;600;700;800&family=Playfair+Display:wght@700&display=swap');
-
 .event-detail-page {
   font-family: 'Mulish', sans-serif; color: #1C1917; padding-bottom: 80px;
 }

@@ -33,12 +33,14 @@
       v-if="!isAiChatting"
       class="float-ai-btn" 
       @click="openAiChat"
-      title="Chat với Gomet AI"
+      title="Chat with Gomet AI"
     >
       <div class="ai-icon-bg">
-        <span class="icon">✨</span>
+        <span class="icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        </span>
       </div>
-      <span class="label">Trợ lý GoMet</span>
+      <span class="label">GoMet Assistant</span>
     </button>
 
     <Teleport to="body">
@@ -83,7 +85,7 @@ const openAiChat = () => {
     name: 'Gomet AI 🤖',
     avatar: 'https://cdn-icons-png.flaticon.com/512/4712/4712027.png', 
     isOnline: true,
-    lastMessage: 'Chào bạn, tôi có thể giúp gì?'
+    lastMessage: 'Hello, how can I help you?'
   }
   chatStore.openChat(aiBot)
 }
@@ -101,82 +103,88 @@ const handleLogout = async () => {
 </script>
 
 <style scoped>
-.app-container { 
-  display: flex; 
-  height: 100vh; 
-  overflow: hidden; /* Cấm body cuộn, tránh 2 thanh cuộn */
-  background-color: #FFFFFF; 
-  font-family: 'Quicksand', sans-serif; 
-  color: #1C1917; 
-  position: relative; 
-}
-
-.fixed-sidebar { flex-shrink: 0; z-index: 2000; }
-
-.main-content { 
-  flex: 1; 
-  display: flex; 
-  flex-direction: column; 
-  height: 100%; 
-  overflow-y: auto; /* Chỉ cho phép cuộn ở đây */
-  scroll-behavior: smooth; 
+/* ─── Layout Shell ─── */
+.app-container {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background-color: var(--color-neutral-0);
+  font-family: var(--font-body);
+  color: var(--color-neutral-900);
   position: relative;
 }
 
-.page-body { 
-  padding: 0; 
-  flex: 1; 
-  position: relative; 
+.fixed-sidebar {
+  flex-shrink: 0;
+  z-index: var(--z-toast);
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  position: relative;
+}
+
+.page-body {
+  padding: 0;
+  flex: 1;
+  position: relative;
   width: 100%;
 }
 
-.page-fade-enter-active, .page-fade-leave-active { transition: opacity 0.3s ease, transform 0.3s ease; }
+/* ─── Page Transition ─── */
+.page-fade-enter-active,
+.page-fade-leave-active {
+  transition: opacity var(--duration-normal) var(--ease-out),
+              transform var(--duration-normal) var(--ease-out);
+}
 .page-fade-enter-from { opacity: 0; transform: translateY(10px); }
-.page-fade-leave-to { opacity: 0; transform: translateY(-10px); }
+.page-fade-leave-to   { opacity: 0; transform: translateY(-10px); }
 
-/* === STYLE NÚT GOMET AI LƠ LỬNG === */
+/* ─── Floating AI Button ─── */
 .float-ai-btn {
   position: fixed;
-  bottom: 30px;
-  right: 30px; 
-  z-index: 1900; 
+  bottom: var(--space-8);
+  right: var(--space-8);
+  z-index: var(--z-modal);
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 20px 8px 8px;
-  background: white;
-  border: 1px solid #E5E7EB;
-  border-radius: 50px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-5) var(--space-2) var(--space-2);
+  background: var(--color-neutral-0);
+  border: 1px solid var(--color-neutral-200);
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-lg);
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: var(--transition-spring);
 }
 
 .float-ai-btn:hover {
   transform: translateY(-5px) scale(1.05);
-  box-shadow: 0 12px 30px rgba(234, 88, 12, 0.25);
-  border-color: #FED7AA;
+  box-shadow: var(--shadow-primary-lg);
+  border-color: var(--color-primary-200);
 }
 
 .ai-icon-bg {
   width: 44px;
   height: 44px;
-  background: linear-gradient(135deg, #EA580C, #F59E0B);
-  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary-600), var(--color-warning));
+  border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-size: 1.2rem;
-  box-shadow: 0 4px 10px rgba(234, 88, 12, 0.3);
+  color: var(--color-neutral-0);
+  font-size: var(--text-lg);
+  box-shadow: var(--shadow-primary-md);
 }
 
 .label {
-  font-weight: 800;
-  color: #1C1917;
-  font-size: 1rem;
-  background: linear-gradient(to right, #C2410C, #EA580C);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  font-weight: var(--font-extrabold);
+  font-size: var(--text-base);
+  color: var(--color-primary-700);
 }
 </style>

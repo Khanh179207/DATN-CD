@@ -78,8 +78,6 @@
 </template>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Quicksand:wght@500;600;700&display=swap');
-
 .landing-footer {
   background-color: #FAFAF9; /* Nền kem sáng sang trọng */
   padding: 80px 0 0;

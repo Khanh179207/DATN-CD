@@ -146,12 +146,13 @@ const getParticleStyle = (n) => {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700;1,900&family=Manrope:wght@400;600;800&display=swap');
-
 /* --- 1. CORE LAYOUT --- */
 .sanctum-leaderboard {
   position: relative; padding: 60px 0 100px;
-  background: #050302; overflow: hidden; color: #FFF;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px);
+  border-top: 1px solid rgba(255,255,255,0.6);
+  overflow: hidden; color: #1C1917;
   font-family: 'Manrope', sans-serif;
   min-height: 100vh;
 }
@@ -189,23 +190,22 @@ const getParticleStyle = (n) => {
   color: #EA580C; margin-bottom: 10px; text-transform: uppercase;
 }
 .main-heading {
-  font-family: 'Playfair Display', serif; font-size: 3.5rem; margin: 0; line-height: 1; color: #FFF;
+  font-family: 'Playfair Display', serif; font-size: 3.5rem; margin: 0; line-height: 1; color: #1C1917;
 }
 .text-gradient {
-  background: linear-gradient(135deg, #FFF 30%, #94A3B8 100%);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-style: italic;
+  color: #EA580C; font-style: italic;
 }
 
 .nav-pill {
-  display: flex; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 50px; padding: 4px; backdrop-filter: blur(10px);
+  display: flex; background: rgba(28,25,23,0.06); border: 1px solid rgba(28,25,23,0.12);
+  border-radius: 50px; padding: 4px; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
 }
 .nav-btn {
   width: 48px; height: 48px; border-radius: 50%; border: none; background: transparent;
-  color: #FFF; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center;
+  color: #1C1917; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center;
 }
 .nav-btn:hover { background: #EA580C; color: #FFF; box-shadow: 0 0 15px rgba(234, 88, 12, 0.4); }
-.nav-divider { width: 1px; height: 24px; background: rgba(255,255,255,0.1); align-self: center; }
+.nav-divider { width: 1px; height: 24px; background: rgba(28,25,23,0.15); align-self: center; }
 
 /* --- 3. CARDS STAGE & SCROLL SNAP --- */
 .card-stage {
@@ -248,32 +248,28 @@ const getParticleStyle = (n) => {
 
 .rank-val {
     position: relative; z-index: 2;
-    font-size: 8rem; 
-    /* Gradient Vàng Kim Loại */
-    background: linear-gradient(135deg, #FFFFFF 20%, #94A3B8 80%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.8));
+    font-size: 8rem;
+    color: #1C1917;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.15));
     font-style: italic;
 }
 
 .top-1 .rank-val {
-    /* Top 1 màu Vàng Rực */
-    background: linear-gradient(135deg, #FFD700 0%, #F59E0B 100%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    color: #FFD700;
     font-size: 10rem;
 }
 
 .rank-shadow {
     position: absolute; top: 5px; left: 5px; z-index: 1;
     font-size: 8rem; color: transparent;
-    -webkit-text-stroke: 2px rgba(234, 88, 12, 0.5);
+    -webkit-text-stroke: 2px rgba(234, 88, 12, 0.25);
     opacity: 0.5;
 }
 .top-1 .rank-shadow { font-size: 10rem; }
 
 
 /* --- CARD VISUAL --- */
-.master-card { position: relative; z-index: 5; background: #1a1a1a; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+.master-card { position: relative; z-index: 5; background: rgba(255,255,255,0.75); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.9); border-radius: 20px; box-shadow: 0 8px 40px rgba(0,0,0,0.10); }
 .card-visual {
   height: 420px; border-radius: 20px; overflow: hidden; position: relative;
 }
@@ -324,8 +320,9 @@ const getParticleStyle = (n) => {
 
 /* --- CHEF CARD STYLE --- */
 .chef-card-style {
-    background: linear-gradient(135deg, #1E1E1E 0%, #0F0F0F 100%);
-    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.75);
+    backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255,255,255,0.9);
     height: 420px; display: flex; flex-direction: column; align-items: center; justify-content: center;
 }
 .chef-big-avt { position: relative; width: 140px; height: 140px; margin-bottom: 25px; }
@@ -333,12 +330,12 @@ const getParticleStyle = (n) => {
 .crown-big { position: absolute; top: -20px; right: -10px; font-size: 2.5rem; transform: rotate(15deg); filter: drop-shadow(0 4px 10px rgba(0,0,0,0.6)); }
 
 .chef-info-core { text-align: center; width: 100%; padding: 0 30px; }
-.chef-big-name { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: #FFF; margin: 0 0 20px; }
+.chef-big-name { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: #1C1917; margin: 0 0 20px; }
 .chef-stats-grid { display: flex; justify-content: center; gap: 20px; margin-bottom: 25px; }
 .stat-box { display: flex; flex-direction: column; }
 .sb-val { font-size: 1.4rem; font-weight: 800; color: #EA580C; }
 .sb-lbl { font-size: 0.7rem; color: #94A3B8; text-transform: uppercase; letter-spacing: 1px; }
-.stat-divider { width: 1px; height: 30px; background: rgba(255,255,255,0.1); }
+.stat-divider { width: 1px; height: 30px; background: rgba(28,25,23,0.15); }
 .btn-follow-glow {
     background: transparent; border: 1px solid #EA580C; color: #EA580C;
     padding: 10px 30px; border-radius: 50px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; font-size: 0.75rem;

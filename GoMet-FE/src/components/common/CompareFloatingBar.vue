@@ -4,7 +4,7 @@
       <div class="bar-content">
         <div class="info">
           <span class="count-badge">{{ compareStore.count }}</span>
-          <span class="text">Đang chọn so sánh</span>
+          <span class="text">{{ $t('compare.selected') }}</span>
           
           <div class="mini-thumbs">
             <div v-for="item in compareStore.items" :key="item.id" class="thumb" :title="item.title">
@@ -15,8 +15,8 @@
         </div>
 
         <div class="actions">
-          <button class="btn-clear" @click="compareStore.clearAll">Hủy</button>
-          <button class="btn-compare-now" @click="goToComparePage">So sánh ngay</button>
+          <button class="btn-clear" @click="compareStore.clearAll">{{ $t('compare.cancel') }}</button>
+          <button class="btn-compare-now" @click="goToComparePage">{{ $t('compare.compare_now') }}</button>
         </div>
       </div>
     </div>
@@ -28,60 +28,142 @@ import { useCompareStore } from '@/stores/compare'
 import { useRouter } from 'vue-router' // 1. Import Router
 
 const compareStore = useCompareStore()
-const router = useRouter() // 2. Khởi tạo Router
+const router = useRouter() // 2. Initialize Router
 
 const goToComparePage = () => {
-  // 3. Chuyển hướng sang trang Compare (đã định nghĩa trong router/index.js)
+  // 3. Navigate to the Compare page (defined in router/index.js)
   router.push({ name: 'Compare' })
 }
 </script>
 
 <style scoped>
+/* ─── Floating Bar ─── */
 .compare-bar {
-  position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-  width: 90%; max-width: 600px; 
-  /* 👇 4. Tăng z-index lên cao nhất để không bị che */
-  z-index: 9999 !important; 
-  
-  background: white; border-radius: 50px;
-  box-shadow: 0 10px 40px -5px rgba(0,0,0,0.25);
-  border: 1px solid #E5E7EB;
-  padding: 8px 12px 8px 20px;
+  position: fixed;
+  bottom: var(--space-8);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 600px;
+  z-index: var(--z-toast);
+  background: var(--color-neutral-0);
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-2xl);
+  border: 1px solid var(--color-neutral-200);
+  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-5);
 }
 
-.bar-content { display: flex; justify-content: space-between; align-items: center; }
-
-.info { display: flex; align-items: center; gap: 15px; }
-.count-badge { 
-  background: #1C1917; color: white; width: 28px; height: 28px; 
-  border-radius: 50%; display: flex; align-items: center; justify-content: center; 
-  font-weight: 800; font-size: 0.9rem; 
+.bar-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
-.text { font-weight: 700; color: #1C1917; font-size: 0.95rem; }
 
-.mini-thumbs { display: flex; gap: -10px; margin-left: 10px; }
-.thumb { position: relative; width: 40px; height: 40px; border-radius: 50%; border: 2px solid white; overflow: hidden; margin-left: -10px; transition: 0.2s; cursor: pointer; }
+/* ─── Info Section ─── */
+.info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.count-badge {
+  background: var(--color-neutral-900);
+  color: var(--color-neutral-0);
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--font-extrabold);
+  font-size: var(--text-sm);
+}
+
+.text {
+  font-weight: var(--font-bold);
+  color: var(--color-neutral-900);
+  font-size: var(--text-sm);
+}
+
+/* ─── Thumbnails ─── */
+.mini-thumbs {
+  display: flex;
+  margin-left: var(--space-3);
+}
+
+.thumb {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-neutral-0);
+  overflow: hidden;
+  margin-left: -10px;
+  transition: var(--transition-fast);
+  cursor: pointer;
+}
 .thumb:first-child { margin-left: 0; }
-.thumb:hover { transform: translateY(-5px); z-index: 2; }
+.thumb:hover { transform: translateY(-5px); z-index: var(--z-base); }
 .thumb img { width: 100%; height: 100%; object-fit: cover; }
+
 .btn-remove-tiny {
-  position: absolute; inset: 0; background: rgba(0,0,0,0.5); color: white; border: none;
-  opacity: 0; transition: 0.2s; display: flex; align-items: center; justify-content: center; font-size: 0.8rem;
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  color: var(--color-neutral-0);
+  border: none;
+  opacity: 0;
+  transition: var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-sm);
 }
 .thumb:hover .btn-remove-tiny { opacity: 1; }
 
-.actions { display: flex; gap: 10px; align-items: center; }
-.btn-clear { background: none; border: none; color: #6B7280; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
-.btn-clear:hover { color: #EF4444; }
+/* ─── Actions ─── */
+.actions {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.btn-clear {
+  background: none;
+  border: none;
+  color: var(--color-neutral-500);
+  font-weight: var(--font-semibold);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  transition: var(--transition-fast);
+}
+.btn-clear:hover { color: var(--color-error); }
 
 .btn-compare-now {
-  background: #EA580C; color: white; border: none; padding: 10px 24px;
-  border-radius: 30px; font-weight: 700; cursor: pointer;
-  box-shadow: 0 4px 15px rgba(234, 88, 12, 0.3); transition: 0.2s;
+  background: var(--color-primary-600);
+  color: var(--color-neutral-0);
+  border: none;
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-full);
+  font-weight: var(--font-bold);
+  cursor: pointer;
+  box-shadow: var(--shadow-primary-md);
+  transition: var(--transition-base);
 }
-.btn-compare-now:hover { background: #C2410C; transform: translateY(-2px); }
 
-/* Animation */
-.slide-up-enter-active, .slide-up-leave-active { transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
-.slide-up-enter-from, .slide-up-leave-to { opacity: 0; transform: translate(-50%, 100%); }
+.btn-compare-now:hover {
+  background: var(--color-primary-700);
+  transform: translateY(-2px);
+}
+
+/* ─── Slide Animation ─── */
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: all var(--duration-slow) var(--ease-spring);
+}
+.slide-up-enter-from,
+.slide-up-leave-to {
+  opacity: 0;
+  transform: translate(-50%, 100%);
+}
 </style>

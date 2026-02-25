@@ -7,10 +7,10 @@
         </svg>
       </div>
 
-      <h3 class="modal-title">Xác thực tài khoản</h3>
+      <h3 class="modal-title">{{ $t('auth.otp_title') }}</h3>
       <p class="modal-desc">
-        Chúng tôi đã gửi mã đến <strong>{{ email }}</strong>.<br>
-        Vui lòng nhập mã 6 số để tiếp tục.
+        {{ $t('auth.otp_sub') }} <strong>{{ email }}</strong>.<br>
+        {{ $t('auth.otp_check') }}
       </p>
 
       <div class="input-wrapper">
@@ -25,8 +25,8 @@
       </div>
 
       <div class="action-buttons">
-        <button @click="$emit('close')" class="btn-secondary">Quay lại</button>
-        <button @click="$emit('verify')" class="btn-primary">Xác nhận</button>
+        <button @click="$emit('close')" class="btn-secondary">{{ $t('auth.otp_back') }}</button>
+        <button @click="$emit('verify')" class="btn-primary">{{ $t('common.confirm') }}</button>
       </div>
     </div>
   </div>
@@ -35,16 +35,16 @@
 <script setup>
 defineProps({
   email: String,
-  modelValue: String // Dùng để v-model binding 2 chiều
+  modelValue: String // Used for two-way v-model binding
 })
 defineEmits(['close', 'verify', 'update:modelValue'])
 </script>
 
 <style scoped>
-/* Style đồng bộ với Form chính */
+/* Styles synchronized with the main auth form */
 .modal-overlay {
   position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(28, 25, 23, 0.8); /* Nền tối hơn cho tập trung */
+  background: rgba(28, 25, 23, 0.8); /* Darker backdrop for focus */
   backdrop-filter: blur(5px);
   display: flex; align-items: center; justify-content: center;
   z-index: 100;
@@ -52,7 +52,7 @@ defineEmits(['close', 'verify', 'update:modelValue'])
 
 .modal-content {
   background: white; padding: 40px 30px; 
-  border-radius: 24px; /* Bo góc giống card đăng nhập */
+  border-radius: 24px; /* Rounded corners matching the login card */
   width: 90%; max-width: 400px; text-align: center;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   font-family: 'Quicksand', sans-serif;
@@ -63,7 +63,7 @@ defineEmits(['close', 'verify', 'update:modelValue'])
   background: #F5F5F4; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
 }
-.mono-icon { width: 30px; height: 30px; color: #1C1917; } /* Icon màu đen đơn sắc */
+.mono-icon { width: 30px; height: 30px; color: #1C1917; } /* Monochrome black icon */
 
 .modal-title {
   font-family: 'Playfair Display', serif; font-size: 1.5rem; 

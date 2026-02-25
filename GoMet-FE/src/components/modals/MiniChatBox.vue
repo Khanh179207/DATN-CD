@@ -10,7 +10,7 @@
           </div>
           <div class="name-col">
             <h4>{{ chatStore.activeChat.name }}</h4>
-            <span class="status-text">Đang hoạt động</span>
+            <span class="status-text">{{ $t('chat.active_now') }}</span>
           </div>
         </div>
         <div class="actions">
@@ -27,11 +27,18 @@
         <div class="chat-messages" ref="msgContainer">
           <div class="intro">
             <img :src="chatStore.activeChat.avatar">
-            <p>Các bạn là bạn bè trên GOMET</p>
+            <p>{{ $t('chat.friends_on_gomet') }}</p>
           </div>
           
           <div v-for="(msg, i) in messages" :key="i" class="msg-row" :class="{ mine: msg.isMine }">
             <div class="bubble">{{ msg.text }}</div>
+          </div>
+
+          <!-- AI typing indicator -->
+          <div v-if="isTyping" class="msg-row">
+            <div class="bubble typing-bubble">
+              <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            </div>
           </div>
         </div>
 
@@ -40,8 +47,11 @@
             v-model="inputMsg" 
             placeholder="Aa" 
             @keyup.enter="sendMsg"
+            :disabled="isTyping"
           >
-          <button class="btn-send" @click="sendMsg">🚀</button>
+          <button class="btn-send" @click="sendMsg" :disabled="isTyping">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
         </div>
       </div>
 
@@ -50,37 +60,71 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, computed } from 'vue'
 import { useChatStore } from '@/stores/chat'
+import { chatWithAIChef } from '@/services/aiService'
 
 const chatStore = useChatStore()
 const isMinimized = ref(false)
 const inputMsg = ref('')
 const msgContainer = ref(null)
+const isTyping = ref(false)
 
-const messages = ref([
-  { text: 'Xin chào!', isMine: false },
-  { text: 'Chào bạn, món ăn ngon quá', isMine: true }
-])
+const isAiChat = computed(() => chatStore.activeChat?.id === 'gomet-ai')
 
-// Khi đổi người chat, reset tin nhắn demo
+const messages = ref([])
+
+// Reset messages when active chat changes
 watch(() => chatStore.activeChat, (newVal) => {
   if (newVal) {
     isMinimized.value = false
+    if (newVal.id === 'gomet-ai') {
+      messages.value = [
+        { text: '👋 Xin chào! Tôi là Gomet AI 🤖 — trợ lý ẩm thực của bạn. Hỏi tôi bất cứ điều gì về công thức nấu ăn, nguyên liệu hoặc gợi ý món ăn nhé!', isMine: false }
+      ]
+    } else {
+      messages.value = [
+        { text: 'Hello!', isMine: false },
+        { text: 'Hey, that dish looks amazing!', isMine: true }
+      ]
+    }
     scrollToBottom()
   }
 })
 
-const sendMsg = () => {
-  if(!inputMsg.value.trim()) return
-  messages.value.push({ text: inputMsg.value, isMine: true })
+const sendMsg = async () => {
+  const text = inputMsg.value.trim()
+  if (!text) return
+
+  messages.value.push({ text, isMine: true })
   inputMsg.value = ''
   scrollToBottom()
+
+  if (isAiChat.value) {
+    isTyping.value = true
+    scrollToBottom()
+    try {
+      const history = messages.value.slice(1, -1)
+      const reply = await chatWithAIChef(history, text)
+      messages.value.push({ text: reply, isMine: false })
+    } catch (err) {
+      const errMsg = err?.message ?? ''
+      const msg = errMsg === 'OPENAI_API_KEY_MISSING'
+        ? 'Tính năng AI chưa được cấu hình. Vui lòng thêm VITE_OPENAI_API_KEY vào file .env để sử dụng.'
+        : (errMsg.includes('429') || errMsg.toLowerCase().includes('rate limit') || errMsg.toLowerCase().includes('too many'))
+          ? 'Gomet AI đang bận quá! Vui lòng đợi vài giây rồi thử lại nhé.'
+          : 'Xin lỗi, tôi đang gặp sự cố. Vui lòng thử lại sau nhé!'
+      messages.value.push({ text: msg, isMine: false })
+    } finally {
+      isTyping.value = false
+      scrollToBottom()
+    }
+  }
 }
 
 const scrollToBottom = async () => {
   await nextTick()
-  if(msgContainer.value) msgContainer.value.scrollTop = msgContainer.value.scrollHeight
+  if (msgContainer.value) msgContainer.value.scrollTop = msgContainer.value.scrollHeight
 }
 </script>
 
@@ -136,4 +180,19 @@ const scrollToBottom = async () => {
 /* Animation */
 .slide-up-enter-active, .slide-up-leave-active { transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
 .slide-up-enter-from, .slide-up-leave-to { transform: translateY(100%); opacity: 0; }
+
+/* Typing indicator */
+.typing-bubble {
+  display: flex; align-items: center; gap: 4px; padding: 10px 16px; min-width: 54px;
+}
+.dot {
+  width: 7px; height: 7px; border-radius: 50%; background: #9CA3AF;
+  animation: typing-bounce 1.2s infinite ease-in-out;
+}
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typing-bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
+  40% { transform: translateY(-6px); opacity: 1; }
+}
 </style>

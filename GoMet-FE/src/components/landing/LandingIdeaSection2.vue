@@ -33,7 +33,7 @@
         </div>
 
         <div class="user-card center-card">
-          <div class="badge-top">🏆 Top Creator</div>
+          <div class="badge-top">Top Creator</div>
           <div class="card-cover">
             <img src="https://images.unsplash.com/photo-1507048331197-7d4ac70811cf?q=80&w=600" alt="Chef">
             <div class="card-overlay"></div>
@@ -73,8 +73,6 @@
 </template>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Quicksand:wght@500;600;700&display=swap');
-
 .section-community { 
   background-color: #FAFAF9; /* Nền kem sáng */
   padding: 100px 0; 

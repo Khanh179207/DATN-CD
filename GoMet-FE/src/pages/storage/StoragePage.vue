@@ -13,18 +13,19 @@
           
           <div class="profile-summary">
             <div class="avatar-ring">
-              <span class="user-initial">K</span>
+              <img v-if="authStore.user?.avatar" :src="authStore.user.avatar" class="user-avt" />
+              <span v-else class="user-initial">{{ (authStore.user?.name || 'U').charAt(0).toUpperCase() }}</span>
             </div>
             <div class="user-text">
-              <span class="u-label">CHỦ SỞ HỮU</span>
-              <span class="u-name">Khánh Nguyên</span>
+              <span class="u-label">{{ $t('storage.owner') }}</span>
+              <span class="u-name">{{ authStore.user?.name || 'Guest' }}</span>
             </div>
           </div>
 
           <div class="divider"></div>
 
           <div class="filter-group">
-            <h3 class="group-title">DANH MỤC</h3>
+            <h3 class="group-title">{{ $t('storage.categories') }}</h3>
             <button 
               v-for="cat in categories" 
               :key="cat"
@@ -39,11 +40,11 @@
 
           <div class="stats-box">
             <div class="stat-row">
-              <span>Đã lưu</span>
+              <span>{{ $t('storage.stats_saved') }}</span>
               <strong>{{ savedPosts.length }}</strong>
             </div>
             <div class="stat-row">
-              <span>Gần đây</span>
+              <span>{{ $t('storage.stats_recent') }}</span>
               <strong>+2</strong>
             </div>
           </div>
@@ -56,13 +57,13 @@
         <header class="collection-header">
           <div class="header-left">
             <div class="brand-tag">GOMET ARCHIVE /// V.3.0</div>
-            <h1 class="main-title">Bộ Sưu Tập <span class="text-serif">Cá Nhân</span></h1>
+            <h1 class="main-title">{{ $t('storage.title').split(' ').slice(0, 2).join(' ') }} <span class="text-serif">{{ $t('storage.title').split(' ').slice(2).join(' ') }}</span></h1>
           </div>
           
           <div class="header-right">
             <div class="search-bar">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-              <input type="text" placeholder="Tìm kiếm món đã lưu..." v-model="searchQuery" />
+              <input type="text" :placeholder="$t('storage.search_placeholder')" v-model="searchQuery" />
             </div>
           </div>
         </header>
@@ -83,8 +84,8 @@
 
             <div class="card-body">
               <div class="meta-row">
-                <span class="date-saved">Lưu ngày: {{ post.savedDate }}</span>
-                <button class="btn-unsave" @click.stop="unsavePost(post.id)" title="Xóa khỏi bộ sưu tập">
+                <span class="date-saved">{{ $t('storage.saved_on') }} {{ post.savedDate }}</span>
+                <button class="btn-unsave" @click.stop="unsavePost(post.id)" :title="$t('storage.unsave')">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
                 </button>
               </div>
@@ -107,9 +108,9 @@
 
         <div v-else class="empty-state">
           <div class="empty-icon">📂</div>
-          <h3>Chưa có dữ liệu</h3>
-          <p>Bạn chưa lưu món ăn nào thuộc danh mục này.</p>
-          <button class="btn-explore" @click="$router.push('/search')">KHÁM PHÁ NGAY</button>
+          <h3>{{ $t('common.no_data') }}</h3>
+          <p>No recipes saved in this category yet.</p>
+          <button class="btn-explore" @click="$router.push('/search')">EXPLORE NOW</button>
         </div>
 
       </main>
@@ -118,68 +119,84 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import { getFavorites, removeFavorite } from '@/services/socialService'
+import { toast } from '@/composables/useToast'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const router = useRouter()
-const activeFilter = ref('Tất cả')
+const authStore = useAuthStore()
+const activeFilter = ref('All')
 const searchQuery = ref('')
+const savedPosts = ref([])
+const loading = ref(true)
 
-// Dữ liệu giả lập (Giả sử lấy từ LocalStorage hoặc API Store)
-const savedPosts = ref([
-  { id: 1, title: 'Bò Wellington Thượng Hạng', category: 'Món Âu', image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=600', time: '2 giờ', difficulty: 'Khó', savedDate: '08/02/2026' },
-  { id: 2, title: 'Sashimi Cá Hồi', category: 'Món Nhật', image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600', time: '15 phút', difficulty: 'Dễ', savedDate: '07/02/2026' },
-  { id: 3, title: 'Phở Bò Hà Nội', category: 'Món Việt', image: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?w=600', time: '4 giờ', difficulty: 'Trung bình', savedDate: '05/02/2026' },
-  { id: 4, title: 'Mỳ Ý Carbonara', category: 'Món Âu', image: 'https://images.unsplash.com/photo-1612874742237-6526221588e3?w=600', time: '30 phút', difficulty: 'Dễ', savedDate: '05/02/2026' },
-  { id: 5, title: 'Cơm Tấm Sườn Bì', category: 'Món Việt', image: 'https://images.unsplash.com/photo-1595295333158-4742f28fbd85?w=600', time: '1 giờ', difficulty: 'Trung bình', savedDate: '02/02/2026' },
-])
+const levelMap = { 1: 'Easy', 2: 'Medium', 3: 'Hard' }
 
-// Tạo danh sách Filter động
-const categories = computed(() => {
-  const cats = new Set(savedPosts.value.map(p => p.category))
-  return ['Tất cả', ...Array.from(cats)]
+const normalizePost = (p) => ({
+  id: p.postID,
+  title: p.title,
+  category: p.categoryName || 'Uncategorized',
+  image: p.media || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop',
+  time: p.cookingTime ? `${p.cookingTime} min` : '?',
+  difficulty: levelMap[p.level] || 'Unknown',
+  savedDate: p.createdAt ? new Date(p.createdAt).toLocaleDateString('vi-VN') : ''
 })
 
-// Tính số lượng cho mỗi filter
+onMounted(async () => {
+  if (!authStore.isAuthenticated) { loading.value = false; return }
+  try {
+    const data = await getFavorites(authStore.user.accountID)
+    savedPosts.value = (data || []).map(normalizePost)
+  } catch (err) {
+    console.warn('StoragePage: load error', err)
+    toast.warn(t('toast.load_error'))
+  } finally {
+    loading.value = false
+  }
+})
+
+const categories = computed(() => {
+  const cats = new Set(savedPosts.value.map(p => p.category))
+  return ['All', ...Array.from(cats)]
+})
+
 const getCount = (cat) => {
-  if (cat === 'Tất cả') return savedPosts.value.length
+  if (cat === 'All') return savedPosts.value.length
   return savedPosts.value.filter(p => p.category === cat).length
 }
 
-// Logic lọc bài viết
 const filteredPosts = computed(() => {
   let posts = savedPosts.value
-  
-  // Lọc theo Category
-  if (activeFilter.value !== 'Tất cả') {
-    posts = posts.filter(p => p.category === activeFilter.value)
-  }
-
-  // Lọc theo Search
+  if (activeFilter.value !== 'All') posts = posts.filter(p => p.category === activeFilter.value)
   if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    posts = posts.filter(p => p.title.toLowerCase().includes(query))
+    const q = searchQuery.value.toLowerCase()
+    posts = posts.filter(p => p.title.toLowerCase().includes(q))
   }
-
   return posts
 })
 
-// Chức năng
-const unsavePost = (id) => {
-  if(confirm('Xóa món này khỏi bộ sưu tập?')) {
+const unsavePost = async (id) => {
+  if (!confirm(t('storage.unsave') + '?')) return
+  try {
+    await removeFavorite(authStore.user.accountID, id)
     savedPosts.value = savedPosts.value.filter(p => p.id !== id)
+    toast.success(t('toast.unsave_ok'))
+  } catch (err) {
+    console.warn('StoragePage: remove error', err)
+    toast.error('Failed to remove, please try again.')
   }
 }
 
-const goToDetail = (id) => {
-  router.push(`/post/${id}`)
-}
+const goToDetail = (id) => router.push(`/home/post/${id}`)
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Manrope:wght@300;400;500;600;700;800&display=swap');
-
-/* --- 1. CORE LAYOUT (Đồng bộ Planner/Arcade) --- */
+/* --- 1. CORE LAYOUT (Synced with Planner/Arcade) --- */
 .gomet-collection {
   width: 100%; min-height: 100vh; background: #FBF6F1; color: #1E293B;
   font-family: 'Manrope', sans-serif; position: relative; overflow-x: hidden;
@@ -203,7 +220,7 @@ const goToDetail = (id) => {
   position: relative; z-index: 10;
 }
 
-/* --- 2. SIDEBAR (Phong cách kỹ thuật số) --- */
+/* --- 2. SIDEBAR (Digital style) --- */
 .collection-sidebar { width: 260px; flex-shrink: 0; }
 .sidebar-sticky { position: sticky; top: 30px; display: flex; flex-direction: column; gap: 30px; }
 
@@ -214,6 +231,7 @@ const goToDetail = (id) => {
   display: flex; align-items: center; justify-content: center; background: #FFF;
 }
 .user-initial { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700; color: #EA580C; }
+.user-avt { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
 .user-text { display: flex; flex-direction: column; }
 .u-label { font-size: 0.6rem; font-weight: 800; color: #94A3B8; letter-spacing: 1px; }
 .u-name { font-size: 1rem; font-weight: 800; color: #1E293B; }

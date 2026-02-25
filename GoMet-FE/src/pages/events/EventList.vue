@@ -3,14 +3,14 @@
     
     <section class="events-hero">
       <div class="hero-content">
-        <span class="hero-tag">Sự kiện nổi bật</span>
-        <h1>Workshop: Nghệ Thuật Bánh Ngọt Pháp</h1>
-        <p>Học hỏi bí quyết từ các chuyên gia hàng đầu và giao lưu với cộng đồng yêu bánh.</p>
+        <span class="hero-tag">{{ $t('events.title') }}</span>
+        <h1>Workshop: The Art of French Pastry</h1>
+        <p>Learn secrets from top experts and connect with the baking community.</p>
         <div class="hero-meta">
-          <span>📅 25 Tháng 10</span>
-          <span>📍 Hà Nội</span>
+          <span>📅 October 25</span>
+          <span>📍 Hanoi</span>
         </div>
-        <button class="btn-hero-join">Đăng ký tham gia ngay</button>
+        <button class="btn-hero-join">{{ $t('events.register') }}</button>
       </div>
       <div class="hero-overlay"></div>
     </section>
@@ -29,7 +29,7 @@
 
       <div class="search-wrap">
         <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-        <input type="text" placeholder="Tìm sự kiện...">
+        <input type="text" v-model="searchQuery" :placeholder="$t('events.find_events')">
       </div>
     </div>
 
@@ -42,71 +42,77 @@
     </div>
 
     <div class="load-more">
-      <button class="btn-outline">Xem thêm sự kiện</button>
+      <button class="btn-outline">{{ $t('events.load_more') }}</button>
     </div>
 
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import EventCard from '@/components/common/EventCard.vue'
+import { getEvents } from '@/services/eventService'
 
-// --- DỮ LIỆU MẪU ---
+const { t } = useI18n()
 const currentFilter = ref('all')
-const filters = [
-  { id: 'all', label: 'Tất cả' },
-  { id: 'upcoming', label: 'Sắp diễn ra' },
-  { id: 'workshop', label: 'Workshop' },
-  { id: 'contest', label: 'Cuộc thi' },
-]
-
-const events = ref([
-  { 
-    id: 1, title: 'Workshop Làm Bánh Trung Thu Hiện Đại', 
-    image: 'https://images.unsplash.com/photo-1529383568366-2244276722d3?w=800&auto=format&fit=crop',
-    month: 'TH8', day: '15', time: '09:00 AM - 12:00 PM', location: 'Quận 1, TP.HCM',
-    type: 'offline', typeLabel: 'Offline', isJoined: false,
-    attendees: ['https://i.pravatar.cc/150?u=1', 'https://i.pravatar.cc/150?u=2', 'https://i.pravatar.cc/150?u=3'],
-    totalAttendees: 45, category: 'workshop'
-  },
-  { 
-    id: 2, title: 'Cuộc Thi: Master Chef Tại Gia Mùa 3', 
-    image: 'https://images.unsplash.com/photo-1556910103-1c02745a30bf?w=800&auto=format&fit=crop',
-    month: 'TH9', day: '02', time: 'Cả ngày', location: 'Online qua Zoom',
-    type: 'online', typeLabel: 'Online', isJoined: true,
-    attendees: ['https://i.pravatar.cc/150?u=4', 'https://i.pravatar.cc/150?u=5', 'https://i.pravatar.cc/150?u=6', 'https://i.pravatar.cc/150?u=7'],
-    totalAttendees: 120, category: 'contest'
-  },
-  { 
-    id: 3, title: 'Coffee Talk: Xu Hướng Ẩm Thực 2024', 
-    image: 'https://images.unsplash.com/photo-1511920170033-f8396924c348?w=800&auto=format&fit=crop',
-    month: 'TH9', day: '10', time: '14:00 - 16:00', location: 'Cầu Giấy, Hà Nội',
-    type: 'offline', typeLabel: 'Offline', isJoined: false,
-    attendees: ['https://i.pravatar.cc/150?u=8', 'https://i.pravatar.cc/150?u=9'],
-    totalAttendees: 28, category: 'meetup'
-  },
-  { 
-    id: 4, title: 'Lớp Học Nấu Ăn Chay Vì Sức Khỏe', 
-    image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&auto=format&fit=crop',
-    month: 'TH9', day: '25', time: '18:00 - 20:00', location: 'Đà Nẵng',
-    type: 'offline', typeLabel: 'Offline', isJoined: false,
-    attendees: ['https://i.pravatar.cc/150?u=10'],
-    totalAttendees: 15, category: 'workshop'
-  },
+const filters = computed(() => [
+  { id: 'all',      label: t('common.category_all') },
+  { id: 'upcoming', label: t('events.upcoming') },
+  { id: 'active',   label: t('events.ongoing') },
+  { id: 'ended',    label: t('events.ended') },
 ])
 
-// Filter Logic
+const events = ref([])
+const loading = ref(true)
+const searchQuery = ref('')
+
+const MONTH_VN = ['TH1','TH2','TH3','TH4','TH5','TH6','TH7','TH8','TH9','TH10','TH11','TH12']
+
+const normalizeEvent = (e) => {
+  const start = e.startAt ? new Date(e.startAt) : null
+  return {
+    id: e.eventID,
+    title: e.eventName,
+    image: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?q=80&w=800&auto=format&fit=crop',
+    month: start ? MONTH_VN[start.getMonth()] : '??',
+    day: start ? String(start.getDate()).padStart(2, '0') : '??',
+    time: e.startAt && e.endAt ? `${e.startAt} → ${e.endAt}` : 'TBA',
+    location: 'Online',
+    type: 'online',
+    typeLabel: 'Online',
+    isJoined: false,
+    attendees: [],
+    totalAttendees: Number(e.participantCount) || 0,
+    category: e.status || 'upcoming'
+  }
+}
+
+onMounted(async () => {
+  try {
+    const data = await getEvents()
+    events.value = (data || []).map(normalizeEvent)
+  } catch (err) {
+    console.warn('EventList: load error', err)
+  } finally {
+    loading.value = false
+  }
+})
+
 const filteredEvents = computed(() => {
-  if (currentFilter.value === 'all') return events.value
-  if (currentFilter.value === 'upcoming') return events.value // Giả lập
-  return events.value.filter(e => e.category === currentFilter.value)
+  let list = events.value
+  if (currentFilter.value !== 'all') {
+    list = list.filter(e => e.category === currentFilter.value)
+  }
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.toLowerCase()
+    list = list.filter(e => e.title?.toLowerCase().includes(q) || e.location?.toLowerCase().includes(q))
+  }
+  return list
 })
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Mulish:wght@400;600;700;800&display=swap');
-
 .events-page {
   font-family: 'Mulish', sans-serif; color: #1C1917;
   padding-bottom: 60px;

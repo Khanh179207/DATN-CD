@@ -6,18 +6,18 @@
       <div class="blob blob-2"></div>
       
       <div class="hero-content">
-        <span class="hero-subtitle">Bộ Sưu Tập Premium</span>
-        <h1 class="hero-title">Đánh Thức <br> <span class="highlight">Vị Giác Của Bạn</span></h1>
+        <span class="hero-subtitle">Premium Collection</span>
+        <h1 class="hero-title">Awaken <br> <span class="highlight">Your Palate</span></h1>
         <p class="hero-text">
-          Hơn <strong>{{ totalResults }}+</strong> công thức độc quyền đang chờ được khám phá.
+          Over <strong>{{ totalResults }}+</strong> exclusive recipes waiting to be explored.
         </p>
         
         <div class="trending-pills">
-          <span class="label">Xu hướng:</span>
+          <span class="label">{{ $t('search.trending_label') }}</span>
           <div class="pills-scroll">
             <button class="pill-item" @click="quickFilter('healthy')">🥑 Eat Clean</button>
-            <button class="pill-item" @click="quickFilter('vietnam')">🇻🇳 Món Việt</button>
-            <button class="pill-item" @click="quickFilter('cake')">🍰 Bánh Ngọt</button>
+            <button class="pill-item" @click="quickFilter('vietnam')">🇻🇳 Vietnamese</button>
+            <button class="pill-item" @click="quickFilter('cake')">🍰 Desserts</button>
             <button class="pill-item" @click="quickFilter('drink')">🍹 Detox</button>
           </div>
         </div>
@@ -42,13 +42,13 @@
         <div class="filter-right">
           <button class="btn-filter-trigger" @click="showAdvanced = !showAdvanced" :class="{ active: showAdvanced }">
             <span class="icon-filter"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg></span>
-            Bộ Lọc
+            {{ $t('search.filters') }}
           </button>
           <div class="sort-select-wrapper">
             <select v-model="filters.sort">
-              <option value="newest">Mới nhất</option>
-              <option value="popular">Phổ biến</option>
-              <option value="rating">Đánh giá cao</option>
+              <option value="newest">{{ $t('search.sort_newest') }}</option>
+              <option value="popular">{{ $t('search.sort_popular') }}</option>
+              <option value="rating">{{ $t('search.sort_rating') }}</option>
             </select>
           </div>
         </div>
@@ -58,25 +58,25 @@
         <div v-if="showAdvanced" class="advanced-panel-depth">
           <div class="panel-grid">
             <div class="filter-col">
-              <h4>Độ khó</h4>
+              <h4>{{ $t('search.difficulty') }}</h4>
               <div class="chip-group">
-                <label class="radio-chip"><input type="radio" v-model="filters.difficulty" value=""><span>Tất cả</span></label>
-                <label class="radio-chip"><input type="radio" v-model="filters.difficulty" value="Dễ"><span>Dễ</span></label>
-                <label class="radio-chip"><input type="radio" v-model="filters.difficulty" value="Trung bình"><span>Trung bình</span></label>
-                <label class="radio-chip"><input type="radio" v-model="filters.difficulty" value="Khó"><span>Khó</span></label>
+                <label class="radio-chip"><input type="radio" v-model="filters.difficulty" value=""><span>{{ $t('common.category_all') }}</span></label>
+                <label class="radio-chip"><input type="radio" v-model="filters.difficulty" value="Easy"><span>{{ $t('common.easy') }}</span></label>
+                <label class="radio-chip"><input type="radio" v-model="filters.difficulty" value="Medium"><span>{{ $t('common.medium') }}</span></label>
+                <label class="radio-chip"><input type="radio" v-model="filters.difficulty" value="Hard"><span>{{ $t('common.hard') }}</span></label>
               </div>
             </div>
             <div class="filter-col">
-              <h4>Thời gian</h4>
+              <h4>{{ $t('search.time') }}</h4>
               <div class="chip-group">
-                <label class="radio-chip"><input type="radio" v-model="filters.time" value=""><span>Tất cả</span></label>
-                <label class="radio-chip"><input type="radio" v-model="filters.time" value="short"><span>&lt; 30p</span></label>
-                <label class="radio-chip"><input type="radio" v-model="filters.time" value="medium"><span>30-60p</span></label>
-                <label class="radio-chip"><input type="radio" v-model="filters.time" value="long"><span>&gt; 60p</span></label>
+                <label class="radio-chip"><input type="radio" v-model="filters.time" value=""><span>{{ $t('common.category_all') }}</span></label>
+                <label class="radio-chip"><input type="radio" v-model="filters.time" value="short"><span>{{ $t('search.short_time') }}</span></label>
+                <label class="radio-chip"><input type="radio" v-model="filters.time" value="medium"><span>{{ $t('search.medium_time') }}</span></label>
+                <label class="radio-chip"><input type="radio" v-model="filters.time" value="long"><span>{{ $t('search.long_time') }}</span></label>
               </div>
             </div>
             <div class="filter-col reset-area">
-              <button class="btn-reset-text" @click="resetFilters">Xóa bộ lọc</button>
+              <button class="btn-reset-text" @click="resetFilters">{{ $t('search.clear_filters') }}</button>
             </div>
           </div>
         </div>
@@ -96,10 +96,12 @@
         </transition-group>
 
         <div v-if="paginatedPosts.length === 0" class="empty-state-depth">
-          <div class="icon-3d">🍳</div>
-          <h3>Không tìm thấy công thức</h3>
-          <p>Hãy thử từ khóa khác xem sao nhé!</p>
-          <button class="btn-back-all" @click="resetFilters">Xem tất cả</button>
+          <div class="icon-3d">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M3 11l19-9-9 19-2-8-8-2z"/><circle cx="12" cy="12" r="3"/></svg>
+          </div>
+          <h3>{{ $t('search.no_results') }}</h3>
+          <p>{{ $t('search.no_results_sub') }}</p>
+          <button class="btn-back-all" @click="resetFilters">{{ $t('search.view_all_btn') }}</button>
         </div>
       </div>
 
@@ -126,68 +128,67 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import RecipeCard from '@/components/common/RecipeCard.vue'
+import { normalizePost } from '@/services/postService'
+import { getCategories } from '@/services/categoryService'
+import { toast } from '@/composables/useToast'
+import api from '@/services/api'
+
+const { t } = useI18n()
 
 const router = useRouter()
 const route = useRoute()
 
-// State
 const showAdvanced = ref(false)
 const currentPage = ref(1)
 const itemsPerPage = 8
 const isStuck = ref(false)
+const loading = ref(false)
 
-// Config Categories
-const categories = [
-  { id: 'all', name: 'Tất cả' },
-  { id: 'món chính', name: 'Món Chính' },
-  { id: 'ăn sáng', name: 'Ăn Sáng' },
-  { id: 'tráng miệng', name: 'Tráng Miệng' },
-  { id: 'healthy', name: 'Healthy' },
-  { id: 'đồ uống', name: 'Đồ Uống' },
-]
+const categories = ref([{ id: null, name: 'All' }])
+const allPosts = ref([])
+const filters = ref({ category: null, difficulty: '', time: '', sort: 'newest' })
 
-// Data
-const allPosts = ref([
-  { id: 1, title: 'Bò Beefsteak Sốt Tiêu Đen Chuẩn Vị Âu', image: 'https://images.unsplash.com/photo-1600891964092-4316c288032e?w=600&q=80', category: 'Món Chính', time: '45p', difficulty: 'Trung bình', author: 'Chef Ramsay', likes: 120 },
-  { id: 2, title: 'Salad Cầu Vồng Ức Gà Sốt Mè Rang', image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&q=80', category: 'Healthy', time: '15p', difficulty: 'Dễ', author: 'Eat Clean', likes: 89 },
-  { id: 3, title: 'Bánh Mousse Chanh Leo Mềm Mịn', image: 'https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?w=600&q=80', category: 'Tráng Miệng', time: '60p', difficulty: 'Khó', author: 'Bếp Bánh', likes: 210 },
-  { id: 4, title: 'Mỳ Ý Spaghetti Carbonara Truyền Thống', image: 'https://images.unsplash.com/photo-1612874742237-98280d207487?w=600&q=80', category: 'Món Chính', time: '30p', difficulty: 'Trung bình', author: 'Luca', likes: 156 },
-  { id: 5, title: 'Sinh Tố Bơ Chuối Hạt Chia', image: 'https://images.unsplash.com/photo-1577805947697-89e18249d767?w=600&q=80', category: 'Đồ Uống', time: '10p', difficulty: 'Dễ', author: 'Green Life', likes: 95 },
-  { id: 6, title: 'Cơm Tấm Sườn Bì Chả Sài Gòn', image: 'https://images.unsplash.com/photo-1595295333158-4742f28fbd85?w=600&q=80', category: 'Món Chính', time: '50p', difficulty: 'Trung bình', author: 'SaiGon Food', likes: 300 },
-  { id: 7, title: 'Phở Bò Tái Nạm Gầu Gân', image: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?w=600&q=80', category: 'Ăn Sáng', time: '120p', difficulty: 'Khó', author: 'Pho King', likes: 500 },
-  { id: 8, title: 'Gỏi Cuốn Tôm Thịt Chấm Tương Đen', image: 'https://images.unsplash.com/photo-1530260626688-d48233003fe9?w=600&q=80', category: 'Ăn Sáng', time: '20p', difficulty: 'Dễ', author: 'Rolls', likes: 110 },
-  { id: 9, title: 'Bánh Mì Pate Chả Lụa Giòn Rụm', image: 'https://images.unsplash.com/photo-1549488391-584332296305?w=600&q=80', category: 'Ăn Sáng', time: '10p', difficulty: 'Dễ', author: 'Banh Mi', likes: 150 },
-  { id: 10, title: 'Canh Chua Cá Lóc Miền Tây', image: 'https://images.unsplash.com/photo-1604908177453-7462950a6a3b?w=600&q=80', category: 'Món Chính', time: '35p', difficulty: 'Trung bình', author: 'Mẹ Nấu', likes: 140 },
-  { id: 11, title: 'Bánh Xèo Tôm Nhảy Bình Định', image: 'https://images.unsplash.com/photo-1519624029237-7c0ac7297e68?w=600&q=80', category: 'Món Chính', time: '40p', difficulty: 'Trung bình', author: 'Binh Dinh', likes: 180 },
-  { id: 12, title: 'Lẩu Thái Tom Yum Chua Cay', image: 'https://images.unsplash.com/photo-1546241072-48010ad2862c?w=600&q=80', category: 'Món Chính', time: '45p', difficulty: 'Trung bình', author: 'Thai Food', likes: 220 },
-  { id: 13, title: 'Chè Khúc Bạch Hạnh Nhân', image: 'https://images.unsplash.com/photo-1623065422902-30a2d299bbe4?w=600&q=80', category: 'Tráng Miệng', time: '60p', difficulty: 'Trung bình', author: 'Sweet', likes: 130 },
-  { id: 14, title: 'Pizza Hải Sản Phô Mai Mozzarella', image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&q=80', category: 'Món Chính', time: '45p', difficulty: 'Khó', author: 'Pizza Home', likes: 310 },
-  { id: 15, title: 'Sushi Cá Hồi & Sashimi Tươi Sống', image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=600&q=80', category: 'Món Chính', time: '50p', difficulty: 'Khó', author: 'Japan Food', likes: 280 },
-  { id: 16, title: 'Trà Đào Cam Sả Mát Lạnh', image: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=600&q=80', category: 'Đồ Uống', time: '15p', difficulty: 'Dễ', author: 'Highland', likes: 170 }
-])
+const diffLevelMap = { 'Easy': 1, 'Medium': 2, 'Hard': 3 }
 
-const filters = ref({ category: 'all', difficulty: '', time: '', sort: 'newest' })
+async function fetchPostsRaw() {
+  loading.value = true
+  try {
+    const keyword = route.query.q || ''
+    const sortMap = { newest: 'newest', popular: 'views', rating: 'rating' }
+    const res = await api.get('/api/posts/search', { params: {
+      keyword,
+      categoryID: filters.value.category || undefined,
+      sort: sortMap[filters.value.sort] || 'newest'
+    }})
+    let mapped = res.data.map(dto => ({
+      ...normalizePost(dto),
+      _level: dto.level,
+      _cookingTime: dto.cookingTime || 0,
+      _categoryID: dto.categoryID
+    }))
+    if (filters.value.difficulty) {
+      const level = diffLevelMap[filters.value.difficulty]
+      mapped = mapped.filter(p => p._level === level)
+    }
+    if (filters.value.time === 'short') mapped = mapped.filter(p => p._cookingTime <= 30)
+    if (filters.value.time === 'medium') mapped = mapped.filter(p => p._cookingTime > 30 && p._cookingTime <= 60)
+    if (filters.value.time === 'long') mapped = mapped.filter(p => p._cookingTime > 60)
+    allPosts.value = mapped
+  } catch (err) {
+    toast.warn(t('toast.search_error'))
+    allPosts.value = []
+  } finally {
+    loading.value = false
+  }
+}
 
-// Computed Logic
-const filteredResults = computed(() => {
-  let result = allPosts.value
-  if (filters.value.category !== 'all') result = result.filter(p => p.category.toLowerCase().includes(filters.value.category.toLowerCase()))
-  if (filters.value.difficulty) result = result.filter(p => p.difficulty === filters.value.difficulty)
-  if (filters.value.time === 'short') result = result.filter(p => parseInt(p.time) <= 30)
-  if (filters.value.time === 'medium') result = result.filter(p => parseInt(p.time) > 30 && parseInt(p.time) <= 60)
-  if (filters.value.time === 'long') result = result.filter(p => parseInt(p.time) > 60)
-  if (route.query.q) result = result.filter(p => p.title.toLowerCase().includes(route.query.q.toLowerCase()))
-  if (filters.value.sort === 'newest') result.sort((a, b) => b.id - a.id)
-  if (filters.value.sort === 'popular') result.sort((a, b) => b.likes - a.likes)
-  return result
-})
-
-const totalResults = computed(() => filteredResults.value.length)
+const totalResults = computed(() => allPosts.value.length)
 const totalPages = computed(() => Math.ceil(totalResults.value / itemsPerPage))
 const paginatedPosts = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage
-  return filteredResults.value.slice(start, start + itemsPerPage)
+  return allPosts.value.slice(start, start + itemsPerPage)
 })
 
 const visiblePages = computed(() => {
@@ -197,8 +198,8 @@ const visiblePages = computed(() => {
   } else {
     pages.push(1)
     if (currentPage.value > 3) pages.push('...')
-    let start = Math.max(2, currentPage.value - 1)
-    let end = Math.min(totalPages.value - 1, currentPage.value + 1)
+    const start = Math.max(2, currentPage.value - 1)
+    const end = Math.min(totalPages.value - 1, currentPage.value + 1)
     for (let i = start; i <= end; i++) pages.push(i)
     if (currentPage.value < totalPages.value - 2) pages.push('...')
     pages.push(totalPages.value)
@@ -206,22 +207,23 @@ const visiblePages = computed(() => {
   return pages
 })
 
-// Actions
-const quickFilter = (cat) => filters.value.category = cat
-const resetFilters = () => { filters.value = { category: 'all', difficulty: '', time: '', sort: 'newest' }; router.push({ query: {} }) }
+const quickFilter = (keyword) => { router.push({ query: { q: keyword } }) }
+const resetFilters = () => { filters.value = { category: null, difficulty: '', time: '', sort: 'newest' }; router.push({ query: {} }) }
 const goToPage = (p) => { if (p !== '...') { currentPage.value = p; window.scrollTo({ top: 400, behavior: 'smooth' }) } }
 const goToDetail = (id) => router.push(`/home/post/${id}`)
 const handleSave = (id) => console.log('Saved', id)
 
-// Hooks
-watch(filters, () => { currentPage.value = 1 }, { deep: true })
-watch(() => route.query.q, () => { currentPage.value = 1 })
-onMounted(() => { window.addEventListener('scroll', () => { isStuck.value = window.scrollY > 350 }) })
+watch([filters, () => route.query.q], () => { currentPage.value = 1; fetchPostsRaw() }, { deep: true })
+
+onMounted(async () => {
+  window.addEventListener('scroll', () => { isStuck.value = window.scrollY > 350 })
+  const cats = await getCategories().catch(() => [])
+  categories.value = [{ id: null, name: t('common.category_all') }, ...cats.map(c => ({ id: c.categoryID, name: c.categoryName }))]
+  await fetchPostsRaw()
+})
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Mulish:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap');
-
 .search-page-container { width: 100%; min-height: 100vh; background-color: #FAFAF9; font-family: 'Mulish', sans-serif; }
 
 /* 1. HERO DEPTH (AURORA) */
@@ -229,7 +231,7 @@ onMounted(() => { window.addEventListener('scroll', () => { isStuck.value = wind
   position: relative; padding: 100px 20px 140px; text-align: center;
   background: #FFF; overflow: hidden;
 }
-/* Hiệu ứng Blob mờ ảo nền */
+/* Soft blurry blob background effect */
 .blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.6; z-index: 0; animation: float 10s infinite alternate; }
 .blob-1 { width: 300px; height: 300px; background: #FFEDD5; top: -50px; left: -50px; }
 .blob-2 { width: 400px; height: 400px; background: #E0F2FE; bottom: -100px; right: -50px; animation-delay: 5s; }

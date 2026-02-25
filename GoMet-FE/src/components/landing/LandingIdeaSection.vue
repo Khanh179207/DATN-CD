@@ -56,8 +56,6 @@
 </template>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Quicksand:wght@500;600;700&display=swap');
-
 .idea-section {
   background-color: white; /* Nền trắng sang trọng */
   padding: 100px 0;

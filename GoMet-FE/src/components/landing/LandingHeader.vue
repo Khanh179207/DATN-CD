@@ -10,11 +10,12 @@
       </router-link>
 
       <div class="header-right">
+        <LangSwitcher />
         <a href="#" class="btn-text" @click.prevent="$emit('open-auth', 'login')">
-          Đăng nhập
+          {{ $t('auth.login') }}
         </a>
         <a href="#" class="btn-primary" @click.prevent="$emit('open-auth', 'register')">
-          <span>Đăng ký ngay</span>
+          <span>{{ $t('auth.register') }}</span>
           <div class="arrow-icon">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </div>
@@ -26,6 +27,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import LangSwitcher from '@/components/common/LangSwitcher.vue'
 
 defineEmits(['open-auth'])
 
@@ -46,8 +48,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Quicksand:wght@500;600;700&display=swap');
-
 /* --- ✨ DYNAMIC HEADER CONTAINER ✨ --- */
 .landing-header {
   position: fixed; top: 0; left: 0; width: 100%; z-index: 1000;

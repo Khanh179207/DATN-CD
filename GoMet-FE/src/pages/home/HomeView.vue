@@ -13,50 +13,50 @@
 
     <div class="main-content">
       
-      <div class="hero-wrapper reveal-on-scroll">
+      <div class="hero-wrapper">
         <HomeHero @view-detail="goToDetail" />
       </div>
 
-      <div class="marquee-slim reveal-on-scroll delay-100">
+      <div class="marquee-slim reveal-fade">
         <div class="marquee-track">
           <div class="marquee-group">
-            <span class="marquee-item">TINH HOA BẾP VIỆT <span class="star">✦</span></span>
-            <span class="marquee-item">KHƠI NGUỒN CẢM HỨNG <span class="star">✦</span></span>
-            <span class="marquee-item">HƯƠNG VỊ ĐỘC BẢN <span class="star">✦</span></span>
-            <span class="marquee-item">TINH HOA BẾP VIỆT <span class="star">✦</span></span>
-            <span class="marquee-item">KHƠI NGUỒN CẢM HỨNG <span class="star">✦</span></span>
-            <span class="marquee-item">HƯƠNG VỊ ĐỘC BẢN <span class="star">✦</span></span>
+            <span class="marquee-item">ESSENCE OF VIETNAMESE CUISINE <span class="star">✦</span></span>
+            <span class="marquee-item">SPARK YOUR INSPIRATION <span class="star">✦</span></span>
+            <span class="marquee-item">SIGNATURE FLAVORS <span class="star">✦</span></span>
+            <span class="marquee-item">ESSENCE OF VIETNAMESE CUISINE <span class="star">✦</span></span>
+            <span class="marquee-item">SPARK YOUR INSPIRATION <span class="star">✦</span></span>
+            <span class="marquee-item">SIGNATURE FLAVORS <span class="star">✦</span></span>
           </div>
         </div>
       </div>
 
-      <section class="section-wrapper compact-section reveal-on-scroll">
+      <section class="section-wrapper compact-section">
         <div class="bg-typo-decor" :style="{ transform: `translate(-50%, ${scrollY * 0.15}px)` }">CATEGORY</div>
         
-        <div class="section-header text-center">
-          <span class="premium-tag">KHÁM PHÁ</span>
-          <h2 class="section-title">Thực Đơn <span class="highlight-text">Đa Dạng</span></h2>
+        <div class="section-header text-center reveal-up">
+          <span class="premium-tag">EXPLORE</span>
+          <h2 class="section-title">Diverse <span class="highlight-text">Menu</span></h2>
         </div>
-        <HomeCategorySection />
+        <div class="reveal-up delay-200"><HomeCategorySection /></div>
       </section>
 
-      <div class="slogan-strip reveal-zoom">
+      <div class="slogan-strip reveal-scale">
         <div class="slogan-content">
           <h3 class="slogan-text">
-            “Nấu ăn là nghệ thuật, người đầu bếp là <span class="glow-text">nghệ sĩ</span>.”
+            "Cooking is an art, and the chef is the <span class="glow-text">artist</span>."
           </h3>
         </div>
       </div>
 
-      <section class="section-wrapper compact-section reveal-on-scroll">
-        <div class="section-header text-center">
-          <span class="premium-tag">CẬP NHẬT MỖI NGÀY</span>
-          <h2 class="section-title">Tác Phẩm Mới Nhất</h2>
+      <section class="section-wrapper compact-section">
+        <div class="section-header text-center reveal-up">
+          <span class="premium-tag">UPDATED DAILY</span>
+          <h2 class="section-title">Latest Creations</h2>
         </div>
-        <HomeLatestRecipes />
+        <div class="reveal-up delay-200"><HomeLatestRecipes /></div>
       </section>
 
-      <section class="newsletter-immersive reveal-on-scroll">
+      <section class="newsletter-immersive reveal-up">
         <svg class="wave-top" viewBox="0 0 1440 80" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M0,20 C320,90 420,-10 740,30 C1060,70 1120,10 1440,20 V80 H0 V20 Z" fill="#1C1917"/>
         </svg>
@@ -64,14 +64,14 @@
         <div class="nl-content">
             <div class="nl-row">
                 <div class="nl-info">
-                    <h2 class="nl-heading">Gia Nhập <br> <span class="orange-txt">Bếp Nhà Gomet</span></h2>
-                    <p class="nl-desc">Nhận ngay công thức bí truyền và mẹo vặt nhà bếp độc quyền mỗi tuần.</p>
+                    <h2 class="nl-heading">Join the <br> <span class="orange-txt">GoMet Kitchen</span></h2>
+                    <p class="nl-desc">Get exclusive secret recipes and kitchen tips delivered weekly.</p>
                 </div>
                 <div class="nl-action">
                     <div class="arty-input">
-                        <input type="email" placeholder="Email của bạn..." />
+                        <input type="email" placeholder="Your email address..." />
                         <button class="btn-submit magnetic-btn">
-                            GỬI NGAY
+                            SUBSCRIBE
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12H19M12 5L19 12L12 19"/></svg>
                         </button>
                     </div>
@@ -112,62 +112,72 @@ const goToDetail = (id) => {
   router.push({ name: 'PostDetail', params: { id: id } })
 }
 
-// --- ✨ ANIMATION LOGIC (LẮNG NGHE TỪ LAYOUT) ✨ ---
+// --- ✨ ANIMATION LOGIC ✨ ---
 const handleScroll = (event) => {
-  scrollY.value = event.target.scrollTop;
+  scrollY.value = event.target.scrollTop
 }
 
 const setupIntersectionObserver = () => {
-  const scrollContainer = document.getElementById('main-scroll-container');
-  
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('is-visible');
-        observer.unobserve(entry.target);
-      }
-    });
-  }, { 
-    threshold: 0.15,
-    root: scrollContainer 
-  });
+  const scrollContainer = document.getElementById('main-scroll-container')
+  const ANIM_CLASSES = '.reveal-up, .reveal-fade, .reveal-scale'
 
-  document.querySelectorAll('.reveal-on-scroll, .reveal-zoom').forEach(el => {
-    observer.observe(el);
-  });
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          // respect data-delay attribute for stagger
+          const delay = entry.target.dataset.delay || 0
+          setTimeout(() => {
+            entry.target.classList.add('is-visible')
+          }, delay)
+          observer.unobserve(entry.target)
+        }
+      })
+    },
+    {
+      threshold: 0.08,
+      root: scrollContainer || null,
+      rootMargin: '0px 0px -60px 0px'
+    }
+  )
+
+  document.querySelectorAll(ANIM_CLASSES).forEach((el) => {
+    observer.observe(el)
+  })
 }
 
 onMounted(() => {
   pickRandomAd()
   setTimeout(() => { showAdPopup.value = true }, 2000)
 
-  const scrollContainer = document.getElementById('main-scroll-container');
+  const scrollContainer = document.getElementById('main-scroll-container')
   if (scrollContainer) {
-    scrollContainer.addEventListener('scroll', handleScroll);
-    setupIntersectionObserver();
+    scrollContainer.addEventListener('scroll', handleScroll, { passive: true })
   } else {
-    // Fallback phòng hờ
-    window.addEventListener('scroll', () => scrollY.value = window.scrollY);
+    window.addEventListener('scroll', () => { scrollY.value = window.scrollY }, { passive: true })
   }
+
+  // Small delay to allow DOM to paint before attaching observer
+  requestAnimationFrame(() => {
+    setupIntersectionObserver()
+  })
 })
 
 onUnmounted(() => {
-  const scrollContainer = document.getElementById('main-scroll-container');
+  const scrollContainer = document.getElementById('main-scroll-container')
   if (scrollContainer) {
-    scrollContainer.removeEventListener('scroll', handleScroll);
+    scrollContainer.removeEventListener('scroll', handleScroll)
   }
 })
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Mulish:wght@300;400;600;800&family=Montserrat:wght@800;900&display=swap');
-
 .home-page-container {
   width: 100%; 
   background-color: #FFFFFF; 
   font-family: 'Mulish', sans-serif;
   color: #1C1917;
-  /* Không set height/overflow để tránh 2 thanh cuộn */
+  /* Do not set height/overflow to avoid double scrollbars */
 }
 
 .bg-texture {
@@ -179,26 +189,67 @@ onUnmounted(() => {
 .main-content { position: relative; z-index: 2; }
 .hero-wrapper { padding-bottom: 0px; }
 
-/* ANIMATION CLASSES */
-.reveal-on-scroll { opacity: 0; transform: translateY(40px); transition: all 1s cubic-bezier(0.2, 0.8, 0.2, 1); }
-.reveal-on-scroll.is-visible { opacity: 1; transform: translateY(0); }
-.delay-100 { transition-delay: 0.1s; }
-.reveal-zoom { opacity: 0; transform: scale(0.95); transition: all 1.2s ease-out; }
-.reveal-zoom.is-visible { opacity: 1; transform: scale(1); }
+/* ─────────────────────────────────────────────
+   ANIMATION SYSTEM — smooth, GPU-accelerated
+───────────────────────────────────────────── */
+:root { --anim-duration: 0.75s; --anim-ease: cubic-bezier(0.22, 1, 0.36, 1); }
+
+/* Slide up (main reveal) */
+.reveal-up {
+  opacity: 0;
+  transform: translateY(36px);
+  transition: opacity var(--anim-duration) var(--anim-ease),
+              transform var(--anim-duration) var(--anim-ease);
+  will-change: opacity, transform;
+}
+.reveal-up.is-visible { opacity: 1; transform: translateY(0); }
+
+/* Fade only (for marquee, subtle elements) */
+.reveal-fade {
+  opacity: 0;
+  transition: opacity 0.9s ease;
+  will-change: opacity;
+}
+.reveal-fade.is-visible { opacity: 1; }
+
+/* Scale (for bold blocks like slogan strip) */
+.reveal-scale {
+  opacity: 0;
+  transform: scaleY(0.88);
+  transform-origin: top center;
+  transition: opacity 0.8s var(--anim-ease),
+              transform 0.8s var(--anim-ease);
+  will-change: opacity, transform;
+}
+.reveal-scale.is-visible { opacity: 1; transform: scaleY(1); }
+
+/* Stagger delays */
+.delay-100 { transition-delay: 0.10s; }
+.delay-150 { transition-delay: 0.15s; }
+.delay-200 { transition-delay: 0.20s; }
+.delay-300 { transition-delay: 0.30s; }
 
 /* SECTIONS */
 .section-wrapper { max-width: 1280px; margin: 0 auto; position: relative; }
 .compact-section { padding: 40px 24px; } 
 .text-center { text-align: center; margin-bottom: 30px; position: relative; z-index: 2; }
-.premium-tag { font-size: 0.7rem; font-weight: 800; letter-spacing: 3px; color: #EA580C; margin-bottom: 8px; display: block; text-transform: uppercase; }
-.section-title { font-family: 'Playfair Display', serif; font-size: 2.5rem; color: #1C1917; margin: 0; line-height: 1.1; }
+.premium-tag {
+  font-size: 0.7rem; font-weight: 800; letter-spacing: 3px; color: #EA580C;
+  margin-bottom: 8px; display: inline-flex; align-items: center; gap: 10px;
+  text-transform: uppercase;
+}
+.premium-tag::before,
+.premium-tag::after { content: ""; display: block; width: 20px; height: 1px; background: currentColor; opacity: 0.5; }
+.section-title { font-family: 'Playfair Display', serif; font-size: 2.6rem; color: #1C1917; margin: 0; line-height: 1.08; letter-spacing: -0.02em; }
 .highlight-text { font-style: italic; color: #EA580C; }
 
 /* MARQUEE */
 .marquee-slim {
-  padding: 15px 0; margin: 20px 0 30px; 
+  padding: 16px 0; margin: 20px 0 30px;
   border-top: 1px solid rgba(28, 25, 23, 0.08); border-bottom: 1px solid rgba(28, 25, 23, 0.08);
   background: #FFFFFF; overflow: hidden; white-space: nowrap; user-select: none;
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 7%, black 93%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 7%, black 93%, transparent 100%);
 }
 .marquee-track { display: flex; width: fit-content; animation: scroll 45s linear infinite; }
 .marquee-group { display: flex; align-items: center; gap: 60px; padding-right: 60px; }
@@ -217,10 +268,15 @@ onUnmounted(() => {
 
 /* SLOGAN */
 .slogan-strip {
-  background: #1C1917; padding: 50px 24px; text-align: center; margin: 30px 0;
-  background-image: radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px); background-size: 30px 30px;
+  padding: 60px 24px; text-align: center; margin: 40px 0;
+  background-color: #1C1917;
+  background-image:
+    radial-gradient(circle at 15% 50%, rgba(234, 88, 12, 0.12) 0%, transparent 35%),
+    radial-gradient(circle at 85% 50%, rgba(234, 88, 12, 0.10) 0%, transparent 30%),
+    radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px);
+  background-size: auto, auto, 28px 28px;
 }
-.slogan-text { font-family: 'Playfair Display', serif; font-size: 1.8rem; font-weight: 400; color: #F5F5F4; max-width: 800px; margin: 0 auto; line-height: 1.4; }
+.slogan-text { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 400; color: #F5F5F4; max-width: 850px; margin: 0 auto; line-height: 1.4; letter-spacing: -0.01em; }
 .glow-text { color: #EA580C; font-style: italic; text-shadow: 0 0 15px rgba(234, 88, 12, 0.4); }
 
 /* NEWSLETTER */
@@ -228,7 +284,7 @@ onUnmounted(() => {
 .wave-top { display: block; width: 100%; height: 60px; margin-bottom: -1px; }
 .nl-content { background: #1C1917; padding: 30px 24px 80px; }
 .nl-row { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 40px; }
-.nl-heading { font-family: 'Playfair Display', serif; font-size: 2.8rem; color: white; line-height: 1.1; margin-bottom: 10px; }
+.nl-heading { font-family: 'Playfair Display', serif; font-size: 3rem; color: white; line-height: 1.08; letter-spacing: -0.02em; margin-bottom: 10px; }
 .orange-txt { color: #EA580C; font-style: italic; }
 .nl-desc { color: #A8A29E; font-size: 1rem; max-width: 400px; }
 .arty-input { display: flex; align-items: center; border-bottom: 2px solid #57534E; padding-bottom: 5px; width: 450px; transition: 0.3s; }

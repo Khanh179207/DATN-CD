@@ -44,7 +44,7 @@ const handleOpenAuth = (viewName) => {
 }
 
 const handleScroll = () => {
-  // Ưu tiên lấy vị trí cuộn chuẩn nhất của trình duyệt
+  // Use the most accurate scroll position for the browser
   const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
   const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
   
@@ -59,9 +59,9 @@ const scrollToTop = () => {
 }
 
 onMounted(() => {
-  // Đảm bảo sự kiện cuộn được lắng nghe trên toàn bộ cửa sổ
+  // Ensure scroll event is listened on the entire window
   window.addEventListener('scroll', handleScroll, { passive: true });
-  // Chạy thử 1 lần để cập nhật trạng thái ban đầu
+  // Run once to update initial state
   handleScroll();
 })
 
@@ -71,30 +71,30 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* --- ✨ CHIẾN THUẬT: MỞ KHÓA CUỘN NHƯNG GIẤU THANH NHỰA ✨ --- */
+/* --- ✨ STRATEGY: UNLOCK SCROLLING BUT HIDE SCROLLBAR ✨ --- */
 
 :global(html) {
-  /* Cho phép cuộn dọc mượt mà */
+  /* Allow smooth vertical scrolling */
   overflow-y: auto !important;
   overflow-x: hidden !important;
   height: auto !important;
 }
 
 :global(body) {
-  /* Đảm bảo body không bị chặn chiều cao */
+  /* Ensure body height is not blocked */
   min-height: 100vh !important;
   height: auto !important;
   overflow-y: visible !important;
   background-color: #FFFFFF;
   margin: 0;
   
-  /* Giấu thanh cuộn Firefox */
+  /* Hide scrollbar Firefox */
   scrollbar-width: none !important;
-  /* Giấu thanh cuộn IE/Edge */
+  /* Hide scrollbar IE/Edge */
   -ms-overflow-style: none !important;
 }
 
-/* Giấu thanh cuộn Chrome/Safari cho TẤT CẢ mọi thứ */
+/* Hide scrollbar Chrome/Safari for EVERYTHING */
 :global(*::-webkit-scrollbar) {
   display: none !important;
 }
@@ -106,7 +106,7 @@ onUnmounted(() => {
   position: relative;
 }
 
-/* Các style trang trí giữ nguyên */
+/* Decorative styles kept as-is */
 .scroll-progress-container { position: fixed; top: 0; left: 0; width: 100%; height: 3px; z-index: 2000; }
 .scroll-progress-bar { height: 100%; background: linear-gradient(to right, #F97316, #EA580C); width: 0%; transition: width 0.1s ease; }
 .back-to-top { position: fixed; bottom: 30px; right: 30px; width: 46px; height: 46px; background: #1C1917; color: white; border-radius: 50%; border: none; z-index: 999; opacity: 0; transform: translateY(20px); transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1); display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }

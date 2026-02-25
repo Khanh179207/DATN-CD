@@ -9,18 +9,18 @@
 
     <div class="dash-hero animate-enter">
       <div class="hero-left">
-        <h2 class="page-title">Trung Tâm Điều Khiển</h2>
-        <p class="sub-title">Tổng quan thời gian thực hệ thống Gomet • <span class="live-pulse">LIVE</span></p>
+        <h2 class="page-title">Control Center</h2>
+        <p class="sub-title">Real-time overview of the Gomet system • <span class="live-pulse">LIVE</span></p>
       </div>
       <div class="hero-stats glass-card-solid">
         <div class="mini-stat">
-          <span class="lbl">Doanh thu</span>
-          <span class="val text-green">125.4M ₫</span>
+          <span class="lbl">Revenue</span>
+          <span class="val text-green">{{ formatRevenue(stats.estimatedRevenue) }}</span>
         </div>
         <div class="divider-v"></div>
         <div class="mini-stat">
           <span class="lbl">Online</span>
-          <span class="val text-orange">542</span>
+          <span class="val text-orange">{{ stats.activeUsers }}</span>
         </div>
       </div>
     </div>
@@ -29,19 +29,21 @@
       
       <div class="bento-card col-span-2 post-card glass-card animate-stagger" style="--i:1">
         <div class="card-header">
-          <div class="h-title"><i class="fa-solid fa-file-pen"></i> Bài Viết Chờ Duyệt</div>
-          <router-link to="/admin/posts" class="btn-pill">Quản lý ({{ data.posts.length }})</router-link>
+          <div class="h-title"><i class="fa-solid fa-file-pen"></i> Pending Posts</div>
+          <router-link to="/admin/posts" class="btn-pill">Manage ({{ stats.pendingPosts }})</router-link>
         </div>
         <div class="card-body">
+          <div v-if="loading" style="color:#94A3B8;text-align:center;padding:20px">Loading...</div>
+          <div v-else-if="data.posts.length === 0" style="color:#94A3B8;text-align:center;padding:20px">No pending posts</div>
           <div v-for="post in data.posts" :key="post.id" class="list-item-row">
             <img :src="post.image" class="item-thumb" />
             <div class="item-details">
               <span class="i-title">{{ post.title }}</span>
-              <span class="i-sub">Đăng bởi <b>{{ post.author }}</b> • {{ post.time }}</span>
+              <span class="i-sub">By <b>{{ post.author }}</b> • {{ post.time }}</span>
             </div>
             <div class="item-actions">
-              <button class="btn-icon-sm check" title="Duyệt"><i class="fa-solid fa-check"></i></button>
-              <button class="btn-icon-sm cross" title="Từ chối"><i class="fa-solid fa-xmark"></i></button>
+              <button @click="approvePost(post.id)" class="btn-icon-sm check" title="Approve"><i class="fa-solid fa-check"></i></button>
+              <button @click="rejectPost(post.id)" class="btn-icon-sm cross" title="Reject"><i class="fa-solid fa-xmark"></i></button>
             </div>
           </div>
         </div>
@@ -49,21 +51,22 @@
 
       <div class="bento-card report-card border-red glass-card animate-stagger" style="--i:2">
         <div class="card-header">
-          <div class="h-title text-red"><i class="fa-solid fa-triangle-exclamation"></i> Khiếu Nại</div>
-          <span class="count-badge red">{{ data.reports.length }}</span>
+          <div class="h-title text-red"><i class="fa-solid fa-triangle-exclamation"></i> Reports</div>
+          <span class="count-badge red">{{ stats.totalReports }}</span>
         </div>
         <div class="card-body">
+          <div v-if="data.reports.length === 0" style="color:#94A3B8;font-size:0.85rem">No recent reports</div>
           <div v-for="rp in data.reports" :key="rp.id" class="report-row">
             <span class="tag-reason">{{ rp.reason }}</span>
             <div class="rp-target">{{ rp.target }}</div>
-            <router-link to="/admin/reports" class="link-arrow">Xử lý →</router-link>
+            <router-link to="/admin/reports" class="link-arrow">Handle →</router-link>
           </div>
         </div>
       </div>
 
       <div class="bento-card event-card glass-card animate-stagger" style="--i:3">
         <div class="card-header">
-          <div class="h-title"><i class="fa-regular fa-calendar-check"></i> Sự Kiện</div>
+          <div class="h-title"><i class="fa-regular fa-calendar-check"></i> Events</div>
           <router-link to="/admin/events" class="icon-link"><i class="fa-solid fa-arrow-right"></i></router-link>
         </div>
         <div class="card-body scroll-y">
@@ -81,7 +84,7 @@
 
       <div class="bento-card user-card glass-card animate-stagger" style="--i:4">
         <div class="card-header">
-          <div class="h-title"><i class="fa-solid fa-users"></i> Người Dùng Mới</div>
+          <div class="h-title"><i class="fa-solid fa-users"></i> New Users</div>
           <router-link to="/admin/users" class="icon-link"><i class="fa-solid fa-arrow-right"></i></router-link>
         </div>
         <div class="card-body row-flex">
@@ -97,8 +100,8 @@
 
       <div class="bento-card comment-card glass-card animate-stagger" style="--i:5">
         <div class="card-header">
-          <div class="h-title"><i class="fa-regular fa-comments"></i> Bình Luận Mới</div>
-          <router-link to="/admin/comments" class="btn-pill-xs">Duyệt</router-link>
+          <div class="h-title"><i class="fa-regular fa-comments"></i> New Comments</div>
+          <router-link to="/admin/comments" class="btn-pill-xs">Review</router-link>
         </div>
         <div class="card-body">
           <div v-for="cmt in data.comments" :key="cmt.id" class="chat-bubble">
@@ -109,7 +112,7 @@
 
       <div class="bento-card cat-card glass-card animate-stagger" style="--i:6">
         <div class="card-header">
-          <div class="h-title"><i class="fa-solid fa-list"></i> Danh Mục</div>
+          <div class="h-title"><i class="fa-solid fa-list"></i> Categories</div>
           <router-link to="/admin/categories" class="icon-link"><i class="fa-solid fa-pen"></i></router-link>
         </div>
         <div class="card-body tag-cloud">
@@ -120,7 +123,7 @@
 
       <div class="bento-card ach-card glass-card animate-stagger" style="--i:7">
         <div class="card-header">
-          <div class="h-title"><i class="fa-solid fa-medal"></i> Danh Hiệu</div>
+          <div class="h-title"><i class="fa-solid fa-medal"></i> Badges</div>
           <router-link to="/admin/achievements" class="icon-link"><i class="fa-solid fa-trophy"></i></router-link>
         </div>
         <div class="card-body medal-list">
@@ -132,8 +135,8 @@
 
       <div class="bento-card noti-card col-span-2 glass-card animate-stagger" style="--i:8">
         <div class="card-header">
-          <div class="h-title"><i class="fa-regular fa-bell"></i> Thông Báo Hệ Thống</div>
-          <router-link to="/admin/notifications" class="link-text">Xem lịch sử</router-link>
+          <div class="h-title"><i class="fa-regular fa-bell"></i> System Notifications</div>
+          <router-link to="/admin/notifications" class="link-text">View history</router-link>
         </div>
         <div class="card-body h-flex">
           <div v-for="notif in data.notifications" :key="notif.id" class="noti-pill">
@@ -147,58 +150,106 @@
 </template>
 
 <script setup>
-import { reactive } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
+import api from '@/services/api'
 
-const data = reactive({
-  posts: [
-    { id: 1, title: 'Bò Wellington Thượng Hạng', author: 'Chef Ramsay', time: '10p trước', image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=100' },
-    { id: 2, title: 'Sashimi Cá Hồi Tươi', author: 'SushiMaster', time: '45p trước', image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=100' },
-    { id: 3, title: 'Kỹ thuật làm bánh Macaron', author: 'SweetLife', time: '2h trước', image: 'https://images.unsplash.com/photo-1558326567-98ae2405596b?w=100' }
-  ],
-  reports: [
-    { id: 1, reason: 'Spam QC', target: '@hacker123' },
-    { id: 2, reason: 'Ngôn từ', target: 'Cmt #882' }
-  ],
-  events: [
-    { id: 1, name: 'Top Chef 2026', day: '20', month: 'FEB', progress: 70 },
-    { id: 2, name: 'Workshop Coffee', day: '25', month: 'FEB', progress: 30 }
-  ],
-  users: [
-    { id: 1, name: 'Minh Tuấn', role: 'Member', avatar: 'https://ui-avatars.com/api/?name=Minh+Tuan&background=random' },
-    { id: 2, name: 'Lan Anh', role: 'Chef', avatar: 'https://ui-avatars.com/api/?name=Lan+Anh&background=random' }
-  ],
-  comments: [
-    { id: 1, user: 'An Nhiên', content: 'Công thức tuyệt vời!' },
-    { id: 2, user: 'Bình Minh', content: 'Cần hướng dẫn chi tiết hơn...' }
-  ],
-  categories: [
-    { id: 1, name: 'Món Âu' }, { id: 2, name: 'Món Á' }, { id: 3, name: 'Healthy' }, { id: 4, name: 'Bánh ngọt' }
-  ],
-  achievements: [
-    { id: 1, user: 'Tùng', title: 'Bếp Vàng' },
-    { id: 2, user: 'Cúc', title: 'Thợ Ảnh' }
-  ],
-  notifications: [
-    { id: 1, content: 'Server bảo trì lúc 02:00 AM', time: 'Hôm nay' },
-    { id: 2, content: 'Đã cập nhật chính sách bảo mật', time: 'Hôm qua' }
-  ]
-})
+const stats = reactive({ totalUsers: 0, totalPosts: 0, pendingPosts: 0, totalReports: 0, activeUsers: 0, estimatedRevenue: 0 })
+const data = reactive({ posts: [], reports: [], events: [], users: [], comments: [], categories: [], achievements: [], notifications: [] })
+const loading = ref(true)
+
+const formatRevenue = (v) => v >= 1000000 ? (v / 1000000).toFixed(1) + 'M ₫' : v + ' ₫'
+
+const fetchAll = async () => {
+  loading.value = true
+  try {
+    const [statsRes, postsRes, reportsRes, eventsRes] = await Promise.allSettled([
+      api.get('/admin/stats'),
+      api.get('/api/admin/posts'),
+      api.get('/api/admin/reports'),
+      api.get('/api/events')
+    ])
+
+    if (statsRes.status === 'fulfilled') {
+      const s = statsRes.value.data
+      Object.assign(stats, s)
+    }
+
+    if (postsRes.status === 'fulfilled') {
+      // Only show pending (isApproved=0, isActive=1) in dashboard
+      data.posts = (postsRes.value.data || [])
+        .filter(p => p.isApproved === 0 && p.isActive === 1)
+        .slice(0, 5)
+        .map(p => ({
+          id: p.postID, title: p.title, author: p.accountName || 'Unknown',
+          time: p.createdAt ? new Date(p.createdAt).toLocaleDateString('en-GB') : '',
+          image: p.image || 'https://placehold.co/100x100?text=Post'
+        }))
+    }
+
+    if (reportsRes.status === 'fulfilled') {
+      data.reports = (reportsRes.value.data || []).slice(0, 5).map(r => ({
+        id: r.reportID, reason: r.reason || 'Violation',
+        target: r.postTitle ? `Post: ${r.postTitle}` : `Report #${r.reportID}`
+      }))
+    }
+
+    if (eventsRes.status === 'fulfilled') {
+      const monthAbbr = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+      const now = new Date()
+      data.events = (eventsRes.value.data || []).slice(0, 3).map(e => {
+        const start = e.startAt ? new Date(e.startAt) : null
+        const end   = e.endAt   ? new Date(e.endAt)   : null
+        const isActive = start && end && now >= start && now <= end
+        const progress = isActive ? 60 : (end && now > end ? 100 : 10)
+        return {
+          id: e.eventID,
+          title: e.eventName || `Event #${e.eventID}`,
+          date: start
+            ? { d: String(start.getDate()).padStart(2,'0'), m: monthAbbr[start.getMonth()] }
+            : { d: '--', m: '---' },
+          participants: progress,
+          maxParticipants: 100
+        }
+      })
+    }
+  } catch (e) {
+    console.error('Dashboard fetch error:', e)
+  } finally {
+    loading.value = false
+  }
+}
+
+const approvePost = async (id) => {
+  try {
+    await api.put(`/api/admin/posts/approve/${id}`)
+    data.posts = data.posts.filter(p => p.id !== id)
+    stats.pendingPosts = Math.max(0, stats.pendingPosts - 1)
+  } catch (e) { alert('Error: ' + (e.response?.data?.message || e.message)) }
+}
+
+const rejectPost = async (id) => {
+  try {
+    await api.put(`/api/admin/posts/deactive/${id}`)
+    data.posts = data.posts.filter(p => p.id !== id)
+    stats.pendingPosts = Math.max(0, stats.pendingPosts - 1)
+  } catch (e) { alert('Error: ' + (e.response?.data?.message || e.message)) }
+}
+
+onMounted(fetchAll)
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Mulish:wght@400;600;700;800;900&display=swap');
-
 .dashboard-zenith-master {
   padding: 30px 40px; font-family: 'Mulish', sans-serif;
   color: #1E293B; min-height: 100vh; position: relative;
   overflow: hidden;
 }
 
-/* --- 🌌 AMBIENT CANVAS (Nền động) --- */
+/* --- 🌌 AMBIENT CANVAS (Dynamic background) --- */
 .ambient-canvas { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
 .orb { position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.5; animation: floatOrb 20s infinite alternate ease-in-out; }
-.orb-1 { width: 500px; height: 500px; background: rgba(251, 146, 60, 0.25); top: -100px; left: -100px; } /* Cam nhạt */
-.orb-2 { width: 400px; height: 400px; background: rgba(147, 197, 253, 0.25); bottom: -100px; right: -100px; animation-duration: 25s; } /* Xanh nhạt */
+.orb-1 { width: 500px; height: 500px; background: rgba(251, 146, 60, 0.25); top: -100px; left: -100px; } /* Soft orange */
+.orb-2 { width: 400px; height: 400px; background: rgba(147, 197, 253, 0.25); bottom: -100px; right: -100px; animation-duration: 25s; } /* Soft blue */
 .grid-texture {
   position: absolute; inset: 0; opacity: 0.2;
   background-image: linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);

@@ -1,17 +1,18 @@
 <template>
   <div id="app">
     <router-view />
+    <ToastContainer />
   </div>
 </template>
 
 <script setup>
+import ToastContainer from '@/components/common/ToastContainer.vue'
 </script>
 
 <style>
-/* CSS toàn cục (Giữ lại để dùng chung) */
-body {
-  margin: 0;
-  font-family: 'Quicksand', sans-serif;
-  background-color: #FAFAF9;
-}
+/* Global styles are now handled by:
+   - assets/styles/design-tokens.css (CSS custom properties)
+   - assets/styles/base.css (resets, scrollbar, utilities)
+   Both imported in main.js
+*/
 </style>

@@ -14,6 +14,10 @@ public class AdminPostDTO {
     private Integer isActive;
     private Integer isApproved;
 
-    private String username; // lấy từ Account
-    private String categoryName; // lấy từ Category
+    private String username; // from Account
+    private Integer accountID;
+    private String accountAvatar;
+    private String categoryName; // from Category
+    private Integer categoryID;
+    private java.time.LocalDate createdAt;
 }

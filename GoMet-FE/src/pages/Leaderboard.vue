@@ -1,5 +1,5 @@
 <template>
-  <div class="gomet-hall-master" @mousemove="handleMouseMove">
+  <div class="gomet-hall-master" @mousemove="handleMouseMove" style="background: #FAFAF9; min-height: 100vh;">
   
     <HeroSanctum 
       v-model="activeCategory" 
@@ -15,17 +15,20 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import HeroSanctum from '@/components/leaderboard/HeroSanctum.vue'
 import NetflixRanking from '@/components/leaderboard/NetflixRanking.vue'
 import LegacyFeed from '@/components/leaderboard/LegacyFeed.vue'
+import { getLeaderboardPosts, getLeaderboardUsers } from '@/services/leaderboardService'
 
+const { t } = useI18n()
 const activeCategory = ref('dishes')
 const mousePos = ref({ x: 0, y: 0 })
-const categories = [
-  { id: 'dishes', name: 'BÀI VIẾT TUYỆT TÁC' },
-  { id: 'chefs', name: 'NGƯỜI DÙNG CHẤT LƯỢNG' }
-]
+const categories = computed(() => [
+  { id: 'dishes', name: t('leaderboard.top_dishes') },
+  { id: 'chefs',  name: t('leaderboard.top_chefs') }
+])
 
 const handleMouseMove = (e) => {
   mousePos.value = {
@@ -34,55 +37,92 @@ const handleMouseMove = (e) => {
   }
 }
 
-const leaderboardData = {
-  dishes: {
-    top1: {
-      name: 'Tuyệt Tác Mỳ Ý Carbonara',
-      image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c',
-      chefName: 'Khánh Nguyễn',
-      chefAvatar: 'https://i.pravatar.cc/100?u=1',
-      time: '30 phút',
-      views: '12.5K lượt xem',
-      publishedAt: '15/01/2026',
-      difficulty: 'Trung bình',
-      difficultyClass: 'medium',
-      ingredients: ['Mỳ Ý Spaghetti', 'Trứng gà', 'Phô mai Parmigiano', 'Pancetta', 'Kem tươi', 'Tiêu đen', 'Tỏi', 'Dầu ô liu'],
-      description: 'Sự cân bằng hoàn hảo giữa kỹ thuật cổ điển Ý và nguyên liệu thượng hạng Gomet Elite.'
-    },
-    top10: Array.from({ length: 10 }, (_, i) => ({
-      id: i + 1, name: ['Mỳ Ý Carbonara', 'Sashimi Cá Hồi', 'Bò Wellington', 'Tôm Hùm Phô Mai', 'Gan Ngỗng Pháp'][i] || 'Tuyệt Tác Gomet',
-      pts: 12500 - (i * 900),
-      image: `https://images.unsplash.com/photo-${['1546069901-ba9599a7e63c', '1467003909585-2f8a72700288', '1544025162-d76694265947', '1551218808-94e220e084d2', '1546241072-48010ad28c2c'][i] || '1511690656952-34342bb7c2f2'}`,
-      authorName: 'Khánh Nguyễn', authorAvatar: 'https://i.pravatar.cc/100?u=1'
-    })),
-    feed: [{ id: 11, title: 'Ức Vịt Sốt Cam', pts: '8,450', likes: '1.2K', comments: '142', image: 'https://images.unsplash.com/photo-1511690656952-34342bb7c2f2', authorName: 'Hoàng Nam', authorAvatar: 'https://i.pravatar.cc/100?u=11', description: 'Hương vị béo ngậy tan chảy của thịt vịt thượng hạng.' }]
-  },
-  chefs: {
-    top1: {
-      name: 'Alexander',
-      image: 'https://images.unsplash.com/photo-1583394838336-acd977736f90',
-      chefName: 'Alexander',
-      chefAvatar: 'https://i.pravatar.cc/100?u=alex',
-      time: '15 Năm Exp',
-      views: '450K',
-      description: 'Bậc thầy về nghệ thuật Fine-Dining.',
-      postCount: 128,
-      joinedAt: '12/08/2024',
-      followers: '24.5K'
-    },
-    top10: [
-      { id: 1, name: 'Alexander', image: 'https://i.pravatar.cc/100?u=alex', postCount: 128, joinedAt: '12/08/2024', followers: '24.5K' },
-      { id: 2, name: 'Khánh Nguyễn', image: 'https://i.pravatar.cc/100?u=1', postCount: 96, joinedAt: '05/09/2024', followers: '18.2K' },
-      { id: 3, name: 'Mai Linh', image: 'https://i.pravatar.cc/100?u=ml', postCount: 84, joinedAt: '20/10/2024', followers: '15.8K' },
-      { id: 4, name: 'Hoàng Nam', image: 'https://i.pravatar.cc/100?u=11', postCount: 72, joinedAt: '01/11/2024', followers: '12.3K' },
-      { id: 5, name: 'Thu Hà', image: 'https://i.pravatar.cc/100?u=th', postCount: 65, joinedAt: '14/11/2024', followers: '10.1K' },
-      { id: 6, name: 'Đức Anh', image: 'https://i.pravatar.cc/100?u=da', postCount: 58, joinedAt: '22/12/2024', followers: '9.2K' },
-      { id: 7, name: 'Hương Giang', image: 'https://i.pravatar.cc/100?u=hg', postCount: 51, joinedAt: '08/01/2025', followers: '7.8K' },
-      { id: 8, name: 'Minh Tuấn', image: 'https://i.pravatar.cc/100?u=mt', postCount: 47, joinedAt: '15/01/2025', followers: '6.5K' },
-      { id: 9, name: 'Lan Anh', image: 'https://i.pravatar.cc/100?u=la', postCount: 42, joinedAt: '20/01/2025', followers: '5.9K' },
-      { id: 10, name: 'Quang Huy', image: 'https://i.pravatar.cc/100?u=qh', postCount: 38, joinedAt: '28/01/2025', followers: '5.2K' }
-    ],
-    feed: []
+// ── Data ───────────────────────────────────────────────────
+const dishesTop10 = ref([])
+const usersTop10 = ref([])
+
+function buildDishTop1(list) {
+  if (!list?.length) return null
+  const p = list[0]
+  return {
+    name:            p.title,
+    image:           p.media || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800',
+    chefName:        p.authorName || 'GoMet Chef',
+    chefAvatar:      p.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.authorName||'G')}&background=EA580C&color=fff`,
+    time:            p.cookingTime ? `${p.cookingTime} min` : '—',
+    views:           p.views > 999 ? `${(p.views/1000).toFixed(1)}K views` : `${p.views} views`,
+    publishedAt:     '—',
+    difficulty:      { 1: 'Easy', 2: 'Medium', 3: 'Hard' }[p.level] || 'Medium',
+    difficultyClass: { 1: 'easy', 2: 'medium', 3: 'hard' }[p.level] || 'medium',
+    description:     p.description || 'A culinary masterpiece on GoMet.',
+    ingredients:     (p.ingredients || '').split('•').map(s => s.trim()).filter(Boolean)
   }
 }
+
+function buildUserTop1(list) {
+  if (!list?.length) return null
+  const u = list[0]
+  return {
+    name:        u.username,
+    image:       u.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.username)}&background=EA580C&color=fff`,
+    chefName:    u.username,
+    chefAvatar:  u.avatar || '',
+    time:        '—',
+    views:       u.followerCount > 999 ? `${(u.followerCount/1000).toFixed(1)}K` : `${u.followerCount}`,
+    description: 'Top member on GoMet.',
+    postCount:   u.postCount || 0,
+    joinedAt:    '—',
+    followers:   u.followerCount > 999 ? `${(u.followerCount/1000).toFixed(1)}K` : `${u.followerCount}`
+  }
+}
+
+const leaderboardData = computed(() => ({
+  dishes: {
+    top1:  buildDishTop1(dishesTop10.value),
+    top10: dishesTop10.value.map((p, i) => ({
+      id:           p.postID,
+      name:         p.title,
+      pts:          p.score ? Math.round(p.score) : 0,
+      image:        p.media || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400',
+      authorName:   p.authorName || 'GoMet',
+      authorAvatar: p.authorAvatar || `https://ui-avatars.com/api/?name=G&background=EA580C&color=fff`
+    })),
+    feed: dishesTop10.value.slice(5).map(p => ({
+      id:          p.postID,
+      title:       p.title,
+      pts:         p.score ? Math.round(p.score).toLocaleString() : '0',
+      likes:       p.favoriteCount > 999 ? `${(p.favoriteCount/1000).toFixed(1)}K` : `${p.favoriteCount}`,
+      comments:    `${p.ratingCount || 0}`,
+      image:       p.media || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400',
+      authorName:  p.authorName || 'GoMet',
+      authorAvatar:p.authorAvatar || '',
+      description: p.description || ''
+    }))
+  },
+  chefs: {
+    top1:  buildUserTop1(usersTop10.value),
+    top10: usersTop10.value.map((u, i) => ({
+      id:        u.accountID,
+      name:      u.username,
+      image:     u.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.username)}&background=EA580C&color=fff`,
+      postCount: u.postCount || 0,
+      joinedAt:  '—',
+      followers: u.followerCount > 999 ? `${(u.followerCount/1000).toFixed(1)}K` : `${u.followerCount}`
+    })),
+    feed: []
+  }
+}))
+
+onMounted(async () => {
+  try {
+    const [posts, users] = await Promise.all([
+      getLeaderboardPosts(10),
+      getLeaderboardUsers(10)
+    ])
+    dishesTop10.value = posts
+    usersTop10.value = users
+  } catch (err) {
+    console.warn('Leaderboard: API error', err)
+  }
+})
 </script>

@@ -11,15 +11,15 @@ import SearchPage from '@/pages/search/SearchPage.vue'
 import PostDetail from '@/pages/home/PostDetail.vue'
 import CreatePost from '@/pages/CreatePost.vue'
 
-// --- 3. IMPORT CÁC TRANG MỚI (EDITORIAL LUXURY) ---
+// --- 3. IMPORT NEW PAGES (EDITORIAL LUXURY) ---
 import ProfilePage from '@/pages/profile/ProfilePage.vue'
 import EventList from '@/pages/events/EventList.vue'
 import EventDetail from '@/pages/events/EventDetail.vue'
 import ComparePage from '@/pages/compare/ComparePage.vue'
 
-// 🚀 CÁC TÍNH NĂNG PREMIUM SẾP VỪA THÊM
+// 🚀 NEW PREMIUM FEATURES RECENTLY ADDED
 import Leaderboard from '@/pages/Leaderboard.vue'
-// Lưu ý: Nếu Sếp chưa tạo 2 file dưới đây, hãy tạo file trống trong thư mục pages để không bị lỗi import
+// Note: If the two files below haven't been created yet, create empty placeholder files in the pages folder to avoid import errors
 import Suggestions from '@/pages/suggestions/SuggestionsPage.vue' 
 import MealPlan from '@/pages/mealplan/MealPlanPage.vue'
 
@@ -49,7 +49,7 @@ const routes = [
     ]
   },
 
-  // 2. MAIN APP (Default Layout) - TẬP TRUNG TÍNH NĂNG NGƯỜI DÙNG
+  // 2. MAIN APP (Default Layout) - CORE USER FEATURES
   {
     path: '/', 
     component: DefaultLayout,
@@ -58,36 +58,42 @@ const routes = [
       { path: 'search', name: 'Search', component: SearchPage },
       { path: 'post/:id', name: 'PostDetail', component: PostDetail, props: true },
       
-      // ✅ Route Sự Kiện
+      // ✅ Events Routes
       { path: 'events', name: 'Events', component: EventList },
       { path: 'events/:id', name: 'EventDetail', component: EventDetail },
       
       { 
         path: 'create-post', 
         name: 'CreatePost', 
-        component: CreatePost 
+        component: CreatePost,
+        meta: { requiresAuth: true }
       },
 
-      // ✅ Route Trang cá nhân & Lưu trữ
+      // ✅ Profile & Storage Routes
       {
         path: 'profile',
         name: 'Profile',
         component: ProfilePage
       },
       {
+        path: 'profile/:id',
+        name: 'ProfileById',
+        component: ProfilePage
+      },
+      {
         path: 'storage',
         name: 'Storage',
-        component: () => import('@/pages/storage/StoragePage.vue') // Lazy load cho nhẹ app
+        component: () => import('@/pages/storage/StoragePage.vue') // Lazy load for lighter bundle
       },
 
-      // ✅ Route So Sánh
+      // ✅ Compare Routes
       {
         path: 'compare',
         name: 'Compare',
         component: ComparePage
       },
 
-      // ✨✨✨ CÁC ROUTE PREMIUM MỚI (ĐÃ ĐỒNG BỘ VỚI SIDEBAR) ✨✨✨
+      // ✨✨✨ NEW PREMIUM ROUTES (SYNCED WITH SIDEBAR) ✨✨✨
       {
         path: 'leaderboard',
         name: 'Leaderboard',
@@ -111,21 +117,39 @@ const routes = [
     path: '/admin',
     component: AdminLayout,
     redirect: '/admin/dashboard',
+    meta: { requiresAdmin: true },
     children: [
-      { path: 'dashboard', name: 'AdminDashboard', component: AdminDashboard },
-      { path: 'statistics', name: 'AdminStatistics', component: Statistics },
-      { path: 'posts', name: 'AdminPosts', component: PostManagement },
-      { path: 'categories', name: 'AdminCategories', component: CategoryManagement },
-      { path: 'users', name: 'AdminUsers', component: UserManagement },
-      { path: 'events', name: 'AdminEvents', component: EventManagement },
-      { path: 'comments', name: 'AdminComments', component: CommentManagement },
-      { path: 'reports', name: 'AdminReports', component: ReportManagement },
-      { path: 'achievements', name: 'AdminAchievements', component: AchievementManagement },
-      { path: 'notifications', name: 'AdminNotifications', component: NotificationManagement }
+      { path: 'dashboard',     name: 'AdminDashboard',      component: AdminDashboard },
+      { path: 'statistics',    name: 'AdminStatistics',     component: Statistics },
+      { path: 'posts',         name: 'AdminPosts',          component: PostManagement },
+      { path: 'categories',    name: 'AdminCategories',     component: CategoryManagement },
+      { path: 'users',         name: 'AdminUsers',          component: UserManagement },
+      { path: 'events',        name: 'AdminEvents',         component: EventManagement },
+      { path: 'comments',      name: 'AdminComments',       component: CommentManagement },
+      { path: 'reports',       name: 'AdminReports',        component: ReportManagement },
+      { path: 'achievements',  name: 'AdminAchievements',   component: AchievementManagement },
+      { path: 'notifications', name: 'AdminNotifications',  component: NotificationManagement }
     ]
   },
 
-  // 4. NOT FOUND (Trang 404 sang chảnh)
+  // 4. STANDALONE PAGES (no layout wrapper)
+  {
+    path: '/verify-email',
+    name: 'VerifyEmail',
+    component: () => import('@/pages/VerifyEmailPage.vue')
+  },
+  {
+    path: '/forgot-password',
+    name: 'ForgotPassword',
+    component: () => import('@/pages/ForgotPasswordPage.vue')
+  },
+  {
+    path: '/reset-password',
+    name: 'ResetPassword',
+    component: () => import('@/pages/ResetPasswordPage.vue')
+  },
+
+  // 5. NOT FOUND (404 page)
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
@@ -141,6 +165,35 @@ const router = createRouter({
     if (to.hash) return { el: to.hash, behavior: 'smooth', top: 80 }
     return { top: 0, behavior: 'smooth' }
   }
+})
+
+// ─── NAVIGATION GUARDS ────────────────────────────────────────────────────────
+router.beforeEach((to, from, next) => {
+  const userStr = localStorage.getItem('user')
+  const user    = userStr ? JSON.parse(userStr) : null
+  const isLoggedIn = !!user?.token
+  const isAdmin    = isLoggedIn && (user?.isAdmin === true || user?.isAdmin === 1 || user?.role === 'admin')
+
+  // 1. Admin-only routes: must be logged in AND be an admin
+  if (to.matched.some(r => r.meta?.requiresAdmin)) {
+    if (!isLoggedIn) {
+      // Not logged in → go to home (landing), show a flash in query
+      return next({ path: '/', query: { redirect: to.fullPath } })
+    }
+    if (!isAdmin) {
+      // Logged in but not admin → redirect to main home
+      return next({ path: '/home' })
+    }
+  }
+
+  // 2. Auth-required routes
+  if (to.matched.some(r => r.meta?.requiresAuth)) {
+    if (!isLoggedIn) {
+      return next({ path: '/home', query: { login: '1' } })
+    }
+  }
+
+  next()
 })
 
 export default router

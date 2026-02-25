@@ -236,8 +236,6 @@ const handleVerifyOtp = () => {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Quicksand:wght@500;600;700&display=swap');
-
 /* --- LAYOUT CHÍNH --- */
 .signup-section {
   min-height: 100vh;

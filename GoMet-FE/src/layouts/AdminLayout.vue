@@ -32,38 +32,36 @@ import HeaderAdmin from '@/components/topbar/HeaderAdmin.vue'
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Mulish:wght@400;500;600;700;800&display=swap');
-
 /* --- 🏛️ CORE LAYOUT --- */
 .admin-layout-sovereign {
   display: flex;
   min-height: 100vh;
   width: 100vw;
   background: #F8F9FB;
-  overflow: hidden; /* Ngăn cuộn trang chính */
+  overflow: hidden; /* Prevent main page scrolling */
   font-family: 'Mulish', sans-serif;
 }
 
-/* Sidebar cố định (Giả định component Sidebar có width 270px) */
+/* Fixed sidebar (Assuming Sidebar component has width 270px) */
 .fixed-sidebar {
   position: fixed;
   top: 0; left: 0; bottom: 0;
   width: 270px;
   z-index: 100;
-  /* Nếu component Sidebar của bạn chưa có style fixed thì thêm vào đây */
+  /* If your Sidebar component doesn't have fixed style, add it here */
 }
 
 .main-content-engine {
   flex: 1;
-  margin-left: 270px; /* Đẩy nội dung sang phải bằng chiều rộng Sidebar */
+  margin-left: 270px; /* Push content to the right by Sidebar width */
   display: flex;
   flex-direction: column;
-  height: 100vh; /* Full chiều cao màn hình */
+  height: 100vh; /* Full screen height */
   position: relative;
   z-index: 1;
 }
 
-/* --- ✨ AMBIENT BACKDROP (NỀN ĐỘNG) --- */
+/* --- ✨ AMBIENT BACKDROP (DYNAMIC BACKGROUND) --- */
 .ambient-backdrop {
   position: absolute; inset: 0; pointer-events: none; z-index: -1;
   overflow: hidden; background: #F8F9FB;
@@ -102,23 +100,23 @@ import HeaderAdmin from '@/components/topbar/HeaderAdmin.vue'
   backdrop-filter: blur(15px);
   background: rgba(248, 249, 251, 0.8);
   border-bottom: 1px solid rgba(0,0,0,0.03);
-  /* width: 100% tự động theo flex cha */
+  /* width: 100% auto-adjusted by flex parent */
 }
 
-/* --- 📜 CONTENT VIEWPORT (TRÀN VIỀN) --- */
+/* --- 📜 CONTENT VIEWPORT (OVERFLOW) --- */
 .content-viewport {
   flex: 1;
-  overflow-y: overlay; /* Chrome/Edge: Thanh cuộn đè lên nội dung (đẹp hơn) */
+  overflow-y: overlay; /* Chrome/Edge: Scrollbar overlays content (nicer) */
   overflow-x: hidden;
   
-  /* QUAN TRỌNG: Xóa padding để content con tràn viền */
+  /* IMPORTANT: Remove padding to allow child content overflow */
   padding: 0; 
   
   position: relative;
   scroll-behavior: smooth;
 }
 
-/* Custom Scrollbar (Tinh tế) */
+/* Custom Scrollbar (Refined) */
 .custom-scrollbar::-webkit-scrollbar { width: 6px; }
 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
 .custom-scrollbar::-webkit-scrollbar-thumb {

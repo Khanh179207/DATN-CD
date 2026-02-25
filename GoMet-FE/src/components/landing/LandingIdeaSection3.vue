@@ -20,7 +20,9 @@
           </div>
 
           <div class="float-card calories-card">
-            <span class="icon">🥗</span>
+            <span class="icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 22a9 9 0 1 1 18 0"/><path d="M12 13a5 5 0 0 0 5-5A5 5 0 0 0 9.8 4.2"/><path d="M12 13a5 5 0 0 1-3.5-1.5"/></svg>
+            </span>
             <div class="text-box">
               <span class="label">Dinh dưỡng</span>
               <span class="value">Heathly & Balance</span>
@@ -41,7 +43,9 @@
 
         <div class="features-list">
           <div class="feature-item">
-            <div class="f-icon">✨</div>
+            <div class="f-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
             <div class="f-text">
               <h4>Gợi ý thông minh</h4>
               <p>Đề xuất món ăn dựa trên sở thích của bạn.</p>
@@ -55,7 +59,9 @@
             </div>
           </div>
           <div class="feature-item">
-            <div class="f-icon">🔥</div>
+            <div class="f-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+            </div>
             <div class="f-text">
               <h4>Kiểm soát Calo</h4>
               <p>Tính toán dinh dưỡng cho từng bữa ăn.</p>
@@ -74,8 +80,6 @@
 </template>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Quicksand:wght@500;600;700&display=swap');
-
 .section-plan { 
   background-color: white; /* Nền trắng sạch sẽ */
   padding: 80px 0; 

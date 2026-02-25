@@ -1,0 +1,75 @@
+// ============================================================
+//   GOMET MAIN SCSS ENTRY POINT
+//   Imported in main.js instead of CSS files (or alongside)
+// ============================================================
+@use 'variables' as *;
+@use 'mixins' as *;
+@use 'image-protection';
+
+// ── Shared Component Utilities ────────────────────────────
+
+// Fade-in animation used by multiple components
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.5s ease-out both;
+}
+
+// Skeleton utility class
+.skeleton {
+  @include skeleton;
+  border-radius: $radius-md;
+}
+
+// Orange badge / tag
+.tag-orange {
+  display: inline-block;
+  background: $primary-50;
+  color: $primary-700;
+  border: 1px solid $primary-200;
+  padding: 4px 12px;
+  border-radius: $radius-full;
+  font-size: $text-xs;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+// Difficulty badges
+.badge-easy   { background: #DCFCE7; color: #15803D; }
+.badge-medium { background: #FEF3C7; color: #92400E; }
+.badge-hard   { background: #FEE2E2; color: #991B1B; }
+
+// Section label
+.section-label {
+  @include label-uppercase;
+  display: block;
+  margin-bottom: $space-2;
+}
+
+// Section heading
+.section-heading-xl {
+  @include heading-display($text-4xl);
+  margin-bottom: $space-4;
+}
+
+// Post loading spinner
+.post-loading {
+  @include flex-center;
+  min-height: 60vh;
+  .loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid $neutral-200;
+    border-top-color: $primary-600;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

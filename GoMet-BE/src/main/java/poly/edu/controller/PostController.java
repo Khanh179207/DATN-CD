@@ -1,0 +1,338 @@
+package poly.edu.controller;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import poly.edu.dao.*;
+import poly.edu.dto.*;
+import poly.edu.entity.*;
+
+import java.time.LocalDate;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping("/api/posts")
+@RequiredArgsConstructor
+public class PostController {
+
+    private final PostDAO postDAO;
+    private final RatingDAO ratingDAO;
+    private final FavoriteDAO favoriteDAO;
+    private final CommentDAO commentDAO;
+    private final FollowDAO followDAO;
+    private final AccountDAO accountDAO;
+    private final CategoryDAO categoryDAO;
+    private final CookingStepsDAO cookingStepsDAO;
+
+    // ─── List latest posts (home feed) ─────────────────────────────────
+    @GetMapping("/latest")
+    public ResponseEntity<List<PublicPostDTO>> getLatest(
+            @RequestParam(defaultValue = "8") int limit) {
+        List<Post> posts = postDAO.findLatest().stream()
+                .limit(limit)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(posts.stream().map(this::toPublicDTO).collect(Collectors.toList()));
+    }
+
+    // ─── List all approved posts (paginated) ───────────────────────────
+    @GetMapping
+    public ResponseEntity<List<PublicPostDTO>> getAll(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "12") int size) {
+        List<Post> all = postDAO.findByIsApprovedAndIsActive(1, 1);
+        int from = Math.min((page - 1) * size, all.size());
+        int to   = Math.min(from + size, all.size());
+        List<Post> paged = all.subList(from, to);
+        return ResponseEntity.ok(paged.stream().map(this::toPublicDTO).collect(Collectors.toList()));
+    }
+
+    // ─── Post detail ───────────────────────────────────────────────────
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getDetail(@PathVariable Integer id) {
+        return postDAO.findById(id).map(post -> {
+            // Increment view count
+            post.setViews(post.getViews() + 1);
+            postDAO.save(post);
+
+            PostDetailDTO dto = toDetailDTO(post);
+            return ResponseEntity.ok(dto);
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    // ─── Search ────────────────────────────────────────────────────────
+    @GetMapping("/search")
+    public ResponseEntity<List<PublicPostDTO>> search(
+            @RequestParam(defaultValue = "") String keyword,
+            @RequestParam(required = false) Integer categoryID,
+            @RequestParam(defaultValue = "newest") String sort) {
+        List<Post> posts;
+        if (keyword.isBlank() && categoryID != null) {
+            posts = postDAO.findByCategory_CategoryIDAndIsApprovedAndIsActive(categoryID, 1, 1);
+        } else if (!keyword.isBlank() && categoryID != null) {
+            posts = postDAO.searchByKeywordAndCategory(keyword, categoryID);
+        } else if (!keyword.isBlank()) {
+            posts = postDAO.searchByKeyword(keyword);
+        } else {
+            posts = postDAO.findByIsApprovedAndIsActive(1, 1);
+        }
+
+        List<PublicPostDTO> result = posts.stream().map(this::toPublicDTO).collect(Collectors.toList());
+        if ("views".equals(sort)) {
+            result.sort(Comparator.comparingInt((PublicPostDTO p) -> p.getViews() != null ? p.getViews() : 0).reversed());
+        } else if ("rating".equals(sort)) {
+            result.sort(Comparator.comparingDouble((PublicPostDTO p) -> p.getAvgRating() != null ? p.getAvgRating() : 0).reversed());
+        } else {
+            result.sort(Comparator.comparing((PublicPostDTO p) -> p.getCreatedAt() != null ? p.getCreatedAt().toString() : "").reversed());
+        }
+        return ResponseEntity.ok(result);
+    }
+
+    // ─── Related posts (same category) ────────────────────────────────
+    @GetMapping("/{id}/related")
+    public ResponseEntity<List<PublicPostDTO>> getRelated(
+            @PathVariable Integer id,
+            @RequestParam(defaultValue = "4") int limit) {
+        return postDAO.findById(id).map(post -> {
+            List<Post> related = postDAO.findRelated(post.getCategory().getCategoryID(), id);
+            List<PublicPostDTO> result = related.stream()
+                    .limit(limit)
+                    .map(this::toPublicDTO)
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(result);
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    // ─── Posts by user ─────────────────────────────────────────────────
+    @GetMapping("/by-user/{accountID}")
+    public ResponseEntity<List<PublicPostDTO>> getByUser(@PathVariable Integer accountID) {
+        List<Post> posts = postDAO.findByAccount_AccountIDAndIsApprovedAndIsActive(accountID, 1, 1);
+        return ResponseEntity.ok(posts.stream().map(this::toPublicDTO).collect(Collectors.toList()));
+    }
+
+    // ─── Suggest posts (for SuggestionsPage) ──────────────────────────
+    @GetMapping("/suggest")
+    public ResponseEntity<List<PublicPostDTO>> suggest(
+            @RequestParam(required = false) Integer categoryID,
+            @RequestParam(required = false) Integer difficulty,
+            @RequestParam(required = false) Integer maxTime,
+            @RequestParam(defaultValue = "0") Integer excludeId) {
+        List<Post> all = postDAO.findByIsApprovedAndIsActive(1, 1);
+        List<Post> filtered = all.stream()
+                .filter(p -> categoryID == null || categoryID.equals(p.getCategory().getCategoryID()))
+                .filter(p -> difficulty == null || difficulty.equals(p.getLevel()))
+                .filter(p -> maxTime == null || p.getCookingTime() <= maxTime)
+                .filter(p -> !p.getPostID().equals(excludeId))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(filtered.stream()
+                .limit(20)
+                .map(this::toPublicDTO)
+                .collect(Collectors.toList()));
+    }
+
+    // ─── Trending (leaderboard-worthy) ────────────────────────────────
+    @GetMapping("/trending")
+    public ResponseEntity<List<PublicPostDTO>> getTrending(@RequestParam(defaultValue = "10") int limit) {
+        List<Post> posts = postDAO.findByIsApprovedAndIsActive(1, 1);
+        List<PublicPostDTO> result = posts.stream().map(this::toPublicDTO)
+                .sorted(Comparator.comparingDouble((PublicPostDTO p) -> {
+                    double views = p.getViews() != null ? p.getViews() / 1000.0 : 0;
+                    double rating = p.getAvgRating() != null ? p.getAvgRating() : 0;
+                    double fav = p.getFavoriteCount() != null ? p.getFavoriteCount() / 10.0 : 0;
+                    return views + rating + fav;
+                }).reversed())
+                .limit(limit)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(result);
+    }
+
+    // ─── Mapping helpers ──────────────────────────────────────────────
+
+    PublicPostDTO toPublicDTO(Post p) {
+        PublicPostDTO dto = new PublicPostDTO();
+        dto.setPostID(p.getPostID());
+        dto.setTitle(p.getTitle());
+        dto.setDescription(p.getDescription());
+        dto.setMedia(p.getMedia());
+        dto.setLevel(p.getLevel());
+        dto.setCookingTime(p.getCookingTime());
+        dto.setViews(p.getViews());
+        dto.setCreatedAt(p.getCreatedAt());
+
+        if (p.getAccount() != null) {
+            dto.setAuthorID(p.getAccount().getAccountID());
+            dto.setAuthorName(p.getAccount().getUsername());
+            dto.setAuthorAvatar(p.getAccount().getAvatar());
+        }
+        if (p.getCategory() != null) {
+            dto.setCategoryID(p.getCategory().getCategoryID());
+            dto.setCategoryName(p.getCategory().getCategoryName());
+        }
+
+        // Aggregate: ratings
+        List<Rating> ratings = p.getRatings();
+        if (ratings != null && !ratings.isEmpty()) {
+            dto.setAvgRating(ratings.stream()
+                    .mapToInt(Rating::getRate)
+                    .average()
+                    .orElse(0));
+            dto.setRatingCount((long) ratings.size());
+        } else {
+            dto.setAvgRating(0.0);
+            dto.setRatingCount(0L);
+        }
+
+        long commentCount = p.getComments() != null ? p.getComments().size() : 0;
+        dto.setCommentCount(commentCount);
+
+        long favCount = p.getFavorites() != null ? p.getFavorites().size() : 0;
+        dto.setFavoriteCount(favCount);
+
+        return dto;
+    }
+
+    private PostDetailDTO toDetailDTO(Post p) {
+        PostDetailDTO dto = new PostDetailDTO();
+        dto.setPostID(p.getPostID());
+        dto.setTitle(p.getTitle());
+        dto.setDescription(p.getDescription());
+        dto.setIngredients(p.getIngredients());
+        dto.setMedia(p.getMedia());
+        dto.setLevel(p.getLevel());
+        dto.setCookingTime(p.getCookingTime());
+        dto.setViews(p.getViews());
+        dto.setCreatedAt(p.getCreatedAt());
+
+        if (p.getAccount() != null) {
+            Account author = p.getAccount();
+            dto.setAuthorID(author.getAccountID());
+            dto.setAuthorName(author.getUsername());
+            dto.setAuthorAvatar(author.getAvatar());
+
+            long postCount = author.getPosts() != null ? author.getPosts().stream()
+                    .filter(ap -> ap.getIsApproved() == 1 && ap.getIsActive() == 1).count() : 0;
+            dto.setAuthorPostCount(postCount);
+
+            long followerCount = followDAO.countByFollowee_AccountIDAndStatus(author.getAccountID(), 1);
+            dto.setAuthorFollowerCount(followerCount);
+        }
+        if (p.getCategory() != null) {
+            dto.setCategoryID(p.getCategory().getCategoryID());
+            dto.setCategoryName(p.getCategory().getCategoryName());
+        }
+        if (p.getEvent() != null) {
+            dto.setEventID(p.getEvent().getEventID());
+            dto.setEventName(p.getEvent().getEventName());
+        }
+
+        // Ratings
+        List<Rating> ratings = p.getRatings();
+        if (ratings != null && !ratings.isEmpty()) {
+            dto.setAvgRating(ratings.stream().mapToInt(Rating::getRate).average().orElse(0));
+            dto.setRatingCount((long) ratings.size());
+        } else {
+            dto.setAvgRating(0.0);
+            dto.setRatingCount(0L);
+        }
+
+        dto.setCommentCount(p.getComments() != null ? (long) p.getComments().size() : 0L);
+        dto.setFavoriteCount(p.getFavorites() != null ? (long) p.getFavorites().size() : 0L);
+
+        // Steps
+        if (p.getCookingSteps() != null) {
+            List<CookingStepDTO> steps = p.getCookingSteps().stream()
+                    .sorted(Comparator.comparingInt(CookingSteps::getStepNumber))
+                    .map(s -> {
+                        CookingStepDTO sdto = new CookingStepDTO();
+                        sdto.setStepID(s.getStepID());
+                        sdto.setStepNumber(s.getStepNumber());
+                        sdto.setContent(s.getContent());
+                        sdto.setImage(s.getImage());
+                        sdto.setVideo(s.getVideo());
+                        return sdto;
+                    }).collect(Collectors.toList());
+            dto.setSteps(steps);
+        }
+
+        // Comments
+        if (p.getComments() != null) {
+            List<CommentDTO> comments = p.getComments().stream().map(c -> {
+                CommentDTO cdto = new CommentDTO();
+                cdto.setCommentID(c.getCommentID());
+                cdto.setPostID(p.getPostID());
+                cdto.setContent(c.getContent());
+                if (c.getAccount() != null) {
+                    cdto.setAccountID(c.getAccount().getAccountID());
+                    cdto.setAuthorName(c.getAccount().getUsername());
+                    cdto.setAuthorAvatar(c.getAccount().getAvatar());
+                    // Try to find their rating for this post
+                    ratingDAO.findByAccount_AccountIDAndPost_PostID(c.getAccount().getAccountID(), p.getPostID())
+                            .ifPresent(r -> cdto.setRating(r.getRate()));
+                }
+                return cdto;
+            }).collect(Collectors.toList());
+            dto.setComments(comments);
+        }
+
+        return dto;
+    }
+
+    // ─── Create post ────────────────────────────────────────────────────
+    @PostMapping
+    public ResponseEntity<?> createPost(@RequestBody Map<String, Object> body) {
+        try {
+            Integer accountID = (Integer) body.get("accountID");
+            Integer categoryID = (Integer) body.get("categoryID");
+            String title = (String) body.getOrDefault("title", "");
+            String description = (String) body.getOrDefault("description", "");
+            String ingredients = (String) body.getOrDefault("ingredients", "");
+            String media = (String) body.getOrDefault("media", "");
+            Integer level = body.get("level") instanceof Integer ? (Integer) body.get("level")
+                         : body.get("level") != null ? Integer.parseInt(body.get("level").toString()) : 2;
+            Integer cookingTime = body.get("cookingTime") instanceof Integer ? (Integer) body.get("cookingTime")
+                               : body.get("cookingTime") != null ? Integer.parseInt(body.get("cookingTime").toString()) : 30;
+
+            Account account = accountDAO.findById(accountID).orElse(null);
+            if (account == null) return ResponseEntity.badRequest().body("Invalid accountID");
+            Category category = categoryDAO.findById(categoryID).orElse(null);
+            if (category == null) return ResponseEntity.badRequest().body("Invalid categoryID");
+
+            Post post = Post.builder()
+                    .account(account)
+                    .category(category)
+                    .title(title)
+                    .description(description)
+                    .ingredients(ingredients)
+                    .media(media)
+                    .level(level)
+                    .cookingTime(cookingTime)
+                    .views(0)
+                    .isActive(1)
+                    .isApproved(0)
+                    .createdAt(LocalDate.now())
+                    .build();
+            post = postDAO.save(post);
+
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> steps = (List<Map<String, Object>>) body.get("steps");
+            if (steps != null) {
+                final Post savedPost = post;
+                for (int i = 0; i < steps.size(); i++) {
+                    Map<String, Object> s = steps.get(i);
+                    CookingSteps step = new CookingSteps();
+                    step.setPost(savedPost);
+                    step.setStepNumber(i + 1);
+                    step.setContent((String) s.getOrDefault("desc", ""));
+                    step.setImage((String) s.getOrDefault("image", null));
+                    cookingStepsDAO.save(step);
+                }
+            }
+
+            return ResponseEntity.ok(Map.of("postID", post.getPostID(), "message", "Post created and pending approval"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+        }
+    }
+}

@@ -3,25 +3,27 @@
     <div class="container">
       
       <div class="page-header">
-        <h1>So sánh món ăn ⚖️</h1>
-        <button class="btn-back" @click="$router.push('/')">← Quay lại trang chủ</button>
+        <h1>Compare Dishes ⚖️</h1>
+        <button class="btn-back" @click="$router.push('/')">← Back to Home</button>
       </div>
 
       <div v-if="compareStore.items.length === 0" class="empty-state">
-        <div class="icon-box">🥗</div>
-        <h3>Chưa có món nào để so sánh</h3>
-        <p>Hãy dạo một vòng và chọn ít nhất 2 món ăn nhé!</p>
-        <button class="btn-primary" @click="$router.push('/')">Khám phá ngay</button>
+        <div class="icon-box">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 22a9 9 0 1 1 18 0"/><path d="M12 13a5 5 0 0 0 5-5A5 5 0 0 0 9.8 4.2"/><path d="M12 13a5 5 0 0 1-3.5-1.5"/></svg>
+        </div>
+        <h3>No dishes to compare yet</h3>
+        <p>Browse around and pick at least 2 dishes to compare!</p>
+        <button class="btn-primary" @click="$router.push('/')">Explore Now</button>
       </div>
 
       <div v-else class="compare-grid-wrapper">
         <div class="grid-col labels-col">
-          <div class="cell header-cell"></div> <div class="cell label">Đánh giá</div>
-          <div class="cell label">Tác giả</div>
-          <div class="cell label">Thời gian nấu</div>
-          <div class="cell label">Độ khó</div>
-          <div class="cell label">Calo (Ước tính)</div>
-          <div class="cell label">Thao tác</div>
+          <div class="cell header-cell"></div> <div class="cell label">Rating</div>
+          <div class="cell label">Author</div>
+          <div class="cell label">Cook Time</div>
+          <div class="cell label">Difficulty</div>
+          <div class="cell label">Calories (Est.)</div>
+          <div class="cell label">Actions</div>
         </div>
 
         <div 
@@ -32,16 +34,16 @@
           <div class="cell header-cell">
             <div class="img-wrap">
               <img :src="item.image" loading="lazy">
-              <button class="btn-remove" @click="compareStore.toggleItem(item)" title="Xóa">✕</button>
+              <button class="btn-remove" @click="compareStore.toggleItem(item)" title="Remove">✕</button>
             </div>
             <h3 class="item-title" @click="goToDetail(item.id)">{{ item.title }}</h3>
           </div>
 
           <div class="cell" :class="{ 'winner': isBest('likes', item.likes) }">
             <div class="stat-box">
-              <span class="icon">❤️</span> 
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> 
               <b>{{ formatNumber(item.likes) }}</b>
-              <span class="win-badge" v-if="isBest('likes', item.likes)">Cao nhất</span>
+              <span class="win-badge" v-if="isBest('likes', item.likes)">Highest</span>
             </div>
           </div>
 
@@ -54,12 +56,12 @@
 
           <div class="cell" :class="{ 'winner': isBest('time', item.time) }">
             <span class="value">{{ item.time || '30p' }}</span>
-            <span class="win-badge" v-if="isBest('time', item.time)">Nhanh nhất</span>
+              <span class="win-badge" v-if="isBest('time', item.time)">Fastest</span>
           </div>
 
           <div class="cell">
             <span class="tag-difficulty" :class="getDifficultyClass(item.difficulty)">
-              {{ item.difficulty || 'Trung bình' }}
+              {{ item.difficulty || 'Medium' }}
             </span>
           </div>
 
@@ -68,14 +70,14 @@
           </div>
 
           <div class="cell action-cell">
-            <button class="btn-view" @click="goToDetail(item.id)">Xem công thức</button>
+            <button class="btn-view" @click="goToDetail(item.id)">View Recipe</button>
           </div>
         </div>
 
         <div v-if="compareStore.items.length < 3" class="grid-col add-col">
           <div class="add-placeholder" @click="$router.push('/')">
             <div class="plus-circle">+</div>
-            <span>Thêm món khác</span>
+            <span>Add another dish</span>
           </div>
         </div>
 
@@ -96,25 +98,25 @@ const goToDetail = (id) => {
   router.push({ name: 'PostDetail', params: { id } })
 }
 
-// Hàm format số (1200 -> 1.2k)
+// Format number (1200 -> 1.2k)
 const formatNumber = (num) => {
   if (!num) return 0;
   if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
   return num;
 }
 
-// Logic tìm người chiến thắng (Highlight)
+// Logic to find the winner (Highlight)
 const isBest = (criteria, value) => {
-  if (compareStore.items.length < 2) return false; // Chỉ so sánh khi có >= 2 món
+  if (compareStore.items.length < 2) return false; // Only compare when there are >= 2 dishes
 
   if (criteria === 'likes') {
-    // Tìm like cao nhất
+    // Find highest likes
     const max = Math.max(...compareStore.items.map(i => i.likes || 0))
     return value === max
   }
   
   if (criteria === 'time') {
-    // Parse chuỗi '30p', '1h' ra số phút để so sánh
+    // Parse string '30p', '1h' into minutes for comparison
     const parseTime = (t) => {
       if (!t) return 999;
       if (t.includes('h')) return parseInt(t) * 60;
@@ -127,18 +129,16 @@ const isBest = (criteria, value) => {
 }
 
 const getDifficultyClass = (diff) => {
-  if (diff === 'Dễ') return 'easy'
-  if (diff === 'Khó') return 'hard'
+  if (diff === 'Easy') return 'easy'
+  if (diff === 'Hard') return 'hard'
   return 'medium'
 }
 
-// Demo Calo ngẫu nhiên vì data gốc chưa có
+// Demo random calories since source data doesn't include them yet
 const getRandomCalo = () => Math.floor(Math.random() * (800 - 300) + 300)
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Mulish:wght@400;600;700;800&display=swap');
-
 .compare-page {
   font-family: 'Mulish', sans-serif; padding: 40px 0 80px; min-height: 80vh;
   background: #FAFAF9;
@@ -182,7 +182,7 @@ const getRandomCalo = () => Math.floor(Math.random() * (800 - 300) + 300)
   box-shadow: 0 2px 5px rgba(16, 185, 129, 0.3);
 }
 
-/* HEADER CELL (ẢNH) */
+/* HEADER CELL (IMAGE) */
 .header-cell { height: auto; min-height: 280px; flex-direction: column; align-items: flex-start; padding: 15px; position: relative; }
 .img-wrap { width: 100%; height: 180px; border-radius: 12px; overflow: hidden; position: relative; margin-bottom: 15px; }
 .img-wrap img { width: 100%; height: 100%; object-fit: cover; }
@@ -232,11 +232,11 @@ const getRandomCalo = () => Math.floor(Math.random() * (800 - 300) + 300)
 .btn-primary { padding: 12px 30px; background: #EA580C; color: white; border: none; border-radius: 30px; font-weight: 700; cursor: pointer; }
 
 @media (max-width: 768px) {
-  .labels-col { display: none; } /* Ẩn label trên mobile cho rộng chỗ */
-  .grid-col { min-width: 85vw; } /* Mỗi món chiếm gần hết màn hình, vuốt ngang */
+  .labels-col { display: none; } /* Hide labels on mobile for more space */
+  .grid-col { min-width: 85vw; } /* Each dish takes up most of screen, swipe horizontally */
   .compare-grid-wrapper { padding: 0 10px 20px; }
   .cell { height: auto; padding: 15px; justify-content: flex-start; }
-  /* Thêm label giả vào trong cell trên mobile */
+  /* Add pseudo labels inside cells on mobile */
   .cell::before { content: attr(data-label); font-weight: 700; color: #9CA3AF; margin-right: 10px; display: none; } 
 }
 </style>

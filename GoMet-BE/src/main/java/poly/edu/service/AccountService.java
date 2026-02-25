@@ -8,6 +8,8 @@ public interface AccountService {
     List<AdminAccountDTO> findAll();
     AdminAccountDTO findById(Integer id);
     AdminAccountDTO save(AdminAccountDTO dto);
-    void delete(Integer id);          // delete bang deactivate
-    void hardDelete(Integer id);      // xóa thật
+    void ban(Integer id);
+    void unban(Integer id);
+    void delete(Integer id);
+    void hardDelete(Integer id);
 }

@@ -14,18 +14,18 @@
         <div class="header-left">
           <button v-if="activeMode !== 'hub'" class="btn-back" @click="returnToHub">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M5 12L12 19M5 12L12 5"/></svg>
-            <span>Quay lại</span>
+            <span>{{ $t('suggestions.go_back') }}</span>
           </button>
           <div class="brand-box" v-else>
-            <span class="brand-sub">GOMET ENTERTAINMENT</span>
-            <h1 class="brand-main">ARCADE ZONE</h1>
+            <span class="brand-sub">{{ $t('suggestions.entertainment') }}</span>
+            <h1 class="brand-main">{{ $t('suggestions.arcade_zone') }}</h1>
           </div>
         </div>
         
         <div class="header-right">
           <div class="user-pill">
-            <span class="u-name">Khánh Nguyên</span>
-            <span class="u-status">● Online</span>
+            <span class="u-name">{{ authStore.currentUser?.name || 'Chef' }}</span>
+            <span class="u-status">{{ $t('suggestions.online') }}</span>
           </div>
         </div>
       </header>
@@ -39,8 +39,8 @@
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6V12L16 14"/></svg>
               </div>
               <div class="card-info">
-                <h3>Vòng Quay Định Mệnh</h3>
-                <p>Để vũ trụ chọn món ăn cho bạn</p>
+                <h3>{{ $t('suggestions.spin_title') }}</h3>
+                <p>{{ $t('suggestions.spin_desc') }}</p>
               </div>
               <div class="card-arrow">→</div>
             </div>
@@ -50,8 +50,8 @@
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
               </div>
               <div class="card-info">
-                <h3>Thấu Hiểu Vị Giác</h3>
-                <p>Trắc nghiệm tìm món hợp gu</p>
+                <h3>{{ $t('suggestions.quiz_title') }}</h3>
+                <p>{{ $t('suggestions.quiz_desc') }}</p>
               </div>
               <div class="card-arrow">→</div>
             </div>
@@ -61,8 +61,8 @@
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
               </div>
               <div class="card-info">
-                <h3>Thẻ Bài Nhân Phẩm</h3>
-                <p>Tính năng đang phát triển</p>
+                <h3>{{ $t('suggestions.tarot_title') }}</h3>
+                <p>{{ $t('suggestions.tarot_desc') }}</p>
               </div>
             </div>
 
@@ -80,14 +80,14 @@
             </div>
             
             <h2 class="dish-name-display">
-              {{ isSpinning ? 'Đang tìm kiếm...' : currentDisplayDish.name }}
+              {{ isSpinning ? $t('suggestions.searching') : currentDisplayDish.name }}
             </h2>
 
             <button class="btn-spin" @click="spinWheel" :disabled="isSpinning">
-              <span v-if="!isSpinning">KHỞI ĐỘNG</span>
-              <span v-else>ĐANG QUAY...</span>
+              <span v-if="!isSpinning">{{ $t('suggestions.spin_btn') }}</span>
+              <span v-else>{{ $t('suggestions.spinning') }}</span>
             </button>
-            <p class="hint-text">Gieo quẻ ngẫu nhiên để tìm món ngon</p>
+            <p class="hint-text">{{ $t('suggestions.hint') }}</p>
           </div>
         </div>
       </transition>
@@ -101,25 +101,25 @@
             </div>
 
             <div class="quiz-content">
-              <span class="step-label">CÂU HỎI {{ quizStep }}/3</span>
+              <span class="step-label">{{ $t('suggestions.q_step') }} {{ quizStep }}/3</span>
               
-              <h2 class="quiz-question" v-if="quizStep === 1">Bạn muốn dùng món <br><em>Khô</em> hay <em>Nước</em>?</h2>
-              <h2 class="quiz-question" v-if="quizStep === 2">Khẩu vị hôm nay <br>của bạn thế nào?</h2>
-              <h2 class="quiz-question" v-if="quizStep === 3">Nguyên liệu chính <br>bạn mong muốn?</h2>
-              <h2 class="quiz-question" v-if="quizStep === 4">Đang phân tích...</h2>
+              <h2 class="quiz-question" v-if="quizStep === 1" v-html="$t('suggestions.quiz_q1')"></h2>
+              <h2 class="quiz-question" v-if="quizStep === 2" v-html="$t('suggestions.quiz_q2')"></h2>
+              <h2 class="quiz-question" v-if="quizStep === 3" v-html="$t('suggestions.quiz_q3')"></h2>
+              <h2 class="quiz-question" v-if="quizStep === 4">{{ $t('suggestions.quiz_q4') }}</h2>
 
               <div class="quiz-options" v-if="quizStep < 4">
                 <template v-if="quizStep === 1">
-                  <button class="opt-btn" @click="answerQuiz('style', 'Khô')">Món Khô / Trộn</button>
-                  <button class="opt-btn" @click="answerQuiz('style', 'Nước')">Món Nước / Canh</button>
+                  <button class="opt-btn" @click="answerQuiz('style', 'Dry')">{{ $t('suggestions.opt_dry') }}</button>
+                  <button class="opt-btn" @click="answerQuiz('style', 'Soupy')">{{ $t('suggestions.opt_soupy') }}</button>
                 </template>
                 <template v-if="quizStep === 2">
-                  <button class="opt-btn" @click="answerQuiz('flavor', 'Đậm đà')">Đậm đà / Cay</button>
-                  <button class="opt-btn" @click="answerQuiz('flavor', 'Thanh đạm')">Thanh đạm / Nhẹ</button>
+                  <button class="opt-btn" @click="answerQuiz('flavor', 'Bold')">{{ $t('suggestions.opt_bold') }}</button>
+                  <button class="opt-btn" @click="answerQuiz('flavor', 'Mild')">{{ $t('suggestions.opt_mild') }}</button>
                 </template>
                 <template v-if="quizStep === 3">
-                  <button class="opt-btn" @click="answerQuiz('main', 'Thịt')">Các loại Thịt</button>
-                  <button class="opt-btn" @click="answerQuiz('main', 'Hải sản')">Hải sản tươi</button>
+                  <button class="opt-btn" @click="answerQuiz('main', 'Meat')">{{ $t('suggestions.opt_meat') }}</button>
+                  <button class="opt-btn" @click="answerQuiz('main', 'Seafood')">{{ $t('suggestions.opt_seafood') }}</button>
                 </template>
               </div>
             </div>
@@ -141,29 +141,29 @@
             </div>
             <div class="modal-info-col">
               <div class="info-top">
-                <span class="match-badge">98% PHÙ HỢP</span>
+                <span class="match-badge">{{ $t('suggestions.match_pct') }}</span>
                 <h2>{{ resultDish.name }}</h2>
                 <p>{{ resultDish.description }}</p>
               </div>
               
               <div class="info-grid">
                 <div class="i-item">
-                  <label>Thời gian</label>
+                  <label>{{ $t('suggestions.lbl_time') }}</label>
                   <span>{{ resultDish.time }}</span>
                 </div>
                 <div class="i-item">
-                  <label>Độ khó</label>
+                  <label>{{ $t('suggestions.lbl_diff') }}</label>
                   <span>{{ resultDish.difficulty }}</span>
                 </div>
                 <div class="i-item">
-                  <label>Khẩu vị</label>
+                  <label>{{ $t('suggestions.lbl_flavor') }}</label>
                   <span>{{ resultDish.flavor }}</span>
                 </div>
               </div>
 
               <div class="info-actions">
-                <button class="btn-view-recipe" @click="goToDetail">Xem Công Thức</button>
-                <button class="btn-retry" @click="retryGame">Thử lại</button>
+                <button class="btn-view-recipe" @click="goToDetail">{{ $t('suggestions.view_recipe') }}</button>
+                <button class="btn-retry" @click="retryGame">{{ $t('suggestions.try_again') }}</button>
               </div>
             </div>
           </div>
@@ -175,67 +175,99 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { getSuggestedPosts, normalizePost } from '@/services/postService'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
+const authStore = useAuthStore()
+const { t } = useI18n()
 
-// Dữ liệu mẫu (giữ nguyên)
-const dishes = [
-  { id: 1, name: 'Phở Bò Hà Nội', category: 'Món Việt', type: 'Nước', flavor: 'Thanh đạm', main: 'Thịt', time: '4 giờ', difficulty: 'Khó', image: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?w=600', description: 'Tinh hoa ẩm thực Việt với nước dùng trong veo, ngọt thanh.' },
-  { id: 2, name: 'Bò Wellington', category: 'Món Âu', type: 'Khô', flavor: 'Đậm đà', main: 'Thịt', time: '2 giờ', difficulty: 'Rất Khó', image: 'https://images.unsplash.com/photo-1546964124-0cce460f38ef?w=600', description: 'Thăn bò mềm tan được bọc trong lớp vỏ pastry vàng giòn.' },
-  { id: 3, name: 'Sashimi Cá Hồi', category: 'Món Nhật', type: 'Khô', flavor: 'Thanh đạm', main: 'Hải sản', time: '15 phút', difficulty: 'Dễ', image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600', description: 'Cá hồi tươi sống chuẩn sashimi, giữ trọn vẹn vị ngọt.' },
-  { id: 4, name: 'Mỳ Ý Carbonara', category: 'Món Âu', type: 'Khô', flavor: 'Đậm đà', main: 'Thịt', time: '30 phút', difficulty: 'Trung bình', image: 'https://images.unsplash.com/photo-1612874742237-6526221588e3?w=600', description: 'Sốt kem trứng béo ngậy truyền thống Ý.' }
+// Fallback dishes when API has no data
+const FALLBACK = [
+  { id: 1, name: 'Hanoi Beef Pho', category: 'Vietnamese', time: '4 hr', difficulty: 'Hard', image: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?w=600', description: 'A Vietnamese culinary gem with a clear, subtly sweet broth.' },
+  { id: 2, name: 'Beef Wellington', category: 'Western', time: '2 hr', difficulty: 'Hard', image: 'https://images.unsplash.com/photo-1546964124-0cce460f38ef?w=600', description: 'Tender beef tenderloin wrapped in a golden, flaky pastry crust.' },
+  { id: 3, name: 'Salmon Sashimi', category: 'Japanese', time: '15 min', difficulty: 'Easy', image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600', description: 'Fresh sashimi-grade salmon that preserves its natural sweetness.' },
+  { id: 4, name: 'Pasta Carbonara', category: 'Western', time: '30 min', difficulty: 'Medium', image: 'https://images.unsplash.com/photo-1612874742237-6526221588e3?w=600', description: 'Classic Italian creamy egg and cheese sauce.' }
 ]
+
+const dishes = ref([...FALLBACK])
+
+async function loadDishes() {
+  try {
+    const raw = await getSuggestedPosts({ limit: 20 })
+    if (raw?.length) {
+      dishes.value = raw.map(dto => ({
+        id:          dto.postID,
+        name:        dto.title,
+        category:    dto.categoryName || '',
+        time:        dto.cookingTime ? `${dto.cookingTime} min` : '—',
+        difficulty:  { 1: 'Easy', 2: 'Medium', 3: 'Hard' }[dto.level] || 'Medium',
+        flavor:      '—',
+        image:       dto.media || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600',
+        description: dto.description || 'A delicious recipe on GoMet.'
+      }))
+    }
+  } catch {
+    // keep fallback
+  }
+}
 
 const activeMode = ref('hub')
 const showResult = ref(false)
-const resultDish = ref(dishes[0])
+const resultDish = ref(dishes.value[0])
 const isSpinning = ref(false)
-const currentDisplayDish = ref(dishes[0])
+const currentDisplayDish = ref(dishes.value[0])
 const quizStep = ref(1)
 const quizAnswers = ref({})
 
-// Actions
 const enterGame = (mode) => { activeMode.value = mode; if (mode === 'quiz') { quizStep.value = 1; quizAnswers.value = {} } }
 const returnToHub = () => { activeMode.value = 'hub'; showResult.value = false }
-const closeResult = () => showResult.value = false
-const retryGame = () => { closeResult(); if(activeMode.value === 'quiz') quizStep.value = 1; }
-const goToDetail = () => router.push(`/post/${resultDish.value.id}`)
+const closeResult = () => (showResult.value = false)
+const retryGame = () => { closeResult(); if (activeMode.value === 'quiz') quizStep.value = 1 }
+const goToDetail = () => router.push(`/home/post/${resultDish.value.id}`)
 
 const spinWheel = () => {
   if (isSpinning.value) return
   isSpinning.value = true
   let count = 0
   const interval = setInterval(() => {
-    currentDisplayDish.value = dishes[Math.floor(Math.random() * dishes.length)]
+    currentDisplayDish.value = dishes.value[Math.floor(Math.random() * dishes.value.length)]
     count++
-    if (count > 20) { clearInterval(interval); isSpinning.value = false; resultDish.value = currentDisplayDish.value; showResult.value = true }
+    if (count > 20) {
+      clearInterval(interval)
+      isSpinning.value = false
+      resultDish.value = currentDisplayDish.value
+      showResult.value = true
+    }
   }, 80)
 }
 
 const answerQuiz = (key, val) => {
   quizAnswers.value[key] = val
-  if (quizStep.value < 3) quizStep.value++
-  else {
+  if (quizStep.value < 3) {
+    quizStep.value++
+  } else {
     quizStep.value = 4
     setTimeout(() => {
-      resultDish.value = dishes[Math.floor(Math.random() * dishes.length)]
+      resultDish.value = dishes.value[Math.floor(Math.random() * dishes.value.length)]
       showResult.value = true
     }, 1000)
   }
 }
+
+onMounted(loadDishes)
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=Manrope:wght@300;400;500;600;700&display=swap');
-
 /* --- 1. CORE LAYOUT (NO SCROLLBAR) --- */
 .gomet-vault {
   width: 100%;
-  height: 100vh; /* Khóa chiều cao bằng màn hình */
-  overflow: hidden; /* Ẩn mọi thanh cuộn */
-  background: #FBF6F1; /* Màu nền kem sang trọng */
+  height: 100vh; /* Lock height to viewport */
+  overflow: hidden; /* Hide all scrollbars */
+  background: #FBF6F1; /* Elegant cream background */
   color: #1E293B;
   font-family: 'Manrope', sans-serif;
   position: relative;
@@ -261,10 +293,10 @@ const answerQuiz = (key, val) => {
 
 /* --- 2. HEADER --- */
 .vault-interface {
-  flex: 1; /* Chiếm hết không gian còn lại */
+  flex: 1; /* Fill remaining space */
   display: flex;
   flex-direction: column;
-  align-items: center; /* Căn giữa trục ngang */
+  align-items: center; /* Horizontally centered */
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
@@ -297,7 +329,7 @@ const answerQuiz = (key, val) => {
 /* --- 3. HUB (LOBBY) --- */
 .hub-container {
   width: 100%;
-  flex: 1; /* Tự giãn để căn giữa dọc */
+  flex: 1; /* Stretch to vertically center content */
   display: flex;
   align-items: center;
   justify-content: center;

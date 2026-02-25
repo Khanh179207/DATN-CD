@@ -22,27 +22,15 @@ public class AccountServiceImpl implements AccountService {
         dto.setAccountID(acc.getAccountID());
         dto.setUsername(acc.getUsername());
         dto.setEmail(acc.getEmail());
-        dto.setPassword(acc.getPassword());
         dto.setAvatar(acc.getAvatar());
+        dto.setIsAdmin(acc.getIsAdmin());
         dto.setIsPremium(acc.getIsPremium());
         dto.setIsActive(acc.getIsActive());
+        dto.setPoint(acc.getPoint());
+        dto.setCreatedAt(acc.getCreatedAt() != null ? acc.getCreatedAt().toString() : null);
+        // Derive role string for FE convenience
+        dto.setRole(acc.getIsAdmin() != null && acc.getIsAdmin() == 1 ? "ADMIN" : "USER");
         return dto;
-    }
-
-    private Account toEntity(AdminAccountDTO dto) {
-        return Account.builder()
-                .accountID(dto.getAccountID())
-                .username(dto.getUsername())
-                .email(dto.getEmail())
-                .password(dto.getPassword())
-                .avatar(dto.getAvatar())
-                .isPremium(dto.getIsPremium())
-                .isActive(dto.getIsActive())
-                .isAdmin(0)
-                .point(0)
-                .token("NONE")
-                .createdAt(LocalDate.now())
-                .build();
     }
 
     @Override
@@ -60,13 +48,53 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public AdminAccountDTO save(AdminAccountDTO dto) {
-        Account acc = toEntity(dto);
-
+        Account acc;
         if (dto.getAccountID() != null) {
+            // UPDATE: Load existing entity so we never overwrite password / token / point
+            acc = accountDAO.findById(dto.getAccountID()).orElseThrow();
+            if (dto.getUsername() != null)  acc.setUsername(dto.getUsername());
+            if (dto.getEmail()    != null)  acc.setEmail(dto.getEmail());
+            if (dto.getAvatar()   != null)  acc.setAvatar(dto.getAvatar());
+            if (dto.getIsPremium()!= null)  acc.setIsPremium(dto.getIsPremium());
+            if (dto.getIsActive() != null)  acc.setIsActive(dto.getIsActive());
+            if (dto.getIsAdmin()  != null)  acc.setIsAdmin(dto.getIsAdmin());
+            // Role string shortcut: "ADMIN" -> isAdmin=1, "USER" -> isAdmin=0
+            if (dto.getRole() != null) {
+                acc.setIsAdmin("ADMIN".equalsIgnoreCase(dto.getRole()) ? 1 : 0);
+            }
             acc.setUpdatedAt(LocalDate.now());
+        } else {
+            // CREATE: build from scratch
+            acc = Account.builder()
+                    .username(dto.getUsername())
+                    .email(dto.getEmail())
+                    .password(dto.getPassword() != null ? dto.getPassword() : "changeme")
+                    .avatar(dto.getAvatar())
+                    .isPremium(dto.getIsPremium() != null ? dto.getIsPremium() : 0)
+                    .isActive(dto.getIsActive()  != null ? dto.getIsActive()  : 1)
+                    .isAdmin(dto.getIsAdmin()    != null ? dto.getIsAdmin()   : 0)
+                    .point(0)
+                    .token("NONE")
+                    .createdAt(LocalDate.now())
+                    .build();
         }
-
         return toDTO(accountDAO.save(acc));
+    }
+
+    @Override
+    public void ban(Integer id) {
+        Account acc = accountDAO.findById(id).orElseThrow();
+        acc.setIsActive(0);
+        acc.setUpdatedAt(LocalDate.now());
+        accountDAO.save(acc);
+    }
+
+    @Override
+    public void unban(Integer id) {
+        Account acc = accountDAO.findById(id).orElseThrow();
+        acc.setIsActive(1);
+        acc.setUpdatedAt(LocalDate.now());
+        accountDAO.save(acc);
     }
 
     @Override

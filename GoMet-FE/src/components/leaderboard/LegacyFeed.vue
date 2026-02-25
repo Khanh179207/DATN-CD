@@ -57,7 +57,7 @@
                   <span class="count">{{ post.likes }}</span>
                 </button>
                 <button class="action-btn comment-btn">
-                  <span class="icon">💬</span>
+                  <span class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
                   <span class="count">{{ post.comments }}</span>
                 </button>
               </div>
@@ -92,8 +92,6 @@ defineEmits(['view-recipe'])
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Mulish:wght@400;600;700;800;900&display=swap');
-
 /* --- ✨ LAYOUT ARCHITECTURE --- */
 .legacy-feed-sanctum {
   padding: 120px 0;

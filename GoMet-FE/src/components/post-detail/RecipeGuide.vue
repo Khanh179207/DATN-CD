@@ -8,12 +8,12 @@
             <div class="nav-left">
               <button @click="$router.push('/home')" class="btn-back-simple">
                 <div class="icon-circle"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div>
-                <span>Quay lại</span>
+                <span>{{ $t('recipe.back') }}</span>
               </button>
               <span class="sep">/</span>
               <span class="category-label">{{ post.category }}</span>
             </div>
-            <button class="btn-report-minimal" title="Báo cáo">
+            <button class="btn-report-minimal" :title="$t('common.report')">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
             </button>
           </div>
@@ -22,21 +22,21 @@
           <p class="recipe-desc-main">{{ post.description }}</p>
 
           <div class="recipe-meta-row">
-            <div class="meta-box"><span class="icon">⏱️</span><div class="meta-detail"><span class="label">THỜI GIAN</span><span class="val">{{ post.time }}</span></div></div>
+            <div class="meta-box"><span class="icon">⏱️</span><div class="meta-detail"><span class="label">{{ $t('recipe.time_label') }}</span><span class="val">{{ post.time }}</span></div></div>
             <div class="meta-divider"></div>
-            <div class="meta-box"><span class="icon">🔥</span><div class="meta-detail"><span class="label">ĐỘ KHÓ</span><span class="val">{{ post.difficulty }}</span></div></div>
+            <div class="meta-box"><span class="icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></span><div class="meta-detail"><span class="label">{{ $t('recipe.difficulty_label') }}</span><span class="val">{{ post.difficulty }}</span></div></div>
             <div class="meta-divider"></div>
-            <div class="meta-box"><span class="icon">🥗</span><div class="meta-detail"><span class="label">KHẨU PHẦN</span><span class="val">{{ post.servings }}</span></div></div>
+            <div class="meta-box"><span class="icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 22a9 9 0 1 1 18 0"/><path d="M12 13a5 5 0 0 0 5-5A5 5 0 0 0 9.8 4.2"/><path d="M12 13a5 5 0 0 1-3.5-1.5"/></svg></span><div class="meta-detail"><span class="label">{{ $t('recipe.servings_label') }}</span><span class="val">{{ post.servings }}</span></div></div>
           </div>
 
           <div class="author-action-row">
             <div class="author-block">
               <img :src="post.authorAvatar" class="auth-img">
-              <div class="auth-text"><span class="label">Công thức bởi</span><span class="name">{{ post.author }}</span></div>
-              <button class="btn-follow-sm">Follow</button>
+              <div class="auth-text"><span class="label">{{ $t('recipe.by') }}</span><span class="name">{{ post.author }}</span></div>
+              <button class="btn-follow-sm">{{ $t('common.follow') }}</button>
             </div>
             <div class="action-group">
-              <button class="btn-save-primary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg><span>Lưu</span></button>
+              <button class="btn-save-primary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg><span>{{ $t('common.save') }}</span></button>
               <button class="btn-share-circle"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg></button>
             </div>
           </div>
@@ -45,7 +45,7 @@
         <div class="hero-image-col">
           <div class="image-frame-hero">
             <img :src="post.image" :alt="post.title" class="img-hero-cover">
-            <div class="floating-stats"><span>📅 {{ post.publishDate || '06/02/2026' }}</span><span class="sep">•</span><span>👁️ {{ post.views || '1.2k' }} xem</span></div>
+            <div class="floating-stats"><span>📅 {{ post.publishDate || '06/02/2026' }}</span><span class="sep">•</span><span>👁️ {{ post.views || '1.2k' }} {{ $t('recipe.views_suffix') }}</span></div>
           </div>
         </div>
       </div>
@@ -60,8 +60,8 @@
             <div class="premium-card ingredients-card slide-in-left">
               <div class="card-header-gradient">
                 <div class="header-content">
-                  <h3>🛒 Nguyên Liệu</h3>
-                  <span class="sub-text">Chuẩn bị cho <b>{{ post.servings }}</b></span>
+                  <h3>🛒 {{ $t('post.ingredients') }}</h3>
+                  <span class="sub-text">{{ $t('recipe.by') }} <b>{{ post.servings }}</b></span>
                 </div>
                 <button class="btn-add-mini" title="Thêm tất cả">+</button>
               </div>
@@ -82,7 +82,7 @@
               </div>
 
               <button class="btn-shopping-cart-lg" @click="handleGoShopping">
-                <span class="icon">🛍️</span> Thêm vào giỏ đi chợ
+                <span class="icon">🛍️</span> {{ $t('recipe.add_to_cart') }}
               </button>
             </div>
 
@@ -90,13 +90,13 @@
               <div class="note-decoration"></div>
               <div class="note-inner">
                 <div class="note-title">
-                  <span class="icon">✏️</span> Ghi chú cá nhân
+                  <span class="icon">✏️</span> {{ $t('recipe.personal_note') }}
                 </div>
                 <div class="textarea-container">
-                  <textarea v-model="userNote" placeholder="Viết ghi chú của bạn tại đây... (Ví dụ: Giảm đường, thêm ớt)"></textarea>
+                  <textarea v-model="userNote" :placeholder="$t('recipe.note_placeholder')"></textarea>
                 </div>
                 <div class="note-status">
-                  <span class="status-badge"><span class="dot"></span> Riêng tư</span>
+                  <span class="status-badge"><span class="dot"></span> {{ $t('recipe.private') }}</span>
                 </div>
               </div>
             </div>
@@ -107,8 +107,8 @@
         <main class="main-right-content">
           <div class="premium-card steps-card slide-in-up">
             <div class="steps-header-modern">
-              <h2>Quy trình thực hiện</h2>
-              <div class="step-counter-badge">{{ post.steps.length }} Bước</div>
+              <h2>{{ $t('recipe.process') }}</h2>
+              <div class="step-counter-badge">{{ post.steps.length }} {{ $t('post.step') }}</div>
             </div>
 
             <div class="timeline-editorial">
@@ -120,7 +120,7 @@
                 </div>
 
                 <div class="step-content-col">
-                  <h4 class="step-heading">BƯỚC {{ index + 1 }}</h4>
+                  <h4 class="step-heading">{{ $t('recipe.step_prefix') }} {{ index + 1 }}</h4>
                   <p class="step-desc-text">{{ step.desc }}</p>
                   
                   <div class="step-gallery-floating" v-if="step.images && step.images.length && step.images[0]">
@@ -145,6 +145,9 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps({
   post: { type: Object, required: true }
@@ -162,8 +165,8 @@ const ingredientsList = computed(() => {
 
 const handleGoShopping = () => {
   const selected = ingredientsList.value.filter(i => i.selectedForShopping)
-  if (selected.length === 0) alert('Vui lòng chọn nguyên liệu!')
-  else alert(`Đã thêm ${selected.length} món vào giỏ!`)
+  if (selected.length === 0) alert(t('recipe.select_ingredients_first'))
+  else alert(`Added ${selected.length} items to cart!`)
 }
 
 const handleImageError = (e) => {
@@ -174,8 +177,6 @@ const handleImageError = (e) => {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Mulish:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700;800;900&display=swap');
-
 .recipe-guide-container { width: 100%; font-family: 'Mulish', sans-serif; color: #1C1917; overflow-x: hidden; }
 
 /* ================= HERO SECTION (GIỮ NGUYÊN) ================= */

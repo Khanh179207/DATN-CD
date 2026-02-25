@@ -1,5 +1,5 @@
 <template>
-  <div class="event-card" @click="goToDetail">
+  <div class="event-card" tabindex="0" :aria-label="event.title" @click="goToDetail" @keydown.enter.prevent="goToDetail">
     <div class="card-image">
       <img :src="event.image" loading="lazy">
       <div class="date-badge">
@@ -65,59 +65,222 @@ const handleJoin = () => {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Mulish:wght@400;600;700;800&display=swap');
-
+/* ─── Card Container ─── */
 .event-card {
-  background: white; border-radius: 16px; overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.02);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  font-family: 'Mulish', sans-serif; cursor: pointer; display: flex; flex-direction: column;
+  background: var(--color-neutral-0);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(0, 0, 0, 0.02);
+  transition: transform var(--duration-normal) var(--ease-out),
+              box-shadow var(--duration-normal) var(--ease-out);
+  font-family: var(--font-ui);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
 }
-.event-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
 
-.card-image { position: relative; height: 180px; overflow: hidden; }
-.card-image img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
-.event-card:hover .card-image img { transform: scale(1.1); }
+.event-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-xl);
+}
 
-/* Date Badge */
+/* Active press feedback */
+.event-card:active {
+  transform: translateY(-1px) scale(0.98);
+  box-shadow: var(--shadow-md);
+  transition: transform var(--duration-instant) var(--ease-out),
+              box-shadow var(--duration-instant) var(--ease-out);
+}
+
+/* Keyboard focus ring */
+.event-card:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 3px;
+}
+
+/* ─── SKELETON STATE ─── */
+.event-card.is-skeleton {
+  pointer-events: none;
+}
+
+.event-card.is-skeleton .card-image,
+.event-card.is-skeleton .event-title,
+.event-card.is-skeleton .meta-row,
+.event-card.is-skeleton .attendance,
+.event-card.is-skeleton .btn-join {
+  background: linear-gradient(
+    90deg,
+    var(--color-neutral-200) 25%,
+    var(--color-neutral-100) 50%,
+    var(--color-neutral-200) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s var(--ease-in-out) infinite;
+  border-radius: var(--radius-sm);
+  color: transparent !important;
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+/* ─── Image ─── */
+.card-image {
+  position: relative;
+  height: 180px;
+  overflow: hidden;
+}
+
+.card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--duration-slower) var(--ease-out);
+}
+
+.event-card:hover .card-image img {
+  transform: scale(1.08);
+}
+
+/* ─── Date Badge ─── */
 .date-badge {
-  position: absolute; top: 12px; left: 12px;
-  background: white; border-radius: 10px; padding: 6px 10px;
-  display: flex; flex-direction: column; align-items: center;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.15); z-index: 2;
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-3);
+  background: var(--color-neutral-0);
+  border-radius: var(--radius-md);
+  padding: var(--space-1) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: var(--shadow-md);
+  z-index: var(--z-base);
 }
-.date-badge .month { font-size: 0.7rem; color: #EA580C; font-weight: 800; text-transform: uppercase; }
-.date-badge .day { font-size: 1.1rem; color: #1C1917; font-weight: 800; line-height: 1; }
 
+.date-badge .month {
+  font-size: var(--text-xs);
+  color: var(--color-primary-600);
+  font-weight: var(--font-extrabold);
+  text-transform: uppercase;
+}
+
+.date-badge .day {
+  font-size: var(--text-lg);
+  color: var(--color-neutral-900);
+  font-weight: var(--font-extrabold);
+  line-height: var(--leading-none);
+}
+
+/* ─── Type Badge ─── */
 .type-badge {
-  position: absolute; top: 12px; right: 12px;
-  padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;
-  color: white; backdrop-filter: blur(4px); z-index: 2;
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: var(--font-bold);
+  color: var(--color-neutral-0);
+  backdrop-filter: blur(4px);
+  z-index: var(--z-base);
 }
-.type-badge.online { background: rgba(59, 130, 246, 0.9); } /* Blue */
-.type-badge.offline { background: rgba(234, 88, 12, 0.9); } /* Orange */
 
-/* Body */
-.card-body { padding: 16px; flex: 1; display: flex; flex-direction: column; }
-.event-title { font-size: 1.1rem; font-weight: 700; color: #1C1917; margin: 0 0 10px; line-height: 1.4; }
+.type-badge.online { background: rgba(59, 130, 246, 0.9); }
+.type-badge.offline { background: rgba(234, 88, 12, 0.9); }
 
-.event-meta { margin-bottom: 15px; }
-.meta-row { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #57534E; margin-bottom: 6px; }
+/* ─── Card Body ─── */
+.card-body {
+  padding: var(--space-4);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
 
-.card-footer { margin-top: auto; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #F5F5F4; padding-top: 12px; }
+.event-title {
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  color: var(--color-neutral-900);
+  margin: 0 0 var(--space-3);
+  line-height: var(--leading-snug);
+}
 
-/* Attendees Stack */
-.attendees { display: flex; align-items: center; gap: 8px; }
-.avatars { display: flex; align-items: center; }
-.attendee-avt { width: 28px; height: 28px; border-radius: 50%; border: 2px solid white; margin-left: -10px; object-fit: cover; }
+/* ─── Meta ─── */
+.event-meta { margin-bottom: var(--space-4); }
+
+.meta-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-neutral-600);
+  margin-bottom: var(--space-1);
+}
+
+/* ─── Footer ─── */
+.card-footer {
+  margin-top: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--color-neutral-100);
+  padding-top: var(--space-3);
+}
+
+/* ─── Attendees ─── */
+.attendees { display: flex; align-items: center; gap: var(--space-2); }
+.avatars   { display: flex; align-items: center; }
+
+.attendee-avt {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-neutral-0);
+  margin-left: -10px;
+  object-fit: cover;
+}
 .attendee-avt:first-child { margin-left: 0; }
-.more-count { width: 28px; height: 28px; border-radius: 50%; background: #F3F4F6; border: 2px solid white; font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; justify-content: center; margin-left: -10px; color: #6B7280; }
-.attend-text { font-size: 0.75rem; color: #78716C; }
 
-.btn-join {
-  background: #F3F4F6; color: #1C1917; border: none; padding: 6px 16px;
-  border-radius: 20px; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: 0.2s;
+.more-count {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  background: var(--color-neutral-100);
+  border: 2px solid var(--color-neutral-0);
+  font-size: var(--text-xs);
+  font-weight: var(--font-bold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: -10px;
+  color: var(--color-neutral-500);
 }
-.btn-join:hover { background: #E5E5E5; }
-.btn-join.joined { background: #DCFCE7; color: #166534; }
+
+.attend-text {
+  font-size: var(--text-xs);
+  color: var(--color-neutral-500);
+}
+
+/* ─── Join Button ─── */
+.btn-join {
+  background: var(--color-neutral-100);
+  color: var(--color-neutral-900);
+  border: none;
+  padding: var(--space-1) var(--space-4);
+  border-radius: var(--radius-full);
+  font-weight: var(--font-bold);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.btn-join:hover {
+  background: var(--color-neutral-200);
+}
+
+.btn-join.joined {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
 </style>

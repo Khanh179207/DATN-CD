@@ -1,9 +1,9 @@
 <template>
   <div class="not-found-container">
-    <h1>MÀY BỊ VỘI À</h1>
-    <p>TỪ TỪ RỒI TAO LÀM.</p>
+    <h1>HOLD ON THERE</h1>
+    <p>THIS PAGE DOESN'T EXIST YET.</p>
     <button @click="$router.push('/home')" class="btn-home">
-      Về trang chủ
+      Back to Home
     </button>
   </div>
 </template>

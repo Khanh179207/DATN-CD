@@ -3,13 +3,12 @@
     
     <div class="page-header">
       <div>
-        <h2 class="title">📝 Quản Lý Bài Đăng</h2>
-        <p class="subtitle">Kiểm duyệt và quản lý toàn bộ nội dung người dùng</p>
+        <h2 class="title"><FileText :size="20" style="vertical-align:middle;margin-right:6px" /> Post Management</h2>
+        <p class="subtitle">Moderate and manage all user content</p>
       </div>
-      
       <div class="search-box">
-        <span class="icon">🔍</span>
-        <input v-model="searchQuery" type="text" placeholder="Tìm tiêu đề, tác giả..." />
+        <Search :size="16" />
+        <input v-model="searchQuery" type="text" placeholder="Search title, author..." />
       </div>
     </div>
 
@@ -24,59 +23,66 @@
       </button>
     </div>
 
-    <div class="table-wrapper">
+    <!-- Loading / Error -->
+    <div v-if="loading" class="empty-state"><Loader2 :size="16" class="spin-icon" /> Loading posts...</div>
+    <div v-else-if="error" class="empty-state error-msg"><AlertTriangle :size="16" /> {{ error }}</div>
+
+    <div v-else class="table-wrapper">
       <table class="data-table">
         <thead>
           <tr>
             <th width="5%">ID</th>
-            <th width="35%">Thông tin bài viết</th>
-            <th width="15%">Danh mục</th>
-            <th width="15%">Tác giả</th>
-            <th width="15%">Trạng thái</th>
-            <th width="15%" class="text-right">Hành động</th>
+            <th width="35%">Post info</th>
+            <th width="12%">Category</th>
+            <th width="15%">Author</th>
+            <th width="13%">Status</th>
+            <th width="20%" class="text-right">Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="post in filteredPosts" :key="post.id">
-            <td>#{{ post.id }}</td>
+          <tr v-for="post in filteredPosts" :key="post.postID">
+            <td>#{{ post.postID }}</td>
             <td>
               <div class="post-info">
-                <img :src="post.image" class="thumb" alt="Thumbnail">
+                <img :src="post.image || 'https://placehold.co/60x60?text=IMG'" class="thumb" alt="Thumbnail">
                 <div class="info-text">
                   <h4 @click="openDetail(post)" class="post-title">{{ post.title }}</h4>
-                  <small>{{ post.date }}</small>
+                  <small>{{ formatDate(post.createdAt) }}</small>
                 </div>
               </div>
             </td>
-            <td><span class="cat-tag">{{ post.category }}</span></td>
+            <td><span class="cat-tag">{{ post.categoryID || '—' }}</span></td>
             <td>
               <div class="author-info">
-                <img :src="post.authorAvatar" class="avatar-xs">
-                <span>{{ post.author }}</span>
+                <img :src="post.accountAvatar || 'https://placehold.co/28x28?text=U'" class="avatar-xs">
+                <span>{{ post.accountName || 'Unknown' }}</span>
               </div>
             </td>
             <td>
-              <span :class="['status-badge', post.status]">
-                {{ getStatusLabel(post.status) }}
+              <span :class="['status-badge', post._status]">
+                {{ getStatusLabel(post._status) }}
               </span>
             </td>
             <td class="text-right">
               <div class="action-group">
-                <button @click="openDetail(post)" class="btn-icon view" title="Xem chi tiết">👁️</button>
-                
-                <template v-if="post.status === 'pending'">
-                  <button @click="approvePost(post.id)" class="btn-icon check" title="Duyệt bài">✓</button>
-                  <button @click="rejectPost(post.id)" class="btn-icon cross" title="Từ chối">✕</button>
+                <button @click="openDetail(post)" class="btn-icon view" title="View detail"><Eye :size="14" /></button>
+
+                <template v-if="post._status === 'pending'">
+                  <button @click="approvePost(post.postID)" class="btn-icon check" title="Approve post">✓</button>
                 </template>
 
-                <button @click="deletePost(post.id)" class="btn-icon trash" title="Xóa bài">🗑️</button>
+                <template v-if="post._status === 'active'">
+                  <button @click="deactivatePost(post.postID)" class="btn-icon cross" title="Deactivate">⛔</button>
+                </template>
+
+                <button @click="deletePost(post.postID)" class="btn-icon trash" title="Delete post"><Trash2 :size="14" /></button>
               </div>
             </td>
           </tr>
-          
+
           <tr v-if="filteredPosts.length === 0">
             <td colspan="6" class="empty-state">
-              🚫 Không tìm thấy bài viết nào phù hợp.
+              No matching posts found.
             </td>
           </tr>
         </tbody>
@@ -86,108 +92,148 @@
     <div v-if="showModal" class="modal-overlay" @click.self="closeDetail">
       <div class="modal-content">
         <button class="btn-close" @click="closeDetail">✕</button>
-        
         <div class="modal-body">
-          <img :src="selectedPost.image" class="modal-cover">
+          <img :src="selectedPost.image || 'https://placehold.co/600x250?text=No+Image'" class="modal-cover">
           <div class="modal-text">
             <div class="modal-meta">
-              <span class="cat-tag">{{ selectedPost.category }}</span>
-              <span>• {{ selectedPost.date }} • Bởi <b>{{ selectedPost.author }}</b></span>
+              <span class="cat-tag">{{ selectedPost.categoryID || 'Uncategorized' }}</span>
+              <span>• {{ formatDate(selectedPost.createdAt) }} • By <b>{{ selectedPost.accountName || 'Unknown' }}</b></span>
             </div>
             <h1>{{ selectedPost.title }}</h1>
-            <p class="post-desc">
-              (Đây là nội dung mô tả giả lập của bài viết...) <br>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. 
-              Món ăn này rất ngon và dễ làm, phù hợp cho dịp tết...
-            </p>
+            <p class="post-desc">{{ selectedPost.description || '(No description)' }}</p>
 
-            <div class="modal-actions" v-if="selectedPost.status === 'pending'">
-              <div class="alert-box">⚠️ Bài viết này đang chờ duyệt. Bạn quyết định sao?</div>
+            <div class="modal-actions" v-if="selectedPost._status === 'pending'">
+              <div class="alert-box"><AlertCircle :size="15" /> This post is pending review. What's your decision?</div>
               <div class="btn-row">
-                <button @click="approvePost(selectedPost.id); closeDetail()" class="btn-approve">✅ Duyệt ngay</button>
-                <button @click="rejectPost(selectedPost.id); closeDetail()" class="btn-reject">⛔ Từ chối</button>
+                <button @click="approvePost(selectedPost.postID); closeDetail()" class="btn-approve"><CheckCircle :size="15" /> Approve</button>
+                <button @click="deactivatePost(selectedPost.postID)" class="btn-reject"><Ban :size="15" /> Deactivate</button>
               </div>
+            </div>
+
+            <div class="modal-footer-actions">
+              <button @click="deletePost(selectedPost.postID)" class="btn-danger"><Trash2 :size="15" /> Delete Permanently</button>
             </div>
           </div>
         </div>
       </div>
     </div>
 
+    <!-- Toast -->
+    <transition name="toast">
+      <div v-if="toast.show" :class="['toast-msg', toast.type]">{{ toast.msg }}</div>
+    </transition>
+
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { FileText, Search, Loader2, AlertTriangle, Eye, Trash2, Ban, CheckCircle, XCircle, AlertCircle } from 'lucide-vue-next'
+import api from '@/services/api'
 
-// --- 1. DỮ LIỆU GIẢ (MOCK DATA) ---
-const posts = ref([
-  { id: 101, title: 'Cách làm bánh chưng ngày Tết', author: 'Nguyễn Văn A', authorAvatar: 'https://i.pravatar.cc/150?img=11', category: 'Ẩm thực', status: 'pending', date: '10:30 20/02/2026', image: 'https://source.unsplash.com/random/400x300?cake' },
-  { id: 102, title: 'Top 5 địa điểm du lịch Đà Lạt', author: 'Trần Thị B', authorAvatar: 'https://i.pravatar.cc/150?img=5', category: 'Du lịch', status: 'active', date: '08:00 19/02/2026', image: 'https://source.unsplash.com/random/400x300?travel' },
-  { id: 103, title: 'Lộ trình học VueJS cho người mới', author: 'Dev Dạo', authorAvatar: 'https://i.pravatar.cc/150?img=3', category: 'Công nghệ', status: 'pending', date: '14:20 18/02/2026', image: 'https://source.unsplash.com/random/400x300?code' },
-  { id: 104, title: 'Review quán cà phê Chill', author: 'Lê C', authorAvatar: 'https://i.pravatar.cc/150?img=8', category: 'Đời sống', status: 'rejected', date: '09:00 15/02/2026', image: 'https://source.unsplash.com/random/400x300?coffee' },
-  { id: 105, title: 'Mâm cơm gia đình Việt', author: 'Mẹ Đảm', authorAvatar: 'https://i.pravatar.cc/150?img=9', category: 'Ẩm thực', status: 'active', date: '18:30 14/02/2026', image: 'https://source.unsplash.com/random/400x300?food' },
-])
-
-// --- 2. QUẢN LÝ TRẠNG THÁI ---
+// --- STATE ---
+const posts = ref([])
+const loading = ref(false)
+const error = ref('')
 const searchQuery = ref('')
-const currentTab = ref('all') // all, pending, active, rejected
+const currentTab = ref('all')
 const showModal = ref(false)
 const selectedPost = ref({})
 
 const tabs = [
-  { key: 'all', label: 'Tất cả' },
-  { key: 'pending', label: 'Chờ duyệt' },
-  { key: 'active', label: 'Đã duyệt' },
-  { key: 'rejected', label: 'Đã từ chối' }
+  { key: 'all', label: 'All' },
+  { key: 'pending', label: 'Pending' },
+  { key: 'active', label: 'Approved' },
+  { key: 'deactivated', label: 'Deactivated' }
 ]
 
-// --- 3. COMPUTED & LOGIC ---
+// --- STATUS LOGIC ---
+// isApproved=0 & isActive=1 → pending | isApproved=1 & isActive=1 → active | isActive=0 → deactivated
+const getStatus = (post) => {
+  if (post.isActive === 0) return 'deactivated'
+  if (post.isApproved === 1) return 'active'
+  return 'pending'
+}
 
-// Đếm số bài chờ duyệt
-const pendingCount = computed(() => posts.value.filter(p => p.status === 'pending').length)
+const getStatusLabel = (status) => {
+  const map = { pending: 'Pending', active: 'Active', deactivated: 'Deactivated' }
+  return map[status] || status
+}
 
-// Lọc bài viết theo Tab & Tìm kiếm
+const formatDate = (d) => {
+  if (!d) return ''
+  const dt = new Date(d)
+  return dt.toLocaleDateString('en-GB')
+}
+
+// --- FETCH ---
+const fetchPosts = async () => {
+  loading.value = true
+  error.value = ''
+  try {
+    const res = await api.get('/api/admin/posts')
+    posts.value = res.data.map(p => ({ ...p, _status: getStatus(p) }))
+  } catch (e) {
+    error.value = 'Failed to load posts. ' + (e.response?.data?.message || e.message)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(fetchPosts)
+
+// --- COMPUTED ---
+const pendingCount = computed(() => posts.value.filter(p => p._status === 'pending').length)
+
 const filteredPosts = computed(() => {
   return posts.value.filter(post => {
-    // 1. Lọc theo Tab
-    const matchTab = currentTab.value === 'all' || post.status === currentTab.value
-    // 2. Lọc theo Search
-    const matchSearch = post.title.toLowerCase().includes(searchQuery.value.toLowerCase()) || 
-                        post.author.toLowerCase().includes(searchQuery.value.toLowerCase())
+    const matchTab = currentTab.value === 'all' || post._status === currentTab.value
+    const q = searchQuery.value.toLowerCase()
+    const matchSearch = !q ||
+      (post.title || '').toLowerCase().includes(q) ||
+      (post.accountName || '').toLowerCase().includes(q)
     return matchTab && matchSearch
   })
 })
 
-const getStatusLabel = (status) => {
-  const map = { pending: 'Chờ duyệt', active: 'Hoạt động', rejected: 'Từ chối' }
-  return map[status] || status
+// --- ACTIONS ---
+const approvePost = async (id) => {
+  try {
+    await api.put(`/api/admin/posts/approve/${id}`)
+    const p = posts.value.find(p => p.postID === id)
+    if (p) { p.isApproved = 1; p._status = 'active' }
+    showToast('Post approved successfully')
+  } catch (e) { showToast('Error: ' + (e.response?.data?.message || e.message), 'error') }
 }
 
-// --- 4. HÀNH ĐỘNG (ACTIONS) ---
-const approvePost = (id) => {
-  const post = posts.value.find(p => p.id === id)
-  if (post) post.status = 'active'
-  // alert(`Đã duyệt bài viết #${id}`)
+const deactivatePost = async (id) => {
+  if (!confirm('Deactivate this post?')) return
+  try {
+    await api.put(`/api/admin/posts/deactive/${id}`)
+    const p = posts.value.find(p => p.postID === id)
+    if (p) { p.isActive = 0; p._status = 'deactivated' }
+    showToast('Post deactivated ⛔')
+  } catch (e) { showToast('Error: ' + (e.response?.data?.message || e.message), 'error') }
 }
 
-const rejectPost = (id) => {
-  const post = posts.value.find(p => p.id === id)
-  if (post) post.status = 'rejected'
+const deletePost = async (id) => {
+  if (!confirm('Permanently delete this post? This cannot be undone.')) return
+  try {
+    await api.delete(`/api/admin/posts/${id}`)
+    posts.value = posts.value.filter(p => p.postID !== id)
+    showModal.value = false
+    showToast('Post deleted')
+  } catch (e) { showToast('Error: ' + (e.response?.data?.message || e.message), 'error') }
 }
 
-const deletePost = (id) => {
-  if(confirm('Bạn có chắc muốn xóa bài này vĩnh viễn?')) {
-    posts.value = posts.value.filter(p => p.id !== id)
-  }
-}
+const openDetail = (post) => { selectedPost.value = post; showModal.value = true }
+const closeDetail = () => { showModal.value = false }
 
-const openDetail = (post) => {
-  selectedPost.value = post
-  showModal.value = true
-}
-
-const closeDetail = () => {
-  showModal.value = false
+// --- TOAST ---
+const toast = ref({ show: false, msg: '', type: 'success' })
+const showToast = (msg, type = 'success') => {
+  toast.value = { show: true, msg, type }
+  setTimeout(() => toast.value.show = false, 3000)
 }
 </script>
 
@@ -228,9 +274,9 @@ const closeDetail = () => {
 
 /* Status Badges */
 .status-badge { padding: 5px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
-.status-badge.pending { background: #FEF3C7; color: #D97706; } /* Vàng */
-.status-badge.active { background: #DCFCE7; color: #16A34A; } /* Xanh */
-.status-badge.rejected { background: #FEE2E2; color: #DC2626; } /* Đỏ */
+.status-badge.pending { background: #FEF3C7; color: #D97706; } /* Yellow */
+.status-badge.active { background: #DCFCE7; color: #16A34A; } /* Green */
+.status-badge.rejected { background: #FEE2E2; color: #DC2626; } /* Red */
 
 /* Action Buttons */
 .action-group { display: flex; justify-content: flex-end; gap: 8px; }
@@ -262,6 +308,19 @@ const closeDetail = () => {
 .btn-approve:hover { background: #15803D; }
 .btn-reject { background: white; border: 1px solid #DC2626; color: #DC2626; }
 .btn-reject:hover { background: #DC2626; color: white; }
+
+.modal-footer-actions { margin-top: 15px; text-align: right; }
+.btn-danger { background: #FEE2E2; color: #DC2626; border: 1px solid #DC2626; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 700; transition: 0.2s; }
+.btn-danger:hover { background: #DC2626; color: white; }
+
+.error-msg { color: #DC2626; }
+
+/* Toast */
+.toast-msg { position: fixed; bottom: 30px; right: 30px; padding: 14px 24px; border-radius: 12px; font-weight: 700; z-index: 9999; box-shadow: 0 10px 30px rgba(0,0,0,0.12); }
+.toast-msg.success { background: #DCFCE7; color: #15803D; border: 1px solid #86EFAC; }
+.toast-msg.error { background: #FEE2E2; color: #B91C1C; border: 1px solid #FCA5A5; }
+.toast-enter-active, .toast-leave-active { transition: all 0.3s ease; }
+.toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(20px); }
 
 @keyframes slideUp {
   from { transform: translateY(20px); opacity: 0; }

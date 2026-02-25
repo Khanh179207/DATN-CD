@@ -10,24 +10,24 @@
       
       <aside class="planner-sidebar">
         <div class="sidebar-sticky">
-          <button class="btn-tool primary" @click="showToast('Đang tổng hợp nguyên liệu...')">
+          <button class="btn-tool primary" @click="showToast($t('mealplan.shopping_list'))">
             <div class="icon-box">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
             </div>
             <div class="text-group">
-              <span class="btn-title">DANH SÁCH ĐI CHỢ</span>
-              <span class="btn-sub">Tự động hóa từ Menu</span>
+              <span class="btn-title">{{ $t('mealplan.shopping_list') }}</span>
+              <span class="btn-sub">{{ $t('mealplan.auto_generated') }}</span>
             </div>
             <div class="arrow-indicator">→</div>
           </button>
 
-          <button class="btn-tool secondary" @click="showToast('Mở kho món ăn yêu thích')">
+          <button class="btn-tool secondary" @click="showToast($t('mealplan.saved_recipes'))">
             <div class="icon-box">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
             </div>
             <div class="text-group">
-              <span class="btn-title">KHO MÓN ĐÃ LƯU</span>
-              <span class="btn-sub">12 công thức yêu thích</span>
+              <span class="btn-title">{{ $t('mealplan.saved_recipes') }}</span>
+              <span class="btn-sub">12 {{ $t('mealplan.fav_count') }}</span>
             </div>
           </button>
         </div>
@@ -38,7 +38,7 @@
         <header class="planner-header">
           <div class="header-left">
             <div class="brand-tag">GOMET PLANNER /// V.PRO</div>
-            <h1 class="main-title">Bản Thiết Kế <span class="text-serif">Ẩm Thực</span></h1>
+            <h1 class="main-title">Culinary <span class="text-serif">Blueprint</span></h1>
           </div>
           
           <div class="header-right">
@@ -47,7 +47,7 @@
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
               </button>
               <div class="week-info">
-                <span class="week-label">TUẦN HIỆN TẠI</span>
+                <span class="week-label">{{ $t('mealplan.current_week') }}</span>
                 <span class="week-display">{{ currentWeekDisplay }}</span>
               </div>
               <button class="btn-arrow" @click="changeWeek(1)">
@@ -56,15 +56,18 @@
             </div>
 
             <div class="actions">
-              <button class="btn-ai-gen" @click="autoFillAI">
-                <span class="icon-sparkle">✨</span>
+              <button class="btn-ai-gen" @click="autoFillAI" :disabled="isAILoading" :class="{ loading: isAILoading }">
+                <span class="icon-sparkle">
+                  <svg v-if="isAILoading" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin-icon"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>
+                  <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                </span>
                 <div class="btn-col">
-                  <span class="main-text">TỰ ĐỘNG ĐIỀN</span>
-                  <span class="sub-text">Gợi ý bởi AI</span>
+                  <span class="main-text">{{ isAILoading ? 'Đang tạo...' : $t('mealplan.auto_fill') }}</span>
+                  <span class="sub-text">{{ $t('mealplan.ai_powered') }}</span>
                 </div>
               </button>
               <button class="btn-export" @click="exportMenu">
-                <span>XUẤT MENU</span>
+                <span>{{ $t('mealplan.export_menu') }}</span>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
               </button>
             </div>
@@ -91,7 +94,7 @@
                       <span class="dish-cat">{{ day.meals[mealType].cat }}</span>
                       <h4 class="dish-name">{{ day.meals[mealType].name }}</h4>
                     </div>
-                    <button class="btn-remove" @click.stop="removeDish(dIndex, mealType)" title="Gỡ món này">
+                    <button class="btn-remove" @click.stop="removeDish(dIndex, mealType)" title="Remove this dish">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                     </button>
                   </div>
@@ -114,95 +117,117 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { generateAIMealPlan } from '@/services/aiService'
 
 const router = useRouter()
+const { t } = useI18n()
 
 // --- LOGIC ---
 
-// 1. Dữ liệu ngày tháng giả lập
-const currentWeekDisplay = ref('02 — 08 THÁNG 2, 2026')
+// 1. Simulated week display
+const currentWeekDisplay = ref('Feb 02 — 08, 2026')
 
 const changeWeek = (direction) => {
-  // Demo đổi text, thực tế sẽ gọi API load tuần mới
-  if(direction > 0) currentWeekDisplay.value = '09 — 15 THÁNG 2, 2026'
-  else currentWeekDisplay.value = '26 — 01 THÁNG 1/2, 2026'
-  showToast('Đang tải dữ liệu tuần mới...')
+  // Demo text swap, real implementation will call API to load the new week
+  if(direction > 0) currentWeekDisplay.value = 'Feb 09 — 15, 2026'
+  else currentWeekDisplay.value = 'Jan 26 — Feb 01, 2026'
+  showToast('Loading new week data...')
 }
 
-// 2. Chức năng chính
+// 2. Core functions
 const goToSearch = (day, meal) => {
   console.log(`Searching for ${day} - ${meal}`)
   router.push('/search')
 }
 
 const removeDish = (dayIndex, mealType) => {
-  if(confirm('Gỡ món này khỏi lịch trình?')) {
+  if(confirm(t('mealplan.remove_confirm'))) {
     weekData.value[dayIndex].meals[mealType] = null
   }
 }
 
 const showDishDetail = (dish) => {
-  showToast(`Đang xem chi tiết: ${dish.name}`)
+  showToast(`Viewing details: ${dish.name}`)
 }
 
-const autoFillAI = () => {
-  showToast('AI đang lên thực đơn cho bạn...')
-  setTimeout(() => {
-    // Demo tự điền
-    weekData.value[2].meals.lunch = { name: 'Cơm Tấm Sườn', cat: 'Món Việt', image: 'https://images.unsplash.com/photo-1595295333158-4742f28fbd85?w=600' }
-    showToast('Đã thêm gợi ý từ AI!')
-  }, 1000)
+const isAILoading = ref(false)
+
+const autoFillAI = async () => {
+  if (isAILoading.value) return
+  isAILoading.value = true
+  showToast(t('mealplan.ai_powered') + '...')
+  try {
+    const plan = await generateAIMealPlan()
+    weekData.value = plan
+    showToast('AI đã tạo thực đơn tuần cho bạn!')
+  } catch (e) {
+    showToast('Không thể tạo thực đơn AI. Vui lòng thử lại!')
+    console.error('AI meal plan error:', e)
+  } finally {
+    isAILoading.value = false
+  }
 }
 
 const exportMenu = () => {
-  showToast('Đang xuất file PDF...')
+  showToast('Exporting PDF...')
 }
 
 const showToast = (msg) => {
-  alert(msg) // Demo đơn giản, có thể thay bằng Toast component xịn
+  // Simple notification — can be replaced with a Toast component
+  const el = document.createElement('div')
+  el.textContent = msg
+  Object.assign(el.style, {
+    position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)',
+    background: '#1C1917', color: '#fff', padding: '12px 24px', borderRadius: '12px',
+    fontSize: '0.9rem', zIndex: '99999', fontFamily: 'Mulish,sans-serif',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.25)', transition: 'opacity 0.4s',
+    pointerEvents: 'none',
+  })
+  document.body.appendChild(el)
+  setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 400) }, 2600)
 }
 
-const getMealLabel = (type) => {
-  const map = { breakfast: 'SÁNG', lunch: 'TRƯA', dinner: 'TỐI' }
-  return map[type]
-}
+const getMealLabel = (type) => ({
+  breakfast: t('mealplan.slot_breakfast'),
+  lunch:     t('mealplan.slot_lunch'),
+  dinner:    t('mealplan.slot_dinner')
+})[type]
 
-// 3. Dữ liệu mẫu (Data)
+// 3. Sample data
 const weekData = ref([
   { 
-    name: 'T2', date: '02', isToday: false,
+    name: 'MON', date: '02', isToday: false,
     meals: {
-      breakfast: { name: 'Bánh Mì Ốp La', cat: 'Việt Nam', image: 'https://images.unsplash.com/photo-1525351484164-3963b40d604c?w=600' },
+      breakfast: { name: 'Banh Mi Sunny-Side Up', cat: 'Vietnamese', image: 'https://images.unsplash.com/photo-1525351484164-3963b40d604c?w=600' },
       lunch: null,
-      dinner: { name: 'Salad Cá Ngừ', cat: 'Healthy', image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600' }
+      dinner: { name: 'Tuna Salad', cat: 'Healthy', image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600' }
     }
   },
   { 
-    name: 'T3', date: '03', isToday: true,
+    name: 'TUE', date: '03', isToday: true,
     meals: {
-      breakfast: { name: 'Yến Mạch Sữa', cat: 'Healthy', image: 'https://images.unsplash.com/photo-1517673132405-a56a62b18caf?w=600' },
-      lunch: { name: 'Cơm Gà Hải Nam', cat: 'Món Á', image: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=600' },
-      dinner: { name: 'Steak Thăn Bò', cat: 'Món Âu', image: 'https://images.unsplash.com/photo-1600891964092-4316c288032e?w=600' }
+      breakfast: { name: 'Milk Oats', cat: 'Healthy', image: 'https://images.unsplash.com/photo-1517673132405-a56a62b18caf?w=600' },
+      lunch: { name: 'Hainanese Chicken Rice', cat: 'Asian', image: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=600' },
+      dinner: { name: 'Beef Tenderloin Steak', cat: 'Western', image: 'https://images.unsplash.com/photo-1600891964092-4316c288032e?w=600' }
     }
   },
-  { name: 'T4', date: '04', isToday: false, meals: { breakfast: null, lunch: null, dinner: null } },
+  { name: 'WED', date: '04', isToday: false, meals: { breakfast: null, lunch: null, dinner: null } },
   { 
-    name: 'T5', date: '05', isToday: false,
+    name: 'THU', date: '05', isToday: false,
     meals: {
       breakfast: null,
-      lunch: { name: 'Bún Chả Hà Nội', cat: 'Món Việt', image: 'https://images.unsplash.com/photo-1585325701165-351af916e581?w=600' },
+      lunch: { name: 'Hanoi Bun Cha', cat: 'Vietnamese', image: 'https://images.unsplash.com/photo-1585325701165-351af916e581?w=600' },
       dinner: null
     }
   },
-  { name: 'T6', date: '06', isToday: false, meals: {} },
-  { name: 'T7', date: '07', isToday: false, meals: {} },
-  { name: 'CN', date: '08', isToday: false, meals: {} },
+  { name: 'FRI', date: '06', isToday: false, meals: {} },
+  { name: 'SAT', date: '07', isToday: false, meals: {} },
+  { name: 'SUN', date: '08', isToday: false, meals: {} },
 ])
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Manrope:wght@300;400;500;600;700;800&display=swap');
-
 /* --- 1. CORE LAYOUT --- */
 .gomet-planner-pro {
   width: 100%; height: 100vh; background: #FBF6F1; color: #1E293B;
@@ -221,17 +246,17 @@ const weekData = ref([
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* 🟢 BỐ CỤC CHÍNH */
+/* 🟢 MAIN LAYOUT */
 .planner-wrapper {
   display: flex; width: 100%; height: 100%; max-width: 1800px;
   margin: 0 auto; padding: 30px; gap: 30px; position: relative; z-index: 10;
 }
 
-/* --- SIDEBAR TRÁI --- */
+/* --- LEFT SIDEBAR --- */
 .planner-sidebar { width: 280px; flex-shrink: 0; display: flex; flex-direction: column; }
 .sidebar-sticky { display: flex; flex-direction: column; gap: 20px; margin-top: 20px; }
 
-/* Nút Sidebar Pro */
+/* Sidebar Pro Buttons */
 .btn-tool {
   display: flex; align-items: center; gap: 16px; padding: 20px; border-radius: 20px;
   border: none; cursor: pointer; transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
@@ -292,6 +317,7 @@ const weekData = ref([
   background: linear-gradient(135deg, #FFF, #F0F9FF); border: 1px solid #E0F2FE; color: #0EA5E9; padding: 10px 24px; border-radius: 12px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.3s;
 }
 .btn-ai-gen:hover { border-color: #0EA5E9; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(14, 165, 233, 0.15); }
+.btn-ai-gen.loading { opacity: 0.7; cursor: not-allowed; pointer-events: none; }
 .btn-col { display: flex; flex-direction: column; align-items: flex-start; }
 .main-text { font-weight: 800; font-size: 0.75rem; }
 .sub-text { font-size: 0.6rem; opacity: 0.8; }
@@ -358,6 +384,6 @@ const weekData = ref([
   .sidebar-sticky { flex-direction: row; width: 100%; }
   .btn-tool { flex: 1; }
   .grid-wrapper { overflow-x: auto; }
-  .blueprint-grid { min-width: 1100px; } /* Đảm bảo grid không bị bóp méo */
+  .blueprint-grid { min-width: 1100px; } /* Ensure grid is not distorted */
 }
 </style>

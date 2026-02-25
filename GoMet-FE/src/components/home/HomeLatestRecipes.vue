@@ -3,8 +3,8 @@
     
     <div class="section-header">
       <div class="header-left">
-        <span class="sub-label">Cập nhật mỗi ngày</span>
-        <h2 class="section-heading">Món Ngon Mới Nhất</h2>
+        <span class="sub-label">{{ $t('home.updated_daily') }}</span>
+        <h2 class="section-heading">{{ $t('home.latest_dishes') }}</h2>
       </div>
 
       <div class="tabs-scroll-wrapper">
@@ -12,11 +12,11 @@
           <div 
             class="tab-pill" 
             v-for="tab in tabs" 
-            :key="tab"
-            :class="{ active: activeTab === tab }"
-            @click="activeTab = tab"
+            :key="tab.id"
+            :class="{ active: activeTab === tab.id }"
+            @click="activeTab = tab.id"
           >
-            {{ tab }}
+            {{ tab.name }}
           </div>
         </div>
         <div class="scroll-fade"></div>
@@ -44,7 +44,7 @@
 
     <div class="center-btn">
       <button class="btn-load-more" @click="goToSearch">
-        Xem tất cả công thức
+        {{ $t('home.view_all_recipes') }}
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"></path><path d="M12 5l7 7-7 7"></path></svg>
       </button>
     </div>
@@ -55,42 +55,52 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import RecipeCard from '@/components/common/RecipeCard.vue' // Import Card chuẩn
+import RecipeCard from '@/components/common/RecipeCard.vue'
+import { getLatestPosts, normalizePost } from '@/services/postService'
+import { getCategories } from '@/services/categoryService'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 
 const router = useRouter()
-const activeTab = ref('Tất cả')
-const tabs = ['Tất cả', 'Món ăn sáng', 'Healthy', 'Món nhậu', 'Tráng miệng', 'Ăn vặt', 'Món chay']
+const activeTab = ref(null) // null = Tất cả (categoryID)
 const loading = ref(true)
+const posts = ref([])
+const categories = ref([])
+
+const tabs = computed(() => [
+  { id: null, name: t('common.category_all') },
+  ...categories.value.map(c => ({ id: c.categoryID, name: c.categoryName }))
+])
+
+const filteredPosts = computed(() => {
+  if (!activeTab.value) return posts.value
+  return posts.value.filter(p => p._categoryID === activeTab.value)
+})
 
 const goToDetail = (id) => router.push({ name: 'PostDetail', params: { id } })
 const goToSearch = () => router.push('/search')
 
-// Data giả lập
-const posts = ref([
-  { id: 1, title: 'Bò Beefsteak Sốt Tiêu Đen', image: 'https://images.unsplash.com/photo-1600891964092-4316c288032e?w=600&q=80', time: '45p', difficulty: 'Khó', likes: 1200, author: { name: 'Chef Ramsay', avatar: 'https://ui-avatars.com/api/?name=G+R&background=EA580C&color=fff' }, category: 'Món Âu' },
-  { id: 2, title: 'Salad Bơ Trứng Lòng Đào', image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&q=80', time: '15p', difficulty: 'Dễ', likes: 850, author: { name: 'Hana Giang', avatar: 'https://ui-avatars.com/api/?name=H+G&background=10B981&color=fff' }, category: 'Healthy' },
-  { id: 3, title: 'Pancake Dâu Tây Mật Ong', image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&q=80', time: '30p', difficulty: 'Trung bình', likes: 2000, author: { name: 'Nino Home', avatar: 'https://ui-avatars.com/api/?name=N+H&background=EC4899&color=fff' }, category: 'Tráng miệng' },
-  { id: 4, title: 'Cà Ri Gà Ấn Độ Cay Nồng', image: 'https://images.unsplash.com/photo-1631292784640-2b24be784d5d?w=600&q=80', time: '60p', difficulty: 'Khó', likes: 560, author: { name: 'Uncle Roger', avatar: 'https://ui-avatars.com/api/?name=U+R&background=F59E0B&color=fff' }, category: 'Món Á' },
-  { id: 5, title: 'Mỳ Ý Sốt Kem Nấm', image: 'https://images.unsplash.com/photo-1626844131082-256783844137?w=600&q=80', time: '25p', difficulty: 'Dễ', likes: 3200, author: { name: 'Gomet Chef', avatar: '' }, category: 'Món Âu' },
-  { id: 6, title: 'Sinh Tố Xoài Chuối', image: 'https://images.unsplash.com/photo-1623065422902-30a2d299bbe4?w=600&q=80', time: '10p', difficulty: 'Dễ', likes: 150, author: { name: 'Healthy Life', avatar: '' }, category: 'Healthy' },
-  { id: 7, title: 'Gà Nướng Mật Ong', image: 'https://images.unsplash.com/photo-1598103442097-8b74394b95c6?w=600&q=80', time: '50p', difficulty: 'Trung bình', likes: 900, author: { name: 'BBQ King', avatar: '' }, category: 'Món nhậu' },
-  { id: 8, title: 'Bánh Mì Chảo Hà Nội', image: 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=600&q=80', time: '20p', difficulty: 'Dễ', likes: 4500, author: { name: 'Street Food', avatar: '' }, category: 'Món ăn sáng' },
-])
-
-const filteredPosts = computed(() => {
-  if (activeTab.value === 'Tất cả') return posts.value
-  return posts.value.filter(p => p.category === activeTab.value || p.category === 'Món Âu') // Demo logic lọc
-})
-
-// Giả lập loading
-onMounted(() => {
-  setTimeout(() => loading.value = false, 1000)
+onMounted(async () => {
+  try {
+    const [rawPosts, rawCats] = await Promise.all([
+      getLatestPosts(16),
+      getCategories()
+    ])
+    categories.value = rawCats
+    posts.value = rawPosts.map(dto => ({
+      ...normalizePost(dto),
+      _categoryID: dto.categoryID
+    }))
+  } catch (err) {
+    console.warn('HomeLatestRecipes: API error', err)
+    // Fallback: keep empty, user sees empty grid gracefully
+  } finally {
+    loading.value = false
+  }
 })
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Mulish:wght@400;600;700;800&family=Playfair+Display:wght@700;800&display=swap');
-
 .section-block { 
   margin: 0 0 80px 0; padding: 0 40px; 
   font-family: 'Mulish', sans-serif; width: 100%;
@@ -114,7 +124,7 @@ onMounted(() => {
 .tabs-scroll-wrapper { position: relative; max-width: 600px; overflow: hidden; }
 .tabs-scroll { 
   display: flex; gap: 10px; overflow-x: auto; padding: 5px; 
-  scrollbar-width: none; -ms-overflow-style: none; /* Ẩn scrollbar */
+  scrollbar-width: none; -ms-overflow-style: none; /* Hide scrollbar */
 }
 .tabs-scroll::-webkit-scrollbar { display: none; }
 

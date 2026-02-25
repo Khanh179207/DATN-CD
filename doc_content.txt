@@ -1,0 +1,399 @@
+GVHD: Thầy NGUYỄN NGHIỆM
+LỚP: PRO2113.05 - Nhóm 3
+MỤC LỤC
+LỜI MỞ ĐẦU
+Lời đầu tiên, nhóm chúng em xin gửi lời cảm ơn chân thành đến Ban Giám hiệu và các Quý Thầy/Cô trường Cao đẳng FPT Polytechnic đã tạo điều kiện thuận lợi, mang đến môi trường học tập năng động và truyền đạt những kiến thức quý báu cho chúng em trong suốt thời gian theo học chuyên ngành Phát triển phần mềm tại trường.
+Đặc biệt, chúng em xin bày tỏ lòng biết ơn sâu sắc nhất đến Thầy Nguyễn Nghiệm. Thầy/Cô là người đã trực tiếp dẫn dắt, tận tình chỉ bảo và định hướng cho nhóm từ những ngày đầu lên ý tưởng cho dự án "Mạng xã hội ẩm thực GOMET". Những lời góp ý về chuyên môn và kinh nghiệm thực tế của Thầy/Cô chính là kim chỉ nam giúp nhóm vượt qua những khó khăn về mặt kỹ thuật để hoàn thiện sản phẩm này.
+Chúng em cũng xin cảm ơn gia đình, bạn bè đã luôn đồng hành, động viên và tạo động lực tinh thần to lớn để cả nhóm cùng nhau nỗ lực đưa dự án về đích.
+Mặc dù cả nhóm đã cố gắng hết sức, nhưng do giới hạn về kiến thức và thời gian thực hiện, đồ án chắc chắn không tránh khỏi những thiếu sót. Chúng em rất mong nhận được sự thông cảm và những ý kiến đóng góp quý báu từ Quý Thầy/Cô trong Hội đồng bảo vệ để sản phẩm được hoàn thiện và phát triển tốt hơn trong tương lai.
+Chúng em xin chân thành cảm ơn!
+TP. Hồ Chí Minh, ngày 13 tháng 4 năm 2026 
+      Nhóm sinh viên thực hiện (Ký và ghi rõ họ tên các thành viên)
+Nguyễn Khánh | Trần võ Gia Hưng | Trần Nam Anh | Lê Vân Như | Đăng Công Minh Khánh | Mạc Quốc Bảo
+PHẦN 1: GIỚI THIỆU ĐỀ TÀI
+1.1 Giới thiệu dự án
+Tên đề tài: Xây dựng Mạng xã hội chia sẻ công thức ẩm thực GOMET (Building GOMET: A Culinary Social Network for Recipe Sharing).
+1. Bối cảnh và Lý do chọn đề tài (Context)
+Trong kỷ nguyên số hóa, nhu cầu về ăn uống của con người đã chuyển dịch từ "ăn no" sang "ăn ngon" và tiến tới là "ăn sạch, ăn khỏe". Mặc dù hiện nay có rất nhiều nền tảng chia sẻ công thức nấu ăn (như Facebook, TikTok, YouTube), tuy nhiên người dùng vẫn gặp phải những vấn đề lớn:
+Thông tin phân tán: Công thức bị trôi bài nhanh chóng, khó tìm kiếm lại và khó lưu trữ một cách hệ thống.
+Thiếu công cụ hỗ trợ: Người dùng vẫn phải tự đau đầu suy nghĩ câu hỏi kinh điển "Hôm nay ăn gì?" mà chưa có công cụ hỗ trợ lên thực đơn tự động.
+Xuất phát từ thực tế đó, nhóm quyết định xây dựng GOMET – một mạng xã hội chuyên biệt về ẩm thực, nơi công nghệ được ứng dụng để giải quyết bài toán dinh dưỡng và kết nối cộng đồng. Đây cũng là cơ hội để nhóm vận dụng các kiến thức chuyên ngành (Java, Spring Boot, Database Design) vào một sản phẩm thực tế có độ phức tạp cao về nghiệp vụ và xử lý dữ liệu.
+2. Giới thiệu về GOMET
+GOMET (lấy cảm hứng từ Gourmet - Người sành ăn) không chỉ là một kho lưu trữ công thức nấu ăn, mà là một Hệ sinh thái ẩm thực trực tuyến.
+Hệ thống được xây dựng dưới dạng một Mạng xã hội (Social Network) với các chức năng trọng tâm:
+Chia sẻ & Tương tác:
+ Cho phép người dùng đăng tải, chỉnh sửa công thức nấu ăn kèm hình ảnh/video và tương tác thông qua bình luận, đánh giá, lưu món yêu thích nhằm xây dựng cộng đồng ẩm thực.
+Khám phá & Tìm kiếm:
+Cho phép người dùng khám phá nội dung ẩm thực thông qua việc xem danh sách các bài đăng, tìm kiếm món ăn theo từ khóa và truy cập trang chi tiết công thức. Tại đây, người dùng có thể xem đầy đủ thông tin món ăn như nguyên liệu, các bước thực hiện, hình ảnh hoặc video minh họa, từ đó lựa chọn món ăn phù hợp với nhu cầu và sở thích cá nhân.
+Quản lý cá nhân:
+ Cho phép người dùng quản lý bài viết, tài khoản, theo dõi người dùng khác và tham gia các sự kiện cộng đồng.
+Mô hình Freemium
+Người dùng thường:
+ Sử dụng các chức năng cơ bản như tìm kiếm, xem công thức và tương tác cộng đồng.
+Người dùng Premium:
+ Được cung cấp các tính năng nâng cao như tìm kiếm chuyên sâu, Chat AI hỗ trợ nấu ăn, gợi ý và so sánh món ăn, lập kế hoạch ăn uống, hỗ trợ đi chợ và xem bảng xếp hạng món ăn.
+3. Đối tượng sử dụng (Target Audience)
+Hệ thống GOMET được thiết kế để phục vụ hai nhóm đối tượng chính dựa trên hành vi và mục đích sử dụng trong hệ sinh thái:
+Nhóm Người tiêu thụ nội dung (Content Consumers)
+Đây là nhóm người dùng chiếm số lượng lớn, truy cập hệ thống với mục đích chính là khai thác thông tin và sử dụng các tiện ích hỗ trợ nấu ăn.
+Chân dung:
+Người nội trợ & Nhân viên văn phòng: Những người bận rộn, luôn đau đầu với câu hỏi "Hôm nay ăn gì?", cần tìm kiếm công thức nhanh gọn, dễ làm.
+Người quan tâm sức khỏe (Gymer, Eat Clean): Nhóm đối tượng có nhu cầu sử dụng những món ăn tốt cho sức khỏe.
+Nhu cầu & Hành vi:
+Tìm kiếm công thức nấu ăn theo tên món, nguyên liệu có sẵn hoặc chế độ ăn.
+Sử dụng các công cụ tiện ích: Lên thực đơn tuần (Meal Planner), Tạo danh sách đi chợ.
+Tương tác cộng đồng: Yêu thích, Bình luận, Đánh giá chất lượng món ăn.
+(Đây là nhóm khách hàng tiềm năng chính cho gói dịch vụ Premium).
+Nhóm Người sáng tạo nội dung (Content Creators)
+Đây là nhóm người dùng đóng vai trò tạo ra giá trị cốt lõi (dữ liệu công thức) cho hệ thống, giúp cộng đồng luôn sôi động và phong phú.
+Chân dung:
+Đầu bếp tại gia (Home Cooks): Những người yêu bếp núc, muốn lưu trữ công thức gia truyền hoặc chia sẻ thành quả nấu nướng của mìnchoho cộng đồng.
+Nhà sáng tạo chuyên nghiệp (Food Bloggers/Chefs): Những người có chuyên môn, muốn xây dựng thương hiệu cá nhân và thu hút người theo dõi (Followers).
+Nhu cầu & Hành vi:
+Soạn thảo và đăng tải công thức chi tiết (bao gồm nguyên liệu, định lượng, hình ảnh/video hướng dẫn).
+Quản lý "Bếp cá nhân" (Profile): Sắp xếp các bộ sưu tập công thức.
+Theo dõi phản hồi từ cộng đồng để cải thiện chất lượng nội dung.
+1.2 Ban dự án
+PHẦN 2: KHẢO SÁT – SURVEY
+2.1 Yêu cầu của khách hàng
+2.1.1 Khảo sát và thu thập thông tin (Survey)
+Do đặc thù dự án là xây dựng nền tảng mạng xã hội mới, quy trình khảo sát được thực hiện dựa trên việc nghiên cứu nhu cầu của người dùng thực tế và phân tích các đối thủ cạnh tranh (như Cookpad, Facebook).
+Đối tượng khảo sát:
+Người nội trợ (25-45 tuổi): Có nhu cầu tìm công thức nhanh, dễ hiểu.
+Sinh viên/Người đi làm bận rộn: Cần tính năng lên thực đơn tự động để tiết kiệm thời gian suy nghĩ.
+Tổng hợp yêu cầu từ phía người dùng (User Requirements):
+Về nội dung: Công thức phải có định lượng rõ ràng, hình ảnh/video trực quan.
+Về trải nghiệm: Giao diện phải sạch sẽ, ít quảng cáo, thao tác lưu công thức phải nhanh.
+Về tính cá nhân hóa: Hệ thống cần gợi ý món ăn dựa trên sở thích hoặc nguyên liệu có sẵn trong tủ lạnh.
+2.1.2 Danh sách chức năng theo vai trò (Functional Requirements by Role)
+Dựa trên kết quả khảo sát, hệ thống GOMET được phân chia thành các nhóm chức năng tương ứng với 4 vai trò người dùng (Actor) như sau:
+A. Người dùng vãng lai (Guest)
+Đăng ký và Đăng nhập (hỗ trợ Google).
+Quên mật khẩu
+Xem danh sách bài đăng.
+Tìm kiếm công thức theo tên món ăn.
+B. Người dùng thường (Regular User)
+Quản lý tài khoản
+ Người dùng có thể xem và cập nhật thông tin cá nhân, đổi mật khẩu, quản lý thành tích cá nhân và thực hiện xóa tài khoản nếu cần.
+Khám phá & tìm kiếm món ăn
+ Người dùng có thể tìm kiếm món ăn, xem danh sách bài đăng và xem chi tiết công thức nấu ăn (bao gồm nguyên liệu, các bước thực hiện, hình ảnh/video).
+Tương tác & cộng đồng
+ Người dùng được phép yêu thích (Like), bình luận (Comment), đánh giá món ăn, lưu công thức vào danh sách yêu thích, theo dõi người dùng khác và tham gia các cuộc thi cho cộng đồng.
+Sáng tạo nội dung
+ Người dùng có thể tạo mới, chỉnh sửa và xóa các bài viết/công thức nấu ăn của chính mình. Các bài viết sẽ được đưa vào trạng thái chờ duyệt trước khi hiển thị công khai.
+Thông báo & hỗ trợ
+ Người dùng có thể xem thông báo từ hệ thống và gửi báo lỗi khi gặp sự cố trong quá trình sử dụng.
+Nâng cấp tài khoản
+ Người dùng có thể đăng ký nâng cấp lên tài khoản Premium thông qua cổng thanh toán trực tuyến.
+C. Người dùng trả phí (Premium User)
+Người dùng Premium kế thừa toàn bộ chức năng của Người dùng thường, đồng thời được bổ sung các tính năng nâng cao sau:
+Tìm kiếm & gợi ý món ăn
+ Hỗ trợ tìm kiếm nâng cao theo nhiều tiêu chí, gợi ý món ăn dựa vào minigame để lựa món
+Chat AI hỗ trợ nấu ăn
+ Người dùng có thể tương tác với Chat AI để được tư vấn món ăn, nguyên liệu và cách chế biến phù hợp.
+Lập kế hoạch & đi chợ
+ Cho phép lập kế hoạch ăn uống theo ngày/tuần, tự động tổng hợp các nguyên liệu thành 1 list giúp người dùng mua các món theo bài viết để đi chợ.
+So sánh món ăn
+Người dùng có thể so sánh món ăn cùng danh mục dựa trên các tiêu chí như thành phần nguyên liệu, độ khó, thời gian nấu và đánh giá của cộng đồng, giúp lựa chọn món ăn phù hợp nhất với nhu cầu.
+Xếp hạng & trải nghiệm cao cấp
+ Người dùng Premium được xem bảng xếp hạng các món ăn nổi bật theo ngày/tuần/tháng và nhận huy hiệu VIP hiển thị trên trang cá nhân cũng như trong phần bình luận.
+D. Quản trị viên (Admin)
+Dashboard & thống kê
+ Admin có thể theo dõi các số liệu thống kê tổng quan như số lượng người dùng, bài viết và doanh thu từ gói Premium.
+Quản lý tài khoản
+ Cho phép xem, chỉnh sửa thông tin và khóa (ban) các tài khoản vi phạm quy định.
+Quản lý bài đăng & tương tác
+ Admin có thể quản lý bài đăng, bình luận, duyệt hoặc xóa các nội dung vi phạm tiêu chuẩn cộng đồng.
+Quản lý danh mục & sự kiện
+ Thực hiện thêm, sửa, xóa các danh mục món ăn và quản lý các sự kiện trong hệ thống.
+Quản lý thành tích
+ Thực hiện thêm, sửa, xóa các thành tích của người dùng.
+Quản lý báo cáo & thông báo
+ Xử lý các báo cáo vi phạm hoặc báo lỗi từ người dùng, đồng thời tạo và quản lý các thông báo hệ thống.
+2.1.3 Mô tả chuỗi quy trình nghiệp vụ chính (Business Process)
+Dưới đây là mô tả tóm tắt các luồng xử lý quan trọng nhất của GOMET:
+Quy trình 1: Đăng tải công thức (Post Recipe)
+User đăng nhập chọn "Quản lý bài viết", sau đó chọn thêm bài viết.
+Nhập thông tin: Tên món, Mô tả, độ khó, Thời gian nấu.
+Nhập nguyên liệu: Chọn nguyên liệu từ Database và nhập khối lượng.
+Nhập các bước thực hiện: Thêm text và hình ảnh/video minh họa.
+Hệ thống kiểm tra dữ liệu hợp lệ (Validate).
+Lưu vào Database và hiển thị lên trang chủ.
+Quy trình 2: Nâng cấp tài khoản Premium (Upgrade Subscription)
+User chọn "Nâng cấp Premium" từ trang cá nhân.
+Hệ thống hiển thị các gói dịch vụ (1 tháng, 6 tháng, 1 năm) và quyền lợi.
+User chọn gói và phương thức thanh toán (VNPay/Momo/Thẻ).
+Hệ thống chuyển hướng sang cổng thanh toán an toàn.
+Sau khi thanh toán thành công, Cổng thanh toán trả về kết quả.
+Hệ thống cập nhật trạng thái tài khoản User lên "Premium" và kích hoạt tính năng VIP.
+Gửi email xác nhận giao dịch.
+Quy trình 3: Xem chi tiết bài viết (View Recipe Detail)
+User chọn một bài viết/công thức từ trang chủ, trang tìm kiếm hoặc trang cá nhân tác giả.
+Hệ thống nhận PostID và truy vấn dữ liệu chi tiết từ Database.
+Hệ thống hiển thị thông tin bài viết:
+Tên món, mô tả, độ khó, thời gian nấu
+Danh sách nguyên liệu và khối lượng
+Các bước thực hiện (text + hình ảnh/video)
+Thông tin tác giả, lượt xem, lượt yêu thích
+Hệ thống hiển thị điểm đánh giá trung bình và danh sách bình luận.
+User thực hiện các tương tác trên bài viết:
+Bình luận
+Đánh giá (1–5 sao)
+Lưu món ăn yêu thích
+Báo cáo bài đăng
+Ghi chú cá nhân
+Hệ thống kiểm tra trạng thái đăng nhập và tính hợp lệ của dữ liệu nhập.
+Hệ thống lưu dữ liệu tương tác vào Database và cập nhật lại giao diện theo thời gian thực.
+Quy trình 4: Lên thực đơn và Xuất danh sách đi chợ (Meal Planning)
+Premium User chọn một món ăn yêu thích -> Bấm "Thêm vào thực đơn".
+Chọn ngày (Thứ 2 - CN) và bữa (Sáng/Trưa/Tối).
+Lặp lại với các món khác.
+User bấm "Tạo danh sách đi chợ".
+Hệ thống quét toàn bộ món ăn trong tuần -> Tổng hợp nguyên liệu giống nhau (Ví dụ: 3 món đều dùng Trứng -> Tổng hợp thành 10 quả Trứng).
+Xuất ra danh sách checklist để User mang đi siêu thị.
+Quy trình 5: Dashboard Admin (Admin Dashboard)
+Admin đăng nhập vào hệ thống quản trị.
+Sau khi đăng nhập thành công, hệ thống tự động chuyển đến Dashboard Admin.
+Hệ thống truy vấn dữ liệu tổng hợp từ Database:
+Doanh thu từ các gói Premium
+Tổng số bài đăng trên hệ thống
+Tổng số người dùng đã đăng ký
+Hệ thống xử lý và thống kê dữ liệu theo thời gian thực.
+Hệ thống hiển thị các chỉ số tổng quan trên Dashboard:
+Doanh thu Premium (VNĐ)
+Tổng số bài đăng
+Tổng số Users
+Hệ thống cập nhật lại dữ liệu Dashboard theo bộ lọc được chọn.
+Admin theo dõi tình trạng hoạt động tổng thể của hệ thống thông qua Dashboard.
+Quy trình 6: Quản lý bài đăng (Post Management – Admin)
+Admin đăng nhập vào hệ thống quản trị (Admin Dashboard).
+Admin chọn chức năng “Quản lý bài đăng”.
+Hệ thống hiển thị danh sách các bài đăng với thông tin:
+Tên bài viết
+Tác giả
+Ngày đăng
+Trạng thái (Chờ duyệt / Đã duyệt / Vi phạm)
+Admin chọn một bài đăng để xem chi tiết nội dung.
+Hệ thống hiển thị toàn bộ nội dung bài đăng:
+Thông tin món ăn
+Nguyên liệu
+Các bước thực hiện
+Hình ảnh/video minh họa
+Admin thực hiện một trong các thao tác quản lý:
+Duyệt bài đăng
+Xóa bài đăng
+Khi Admin chọn “Duyệt bài đăng”:
+Hệ thống cập nhật trạng thái bài viết sang “Đã duyệt”
+Bài đăng được hiển thị công khai trên hệ thống
+Khi Admin chọn “Xóa bài đăng”:
+Hệ thống yêu cầu Admin xác nhận thao tác
+Sau khi xác nhận, bài đăng bị xóa khỏi hệ thống
+Hệ thống lưu thay đổi vào Database và cập nhật lại danh sách bài đăng.
+Quy trình 7: Quản lý tài khoản (Account Management – Admin)
+Admin đăng nhập vào hệ thống quản trị (Admin Dashboard).
+Admin chọn chức năng “Quản lý tài khoản”.
+Hệ thống hiển thị danh sách tài khoản người dùng với các thông tin:
+Tên đăng nhập
+Email
+Vai trò (User / Premium / Admin)
+Trạng thái tài khoản (Hoạt động / Bị khóa)
+Admin chọn một tài khoản để xem chi tiết.
+Hệ thống hiển thị thông tin chi tiết tài khoản:
+Thông tin cá nhân
+Ngày tạo tài khoản
+Trạng thái gói dịch vụ (Thường / Premium)
+Admin thực hiện các thao tác quản lý tài khoản:
+Xem thông tin tài khoản
+Chỉnh sửa tài khoản
+Xóa tài khoản
+Khi Admin chọn “Chỉnh sửa tài khoản”:
+Admin cập nhật thông tin (vai trò, trạng thái, gói dịch vụ…)
+Hệ thống kiểm tra dữ liệu hợp lệ
+Lưu thay đổi vào Database
+Khi Admin chọn “Xóa tài khoản”:
+Hệ thống yêu cầu Admin xác nhận thao tác
+Sau khi xác nhận, tài khoản bị xóa hoặc chuyển sang trạng thái Vô hiệu hóa
+Hệ thống cập nhật lại danh sách tài khoản sau khi xử lý.
+Quy trình 8: Quản lý báo cáo (Report Management – Admin)
+Admin đăng nhập vào hệ thống quản trị.
+Admin chọn chức năng “Quản lý báo cáo”.
+Hệ thống hiển thị danh sách các đơn báo cáo với thông tin:
+Loại báo cáo (Lỗi hệ thống / Bài đăng vi phạm)
+Người gửi báo cáo
+Thời gian gửi
+Trạng thái xử lý (Chờ xử lý / Đang xử lý / Đã xử lý)
+Admin chọn một đơn báo cáo để xem chi tiết.
+Hệ thống hiển thị nội dung chi tiết báo cáo:
+Mô tả lỗi hoặc hành vi vi phạm
+Bài đăng liên quan (nếu có)
+Hình ảnh/tệp đính kèm (nếu có)
+Admin thực hiện xử lý theo loại báo cáo:
+Đối với báo cáo lỗi hệ thống:
+Đánh dấu trạng thái “Đang xử lý” hoặc “Đã xử lý”
+Ghi chú hướng xử lý / chuyển cho bộ phận kỹ thuật
+Đối với báo cáo bài đăng vi phạm:
+Xem nội dung bài đăng bị báo cáo
+Quyết định: Duyệt nội dung / Gỡ bài đăng / Cảnh cáo User
+Admin xác nhận kết quả xử lý báo cáo.
+Hệ thống cập nhật trạng thái báo cáo trong Database.
+Hệ thống lưu lịch sử xử lý để phục vụ kiểm tra và thống kê sau này.
+2.2 Kế hoạch dự án (12/1 tới 29/3)
+PHẦN 3: PHÂN TÍCH - ANALYSIS
+3.1 Mô hình triển khai hệ thống
+Mô tả mô hình triển khai hệ thống
+Hệ thống GOMET được xây dựng theo mô hình Client – Server – Database. Hệ thống phục vụ nhiều nhóm người dùng gồm Guest, User, Premium User và Admin. Tất cả người dùng đều gửi yêu cầu đến Server, nơi thực hiện xác thực, phân quyền và xử lý các nghiệp vụ của hệ thống.
+Server đóng vai trò trung gian, giao tiếp hai chiều với SQL Server để truy xuất và lưu trữ dữ liệu. Người dùng không được truy cập trực tiếp vào cơ sở dữ liệu, giúp đảm bảo tính bảo mật và an toàn thông tin.
+3.2 Sơ đồ Use Cases
+3.2.1 Tổng quan
+Use case tổng quát các chức năng
+3.2.2 Use Cases dành cho khách vãng lai
+3.2.3 Use Cases dành cho người dùng thường
+3.2.4 Use Cases dành cho người dùng trả phí
+3.2.5 Use Cases dành cho quản trị
+3.3 Đặc tả yêu cầu hệ thống (SRS)
+3.3.1 Chi tiết use cases dành cho guest
+Use Case 1: Đăng ký tài khoản
+Use Case 2: Đăng nhập
+Use Case 3: Quên mật khẩu
+3.3.2 Chi tiết use cases dàng cho user
+Use Case 1: Xem món ăn
+Use Case 2: Quản lý bài viết
+Use Case 3: Nâng cấp tài khoản
+Use Case 4: Báo lỗi hệ thống
+Use Case 5: Bình luận và đánh giá
+Use Case 6: Tìm kiếm thường
+Use Case 7: Quản lý tài khoản
+3.3.3 Chi tiết use cases dàng cho premium user
+Use Case 01: Tìm kiếm nâng cao
+Use Case 2: Gợi ý món ăn
+Use Case 3: Xem bảng xếp hạng
+3.3.4 Chi tiết use cases dành cho quản trị
+Use Case 1: Quản lý tài khoản
+Use Case 2: Quản lý bài đăng
+Use Case 3: Quản lý bình luận 
+Use case 4: Xử lý các hỗ trợ
+Use case 5: Xem thống kê
+Use case 6: Quản lý sự kiện
+Use case 7: Gửi thông báo hệ thống
+Use case 8: Quản lý danh mục
+PHẦN 4: THIẾT KẾ - DESIGN
+4.1 Mô hình công nghệ
+Mô tả mô hình công nghệ
+Hệ thống được xây dựng theo mô hình ứng dụng Web nhiều tầng.
+ Tầng giao diện sử dụng HTML, CSS, Bootstrap và jQuery để hiển thị nội dung và xử lý tương tác người dùng.
+ Tầng xử lý nghiệp vụ được phát triển bằng Spring MVC kết hợp JPA, chạy trên Tomcat và JDK, đảm nhiệm việc xử lý logic và trao đổi dữ liệu.
+ Dữ liệu của hệ thống được lưu trữ và quản lý trong SQL Server, đảm bảo tính toàn vẹn và hiệu quả khi truy vấn.
+4.2 Thiết kế giao diện
+4.2.1 Sitemap 
+Mô tả
+Sitemap của hệ thống GOMET mô tả cấu trúc tổng thể website và mối quan hệ giữa các trang chức năng, giúp người dùng dễ dàng định hướng và truy cập các chức năng của hệ thống.
+Hệ thống được chia thành ba khu vực chính: Guest, User/Premium User và Admin.
+ Người dùng vãng lai có thể xem danh sách món ăn, xem chi tiết công thức, tìm kiếm, đăng ký và đăng nhập. Sau khi đăng nhập, người dùng có thể quản lý bài viết, bình luận, đánh giá, lưu món ăn yêu thích và quản lý thông tin cá nhân; tài khoản Premium được sử dụng thêm các chức năng nâng cao như tìm kiếm nâng cao, gợi ý món ăn và lập kế hoạch ăn uống. Khu vực Admin cho phép quản lý người dùng, duyệt bài đăng, quản lý danh mục, bình luận và theo dõi thống kê hệ thống.
+Sitemap đảm bảo phân quyền rõ ràng, hỗ trợ mở rộng hệ thống và nâng cao trải nghiệm người dùng.
+4.2.2 Layout
+Mô tả
+Layout của hệ thống GOMET được thiết kế theo bố cục dọc, rõ ràng và dễ sử dụng. Trang gồm các thành phần chính: Header, Horizontal Menu, Hero Section, Categories Section, Featured Recipes và Footer. Cách bố trí này giúp người dùng dễ dàng điều hướng, nhanh chóng tiếp cận danh mục và các công thức nổi bật, đồng thời nâng cao trải nghiệm sử dụng.
+4.2.3 Giao diện chức năng
+Phác thảo giao diện cho các chức năng và mô tả hoạt động cho các tương tác của người sử dụng lên giao diện
+Chức năng 1:
+Đăng nhập
+
+Chức năng 2: 
+Trang	chủ 
+Chức năng 3: 
+Món ăn hot trong ngày/tuần/tháng
+
+Chức năng 4:
+Danh mục món
+
+Chức năng 5:
+Dashboard Admin
+
+
+Chức năng 6:
+Quản lý tài khoản
+Chức năng 7:
+Quản lý bài đăng
+
+Chức năng 8:
+Quản lý bình luận
+
+Chức năng 9:
+Xử lý Report
+Chức năng 10:
+Quản lý sự kiện
+4.3 Thiết kế dữ liệu
+4.3.1 Sơ đồ quan hệ thực thể (ERD)
+Tổng quan ERD
+Sơ đồ tổng quan ERD
+Chi tiết ERD
+4.3.2 Chi tiết thực thể
+Thực thể Account
+Thực thể Post
+Thực thể Category 
+Thực thể Event
+Thực thể EventPosts
+Thực thể MealPlan
+Thực thể History
+Thực thể Note
+Thực thể Notification 
+Thực thể Comment 
+Thực thể Rating 
+Thực thể Favorite 
+Thực thể Follow 
+Thực thể UserAchievement 
+Thực thể Achievement 
+Thực thể Subscription 
+Thực thể Error
+Thực thể Report
+Thực thể CookingSteps
+4.4 Sơ đồ lớp DAO
+PHẦN 5: THỰC HIỆN – IMPLEMENT
+Dựa trên cơ sở của phần thiết kế bạn tiến hành xây dựng và viết mã cho ứng dụng phần mềm. 
+Trong phần này bạn sẽ phải sử dụng tool để hiện thực theo đúng bản thiết kế thành phần mềm cụ thể.
+Chuẩn bị môi trường phát triển
+Xây dựng CSDL
+Xây dựng layout, thiết kế giao diện chi tiết cho các chức năng
+Xây dựng thư viện cần thiết cho dự án
+Viết mã cho các chức năng nghiệp vụ
+Chú ý: Khi viết báo cáo phần này, bạn không chép toàn bộ code, giao diện đã thực hiện trong dự án đưa hết vào đây mà cần phải trình bày theo cách ứng ựng và tham khao dưới dạng API.
+Các sơ đồ quan hệ
+Mô tả công dụng các lớp, các hàm… bạn đã viết và cách sử dụng chúng
+Các thư viện đã sử dụng bên ngoài
+Các thư viện do chính bạn viết ra
+5.1 Database
+5.2 Layout
+5.3 Sơ đồ kiến trúc công nghệ
+Tổ chức client
+Tổ chức server (Controller, Service, DAO, Entity, Database)
+5.4 Các loại sơ đồ
+5.4.1 Sequence Diagram
+Chọn và mô tả đầy đủ một hoạt động tương tác
+5.4.2 Activity Diagram
+5.4.3 Class Diagram
+5.5 API
+5.5.1 Controllers
+Controller 1:
+Controller 2:
+5.5.2 Servives (Bussiness Logic Layer)
+Service 1:
+Service 1:
+PHẦN 6: KIỂM THỬ - TESTING
+Kiểm thử là công đoạn quan trọng để đảm bảo chất lượng sản phẩm trước khi đóng gói và bàn giao cho khách hàng. Căn cứ vào dữ liệu phân tích từ yêu cầu của khách hàng để xem xét các chức năng có hoạt động như mong muốn hay chưa?
+Cụ thể, hãy căn cứ vào sản phẩm bạn đã xây dựng hãy liệt kê tất cả các giao diện chức năng cần phải kiểm thử, chỉ rõ mỗi chức năng cần phải kiểm thử những tình huống nào? Hãy tiến hành theo trình tự các bước sau đây:
+Xây dựng test plan (kịch bản kiểm thử)
+Đưa ra các bộ dữ liệu kiểm thử cho từng test case
+Tiến hành kiểm thử dự vào dữ liệu mẫu
+Ghi nhận kết quả kiểm thử
+Lập trình sửa lỗi chưa thỏa mãn
+PHẦN 7: ĐÓNG GÓI & TRIỂN KHAI
+Sản phẩm đã hoàn thiện cần được đóng gói để chuyển giao cho khách hàng. Đối với sản phẩm công nghệ web viết bằng Java bạn cần thực hiện các bước sau
+Tạo file *.war để đóng gói toàn bộ sản phẩm
+Backup CSDL khởi đầu của ứng dụng
+Viết tài liệu hướng dẫn cài đặt và sử dụng
+KẾT LUẬN
+Bạn cần tóm tắt những gì đã thực hiện trong dự án. Nêu cụ thể những gì đã làm được, chưa được và hướng khắc phục như thế nào. Bạn cũng đừng quên nói lời cám ơn đến các bên liên quan đã hỗ trợ mình trong suốt quá trình làm dự án. Đừng quên nếu hướng phát triển mở rộng trong tương lại (nếu có)
+PHỤ LỤC
+…
+TÀI LIỆU THAM KHẢO
+…

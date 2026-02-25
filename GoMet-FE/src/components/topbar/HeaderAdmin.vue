@@ -27,14 +27,18 @@
             </div>
             <div class="panel-body custom-scroll">
               <div class="noti-card unread" @click="handleNotiClick(1)">
-                <div class="status-icon warning">⚠️</div>
+                <div class="status-icon warning">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                </div>
                 <div class="content">
                   <p class="msg">Có báo cáo vi phạm từ User #882</p>
                   <span class="time">5 phút trước</span>
                 </div>
               </div>
               <div class="noti-card" @click="handleNotiClick(2)">
-                <div class="status-icon success">✅</div>
+                <div class="status-icon success">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
                 <div class="content">
                   <p class="msg">Bài viết "Mỳ Ý" đã được duyệt</p>
                   <span class="time">1 giờ trước</span>
@@ -51,24 +55,23 @@
       <div class="action-item" v-click-outside="closeUser">
         <div class="user-trigger-lux" @click="toggleUser">
           <div class="text-info">
-            <span class="name">Khánh Admin</span>
+            <span class="name">{{ adminName }}</span>
             <span class="role">Super Admin</span>
           </div>
           <div class="avatar-ring">
-             <img src="https://ui-avatars.com/api/?name=Khanh+Nguyen&background=EA580C&color=fff&size=128" alt="Admin">
+             <img :src="adminAvatar" :alt="adminName">
           </div>
         </div>
 
         <transition name="zoom-fade">
           <div v-if="showUser" class="dropdown-panel user-panel">
             <div class="user-cover-header">
-               <img src="https://ui-avatars.com/api/?name=Khanh+Nguyen&background=EA580C&color=fff&size=128" alt="Admin">
+               <img :src="adminAvatar" :alt="adminName">
                <div class="u-detail">
-                 <strong>Khánh Admin</strong>
-                 <span>admin@gomet.vn</span>
+                 <strong>{{ adminName }}</strong>
+                 <span>{{ adminEmail }}</span>
                </div>
             </div>
-            
             <div class="menu-list">
               <button class="menu-link" @click="goToProfile">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
@@ -96,15 +99,25 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
-const route = useRoute()
+const route  = useRoute()
 const router = useRouter()
+const auth   = useAuthStore()
+
 const showNoti = ref(false)
 const showUser = ref(false)
 
-// GIỮ NGUYÊN LOGIC CŨ CỦA SẾP
+// Real user data from auth store
+const adminName   = computed(() => auth.currentUser?.username || 'Admin')
+const adminEmail  = computed(() => auth.currentUser?.email    || '')
+const adminAvatar = computed(() =>
+  auth.currentUser?.avatar ||
+  `https://ui-avatars.com/api/?name=${encodeURIComponent(adminName.value)}&background=EA580C&color=fff&size=128`
+)
+
 const vClickOutside = {
   mounted(el, binding) {
     el.clickOutsideEvent = (event) => {
@@ -116,19 +129,23 @@ const vClickOutside = {
 }
 
 const toggleNoti = () => { showNoti.value = !showNoti.value; showUser.value = false }
-const closeNoti = () => { showNoti.value = false }
+const closeNoti  = () => { showNoti.value = false }
 const toggleUser = () => { showUser.value = !showUser.value; showNoti.value = false }
-const closeUser = () => { showUser.value = false }
+const closeUser  = () => { showUser.value = false }
 
 const goToProfile = () => { router.push('/profile'); closeUser() }
 const goToSettings = () => { closeUser() }
-const handleLogout = () => { if(confirm('Bạn có chắc muốn đăng xuất?')) { localStorage.removeItem('token'); router.push('/login') } }
-const handleNotiClick = (id) => { alert(`Đã click thông báo ${id}`); closeNoti() }
+
+const handleLogout = () => {
+  closeUser()
+  // Use the store's logout which clears state and navigates to '/'
+  auth.logout()
+}
+
+const handleNotiClick = (id) => { router.push('/admin/notifications'); closeNoti() }
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Mulish:wght@400;600;700;800&display=swap');
-
 /* --- 🏛️ HEADER: GLASSMORPHISM --- */
 .header-admin-sovereign {
   height: 85px; /* Tăng chiều cao để thoáng */

@@ -3,8 +3,8 @@
     
     <div class="section-header fade-in-up">
       <div class="header-left">
-        <span class="sub-label">Khám Phá</span>
-        <h2 class="section-heading">Danh Mục</h2>
+        <span class="sub-label">{{ $t('home.explore') }}</span>
+        <h2 class="section-heading">{{ $t('home.categories') }}</h2>
       </div>
       
       <div class="nav-controls">
@@ -51,7 +51,7 @@
           <div class="card-inner view-more-inner">
             <div class="view-more-content">
               <div class="icon-pulse-box">➜</div>
-              <h3>Xem Tất Cả</h3>
+              <h3>{{ $t('home.view_all') }}</h3>
             </div>
           </div>
         </div>
@@ -63,19 +63,51 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { getCategories } from '@/services/categoryService'
 
 const router = useRouter()
+const { t } = useI18n()
 const carouselRef = ref(null)
 const activeIndex = ref(0)
+const apiCategories = ref([])
+
+// Fallback image map for known category names
+const fallbackImages = {
+  'dessert': 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=600&fit=crop',
+  'drinks': 'https://images.unsplash.com/photo-1544145945-f90425340c7e?q=80&w=600&fit=crop',
+  'healthy': 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?q=80&w=600&fit=crop',
+  'main': 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?q=80&w=600&fit=crop',
+  'snack': 'https://images.unsplash.com/photo-1526230427044-d092040d48dc?q=80&w=600&fit=crop',
+  'veg': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=600&fit=crop',
+  'breakfast': 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?q=80&w=600&fit=crop',
+  'soup': 'https://images.unsplash.com/photo-1547592166-23ac45744acd?q=80&w=600&fit=crop',
+  'default': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=600&fit=crop',
+}
+
+const getCatImage = (name) => {
+  const key = name.toLowerCase()
+  for (const [k, v] of Object.entries(fallbackImages)) {
+    if (key.includes(k)) return v
+  }
+  return fallbackImages.default
+}
+
+onMounted(async () => {
+  try {
+    const cats = await getCategories()
+    apiCategories.value = cats
+  } catch { /* keep empty */ }
+})
 
 const handleFilter = (slug) => { router.push({ name: 'Search', query: { cat: slug } }) }
 const goToSearch = () => { router.push({ name: 'Search' }) }
 
 const scroll = (direction) => {
   if (!carouselRef.value) return;
-  const cardWidth = 240; // Card width + gap
+  const cardWidth = 240;
   const scrollAmount = direction === 'left' ? -cardWidth : cardWidth;
   carouselRef.value.scrollBy({ left: scrollAmount, behavior: 'smooth' });
 }
@@ -87,56 +119,69 @@ const handleScroll = () => {
   activeIndex.value = Math.round(scrollLeft / cardWidth);
 }
 
-const categories = ref([
-  { name: 'Bánh Ngọt', slug: 'dessert', count: '150+', image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=600&fit=crop' },
-  { name: 'Đồ Uống', slug: 'drinks', count: '60+', image: 'https://images.unsplash.com/photo-1544145945-f90425340c7e?q=80&w=600&fit=crop' },
-  { name: 'Eat Clean', slug: 'healthy', count: '85+', image: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?q=80&w=600&fit=crop' },
-  { name: 'Món Chính', slug: 'main-course', count: '300+', image: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?q=80&w=600&fit=crop' },
-  { name: 'Ăn Vặt', slug: 'snacks', count: '200+', image: 'https://images.unsplash.com/photo-1526230427044-d092040d48dc?q=80&w=600&fit=crop' },
-  { name: 'Món Chay', slug: 'vegetarian', count: '120+', image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=600&fit=crop' },
-])
+const categories = computed(() => {
+  if (apiCategories.value.length > 0) {
+    return apiCategories.value.map(c => ({
+      name: c.categoryName,
+      slug: c.categoryName.toLowerCase().replace(/\s+/g, '-'),
+      count: (c.postCount != null ? c.postCount : '?') + '+',
+      image: getCatImage(c.categoryName)
+    }))
+  }
+  // Fallback static
+  return [
+    { name: t('home.cat_dessert'), slug: 'dessert', count: '150+', image: fallbackImages.dessert },
+    { name: t('home.cat_drinks'),  slug: 'drinks',  count: '60+',  image: fallbackImages.drinks },
+    { name: t('home.cat_healthy'), slug: 'healthy', count: '85+',  image: fallbackImages.healthy },
+    { name: t('home.cat_main'),    slug: 'main-course', count: '300+', image: fallbackImages.main },
+    { name: t('home.cat_snacks'),  slug: 'snacks', count: '200+',  image: fallbackImages.snack },
+    { name: t('home.cat_veg'),     slug: 'vegetarian', count: '120+', image: fallbackImages.veg },
+  ]
+})
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Mulish:wght@400;600;700;800&family=Playfair+Display:wght@700;800&display=swap');
-
 /* --- CONTAINER CHÍNH --- */
 .category-section {
-  background: transparent; /* Trong suốt để ăn nhập với nền cha */
+  background: transparent;
   margin: 20px 0;
-  padding: 10px 0 10px 0;
+  padding: 10px 0;
   width: 100%;
-  font-family: 'Mulish', sans-serif;
+  font-family: var(--font-ui);
   position: relative;
 }
 
 /* --- HEADER --- */
 .section-header {
   display: flex; align-items: flex-end; justify-content: space-between;
-  padding: 0 40px; margin-bottom: 25px;
+  padding: 0 var(--space-10); margin-bottom: var(--space-6);
 }
 .sub-label {
-  display: block; font-size: 0.75rem; color: #EA580C; font-weight: 800; 
-  text-transform: uppercase; margin-bottom: 6px; letter-spacing: 1.5px;
+  display: block; font-size: var(--text-xs); color: var(--color-primary-600); font-weight: var(--font-extrabold);
+  text-transform: uppercase; margin-bottom: var(--space-1); letter-spacing: 1.5px;
 }
 .section-heading {
-  font-family: 'Playfair Display', serif;
-  font-size: 2.2rem; color: #1C1917; margin: 0; line-height: 1;
+  font-family: var(--font-display);
+  font-size: var(--text-3xl); color: var(--color-neutral-900); margin: 0; line-height: var(--leading-none);
 }
 
 /* Navigation Buttons */
-.nav-controls { display: flex; gap: 12px; }
+.nav-controls { display: flex; gap: var(--space-3); }
 .nav-btn {
-  width: 40px; height: 40px; border-radius: 50%;
-  border: 1px solid rgba(0,0,0,0.1); background: white;
+  width: 40px; height: 40px; border-radius: var(--radius-full);
+  border: 1px solid var(--color-neutral-200); background: var(--color-neutral-0);
   display: flex; align-items: center; justify-content: center;
-  cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  font-size: 0.9rem; color: #1C1917;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  cursor: pointer;
+  font-size: var(--text-sm); color: var(--color-neutral-900);
+  box-shadow: var(--shadow-xs);
+  /* Use composited transform only, not box-shadow */
+  transition: background var(--duration-fast) var(--ease-out),
+              transform  var(--duration-fast) var(--ease-spring),
+              color      var(--duration-fast) var(--ease-out);
 }
-.nav-btn:hover { 
-  background: #EA580C; color: white; border-color: #EA580C; 
-  transform: scale(1.1); box-shadow: 0 8px 20px rgba(234, 88, 12, 0.3);
+.nav-btn:hover {
+  background: var(--color-primary-600); color: var(--color-neutral-0); border-color: var(--color-primary-600);
+  transform: scale(1.1);
 }
 
 /* --- CAROUSEL --- */
@@ -154,29 +199,32 @@ const categories = ref([
 
 /* --- CARD VIP PRO --- */
 .cat-card {
-  min-width: 220px; height: 300px; /* Thẻ to hơn, sang hơn */
+  min-width: 220px; height: 300px;
   position: relative; cursor: pointer;
   scroll-snap-align: start;
   perspective: 1000px;
-  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* Promote to own layer so hover changes don’t repaint the whole page */
+  will-change: transform;
+  transition: transform var(--duration-normal) var(--ease-spring);
 }
 
 .card-inner {
   width: 100%; height: 100%;
-  border-radius: 24px; overflow: hidden;
+  border-radius: var(--radius-xl); overflow: hidden;
   position: relative;
-  background: white;
-  /* Bóng đổ nhẹ lúc bình thường */
-  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.01);
-  transition: all 0.4s ease;
-  transform-style: preserve-3d;
+  background: var(--color-neutral-0);
+  box-shadow: var(--shadow-md);
+  /* Explicit props only — never 'all' */
+  transition: transform  var(--duration-normal) var(--ease-out),
+              box-shadow var(--duration-normal) var(--ease-out),
+              border     var(--duration-normal) var(--ease-out);
 }
 
 /* Ảnh Parallax */
 .card-image-wrapper { width: 100%; height: 100%; overflow: hidden; position: relative; }
 .parallax-img {
   width: 100%; height: 100%; object-fit: cover;
-  transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: transform var(--duration-slower) var(--ease-out);
 }
 .overlay-gradient {
   position: absolute; inset: 0;
@@ -202,65 +250,69 @@ const categories = ref([
 .glass-pill {
   position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); z-index: 2;
   background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(15px);
-  padding: 10px 24px; border-radius: 40px;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+  backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+  padding: var(--space-3) var(--space-6); border-radius: var(--radius-full);
+  box-shadow: var(--shadow-lg);
   white-space: nowrap;
-  transition: all 0.3s ease;
-  border: 1px solid rgba(255,255,255,0.8);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  /* Only transition composited properties + background */
+  transition: background var(--duration-normal) var(--ease-out),
+              transform  var(--duration-normal) var(--ease-spring),
+              border-color var(--duration-normal) var(--ease-out);
 }
-.cat-name { font-size: 1rem; font-weight: 800; color: #1C1917; letter-spacing: -0.5px; }
+.cat-name { font-size: var(--text-base); font-weight: var(--font-extrabold); color: var(--color-neutral-900); letter-spacing: -0.5px; }
 
 /* --- INTERACTIVE STATES (HOVER) --- */
 .cat-card:hover .card-inner {
-  transform: translateY(-12px); /* Bay lên cao hơn */
-  box-shadow: 0 25px 50px -12px rgba(234, 88, 12, 0.25); /* Bóng cam lan tỏa */
+  transform: translateY(-12px);
+  box-shadow: var(--shadow-primary-lg);
   border: 1px solid rgba(234, 88, 12, 0.2);
 }
 
 .cat-card:hover .parallax-img { transform: scale(1.1); }
 
 .cat-card:hover .glass-pill {
-  background: #EA580C; /* Đổi màu cam */
+  background: var(--color-primary-600);
   transform: translateX(-50%) scale(1.05);
-  box-shadow: 0 10px 30px rgba(234, 88, 12, 0.4);
-  border-color: #EA580C;
+  border-color: var(--color-primary-600);
 }
-.cat-card:hover .cat-name { color: white; }
+.cat-card:hover .cat-name { color: var(--color-neutral-0); }
 
 /* --- VIEW MORE CARD --- */
 .view-more-inner {
-  background: #FFF7ED; /* Nền cam nhạt */
-  border: 2px dashed #FDBA74; /* Viền đứt đoạn */
+  background: var(--color-primary-50);
+  border: 2px dashed var(--color-primary-300);
   display: flex; align-items: center; justify-content: center;
   box-shadow: none !important;
 }
 .view-more-content { text-align: center; }
 .icon-pulse-box {
-  width: 50px; height: 50px; border-radius: 50%;
-  background: white; color: #EA580C;
+  width: 50px; height: 50px; border-radius: var(--radius-full);
+  background: var(--color-neutral-0); color: var(--color-primary-600);
   display: flex; align-items: center; justify-content: center;
-  margin: 0 auto 12px; font-size: 1.2rem;
-  box-shadow: 0 5px 15px rgba(234, 88, 12, 0.15);
-  animation: pulseIcon 2s infinite;
-}
-@keyframes pulseIcon { 
-  0% { box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.4); } 
-  70% { box-shadow: 0 0 0 15px rgba(234, 88, 12, 0); } 
-  100% { box-shadow: 0 0 0 0 rgba(234, 88, 12, 0); } 
+  margin: 0 auto var(--space-3); font-size: var(--text-xl);
+  box-shadow: var(--shadow-primary-sm);
+  /* Composited pulse: scale only, no box-shadow animation */
+  animation: pulseIcon 2.5s var(--ease-in-out) infinite;
 }
 
-.view-more-card h3 { font-family: 'Mulish', sans-serif; font-size: 1rem; font-weight: 800; color: #C2410C; margin: 0; }
+/* ⚡ Composited-only pulse using scale + opacity */
+@keyframes pulseIcon {
+  0%, 100% { transform: scale(1);    opacity: 1; }
+  50%       { transform: scale(1.12); opacity: 0.85; }
+}
+
+.view-more-card h3 { font-family: var(--font-ui); font-size: var(--text-base); font-weight: var(--font-extrabold); color: var(--color-primary-700); margin: 0; }
 
 .view-more-card:hover .view-more-inner {
-  background: #FFEDD5; border-color: #EA580C; transform: translateY(-5px);
+  background: var(--color-primary-100); border-color: var(--color-primary-600); 
+  transform: translateY(-5px);
 }
-.view-more-card:hover .icon-pulse-box { background: #EA580C; color: white; }
+.view-more-card:hover .icon-pulse-box { background: var(--color-primary-600); color: var(--color-neutral-0); }
 
-/* Responsive */
 @media (max-width: 768px) {
-  .section-header { padding: 0 20px; margin-bottom: 15px; }
-  .carousel-wrapper { padding: 10px 20px 30px 20px; }
+  .section-header { padding: 0 var(--space-5); margin-bottom: var(--space-4); }
+  .carousel-wrapper { padding: var(--space-3) var(--space-5) var(--space-8) var(--space-5); }
   .cat-card { min-width: 160px; height: 240px; }
   .nav-controls { display: none; }
 }

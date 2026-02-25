@@ -9,16 +9,13 @@
             <div class="nav-left">
               <button @click="$router.back()" class="btn-back-simple">
                 <div class="icon-circle"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div>
-                <span>Hủy bỏ</span>
+                <span>Cancel</span>
               </button>
               <span class="sep">/</span>
               <div class="category-wrapper">
                 <select v-model="post.categoryID" class="category-select">
-                  <option value="" disabled selected>CHỌN DANH MỤC</option>
-                  <option value="1">Món Chính</option>
-                  <option value="2">Ăn Sáng</option>
-                  <option value="3">Healthy</option>
-                  <option value="4">Tráng Miệng</option>
+                  <option value="" disabled>SELECT CATEGORY</option>
+                  <option v-for="cat in categories" :key="cat.categoryID" :value="cat.categoryID">{{ cat.categoryName }}</option>
                 </select>
               </div>
             </div>
@@ -27,7 +24,7 @@
           <textarea 
             v-model="post.title" 
             class="recipe-title-input" 
-            placeholder="Nhập tên món ăn..." 
+            placeholder="Enter dish name..." 
             rows="1"
             @input="autoResize"
           ></textarea>
@@ -35,7 +32,7 @@
           <textarea 
             v-model="post.description" 
             class="recipe-desc-input" 
-            placeholder="Viết một đoạn mô tả ngắn hấp dẫn về món ăn này..." 
+            placeholder="Write a short, enticing description of this dish..." 
             rows="2"
             @input="autoResize"
           ></textarea>
@@ -44,28 +41,32 @@
             <div class="meta-box">
               <span class="icon">⏱️</span>
               <div class="meta-detail">
-                <span class="label">THỜI GIAN</span>
-                <input v-model="post.cookingTime" placeholder="VD: 45p" class="meta-inp">
+                <span class="label">TIME</span>
+                <input v-model="post.cookingTime" placeholder="e.g. 45min" class="meta-inp">
               </div>
             </div>
             <div class="meta-divider"></div>
             <div class="meta-box">
-              <span class="icon">🔥</span>
+              <span class="icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+              </span>
               <div class="meta-detail">
-                <span class="label">ĐỘ KHÓ</span>
+                <span class="label">DIFFICULTY</span>
                 <select v-model="post.level" class="meta-select">
-                  <option>Dễ</option>
-                  <option>TBình</option>
-                  <option>Khó</option>
+                  <option>Easy</option>
+                  <option>Medium</option>
+                  <option>Hard</option>
                 </select>
               </div>
             </div>
             <div class="meta-divider"></div>
             <div class="meta-box">
-              <span class="icon">🥗</span>
+              <span class="icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 22a9 9 0 1 1 18 0"/><path d="M1 22h22"/><path d="M12 13a5 5 0 0 0 5-5A5 5 0 0 0 9.8 4.2"/><path d="M12 13a5 5 0 0 1-3.5-1.5"/></svg>
+              </span>
               <div class="meta-detail">
-                <span class="label">KHẨU PHẦN</span>
-                <input v-model="post.servings" placeholder="2 người" class="meta-inp">
+                <span class="label">SERVINGS</span>
+                <input v-model="post.servings" placeholder="2 servings" class="meta-inp">
               </div>
             </div>
           </div>
@@ -74,8 +75,8 @@
             <div class="author-block">
               <img src="https://ui-avatars.com/api/?name=Me&background=random" class="auth-img">
               <div class="auth-text">
-                <span class="label">Đầu bếp</span>
-                <span class="name">Tôi (Bạn)</span>
+                <span class="label">Chef</span>
+                <span class="name">Me (You)</span>
               </div>
             </div>
           </div>
@@ -86,9 +87,9 @@
             <img v-if="post.image" :src="post.image" class="img-hero-cover">
             <div v-else class="upload-placeholder">
               <div class="icon-camera">📷</div>
-              <span>Tải ảnh bìa (HD)</span>
+              <span>Upload Cover Photo (HD)</span>
             </div>
-            <div v-if="post.image" class="edit-overlay"><span>Thay đổi ảnh</span></div>
+            <div v-if="post.image" class="edit-overlay"><span>Change Photo</span></div>
             <input type="file" ref="fileInput" class="hidden-input" @change="handleImageUpload">
           </div>
         </div>
@@ -104,20 +105,20 @@
             <div class="premium-card ingredients-card">
               <div class="card-header-gradient">
                 <div class="header-content">
-                  <h3>🛒 Nguyên Liệu</h3>
-                  <span class="sub-text">Chuẩn bị gì?</span>
+                  <h3>🛒 Ingredients</h3>
+                  <span class="sub-text">What do you need?</span>
                 </div>
               </div>
               
               <div class="ingredients-list-editor">
                 <div v-for="(ing, index) in post.ingredients" :key="index" class="ing-row-edit">
                   <div class="checkbox-visual"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-                  <input v-model="ing.name" class="ing-input-text" placeholder="VD: 500g Ba chỉ bò..." @keyup.enter="addIngredient">
+                  <input v-model="ing.name" class="ing-input-text" placeholder="e.g.: 500g beef belly..." @keyup.enter="addIngredient">
                   <button class="btn-remove" @click="removeIngredient(index)" v-if="post.ingredients.length > 1">×</button>
                 </div>
               </div>
 
-              <button class="btn-add-dashed" @click="addIngredient">+ Thêm dòng nguyên liệu</button>
+              <button class="btn-add-dashed" @click="addIngredient">+ Add ingredient row</button>
             </div>
           </div>
         </aside>
@@ -125,8 +126,8 @@
         <main class="main-right-content">
           <div class="premium-card steps-card">
             <div class="steps-header-modern">
-              <h2>Quy trình thực hiện</h2>
-              <div class="step-counter-badge">{{ post.steps.length }} Bước</div>
+              <h2>Recipe Steps</h2>
+              <div class="step-counter-badge">{{ post.steps.length }} Steps</div>
             </div>
 
             <div class="timeline-editorial">
@@ -140,14 +141,14 @@
 
                   <div class="step-content-col">
                     <div class="step-top-row">
-                      <h4 class="step-heading">BƯỚC {{ index + 1 }}</h4>
-                      <button class="btn-del-step" @click="removeStep(index)" v-if="post.steps.length > 1">Xóa</button>
+                      <h4 class="step-heading">STEP {{ index + 1 }}</h4>
+                      <button class="btn-del-step" @click="removeStep(index)" v-if="post.steps.length > 1">Remove</button>
                     </div>
                     
                     <textarea 
                       v-model="step.desc" 
                       class="step-desc-input" 
-                      placeholder="Mô tả chi tiết các thao tác thực hiện..."
+                      placeholder="Describe this step in detail..."
                       rows="3"
                       @input="autoResize"
                     ></textarea>
@@ -155,10 +156,10 @@
                     <div class="step-media-upload">
                       <div v-if="step.image" class="media-preview" @click="triggerStepUpload(index)">
                         <img :src="step.image">
-                        <div class="hover-change">Thay ảnh</div>
+                        <div class="hover-change">Change image</div>
                       </div>
                       <div v-else class="upload-trigger-small" @click="triggerStepUpload(index)">
-                        <span class="icon">📷</span> Thêm ảnh minh họa
+                        <span class="icon">📷</span> Add photo
                       </div>
                       <input type="file" :ref="el => stepInputRefs[index] = el" class="hidden-input" @change="handleStepUpload($event, index)">
                     </div>
@@ -168,7 +169,7 @@
               </transition-group>
             </div>
 
-            <button class="btn-add-step-large" @click="addStep">Thêm bước tiếp theo</button>
+            <button class="btn-add-step-large" @click="addStep">Add next step</button>
           </div>
         </main>
 
@@ -178,11 +179,13 @@
     <div class="action-footer">
       <div class="footer-container">
         <div class="left">
-          <button class="btn-preview">👁️ Xem trước</button>
+          <button class="btn-preview">👁️ Preview</button>
         </div>
         <div class="right">
-          <button class="btn-draft">Lưu nháp</button>
-          <button class="btn-publish" @click="handlePublish">Đăng Bài Viết</button>
+          <button class="btn-draft">Save Draft</button>
+          <button class="btn-publish" :disabled="publishing" @click="handlePublish">
+              {{ publishing ? 'Publishing...' : 'Publish Post' }}
+            </button>
         </div>
       </div>
     </div>
@@ -191,12 +194,24 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import { getCategories } from '@/services/categoryService'
+import { createPost } from '@/services/postService'
+import { uploadMedia } from '@/services/uploadService'
+import { toast } from '@/composables/useToast'
 
 const router = useRouter()
+const authStore = useAuthStore()
 const fileInput = ref(null)
 const stepInputRefs = ref([])
+const categories = ref([])
+const publishing = ref(false)
+const coverImageFile = ref(null)          // actual File for upload
+const stepImageFiles = ref({})             // { [stepIndex]: File }
+
+const currentUser = computed(() => authStore.user || {})
 
 const post = ref({
   title: '',
@@ -204,13 +219,28 @@ const post = ref({
   categoryID: '',
   image: null,
   cookingTime: '',
-  level: 'Trung bình',
+  level: 'Medium',
   servings: '',
   ingredients: [{ name: '' }, { name: '' }, { name: '' }],
   steps: [{ id: 1, desc: '', image: null }],
 })
 
-// --- FIX LỖI: Dùng hàm thay vì Component con ---
+// Load categories from API
+onMounted(async () => {
+  try {
+    categories.value = await getCategories()
+  } catch {
+    // fallback to static
+    categories.value = [
+      { categoryID: 1, categoryName: 'Main Dish' },
+      { categoryID: 2, categoryName: 'Breakfast' },
+      { categoryID: 3, categoryName: 'Healthy' },
+      { categoryID: 4, categoryName: 'Dessert' },
+    ]
+  }
+})
+
+// --- FIX: Use function instead of child component ---
 const autoResize = (event) => {
   const element = event.target
   element.style.height = 'auto'
@@ -220,13 +250,17 @@ const autoResize = (event) => {
 const triggerUpload = () => fileInput.value.click()
 const handleImageUpload = (e) => {
   const file = e.target.files[0]
-  if(file) post.value.image = URL.createObjectURL(file)
+  if (!file) return
+  coverImageFile.value = file
+  post.value.image = URL.createObjectURL(file)  // preview only
 }
 
 const triggerStepUpload = (idx) => stepInputRefs.value[idx].click()
 const handleStepUpload = (e, idx) => {
   const file = e.target.files[0]
-  if(file) post.value.steps[idx].image = URL.createObjectURL(file)
+  if (!file) return
+  stepImageFiles.value[idx] = file
+  post.value.steps[idx].image = URL.createObjectURL(file)  // preview only
 }
 
 const addIngredient = () => post.value.ingredients.push({ name: '' })
@@ -235,16 +269,67 @@ const removeIngredient = (idx) => { if(post.value.ingredients.length > 1) post.v
 const addStep = () => post.value.steps.push({ id: Date.now(), desc: '', image: null })
 const removeStep = (idx) => { if(post.value.steps.length > 1) post.value.steps.splice(idx, 1) }
 
-const handlePublish = () => {
-  if(!post.value.title) return alert('Vui lòng nhập tên món!')
-  alert('Đăng bài thành công!')
-  router.push('/home')
+const levelToInt = (lv) => ({ 'Easy': 1, 'Medium': 2, 'Hard': 3 }[lv] ?? 2)
+
+const handlePublish = async () => {
+  if (!post.value.title.trim()) { toast.warn('Please enter a dish name!'); return }
+  if (!post.value.categoryID) { toast.warn('Please select a category!'); return }
+  if (publishing.value) return
+
+  publishing.value = true
+  try {
+    const accountID = currentUser.value.accountID || currentUser.value.id
+    const ingredientsStr = post.value.ingredients.map(i => i.name).filter(Boolean).join(', ')
+    const cookingTimeInt = parseInt(post.value.cookingTime) || 30
+
+    // Upload cover image if user selected one
+    let coverMediaUrl = ''
+    if (coverImageFile.value) {
+      try {
+        coverMediaUrl = await uploadMedia(coverImageFile.value)
+      } catch { /* cover upload failed — continue without image */ }
+    }
+
+    // Upload each step image that has a file
+    const stepUrls = {}
+    for (const [idx, file] of Object.entries(stepImageFiles.value)) {
+      try {
+        stepUrls[idx] = await uploadMedia(file)
+      } catch { /* step upload failed — continue without image */ }
+    }
+
+    const payload = {
+      accountID,
+      categoryID: parseInt(post.value.categoryID),
+      title: post.value.title,
+      description: post.value.description,
+      ingredients: ingredientsStr,
+      media: coverMediaUrl,
+      level: levelToInt(post.value.level),
+      cookingTime: cookingTimeInt,
+      steps: post.value.steps.map((s, i) => ({
+        desc: s.desc,
+        image: stepUrls[i] || null
+      }))
+    }
+
+    const result = await createPost(payload)
+    toast.success('Post submitted for review!')
+    const newId = result?.postID
+    if (newId) {
+      router.push(`/post/${newId}`)
+    } else {
+      router.push('/home')
+    }
+  } catch (err) {
+    toast.error('Failed to publish. Please try again.')
+  } finally {
+    publishing.value = false
+  }
 }
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Mulish:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700;800;900&display=swap');
-
 .create-post-container { width: 100%; font-family: 'Mulish', sans-serif; color: #1C1917; overflow-x: hidden; background: #F8FAFC; display: flex; flex-direction: column; min-height: 100vh; }
 
 /* HERO SECTION */

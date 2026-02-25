@@ -25,7 +25,7 @@
     <div class="hero-mask"></div>
 
     <div class="hero-content">
-      <div class="badge-pill">✨ Mạng xã hội Ẩm thực số 2 Việt Nam</div>
+      <div class="badge-pill">Mạng xã hội Ẩm thực số 2 Việt Nam</div>
       
       <h1 class="hero-title">
         Kết Nối Đam Mê <br>
@@ -94,8 +94,6 @@ const scrollToSignup = () => {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Quicksand:wght@500;600;700&display=swap');
-
 .hero-section {
   position: relative;
   height: 100vh;
@@ -196,9 +194,7 @@ const scrollToSignup = () => {
 }
 
 .text-gradient {
-  background: linear-gradient(135deg, #F97316 0%, #EA580C 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #EA580C;
   display: inline-block;
 }
 

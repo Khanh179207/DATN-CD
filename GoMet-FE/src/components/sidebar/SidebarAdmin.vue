@@ -43,7 +43,7 @@
         </router-link>
         <router-link to="/admin/categories" class="nav-link-lux" active-class="active">
           <div class="icon-orb"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><circle cx="3" cy="6" r="1.5"></circle><circle cx="3" cy="12" r="1.5"></circle><circle cx="3" cy="18" r="1.5"></circle></svg></div>
-          <span>Quản lý Danh Mụcc</span>
+          <span>Quản lý Danh Mục</span>
         </router-link>
         <router-link to="/admin/comments" class="nav-link-lux" active-class="active">
           <div class="icon-orb"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7"></path></svg></div>
@@ -95,8 +95,6 @@
 
 <style scoped>
 /* 1. ĐỒNG BỘ FONT ĐẲNG CẤP TỪ WEB CHỦ */
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@900&family=Mulish:wght@600;700;800;900&display=swap');
-
 /* --- ✨ CORE CONTAINER: NO SCROLL --- */
 .sidebar-vipro-sovereign {
   width: 270px; height: 100vh;
