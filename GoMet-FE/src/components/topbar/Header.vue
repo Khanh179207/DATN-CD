@@ -1,22 +1,7 @@
 <template>
   <header class="content-header" :class="{ 'is-scrolled': isScrolled }">
     
-    <div class="search-wrapper-centered">
-      <div class="search-box-vip" :class="{ 'is-focused': isSearchFocused }">
-        <span class="search-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-        </span>
-        <input 
-          type="text" 
-          v-model="searchKeyword"
-          placeholder="Search recipes..." 
-          @focus="isSearchFocused = true"
-          @blur="isSearchFocused = false"
-          @keyup.enter="handleSearch"
-        />
-        <button class="btn-search-submit" @click="handleSearch">{{ $t('nav.search') }}</button>
-      </div>
-    </div>
+    <SearchBox />
 
     <div class="header-right">
       <button class="btn-create-post" @click="handleCreatePost">
@@ -31,33 +16,52 @@
         <div class="action-wrapper" @click.stop>
           <button class="btn-icon" :class="{ active: showShopping }" title="Shopping List" @click="toggleShopping">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
-            <span v-if="shoppingItems.length > 0" class="badge-dot"></span>
+            <span v-if="shoppingStore.unreadCount > 0" class="badge-dot"></span>
           </button>
 
           <transition name="dropdown-anim">
             <div v-if="showShopping" class="common-dropdown shopping-width">
+              
               <div class="dropdown-header">
                 <h3>{{ $t('header.shopping_list') }}</h3>
-                <span class="action-link" @click="clearShoppingList">{{ $t('header.clear_all') }}</span>
+                <div style="display: flex; gap: 15px;">
+                  <span 
+                    v-if="shoppingStore.items.some(i => i.checked)" 
+                    class="action-link" 
+                    @click="shoppingStore.removeCheckedItems()" 
+                    style="color: #EF4444;"
+                  >
+                    🗑️ Xóa món đã tick
+                  </span>
+                  <span class="action-link" @click="shoppingStore.clearItems()">{{ $t('header.clear_all') }}</span>
+                </div>
               </div>
+
               <div class="dropdown-body scroll-body">
-                <div v-if="shoppingItems.length === 0" class="empty-state">
+                <div v-if="shoppingStore.items.length === 0" class="empty-state">
                   <p>{{ $t('header.shopping_empty') }}</p>
                 </div>
-                <div v-else v-for="(item, idx) in shoppingItems" :key="idx" class="shop-item" :class="{ checked: item.checked }" @click="item.checked = !item.checked">
+                <div v-else v-for="(item, idx) in shoppingStore.items" :key="idx" class="shop-item" :class="{ checked: item.checked }" @click="shoppingStore.toggleItem(idx)">
                   <div class="checkbox-circle">
                     <svg v-if="item.checked" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
                   </div>
                   <div class="item-text">
                     <span class="name">{{ item.name }}</span>
-                    <span class="qty">{{ item.quantity }}</span>
+                    <span class="qty" style="color: #EA580C; font-size: 0.75rem;">🍲 {{ item.quantity }}</span> 
                   </div>
                 </div>
               </div>
+            
+              <div class="dropdown-footer" v-if="shoppingStore.items.length > 0" style="padding: 12px; border-top: 1px solid #F3F4F6;">
+                <button @click="openGoogleMaps" style="width: 100%; padding: 12px; background: #EA580C; color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s;" onmouseover="this.style.background='#C2410C'" onmouseout="this.style.background='#EA580C'">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                  Tìm Siêu thị / Chợ
+                </button>
+              </div>
+
             </div>
           </transition>
         </div>
-
         <div class="action-wrapper" @click.stop>
           <button class="btn-icon" :class="{ active: showChat }" title="Messages" @click="toggleChat">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
@@ -223,6 +227,8 @@
           </div>
         </div>
       </transition>
+
+      <MapModal v-if="showMapModal" @close="showMapModal = false" />
     </Teleport>
 
   </header>
@@ -233,7 +239,11 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useChatStore } from '@/stores/chat'
+import { useShoppingStore } from '@/stores/shopping'
 import LangSwitcher from '@/components/common/LangSwitcher.vue'
+import MapModal from '@/components/modals/MapModal.vue'
+// 🌟 Nhập file Component SearchBox vào đây (nhớ điều chỉnh đường dẫn nếu cần)
+import SearchBox from '@/components/common/SearchBox.vue'
 import { toast } from '@/composables/useToast'
 import { useI18n } from 'vue-i18n'
 import { getNotifications, markAllNotificationsRead, markNotificationRead } from '@/services/notificationService'
@@ -241,24 +251,22 @@ import { getNotifications, markAllNotificationsRead, markNotificationRead } from
 const { t } = useI18n()
 const authStore = useAuthStore()
 const chatStore = useChatStore()
+const shoppingStore = useShoppingStore()
 const router = useRouter()
+
+// 🌟 Đã xóa hết biến searchKeyword, isSearchFocused, handleSearch vì SearchBox đã lo liệu
 
 // State
 const showShopping = ref(false)
 const showChat = ref(false)
 const showNoti = ref(false)
 const isDropdownOpen = ref(false)
-const isSearchFocused = ref(false)
-const searchKeyword = ref('')
 const isScrolled = ref(false)
 const showBugReport = ref(false)
+const showMapModal = ref(false)
 const bugForm = ref({ type: 'ui', desc: '' })
 
 // Mock Data
-const shoppingItems = ref([
-  { name: 'Ba chỉ bò Mỹ', quantity: '500g', checked: false },
-  { name: 'Nấm kim châm', quantity: '2 gói', checked: true },
-])
 const conversations = ref([
   { id: 1, name: 'Bếp Trưởng Gomet', avatar: 'https://i.pravatar.cc/150?u=chef', lastMessage: 'Công thức này tuyệt lắm!', time: '5p', read: false, online: true },
   { id: 2, name: 'Hội Yêu Bếp', avatar: 'https://ui-avatars.com/api/?name=H&background=random', lastMessage: 'Mai: Cảm ơn nhé', time: '1h', read: true, online: false },
@@ -289,7 +297,16 @@ const loadNotifications = async () => {
 
 // Actions
 const closeAllDropdowns = () => { isDropdownOpen.value = false; showChat.value = false; showNoti.value = false; showShopping.value = false }
-const toggleShopping = () => { const s = !showShopping.value; closeAllDropdowns(); showShopping.value = s }
+
+const toggleShopping = () => { 
+  const s = !showShopping.value; 
+  closeAllDropdowns(); 
+  showShopping.value = s;
+  if (s && authStore.isAuthenticated) {
+    shoppingStore.fetchCart(); 
+  }
+}
+
 const toggleChat = () => { const s = !showChat.value; closeAllDropdowns(); showChat.value = s }
 const toggleNoti = () => {
   const s = !showNoti.value
@@ -299,11 +316,14 @@ const toggleNoti = () => {
 }
 const toggleDropdown = () => { const s = !isDropdownOpen.value; closeAllDropdowns(); isDropdownOpen.value = s }
 
-const clearShoppingList = () => shoppingItems.value = []
 const openBugModal = () => { closeAllDropdowns(); showBugReport.value = true }
 const submitBug = () => { toast.success(t('toast.bug_sent')); showBugReport.value = false; bugForm.value.desc = '' }
 
-// === LOGIC MỞ CHAT & BÀI VIẾT ===
+const openGoogleMaps = () => {
+  showMapModal.value = true 
+  closeAllDropdowns()       
+}
+
 const openMiniChat = (user) => { 
   chatStore.openChat(user)
   showChat.value = false 
@@ -317,27 +337,20 @@ const handleNotiClick = async (noti) => {
   if (noti.targetId) router.push({ name: 'PostDetail', params: { id: noti.targetId } })
 }
 
-// [MỚI] Hàm chuyển hướng sang Admin
 const goToAdmin = () => {
   closeAllDropdowns()
   router.push('/admin/dashboard') 
 }
 
 const handleLogout = async () => { 
-  // 1. Đóng các menu đang mở
   closeAllDropdowns(); 
-
-  // 2. Xóa dữ liệu đăng nhập
   localStorage.removeItem('user'); 
   localStorage.removeItem('token'); 
   authStore.user = null; 
   authStore.isAuthenticated = false; 
-
-  // 3. CHỈNH SỬA TẠI ĐÂY: Chuyển hướng kèm theo Hash ID của section đăng ký
   await router.push({ path: '/', hash: '#sectionsigninlanding' }); 
 }
 const handleCreatePost = () => authStore.isAuthenticated ? router.push('/create-post') : emit('open-login')
-const handleSearch = () => { if (searchKeyword.value.trim()) router.push({ name: 'Search', query: { q: searchKeyword.value } }) }
 const goToProfile = () => { closeAllDropdowns(); router.push('/profile') }
 const openPremium = () => { closeAllDropdowns(); emit('open-premium') }
 const markAllRead = async () => {
@@ -349,9 +362,13 @@ const markAllRead = async () => {
 }
 
 const handleScroll = () => { isScrolled.value = window.scrollY > 10 }
+
 onMounted(() => {
   window.addEventListener('scroll', handleScroll)
-  if (authStore.isAuthenticated) loadNotifications()
+  if (authStore.isAuthenticated) {
+    loadNotifications()
+    shoppingStore.fetchCart() 
+  }
 })
 onUnmounted(() => window.removeEventListener('scroll', handleScroll))
 </script>

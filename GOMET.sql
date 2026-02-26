@@ -243,8 +243,7 @@ INSERT INTO Account (Username, Email, Password, Avatar, Token, Point, isAdmin, i
 VALUES
 ('user1', 'user1@gmail.com', '123456', NULL, 'token1', 10, 0, 0, 1, GETDATE()),
 ('user2', 'user2@gmail.com', '123456', NULL, 'token2', 20, 0, 1, 1, GETDATE()),
-('admin', 'admin@gmail.com', 'admin123', NULL, 'token3', 100, 1, 1, 1, GETDATE());
-
+('admin', 'admin@gmail.com', 'admin123', NULL, 'token3', 100, 1, 1, 1, GETDATE());	
 GO
 
 INSERT INTO Category (CategoryName)
@@ -383,3 +382,11 @@ VALUES
 (2, 1, N'Nội dung không phù hợp', GETDATE()),
 (1, 2, N'Spam', GETDATE()),
 (3, 1, N'Sai công thức', GETDATE());
+
+Select * from Account;
+INSERT INTO account (Username, Email, Password, Avatar, Token, Point, isAdmin, isPremium, isActive, CreatedAt)
+VALUES 
+('Khanh', 'Khanh123@gmail.com', '321123', NULL, 'token3', 100, 1, 1, 1, GETDATE());
+
+DELETE FROM account 
+WHERE accountID = 5;
