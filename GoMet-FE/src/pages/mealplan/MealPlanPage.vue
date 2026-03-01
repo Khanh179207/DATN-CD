@@ -1,19 +1,15 @@
 <template>
   <div class="gomet-planner-pro">
-    
     <div class="bg-layer">
       <div class="grid-mesh"></div>
       <div class="noise-texture"></div>
     </div>
 
     <div class="planner-wrapper">
-      
       <aside class="planner-sidebar">
         <div class="sidebar-sticky">
           <button class="btn-tool primary" @click="showToast($t('mealplan.shopping_list'))">
-            <div class="icon-box">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
-            </div>
+            <div class="icon-box"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg></div>
             <div class="text-group">
               <span class="btn-title">{{ $t('mealplan.shopping_list') }}</span>
               <span class="btn-sub">{{ $t('mealplan.auto_generated') }}</span>
@@ -22,9 +18,7 @@
           </button>
 
           <button class="btn-tool secondary" @click="showToast($t('mealplan.saved_recipes'))">
-            <div class="icon-box">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
-            </div>
+            <div class="icon-box"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg></div>
             <div class="text-group">
               <span class="btn-title">{{ $t('mealplan.saved_recipes') }}</span>
               <span class="btn-sub">12 {{ $t('mealplan.fav_count') }}</span>
@@ -34,7 +28,6 @@
       </aside>
 
       <main class="planner-content">
-        
         <header class="planner-header">
           <div class="header-left">
             <div class="brand-tag">GOMET PLANNER /// V.PRO</div>
@@ -43,32 +36,28 @@
           
           <div class="header-right">
             <div class="week-selector">
-              <button class="btn-arrow" @click="changeWeek(-1)">
+              <button class="btn-arrow" @click="changeWeek(-1)" :disabled="isLoading">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
               </button>
               <div class="week-info">
                 <span class="week-label">{{ $t('mealplan.current_week') }}</span>
                 <span class="week-display">{{ currentWeekDisplay }}</span>
               </div>
-              <button class="btn-arrow" @click="changeWeek(1)">
+              <button class="btn-arrow" @click="changeWeek(1)" :disabled="isLoading">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
               </button>
             </div>
 
             <div class="actions">
-              <button class="btn-ai-gen" @click="autoFillAI" :disabled="isAILoading" :class="{ loading: isAILoading }">
+              <button class="btn-ai-gen" @click="autoFillAI" :disabled="isLoading" :class="{ loading: isLoading }">
                 <span class="icon-sparkle">
-                  <svg v-if="isAILoading" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin-icon"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>
+                  <svg v-if="isLoading" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin-icon"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>
                   <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                 </span>
                 <div class="btn-col">
-                  <span class="main-text">{{ isAILoading ? 'Đang tạo...' : $t('mealplan.auto_fill') }}</span>
+                  <span class="main-text">{{ isLoading ? 'Đang tải...' : $t('mealplan.auto_fill') }}</span>
                   <span class="sub-text">{{ $t('mealplan.ai_powered') }}</span>
                 </div>
-              </button>
-              <button class="btn-export" @click="exportMenu">
-                <span>{{ $t('mealplan.export_menu') }}</span>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
               </button>
             </div>
           </div>
@@ -80,26 +69,32 @@
               
               <div class="col-header">
                 <span class="day-name">{{ day.name }}</span>
-                <span class="day-date">{{ day.date }}</span>
+                <span class="day-date">{{ day.displayDate }}</span>
                 <div class="header-line"></div>
               </div>
 
               <div class="slots-container">
-                <div v-for="mealType in ['breakfast', 'lunch', 'dinner']" :key="mealType" class="meal-slot">
+                <div v-for="mealType in ['BREAKFAST', 'LUNCH', 'DINNER']" :key="mealType" class="meal-slot">
                   <span class="slot-label">{{ getMealLabel(mealType) }}</span>
                   
-                  <div v-if="day.meals[mealType]" class="dish-card" @click="showDishDetail(day.meals[mealType])">
-                    <img :src="day.meals[mealType].image" class="dish-bg" />
+                  <div v-if="day.meals[mealType]" class="dish-card" @click="showDishDetail(day.meals[mealType])" :class="{'is-completed': day.meals[mealType].isCompleted}">
+                    <img :src="day.meals[mealType].image || 'https://images.unsplash.com/photo-1490818387583-1b5f2223d848?w=600'" class="dish-bg" />
                     <div class="dish-overlay">
-                      <span class="dish-cat">{{ day.meals[mealType].cat }}</span>
+                      <span class="dish-cat">{{ day.meals[mealType].postId ? 'Hệ thống' : 'Món tự nhập' }}</span>
                       <h4 class="dish-name">{{ day.meals[mealType].name }}</h4>
                     </div>
-                    <button class="btn-remove" @click.stop="removeDish(dIndex, mealType)" title="Remove this dish">
+                    
+                    <button class="btn-check" @click.stop="markCompleted(dIndex, mealType, day.meals[mealType].planId)" title="Đánh dấu đã ăn">
+                      <svg v-if="day.meals[mealType].isCompleted" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                      <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle></svg>
+                    </button>
+
+                    <button class="btn-remove" @click.stop="removeDish(dIndex, mealType, day.meals[mealType].planId)" title="Xóa món này">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                     </button>
                   </div>
 
-                  <button v-else class="btn-add-slot" @click="goToSearch(day.name, mealType)">
+                  <button v-else class="btn-add-slot" @click="goToSearch(day.fullDate, mealType)">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                   </button>
                 </div>
@@ -115,116 +110,198 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { generateAIMealPlan } from '@/services/aiService'
+import { useAuthStore } from '@/stores/auth' // Giả sử bạn dùng Pinia lưu user
+import api from '@/services/api' // Giả sử bạn có cấu hình Axios (hoặc dùng import axios từ 'axios')
 
 const router = useRouter()
 const { t } = useI18n()
+const authStore = useAuthStore()
 
-// --- LOGIC ---
+// --- QUẢN LÝ THỜI GIAN ---
+const baseDate = ref(new Date()) // Ngày làm mốc để tính toán tuần
+const weekData = ref([])
+const isLoading = ref(false)
 
-// 1. Simulated week display
-const currentWeekDisplay = ref('Feb 02 — 08, 2026')
+// Lấy accountId từ store (Nhớ đảm bảo biến này khớp với cách bạn lưu trong Login)
+const accountId = computed(() => authStore.user?.accountID || authStore.user?.id)
 
-const changeWeek = (direction) => {
-  // Demo text swap, real implementation will call API to load the new week
-  if(direction > 0) currentWeekDisplay.value = 'Feb 09 — 15, 2026'
-  else currentWeekDisplay.value = 'Jan 26 — Feb 01, 2026'
-  showToast('Loading new week data...')
-}
+// Sinh mảng 7 ngày cho tuần hiện tại
+const generateWeekDays = (date) => {
+  const dayOfWeek = date.getDay() === 0 ? 6 : date.getDay() - 1 // Đưa T2 thành 0, CN thành 6
+  const startOfWeek = new Date(date)
+  startOfWeek.setDate(date.getDate() - dayOfWeek)
 
-// 2. Core functions
-const goToSearch = (day, meal) => {
-  console.log(`Searching for ${day} - ${meal}`)
-  router.push('/search')
-}
+  const days = []
+  const dayNames = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
+  
+  for (let i = 0; i < 7; i++) {
+    const current = new Date(startOfWeek)
+    current.setDate(startOfWeek.getDate() + i)
+    
+    // Định dạng YYYY-MM-DD để gửi lên Backend
+    const year = current.getFullYear()
+    const month = String(current.getMonth() + 1).padStart(2, '0')
+    const day = String(current.getDate()).padStart(2, '0')
+    const fullDate = `${year}-${month}-${day}`
+    
+    // Kiểm tra xem có phải hôm nay không
+    const today = new Date()
+    const isToday = current.toDateString() === today.toDateString()
 
-const removeDish = (dayIndex, mealType) => {
-  if(confirm(t('mealplan.remove_confirm'))) {
-    weekData.value[dayIndex].meals[mealType] = null
+    days.push({
+      name: dayNames[i],
+      displayDate: day,
+      fullDate: fullDate,
+      isToday: isToday,
+      meals: { BREAKFAST: null, LUNCH: null, DINNER: null } // Khởi tạo rỗng
+    })
   }
+  return days
 }
 
-const showDishDetail = (dish) => {
-  showToast(`Viewing details: ${dish.name}`)
-}
+// Hiển thị text: Vd "Mar 02 — 08, 2026"
+const currentWeekDisplay = computed(() => {
+  if (!weekData.value.length) return ''
+  const start = new Date(weekData.value[0].fullDate)
+  const end = new Date(weekData.value[6].fullDate)
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+  return `${monthNames[start.getMonth()]} ${String(start.getDate()).padStart(2,'0')} — ${String(end.getDate()).padStart(2,'0')}, ${end.getFullYear()}`
+})
 
-const isAILoading = ref(false)
+// --- TƯƠNG TÁC API BACKEND ---
 
-const autoFillAI = async () => {
-  if (isAILoading.value) return
-  isAILoading.value = true
-  showToast(t('mealplan.ai_powered') + '...')
+// 1. Tải toàn bộ dữ liệu tuần
+const loadWeekData = async () => {
+  if (!accountId.value) {
+    showToast("Vui lòng đăng nhập để xem kế hoạch ăn uống!")
+    return
+  }
+
+  isLoading.value = true
+  const days = generateWeekDays(baseDate.value)
+  weekData.value = days
+
   try {
-    const plan = await generateAIMealPlan()
-    weekData.value = plan
-    showToast('AI đã tạo thực đơn tuần cho bạn!')
-  } catch (e) {
-    showToast('Không thể tạo thực đơn AI. Vui lòng thử lại!')
-    console.error('AI meal plan error:', e)
+    // Gọi API song song (Promise.all) cho 7 ngày để tối ưu tốc độ
+    const promises = days.map(day => 
+      api.get(`/api/meal-plans/user/${accountId.value}/date/${day.fullDate}`)
+    )
+    
+    const responses = await Promise.all(promises)
+    
+    // Lắp dữ liệu API vào mảng weekData
+    responses.forEach((res, index) => {
+      const plans = res.data // Mảng các món ăn trong ngày đó
+      
+      plans.forEach(plan => {
+        // Backend trả về MealType là 'BREAKFAST', 'LUNCH'...
+        if (weekData.value[index].meals[plan.mealType] !== undefined) {
+          weekData.value[index].meals[plan.mealType] = {
+            planId: plan.planId,
+            postId: plan.postId,
+            name: plan.customMealName || `Món ăn #${plan.postId}`, // Nếu ăn ngoài hiện tên tự nhập
+            isCompleted: plan.isCompleted,
+            image: null // Sau này nếu bạn join bảng Post ở BE thì lấy ảnh từ plan.postImage
+          }
+        }
+      })
+    })
+
+  } catch (error) {
+    console.error("Lỗi tải lịch ăn:", error)
+    showToast("Không thể kết nối máy chủ!")
   } finally {
-    isAILoading.value = false
+    isLoading.value = false
   }
 }
 
-const exportMenu = () => {
-  showToast('Exporting PDF...')
+// 2. Chuyển tuần
+const changeWeek = (direction) => {
+  const newDate = new Date(baseDate.value)
+  newDate.setDate(baseDate.value.getDate() + (direction * 7))
+  baseDate.value = newDate
+  loadWeekData() // Gọi lại API cho tuần mới
 }
+
+// 3. Xóa món ăn khỏi lịch
+const removeDish = async (dayIndex, mealType, planId) => {
+  if (!confirm(t('mealplan.remove_confirm') || 'Bạn có chắc muốn xóa món này?')) return
+
+  try {
+    // Gọi API DELETE
+    await api.delete(`/api/meal-plans/${planId}`)
+    
+    // Xóa thành công thì dọn dẹp UI
+    weekData.value[dayIndex].meals[mealType] = null
+    showToast('Đã xóa món ăn khỏi lịch!')
+  } catch (error) {
+    showToast('Lỗi khi xóa món ăn.')
+  }
+}
+
+// 4. Tick đã ăn xong
+const markCompleted = async (dayIndex, mealType, planId) => {
+  try {
+    // Gọi API PUT
+    await api.put(`/api/meal-plans/${planId}/complete`)
+    
+    // Cập nhật UI
+    weekData.value[dayIndex].meals[mealType].isCompleted = true
+    showToast('Tuyệt vời! Đã hoàn thành bữa ăn.')
+  } catch (error) {
+    showToast('Lỗi cập nhật trạng thái.')
+  }
+}
+
+// 5. Chuyển hướng sang trang tìm kiếm (Để thêm món mới)
+const goToSearch = (fullDate, mealType) => {
+  // Đẩy ngày và buổi ăn qua URL để trang Search biết mà gọi API POST lưu lại
+  router.push({ 
+    path: '/search', 
+    query: { 
+      planDate: fullDate, 
+      mealType: mealType 
+    } 
+  })
+}
+
+// --- UTILS ---
+const showDishDetail = (dish) => {
+  if (dish.postId) {
+    router.push(`/recipe/${dish.postId}`) // Vào xem chi tiết bài viết
+  } else {
+    showToast(`Món tự nhập: ${dish.name}`)
+  }
+}
+
+const getMealLabel = (type) => ({
+  'BREAKFAST': t('mealplan.slot_breakfast', 'Sáng'),
+  'LUNCH':     t('mealplan.slot_lunch', 'Trưa'),
+  'DINNER':    t('mealplan.slot_dinner', 'Tối')
+})[type]
 
 const showToast = (msg) => {
-  // Simple notification — can be replaced with a Toast component
   const el = document.createElement('div')
   el.textContent = msg
   Object.assign(el.style, {
     position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)',
     background: '#1C1917', color: '#fff', padding: '12px 24px', borderRadius: '12px',
     fontSize: '0.9rem', zIndex: '99999', fontFamily: 'Mulish,sans-serif',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.25)', transition: 'opacity 0.4s',
-    pointerEvents: 'none',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.25)', transition: 'opacity 0.4s', pointerEvents: 'none',
   })
   document.body.appendChild(el)
   setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 400) }, 2600)
 }
 
-const getMealLabel = (type) => ({
-  breakfast: t('mealplan.slot_breakfast'),
-  lunch:     t('mealplan.slot_lunch'),
-  dinner:    t('mealplan.slot_dinner')
-})[type]
+// Chạy lần đầu khi load trang
+onMounted(() => {
+  loadWeekData()
+})
 
-// 3. Sample data
-const weekData = ref([
-  { 
-    name: 'MON', date: '02', isToday: false,
-    meals: {
-      breakfast: { name: 'Banh Mi Sunny-Side Up', cat: 'Vietnamese', image: 'https://images.unsplash.com/photo-1525351484164-3963b40d604c?w=600' },
-      lunch: null,
-      dinner: { name: 'Tuna Salad', cat: 'Healthy', image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600' }
-    }
-  },
-  { 
-    name: 'TUE', date: '03', isToday: true,
-    meals: {
-      breakfast: { name: 'Milk Oats', cat: 'Healthy', image: 'https://images.unsplash.com/photo-1517673132405-a56a62b18caf?w=600' },
-      lunch: { name: 'Hainanese Chicken Rice', cat: 'Asian', image: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=600' },
-      dinner: { name: 'Beef Tenderloin Steak', cat: 'Western', image: 'https://images.unsplash.com/photo-1600891964092-4316c288032e?w=600' }
-    }
-  },
-  { name: 'WED', date: '04', isToday: false, meals: { breakfast: null, lunch: null, dinner: null } },
-  { 
-    name: 'THU', date: '05', isToday: false,
-    meals: {
-      breakfast: null,
-      lunch: { name: 'Hanoi Bun Cha', cat: 'Vietnamese', image: 'https://images.unsplash.com/photo-1585325701165-351af916e581?w=600' },
-      dinner: null
-    }
-  },
-  { name: 'FRI', date: '06', isToday: false, meals: {} },
-  { name: 'SAT', date: '07', isToday: false, meals: {} },
-  { name: 'SUN', date: '08', isToday: false, meals: {} },
-])
+const autoFillAI = () => showToast('Tính năng AI đang bảo trì')
 </script>
 
 <style scoped>
@@ -386,4 +463,15 @@ const weekData = ref([
   .grid-wrapper { overflow-x: auto; }
   .blueprint-grid { min-width: 1100px; } /* Ensure grid is not distorted */
 }
+.btn-check {
+  position: absolute; top: 8px; left: 8px; width: 26px; height: 26px;
+  background: rgba(255,255,255,0.85); border: none; border-radius: 50%;
+  color: #94A3B8; cursor: pointer; transition: 0.2s;
+  display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 2;
+}
+.btn-check:hover { background: #FFF; transform: scale(1.1); color: #22c55e; }
+.is-completed .btn-check { background: #DCFCE7; } /* Xanh lá nhạt khi đã tick */
+.is-completed .dish-bg { filter: grayscale(40%) opacity(0.8); } /* Làm mờ ảnh khi đã ăn xong */
+.is-completed .dish-name { text-decoration: line-through; color: #E2E8F0; }
 </style>
