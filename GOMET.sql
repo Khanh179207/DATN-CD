@@ -239,6 +239,37 @@ CREATE TABLE Report (
 
 GO
 
+-- ==========================================
+-- 1. Tạo bảng SearchHistory
+-- ==========================================
+CREATE TABLE SearchHistory (
+    SearchID INT IDENTITY(1,1) PRIMARY KEY,
+    AccountID INT NOT NULL,
+    Keyword NVARCHAR(255) NOT NULL,
+    SearchedAt DATETIME DEFAULT GETDATE(),
+
+    -- Nối khóa ngoại tới bảng Account
+    CONSTRAINT FK_SearchHistory_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID)
+);
+GO
+
+-- ==========================================
+-- 2. Tạo bảng ShoppingList
+-- ==========================================
+CREATE TABLE ShoppingList (
+    ShoppingID INT IDENTITY(1,1) PRIMARY KEY,
+    AccountID INT,
+    PostID INT,
+    IngredientName NVARCHAR(255),
+    IsBought INT DEFAULT 0, -- 0: Chưa mua, 1: Đã mua
+    CreatedAt DATE DEFAULT GETDATE(),
+
+    -- Nối khóa ngoại tới bảng Account và Post
+    CONSTRAINT FK_ShoppingList_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
+    CONSTRAINT FK_ShoppingList_Post FOREIGN KEY (PostID) REFERENCES Post(PostID)
+);
+GO
+
 INSERT INTO Account (Username, Email, Password, Avatar, Token, Point, isAdmin, isPremium, isActive, CreatedAt)
 VALUES
 ('user1', 'user1@gmail.com', '123456', NULL, 'token1', 10, 0, 0, 1, GETDATE()),
@@ -390,3 +421,15 @@ VALUES
 
 DELETE FROM account 
 WHERE accountID = 5;
+
+INSERT INTO Post (
+    AccountID, CategoryID, EventID, Title, Description, Ingredients,
+    Media, Level, CookingTime, Views, isActive, isApproved, CreatedAt
+)
+VALUES
+(1, 1, 1, N'Phở Bò', N'Hướng dẫn nấu phở bò', N'Bánh phở, thịt bò', NULL, 2, 3, 100, 1, 1, GETDATE()),
+(2, 2, 2, N'Steak', N'Cách làm steak', N'Thịt bò, bơ', NULL, 3, 1, 50, 1, 1, GETDATE()),
+(1, 3, NULL, N'Đậu hũ chiên', N'Món chay đơn giản', N'Đậu hũ', NULL, 1, 1, 30, 1, 1, GETDATE());
+
+GO
+Select *from SearchHistory;
