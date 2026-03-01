@@ -270,6 +270,37 @@ CREATE TABLE ShoppingList (
 );
 GO
 
+-- ==========================================
+-- 1. Tạo bảng MealPlan (Kế hoạch ăn uống)
+-- ==========================================
+CREATE TABLE MealPlan (
+    PlanID INT IDENTITY(1,1) PRIMARY KEY,
+    AccountID INT NOT NULL,            -- Người lên kế hoạch
+    PostID INT,                        -- Món ăn (Nối với bảng Post, có thể NULL nếu họ tự nhập tên món ngoài)
+    CustomMealName NVARCHAR(255),      -- Tên món ăn ngoài (Dành cho trường hợp không chọn từ Post có sẵn)
+    PlanDate DATE NOT NULL,            -- Ngày ăn (VD: 2026-03-05)
+    MealType NVARCHAR(50) NOT NULL,    -- Buổi ăn: 'BREAKFAST' (Sáng), 'LUNCH' (Trưa), 'DINNER' (Tối), 'SNACK' (Ăn vặt)
+    Notes NVARCHAR(MAX),               -- Ghi chú thêm (VD: Ăn nhạt, ít cay)
+    IsCompleted INT DEFAULT 0,         -- Đã ăn chưa? 0: Chưa ăn, 1: Đã hoàn thành
+    CreatedAt DATETIME DEFAULT GETDATE(),
+
+    -- Ràng buộc Khóa ngoại
+    CONSTRAINT FK_MealPlan_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
+    CONSTRAINT FK_MealPlan_Post FOREIGN KEY (PostID) REFERENCES Post(PostID)
+);
+GO
+
+-- ==========================================
+-- 2. Thêm dữ liệu mẫu (Mock Data) để Test
+-- ==========================================
+INSERT INTO MealPlan (AccountID, PostID, CustomMealName, PlanDate, MealType, Notes, IsCompleted)
+VALUES 
+(1, 1, NULL, CAST(GETDATE() AS DATE), 'BREAKFAST', N'Cho thêm nhiều hành', 0),    -- User 1 ăn món Phở Bò (PostID 1) vào sáng nay
+(1, 2, NULL, CAST(GETDATE() AS DATE), 'DINNER', N'Chín vừa (Medium rare)', 0),     -- User 1 ăn Steak (PostID 2) vào tối nay
+(1, NULL, N'Bánh mì ốp la', CAST(GETDATE() + 1 AS DATE), 'BREAKFAST', N'Mua ở đầu ngõ', 0), -- Tự nhập món ngoài cho sáng mai
+(2, 3, NULL, CAST(GETDATE() AS DATE), 'LUNCH', N'Ăn chay mùng 1', 1);              -- User 2 đã hoàn thành món Đậu hũ chiên (PostID 3)
+GO
+
 INSERT INTO Account (Username, Email, Password, Avatar, Token, Point, isAdmin, isPremium, isActive, CreatedAt)
 VALUES
 ('user1', 'user1@gmail.com', '123456', NULL, 'token1', 10, 0, 0, 1, GETDATE()),
@@ -433,3 +464,4 @@ VALUES
 
 GO
 Select *from SearchHistory;
+Select *from MealPlan;
