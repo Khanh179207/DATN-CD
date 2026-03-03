@@ -1,0 +1,221 @@
+// ==========================================
+// BIẾN & MIXIN HỖ TRỢ
+// ==========================================
+$font-sans: 'Inter', 'Mulish', sans-serif; // <-- THÊM DÒNG NÀY ĐỂ FIX LỖI
+
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// ==========================================
+// GIAO DIỆN MINI CHAT BOX (CHUẨN MESSENGER)
+// ==========================================
+.mini-chat-box {
+  position: fixed;
+  // ... phần còn lại giữ nguyên
+  position: fixed;
+  bottom: 0;
+  right: 80px;
+  width: 350px;
+  height: 480px;
+  background: #ffffff;
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 5px 30px rgba(0, 0, 0, 0.18);
+  z-index: 10000;
+  border: 1px solid #e5e7eb;
+  border-bottom: none;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Inter', 'Mulish', sans-serif;
+  transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+  overflow: hidden;
+
+  &.is-minimized {
+    transform: translateY(calc(100% - 64px));
+  }
+
+  /* ================= HEADER (Đã fix lỗi xếp dọc nút) ================= */
+  .chat-head {
+    height: 64px;
+    min-height: 64px;
+    padding: 0 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: row; /* Bắt buộc dàn hàng ngang */
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    background: #ffffff;
+    flex-shrink: 0;
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1; /* Chiếm hết phần không gian trống */
+      overflow: hidden;
+
+      .avt-wrap {
+        position: relative;
+        width: 40px; height: 40px;
+        flex-shrink: 0; /* Không cho phép bị bóp méo */
+        
+        img { 
+          width: 40px !important; height: 40px !important; 
+          border-radius: 50%; object-fit: cover; border: 1px solid #f3f4f6; 
+        }
+        
+        .dot-status {
+          position: absolute; bottom: 0; right: 0; width: 12px; height: 12px;
+          background: #22c55e; border: 2px solid #ffffff; border-radius: 50%;
+        }
+      }
+
+      .name-col {
+        display: flex; flex-direction: column;
+        overflow: hidden;
+        h4 { margin: 0; font-size: 1rem; font-weight: 700; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .status-text { font-size: 0.75rem; color: #6b7280; margin-top: 2px; }
+      }
+    }
+
+    /* FIX CÁC NÚT BÊN PHẢI */
+    .actions {
+      display: flex;
+      flex-direction: row !important; /* Ép buộc luôn nằm ngang */
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0; /* Không cho phép bị ép nhỏ lại */
+      margin-left: 10px;
+
+      .btn-icon {
+        width: 32px; height: 32px; border-radius: 50%; 
+        @include flex-center;
+        background: transparent; border: none; color: #ea580c; 
+        cursor: pointer; transition: 0.2s;
+        padding: 0; /* Xóa padding thừa để tránh phình to */
+        
+        svg { width: 18px; height: 18px; flex-shrink: 0; }
+        
+        &:hover { background: #fff7ed; }
+        &.close { color: #6b7280; &:hover { color: #ef4444; background: #fef2f2; } }
+      }
+    }
+  }
+
+  /* ================= BODY CHAT (Đã fix lỗi Avatar to) ================= */
+  .chat-body-wrapper {
+    flex: 1; 
+    display: flex; 
+    flex-direction: column;
+    overflow: hidden;
+    background: #ffffff;
+    
+    .chat-messages {
+      flex: 1; 
+      overflow-y: auto; 
+      overflow-x: hidden;
+      padding: 16px 12px; 
+      display: flex; 
+      flex-direction: column;
+      
+      &::-webkit-scrollbar { width: 4px; }
+      &::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+
+      /* FIX AVATAR TỔNG (US) BỊ KHỔNG LỒ */
+      .intro {
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; /* Ép mọi thứ vào chính giữa */
+        justify-content: center;
+        padding: 20px 0 30px;
+        
+        img { 
+          /* Đóng đinh kích thước 75x75, cấm mọi hành vi tự phóng to */
+          width: 75px !important; height: 75px !important; 
+          min-width: 75px; min-height: 75px;
+          max-width: 75px; max-height: 75px;
+          border-radius: 50%; object-fit: cover; 
+          margin-bottom: 12px; border: 1px solid #e5e7eb; 
+        }
+        h5 { margin: 0 0 4px; font-size: 1.1rem; font-weight: 800; color: #111827; text-align: center; }
+        p { font-size: 0.8rem; color: #6b7280; margin: 0; text-align: center; }
+      }
+
+      /* TIN NHẮN CHUNG */
+      .msg-item {
+        display: flex; flex-direction: column; margin-top: 2px;
+        &.is-last { margin-bottom: 12px; }
+
+        .msg-content { display: flex; align-items: flex-end; gap: 8px; max-width: 85%; }
+        
+        .msg-avatar-container { width: 28px; height: 28px; flex-shrink: 0; }
+        .msg-avatar { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 1px solid #f3f4f6; }
+
+        .bubble { padding: 8px 14px; font-size: 0.95rem; line-height: 1.4; word-wrap: break-word; border-radius: 18px; }
+        .msg-time { font-size: 0.65rem !important; color: #9ca3af; margin-top: 4px; }
+
+        /* KHÁCH NHẮN (TRÁI) */
+        &:not(.mine) {
+          align-items: flex-start;
+          .msg-content { align-self: flex-start; }
+          .bubble { background: #f3f4f6; color: #111827; border-bottom-left-radius: 4px; }
+          &.is-last .bubble { border-bottom-left-radius: 18px; }
+          .msg-time { margin-left: 36px; }
+        }
+
+        /* MÌNH NHẮN (PHẢI) */
+        &.mine {
+          align-items: flex-end;
+          .msg-content { align-self: flex-end; flex-direction: row-reverse; }
+          .bubble { background: #ea580c; color: #ffffff; border-bottom-right-radius: 4px; }
+          &.is-last .bubble { border-bottom-right-radius: 18px; }
+        }
+      }
+    }
+  }
+
+  /* ================= FOOTER NHẬP LIỆU ================= */
+  .chat-footer {
+    min-height: 60px; padding: 10px 14px; background: #ffffff; 
+    border-top: 1px solid #f3f4f6; display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+
+    .input-actions {
+      display: flex; gap: 4px;
+      .btn-action-icon {
+        width: 32px; height: 32px; border-radius: 50%;
+        background: transparent; border: none; color: #ea580c; 
+        @include flex-center; cursor: pointer; transition: 0.2s;
+        svg { width: 20px; height: 20px; }
+        &:hover { background: #fff7ed; }
+      }
+    }
+
+    .input-wrapper {
+      flex: 1; background: #f3f4f6; border-radius: 20px; display: flex; align-items: center; padding: 0 14px;
+      input { width: 100%; height: 36px; border: none; background: transparent; outline: none; font-size: 0.95rem; font-family: $font-sans; }
+    }
+
+    .btn-send {
+      width: 36px; height: 36px; border-radius: 50%; background: transparent; border: none; color: #ea580c; 
+      @include flex-center; cursor: pointer; transition: transform 0.1s;
+      svg { width: 20px; height: 20px; }
+      &:active { transform: scale(0.9); }
+      &:disabled { color: #d1d5db; cursor: not-allowed; }
+    }
+  }
+}
+
+/* ================= HIỆU ỨNG ================= */
+.typing-bubble { display: flex; gap: 4px; padding: 12px 16px !important; align-items: center; }
+.dot { 
+  width: 6px; height: 6px; border-radius: 50%; background: #9ca3af; 
+  animation: typing-bounce 1.4s infinite ease-in-out; 
+  &:nth-child(2) { animation-delay: 0.2s; }
+  &:nth-child(3) { animation-delay: 0.4s; }
+}
+@keyframes typing-bounce { 0%, 80%, 100% { transform: translateY(0); opacity: 0.4; } 40% { transform: translateY(-5px); opacity: 1; } }
+.slide-up-enter-active, .slide-up-leave-active { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+.slide-up-enter-from, .slide-up-leave-to { transform: translateY(100%); opacity: 0; }

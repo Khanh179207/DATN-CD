@@ -21,22 +21,15 @@
 
           <transition name="dropdown-anim">
             <div v-if="showShopping" class="common-dropdown shopping-width">
-              
               <div class="dropdown-header">
                 <h3>{{ $t('header.shopping_list') }}</h3>
                 <div style="display: flex; gap: 15px;">
-                  <span 
-                    v-if="shoppingStore.items.some(i => i.checked)" 
-                    class="action-link" 
-                    @click="shoppingStore.removeCheckedItems()" 
-                    style="color: #EF4444;"
-                  >
+                  <span v-if="shoppingStore.items.some(i => i.checked)" class="action-link" @click="shoppingStore.removeCheckedItems()" style="color: #EF4444;">
                     🗑️ Xóa món đã tick
                   </span>
                   <span class="action-link" @click="shoppingStore.clearItems()">{{ $t('header.clear_all') }}</span>
                 </div>
               </div>
-
               <div class="dropdown-body scroll-body">
                 <div v-if="shoppingStore.items.length === 0" class="empty-state">
                   <p>{{ $t('header.shopping_empty') }}</p>
@@ -51,51 +44,23 @@
                   </div>
                 </div>
               </div>
-            
               <div class="dropdown-footer" v-if="shoppingStore.items.length > 0" style="padding: 12px; border-top: 1px solid #F3F4F6;">
-                <button @click="openGoogleMaps" style="width: 100%; padding: 12px; background: #EA580C; color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s;" onmouseover="this.style.background='#C2410C'" onmouseout="this.style.background='#EA580C'">
+                <button @click="openGoogleMaps" class="btn-map-action">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
                   Tìm Siêu thị / Chợ
                 </button>
               </div>
-
             </div>
           </transition>
         </div>
-        <div class="action-wrapper" @click.stop>
-          <button class="btn-icon" :class="{ active: showChat }" title="Messages" @click="toggleChat">
+
+        <div class="action-wrapper">
+          <button class="btn-icon" :class="{ active: chatStore.isMessengerOpen }" title="Messages" @click.stop="toggleChat">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-            <span v-if="unreadMessages > 0" class="badge-count">{{ unreadMessages }}</span>
+            <span v-if="chatStore.totalUnreadCount > 0" class="badge-count">{{ chatStore.totalUnreadCount }}</span>
           </button>
-
-          <transition name="dropdown-anim">
-            <div v-if="showChat" class="common-dropdown chat-width">
-              <div class="dropdown-header">
-                <h3>{{ $t('header.messages') }}</h3>
-                <span class="action-icon">•••</span>
-              </div>
-              <div class="dropdown-body scroll-body">
-                <div v-for="c in conversations" :key="c.id" class="list-item" @click="openMiniChat(c)">
-                  <div class="avatar-wrap">
-                    <img :src="c.avatar">
-                    <div v-if="c.online" class="online-status"></div>
-                  </div>
-                  <div class="item-info">
-                    <div class="top-line">
-                      <span class="name">{{ c.name }}</span>
-                      <span class="time">{{ c.time }}</span>
-                    </div>
-                    <div class="preview" :class="{ unread: !c.read }">{{ c.lastMessage }}</div>
-                  </div>
-                  <div v-if="!c.read" class="unread-dot"></div>
-                </div>
-              </div>
-              <div class="dropdown-footer">
-                <a href="#">{{ $t('header.see_all_messages') }}</a>
-              </div>
-            </div>
-          </transition>
-        </div>
+          
+          </div>
         
         <div class="action-wrapper" @click.stop>
           <button class="btn-icon" :class="{ active: showNoti }" title="Notifications" @click="toggleNoti">
@@ -110,13 +75,7 @@
                 <span class="action-link" @click="markAllRead">{{ $t('header.mark_all_read') }}</span>
               </div>
               <div class="dropdown-body scroll-body">
-                <div 
-                  v-for="n in notifications" 
-                  :key="n.id" 
-                  class="list-item noti-item" 
-                  :class="{ unread: !n.isRead }"
-                  @click="handleNotiClick(n)" 
-                >
+                <div v-for="n in notifications" :key="n.id" class="list-item noti-item" :class="{ unread: !n.isRead }" @click="handleNotiClick(n)">
                   <div class="avatar-wrap">
                     <img :src="n.avatar">
                     <div class="noti-type-icon" :class="n.type">
@@ -160,9 +119,7 @@
             
             <ul class="menu-list">
               <li @click="goToAdmin" class="admin-link">
-                <span class="icon">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                </span>
+                <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></span>
                 {{ $t('header.admin_panel') }}
               </li>
               <li class="divider"></li>
@@ -193,7 +150,7 @@
         <button class="btn-signup" @click="$emit('open-register')">{{ $t('auth.register') }}</button>
       </div>
       
-      <div v-if="isDropdownOpen || showNoti || showChat || showShopping" class="click-outside-header" @click="closeAllDropdowns"></div>
+      <div v-if="isDropdownOpen || showNoti || showShopping" class="click-outside-header" @click="closeAllDropdowns"></div>
     </div>
 
     <Teleport to="body">
@@ -227,7 +184,6 @@
           </div>
         </div>
       </transition>
-
       <MapModal v-if="showMapModal" @close="showMapModal = false" />
     </Teleport>
 
@@ -242,7 +198,6 @@ import { useChatStore } from '@/stores/chat'
 import { useShoppingStore } from '@/stores/shopping'
 import LangSwitcher from '@/components/common/LangSwitcher.vue'
 import MapModal from '@/components/modals/MapModal.vue'
-// 🌟 Nhập file Component SearchBox vào đây (nhớ điều chỉnh đường dẫn nếu cần)
 import SearchBox from '@/components/common/SearchBox.vue'
 import { toast } from '@/composables/useToast'
 import { useI18n } from 'vue-i18n'
@@ -254,11 +209,8 @@ const chatStore = useChatStore()
 const shoppingStore = useShoppingStore()
 const router = useRouter()
 
-// 🌟 Đã xóa hết biến searchKeyword, isSearchFocused, handleSearch vì SearchBox đã lo liệu
-
 // State
 const showShopping = ref(false)
-const showChat = ref(false)
 const showNoti = ref(false)
 const isDropdownOpen = ref(false)
 const isScrolled = ref(false)
@@ -266,68 +218,63 @@ const showBugReport = ref(false)
 const showMapModal = ref(false)
 const bugForm = ref({ type: 'ui', desc: '' })
 
-// Mock Data
-const conversations = ref([
-  { id: 1, name: 'Bếp Trưởng Gomet', avatar: 'https://i.pravatar.cc/150?u=chef', lastMessage: 'Công thức này tuyệt lắm!', time: '5p', read: false, online: true },
-  { id: 2, name: 'Hội Yêu Bếp', avatar: 'https://ui-avatars.com/api/?name=H&background=random', lastMessage: 'Mai: Cảm ơn nhé', time: '1h', read: true, online: false },
-])
+// Notifications State
 const notifications = ref([])
-
-const unreadMessages = computed(() => conversations.value.filter(c => !c.read).length)
 const unreadNotiCount = computed(() => notifications.value.filter(n => !n.isRead).length)
 
-// Load real notifications from API
-const loadNotifications = async () => {
-  const user = authStore.currentUser
-  if (!user?.accountID) return
-  try {
-    const data = await getNotifications(user.accountID)
-    notifications.value = data.map(n => ({
-      id:       n.notificationID,
-      user:     n.title,
-      action:   n.content,
-      time:     n.createdAt ? new Date(n.createdAt).toLocaleDateString('vi-VN') : '',
-      isRead:   n.isRead === 1,
-      type:     n.type || 'general',
-      targetId: n.postID || 0,
-      avatar:   `https://ui-avatars.com/api/?name=${encodeURIComponent(n.title)}&background=EA580C&color=fff`
-    }))
-  } catch { /* silent */ }
-}
-
 // Actions
-const closeAllDropdowns = () => { isDropdownOpen.value = false; showChat.value = false; showNoti.value = false; showShopping.value = false }
+const closeAllDropdowns = () => { 
+  isDropdownOpen.value = false; 
+  showNoti.value = false; 
+  showShopping.value = false 
+  // Không đóng Chat Sidebar ở đây vì nó có cơ chế overlay riêng
+}
 
 const toggleShopping = () => { 
   const s = !showShopping.value; 
   closeAllDropdowns(); 
   showShopping.value = s;
-  if (s && authStore.isAuthenticated) {
-    shoppingStore.fetchCart(); 
-  }
+  if (s && authStore.isAuthenticated) shoppingStore.fetchCart(); 
 }
 
-const toggleChat = () => { const s = !showChat.value; closeAllDropdowns(); showChat.value = s }
+const toggleChat = () => { 
+  // Chỉ gọi Store, Sidebar sẽ tự động mở ra
+  chatStore.isMessengerOpen = !chatStore.isMessengerOpen;
+  closeAllDropdowns(); 
+}
+
 const toggleNoti = () => {
   const s = !showNoti.value
   closeAllDropdowns()
   showNoti.value = s
   if (s) loadNotifications()
 }
-const toggleDropdown = () => { const s = !isDropdownOpen.value; closeAllDropdowns(); isDropdownOpen.value = s }
 
-const openBugModal = () => { closeAllDropdowns(); showBugReport.value = true }
-const submitBug = () => { toast.success(t('toast.bug_sent')); showBugReport.value = false; bugForm.value.desc = '' }
-
-const openGoogleMaps = () => {
-  showMapModal.value = true 
-  closeAllDropdowns()       
+const toggleDropdown = () => { 
+  const s = !isDropdownOpen.value; 
+  closeAllDropdowns(); 
+  isDropdownOpen.value = s 
 }
 
-const openMiniChat = (user) => { 
-  chatStore.openChat(user)
-  showChat.value = false 
+// Logic thông báo & Auth giữ nguyên
+const loadNotifications = async () => {
+  const user = authStore.currentUser
+  if (!user?.accountID) return
+  try {
+    const data = await getNotifications(user.accountID)
+    notifications.value = data.map(n => ({
+      id: n.notificationID,
+      user: n.title,
+      action: n.content,
+      time: n.createdAt ? new Date(n.createdAt).toLocaleDateString('vi-VN') : '',
+      isRead: n.isRead === 1,
+      type: n.type || 'general',
+      targetId: n.postID || 0,
+      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(n.title)}&background=EA580C&color=fff`
+    }))
+  } catch { /* silent */ }
 }
+
 const handleNotiClick = async (noti) => {
   if (!noti.isRead) {
     noti.isRead = true
@@ -335,11 +282,6 @@ const handleNotiClick = async (noti) => {
   }
   showNoti.value = false
   if (noti.targetId) router.push({ name: 'PostDetail', params: { id: noti.targetId } })
-}
-
-const goToAdmin = () => {
-  closeAllDropdowns()
-  router.push('/admin/dashboard') 
 }
 
 const handleLogout = async () => { 
@@ -350,18 +292,15 @@ const handleLogout = async () => {
   authStore.isAuthenticated = false; 
   await router.push({ path: '/', hash: '#sectionsigninlanding' }); 
 }
+
+const handleScroll = () => { isScrolled.value = window.scrollY > 10 }
+const openBugModal = () => { closeAllDropdowns(); showBugReport.value = true }
+const submitBug = () => { toast.success(t('toast.bug_sent')); showBugReport.value = false; bugForm.value.desc = '' }
+const openGoogleMaps = () => { showMapModal.value = true; closeAllDropdowns() }
+const goToAdmin = () => { closeAllDropdowns(); router.push('/admin/dashboard') }
 const handleCreatePost = () => authStore.isAuthenticated ? router.push('/create-post') : emit('open-login')
 const goToProfile = () => { closeAllDropdowns(); router.push('/profile') }
 const openPremium = () => { closeAllDropdowns(); emit('open-premium') }
-const markAllRead = async () => {
-  notifications.value.forEach(n => { n.isRead = true })
-  const user = authStore.currentUser
-  if (user?.accountID) {
-    markAllNotificationsRead(user.accountID).catch(() => {})
-  }
-}
-
-const handleScroll = () => { isScrolled.value = window.scrollY > 10 }
 
 onMounted(() => {
   window.addEventListener('scroll', handleScroll)
@@ -374,3 +313,11 @@ onUnmounted(() => window.removeEventListener('scroll', handleScroll))
 </script>
 
 <style scoped lang="scss" src="./Header.scss"></style>
+<style scoped>
+.btn-map-action {
+  width: 100%; padding: 12px; background: #EA580C; color: white; border: none; 
+  border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; 
+  align-items: center; justify-content: center; gap: 8px; transition: 0.2s;
+}
+.btn-map-action:hover { background: #C2410C; }
+</style>
