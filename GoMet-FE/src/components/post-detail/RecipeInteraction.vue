@@ -8,7 +8,7 @@
         <div class="author-vip-card">
           <div class="auth-left">
             <div class="avatar-ring">
-              <img :src="post.authorAvatar" class="auth-img">
+              <img :src="post.authorAvatar" class="auth-img" alt="Author Avatar">
             </div>
           </div>
           <div class="auth-right">
@@ -18,6 +18,13 @@
                 <button class="btn-favorite" :class="{ 'is-saved': isFavorite }" @click="toggleFavorite" :title="isFavorite ? $t('post.saved') : $t('post.unsaved')">
                   {{ isFavorite ? '♥' : '♡' }}
                 </button>
+
+                <button class="btn-message-chef" @click="handleContactChef" :title="$t('common.message')">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                  </svg>
+                </button>
+
                 <button class="btn-connect" :class="{ 'is-following': isFollowing }" @click="toggleFollow">
                   {{ isFollowing ? $t('profile.following') : $t('recipe.connect') }}
                 </button>
@@ -34,7 +41,6 @@
       </section>
 
       <section class="reviews-section fade-in">
-        
         <div class="reviews-header">
           <h3 class="section-title">{{ $t('post.community_reviews') }}</h3>
           <div class="review-summary-card">
@@ -58,13 +64,10 @@
             <div class="rating-selector">
               <span>{{ $t('post.rating_prompt') }}</span>
               <div class="star-rating-input">
-                <span v-for="star in 5" :key="star" 
-                      @click="userRating = star" 
-                      :class="{ active: star <= userRating }">★</span>
+                <span v-for="star in 5" :key="star" @click="userRating = star" :class="{ active: star <= userRating }">★</span>
               </div>
             </div>
           </div>
-          
           <div class="textarea-box">
             <textarea v-model="newComment" :placeholder="$t('post.add_comment')"></textarea>
             <div class="input-footer">
@@ -82,18 +85,14 @@
                 <span class="cmt-author">{{ cmt.name || $t('recipe.anonymous_user') }}</span>
                 <span class="cmt-date">{{ cmt.time || $t('recipe.just_posted') }}</span>
               </div>
-              
               <div class="cmt-rating">
                 <span class="stars" v-for="n in 5" :key="n" :class="{ filled: n <= cmt.rating }">★</span>
                 <span class="verified-badge" v-if="cmt.verified">✓ {{ $t('recipe.verified_cook') }}</span>
               </div>
-
               <p class="cmt-text">{{ cmt.content }}</p>
-
               <div class="cmt-images" v-if="cmt.images">
                 <img v-for="(img, idx) in cmt.images" :key="idx" :src="img">
               </div>
-
               <div class="cmt-actions">
                 <button class="action-link"><span class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg></span> {{ $t('recipe.helpful') }} ({{ cmt.likes }})</button>
                 <button class="action-link">{{ $t('recipe.reply') }}</button>
@@ -101,9 +100,7 @@
             </div>
           </div>
         </div>
-
       </section>
-
     </div>
   </div>
 </template>
@@ -112,15 +109,19 @@
 import { ref, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
+import { useChatStore } from '@/stores/chat' // Import Store Chat
 import { getComments, addComment, ratePost } from '@/services/interactionService'
 import { checkFollow, follow, unfollow, checkFavorite, addFavorite, removeFavorite } from '@/services/socialService'
 import { getUserStats } from '@/services/userService'
 import { toast } from '@/composables/useToast'
+import axios from 'axios'
 
 const props = defineProps({ post: Object })
 const { t } = useI18n()
 
 const authStore = useAuthStore()
+const chatStore = useChatStore() // Khởi tạo Store Chat
+
 const userRating = ref(0)
 const newComment = ref('')
 const commentsList = ref([])
@@ -130,14 +131,13 @@ const isFollowing = ref(false)
 const isFavorite = ref(false)
 const authorStats = ref({ posts: 0, followers: 0 })
 
-// Compute real rating distribution from comments (no more Math.random)
+// Logic tính toán phân phối rating
 const ratingDistribution = computed(() => {
-  const counts = [0, 0, 0, 0, 0] // index 0 = 1★ ... index 4 = 5★
+  const counts = [0, 0, 0, 0, 0]
   commentsList.value.forEach(c => {
     if (c.rating >= 1 && c.rating <= 5) counts[c.rating - 1]++
   })
   const total = counts.reduce((s, n) => s + n, 0)
-  // Return [5★%, 4★%, 3★%, 2★%, 1★%] (highest first for display)
   return counts.map(n => total > 0 ? Math.round(n / total * 100) : 0).reverse()
 })
 
@@ -171,14 +171,12 @@ const loadSocialState = async (post) => {
   if (!post) return
   const uid = authStore.user?.accountID
   const authorID = post.authorID
-  // Load author stats
   if (authorID) {
     try {
       const stats = await getUserStats(authorID)
       authorStats.value = { posts: stats.postCount || stats.posts || 0, followers: stats.followerCount || stats.followers || 0 }
-    } catch { /* stats not available */ }
+    } catch { /* ignore */ }
   }
-  // Check follow & favorite state if logged in
   if (uid && uid !== authorID) {
     try {
       const [followRes, favRes] = await Promise.allSettled([
@@ -188,6 +186,46 @@ const loadSocialState = async (post) => {
       if (followRes.status === 'fulfilled') isFollowing.value = !!followRes.value
       if (favRes.status === 'fulfilled') isFavorite.value = !!favRes.value
     } catch { /* ignore */ }
+  }
+}
+
+// LOGIC NHẮN TIN CHO ĐẦU BẾP
+const handleContactChef = async () => {
+  if (!authStore.isAuthenticated) {
+    toast.warn(t('toast.need_login'));
+    return;
+  }
+
+  const currentUserId = authStore.user?.accountID;
+  const chefId = props.post?.authorID;
+
+  if (currentUserId === chefId) {
+    toast.info('Sếp không thể tự nhắn tin cho chính mình đâu nha!');
+    return;
+  }
+
+  try {
+    // Gọi API lấy hoặc tạo mới cuộc hội thoại
+    const res = await axios.post('http://localhost:8080/api/conversations/access', {
+      user1Id: currentUserId,
+      user2Id: chefId
+    });
+
+    const conversationData = {
+      id: res.data.conversationID,
+      name: props.post.author,
+      avatar: props.post.authorAvatar,
+      online: true 
+    };
+
+    // Mở khung chat mini và đẩy Sidebar danh sách chat ra
+    chatStore.openChat(conversationData);
+    chatStore.isMessengerOpen = true; 
+    
+    toast.success(`Đang kết nối với đầu bếp ${props.post.author}...`);
+  } catch (err) {
+    console.error("Lỗi chat:", err);
+    toast.error('Không thể kết nối lúc này, Sếp vui lòng thử lại sau nhé!');
   }
 }
 
@@ -257,7 +295,6 @@ const submitComment = async () => {
     await loadComments(postID)
     toast.success(t('toast.comment_ok'))
   } catch (err) {
-    console.warn('RecipeInteraction: submit error', err)
     toast.error(t('toast.error_generic'))
   }
 }

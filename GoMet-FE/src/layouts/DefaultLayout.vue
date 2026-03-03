@@ -26,6 +26,8 @@
       <TheFooter />
     </div>
 
+    <ChatSidebar />
+
     <MiniChatBox />
     <CompareFloatingBar />
 
@@ -62,11 +64,13 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useChatStore } from '@/stores/chat' 
 
+// Import các Component
 import Sidebar from '@/components/sidebar/Sidebar.vue'
 import Header from '@/components/topbar/Header.vue' 
 import AuthModal from '@/components/modals/AuthModal.vue'
 import PremiumModal from '@/components/modals/PremiumModal.vue'
-import MiniChatBox from '@/components/modals/MiniChatBox.vue'
+import MiniChatBox from '@/components/chat/MiniChatBox.vue'
+import ChatSidebar from '@/components/chat/ChatSidebar.vue' // Đảm bảo đã import
 import TheFooter from '@/components/footer/TheFooter.vue'
 import CompareFloatingBar from '@/components/common/CompareFloatingBar.vue'
 
@@ -105,9 +109,9 @@ const handleLogout = async () => {
 <style scoped>
 /* ─── Layout Shell ─── */
 .app-container {
-  display: flex;
+  display: flex; /* BẮT BUỘC: Để chia cột Sidebar - MainContent - ChatSidebar */
   height: 100vh;
-  overflow: hidden;
+  overflow: hidden; /* Ngăn trình duyệt xuất hiện thanh cuộn ngoài cùng */
   background-color: var(--color-neutral-0);
   font-family: var(--font-body);
   color: var(--color-neutral-900);
@@ -120,11 +124,11 @@ const handleLogout = async () => {
 }
 
 .main-content {
-  flex: 1;
+  flex: 1; /* Chiếm toàn bộ không gian còn lại */
   display: flex;
   flex-direction: column;
   height: 100%;
-  overflow-y: auto;
+  overflow-y: auto; /* THANH CUỘN CHÍNH: Sẽ nằm ở đây, sát mép ChatSidebar */
   scroll-behavior: smooth;
   position: relative;
 }
@@ -145,12 +149,13 @@ const handleLogout = async () => {
 .page-fade-enter-from { opacity: 0; transform: translateY(10px); }
 .page-fade-leave-to   { opacity: 0; transform: translateY(-10px); }
 
-/* ─── Floating AI Button ─── */
+/* ─── Floating UI ─── */
 .float-ai-btn {
   position: fixed;
   bottom: var(--space-8);
   right: var(--space-8);
-  z-index: var(--z-modal);
+  /* z-index thấp hơn ChatSidebar nếu cần, hoặc cao hơn tùy bạn */
+  z-index: 99; 
   display: flex;
   align-items: center;
   gap: var(--space-3);
