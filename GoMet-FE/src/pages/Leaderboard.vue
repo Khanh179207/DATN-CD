@@ -1,33 +1,38 @@
 <template>
-  <div class="gomet-hall-master" @mousemove="handleMouseMove" style="background: #FAFAF9; min-height: 100vh;">
-  
+  <div class="gomet-hall-master" @mousemove="handleMouseMove">
     <HeroSanctum 
-      v-model="activeCategory" 
-      :mousePos="mousePos" 
-      :categories="categories" 
-      :topDish="leaderboardData[activeCategory].top1"
+      v-if="leaderboardData.dishes.top1 || leaderboardData.chefs.top1"
+      v-model="activeCategory"
+      :topDish="leaderboardData.dishes.top1"
+      :topUser="leaderboardData.chefs.top1"
     />
 
-    <NetflixRanking :data="leaderboardData[activeCategory].top10" :category="activeCategory" />
+    <CinematicList 
+      v-if="leaderboardData[activeCategory].remaining.length > 0"
+      :data="leaderboardData[activeCategory].remaining" 
+      :category="activeCategory"
+      :start-rank="2"
+    />
 
-    <LegacyFeed :posts="leaderboardData[activeCategory].feed" />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import HeroSanctum from '@/components/leaderboard/HeroSanctum.vue'
-import NetflixRanking from '@/components/leaderboard/NetflixRanking.vue'
-import LegacyFeed from '@/components/leaderboard/LegacyFeed.vue'
+
+// Import 2 component chính
+import HeroSanctum from '@/components/leaderboard/HeroCinematic.vue'
+import CinematicList from '@/components/leaderboard/CinematicList.vue' // Import file mới tạo
+
 import { getLeaderboardPosts, getLeaderboardUsers } from '@/services/leaderboardService'
 
 const { t } = useI18n()
 const activeCategory = ref('dishes')
 const mousePos = ref({ x: 0, y: 0 })
 const categories = computed(() => [
-  { id: 'dishes', name: t('leaderboard.top_dishes') },
-  { id: 'chefs',  name: t('leaderboard.top_chefs') }
+  { id: 'dishes', name: t('leaderboard.top_dishes', 'Tuyệt tác ẩm thực') },
+  { id: 'chefs',  name: t('leaderboard.top_chefs', 'Đầu bếp Elite') }
 ])
 
 const handleMouseMove = (e) => {
@@ -45,6 +50,7 @@ function buildDishTop1(list) {
   if (!list?.length) return null
   const p = list[0]
   return {
+    id:              p.postID,
     name:            p.title,
     image:           p.media || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800',
     chefName:        p.authorName || 'GoMet Chef',
@@ -63,6 +69,7 @@ function buildUserTop1(list) {
   if (!list?.length) return null
   const u = list[0]
   return {
+    id:          u.accountID,
     name:        u.username,
     image:       u.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.username)}&background=EA580C&color=fff`,
     chefName:    u.username,
@@ -76,40 +83,30 @@ function buildUserTop1(list) {
   }
 }
 
+// Cấu trúc lại Computed: Chỉ giữ Top 1 và Remaining (Top 2-10)
 const leaderboardData = computed(() => ({
   dishes: {
-    top1:  buildDishTop1(dishesTop10.value),
-    top10: dishesTop10.value.map((p, i) => ({
+    top1: buildDishTop1(dishesTop10.value),
+    // Cắt từ phần tử số 1 (Top 2) trở đi
+    remaining: dishesTop10.value.slice(1).map(p => ({
       id:           p.postID,
-      name:         p.title,
-      pts:          p.score ? Math.round(p.score) : 0,
+      title:        p.title,
+      pts:          p.score ? Math.round(p.score).toLocaleString() : '0',
       image:        p.media || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400',
       authorName:   p.authorName || 'GoMet',
       authorAvatar: p.authorAvatar || `https://ui-avatars.com/api/?name=G&background=EA580C&color=fff`
-    })),
-    feed: dishesTop10.value.slice(5).map(p => ({
-      id:          p.postID,
-      title:       p.title,
-      pts:         p.score ? Math.round(p.score).toLocaleString() : '0',
-      likes:       p.favoriteCount > 999 ? `${(p.favoriteCount/1000).toFixed(1)}K` : `${p.favoriteCount}`,
-      comments:    `${p.ratingCount || 0}`,
-      image:       p.media || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400',
-      authorName:  p.authorName || 'GoMet',
-      authorAvatar:p.authorAvatar || '',
-      description: p.description || ''
     }))
   },
   chefs: {
-    top1:  buildUserTop1(usersTop10.value),
-    top10: usersTop10.value.map((u, i) => ({
+    top1: buildUserTop1(usersTop10.value),
+    // Cắt từ phần tử số 1 (Top 2) trở đi
+    remaining: usersTop10.value.slice(1).map(u => ({
       id:        u.accountID,
       name:      u.username,
       image:     u.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.username)}&background=EA580C&color=fff`,
       postCount: u.postCount || 0,
-      joinedAt:  '—',
       followers: u.followerCount > 999 ? `${(u.followerCount/1000).toFixed(1)}K` : `${u.followerCount}`
-    })),
-    feed: []
+    }))
   }
 }))
 
@@ -126,3 +123,12 @@ onMounted(async () => {
   }
 })
 </script>
+
+<style scoped>
+/* Chìa khóa mấu chốt để ghép nối mượt mà */
+.gomet-hall-master {
+  background-color: #050505; /* Màu đen sâu thẳm chuẩn Cinematic */
+  min-height: 100vh;
+  overflow: hidden; /* Ngăn scroll ngang nếu có lỗi CSS tràn viền */
+}
+</style>

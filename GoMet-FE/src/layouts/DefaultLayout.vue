@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container">
+  <div class="app-container" :class="{ 'is-dark-theme': route.meta?.isDark }">
     
     <Sidebar 
       class="fixed-sidebar" 
@@ -16,9 +16,9 @@
       />
 
       <div class="page-body">
-        <router-view v-slot="{ Component, route }">
+        <router-view v-slot="{ Component, route: currentRoute }">
           <transition name="page-fade" mode="out-in">
-            <component :is="Component" :key="route.fullPath" />
+            <component :is="Component" :key="currentRoute.fullPath" />
           </transition>
         </router-view>
       </div>
@@ -27,7 +27,6 @@
     </div>
 
     <ChatSidebar />
-
     <MiniChatBox />
     <CompareFloatingBar />
 
@@ -61,20 +60,20 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router' // 🔥 Import useRoute
 import { useChatStore } from '@/stores/chat' 
 
-// Import các Component
 import Sidebar from '@/components/sidebar/Sidebar.vue'
 import Header from '@/components/topbar/Header.vue' 
 import AuthModal from '@/components/modals/AuthModal.vue'
 import PremiumModal from '@/components/modals/PremiumModal.vue'
 import MiniChatBox from '@/components/chat/MiniChatBox.vue'
-import ChatSidebar from '@/components/chat/ChatSidebar.vue' // Đảm bảo đã import
+import ChatSidebar from '@/components/chat/ChatSidebar.vue'
 import TheFooter from '@/components/footer/TheFooter.vue'
 import CompareFloatingBar from '@/components/common/CompareFloatingBar.vue'
 
 const router = useRouter()
+const route = useRoute() // 🔥 Khởi tạo để theo dõi meta.isDark
 const chatStore = useChatStore() 
 
 const showAuthModal = ref(false)
@@ -109,13 +108,19 @@ const handleLogout = async () => {
 <style scoped>
 /* ─── Layout Shell ─── */
 .app-container {
-  display: flex; /* BẮT BUỘC: Để chia cột Sidebar - MainContent - ChatSidebar */
+  display: flex;
   height: 100vh;
-  overflow: hidden; /* Ngăn trình duyệt xuất hiện thanh cuộn ngoài cùng */
+  overflow: hidden;
   background-color: var(--color-neutral-0);
   font-family: var(--font-body);
   color: var(--color-neutral-900);
   position: relative;
+  transition: background-color 0.4s ease; /* Chuyển màu nền mượt mà */
+}
+
+/* 🔥 Trạng thái trang Premium/Dark */
+.app-container.is-dark-theme {
+  background-color: #000000 !important; /* Biến nền layout thành đen hoàn toàn */
 }
 
 .fixed-sidebar {
@@ -124,13 +129,18 @@ const handleLogout = async () => {
 }
 
 .main-content {
-  flex: 1; /* Chiếm toàn bộ không gian còn lại */
+  flex: 1;
   display: flex;
   flex-direction: column;
   height: 100%;
-  overflow-y: auto; /* THANH CUỘN CHÍNH: Sẽ nằm ở đây, sát mép ChatSidebar */
+  overflow-y: auto;
   scroll-behavior: smooth;
   position: relative;
+}
+
+/* 🔥 Ép nội dung tràn lên dưới Header khi ở Dark Theme */
+.is-dark-theme .page-body {
+  margin-top: calc(-1 * var(--header-height, 80px)); /* Kéo nội dung lên trên */
 }
 
 .page-body {
@@ -154,7 +164,6 @@ const handleLogout = async () => {
   position: fixed;
   bottom: var(--space-8);
   right: var(--space-8);
-  /* z-index thấp hơn ChatSidebar nếu cần, hoặc cao hơn tùy bạn */
   z-index: 99; 
   display: flex;
   align-items: center;
@@ -168,10 +177,14 @@ const handleLogout = async () => {
   transition: var(--transition-spring);
 }
 
-.float-ai-btn:hover {
-  transform: translateY(-5px) scale(1.05);
-  box-shadow: var(--shadow-primary-lg);
-  border-color: var(--color-primary-200);
+/* Đổi màu nút Assistant khi ở nền tối để không bị quá chói */
+.is-dark-theme .float-ai-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+}
+.is-dark-theme .float-ai-btn .label {
+  color: #FFF;
 }
 
 .ai-icon-bg {
