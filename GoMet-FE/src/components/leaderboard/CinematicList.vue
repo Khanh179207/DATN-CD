@@ -85,54 +85,49 @@
     <!-- Preview overlay khi click item đang ở giữa -->
     <div
       v-if="previewItem"
+      ref="previewOverlayRef"
       class="preview-overlay"
       @click.self="closePreview"
     >
-      <div class="preview-card">
-        <button class="preview-close" @click="closePreview">×</button>
+      <button class="preview-close" @click="closePreview">×</button>
 
-        <div class="preview-main">
-          <div class="preview-image-wrap">
-            <img
-              :src="previewImage"
-              :alt="previewTitle"
-            />
-          </div>
+      <div ref="fxImageWrapRef" class="fx-image-wrap" aria-hidden="true">
+        <img :src="previewImage" :alt="previewTitle" />
+      </div>
 
-          <div class="preview-content">
-            <span class="preview-tag">
-              {{ category === 'dishes' ? 'Tuyệt tác nổi bật' : 'Thành viên xuất sắc' }}
-            </span>
-            <h3 class="preview-title">{{ previewTitle }}</h3>
+      <div ref="fxPanelRef" class="fx-panel" role="dialog" aria-modal="true">
+        <span class="preview-tag">
+          {{ category === 'dishes' ? 'Tuyệt tác nổi bật' : 'Thành viên xuất sắc' }}
+        </span>
+        <h3 class="preview-title">{{ previewTitle }}</h3>
 
-            <p class="preview-meta">
-              <template v-if="category === 'dishes'">
-                By {{ previewItem.authorName || 'GoMet Chef' }}
-                · {{ previewItem.pts || 0 }} PTS
-              </template>
-              <template v-else>
-                {{ previewItem.postCount || 0 }} bài viết
-                · {{ previewItem.followers || 0 }} followers
-              </template>
-            </p>
+        <p class="preview-meta">
+          <template v-if="category === 'dishes'">
+            By {{ previewItem.authorName || 'GoMet Chef' }}
+            · {{ previewItem.pts || 0 }} PTS
+          </template>
+          <template v-else>
+            {{ previewItem.postCount || 0 }} bài viết
+            · {{ previewItem.followers || 0 }} followers
+          </template>
+        </p>
 
-            <p v-if="previewItem.description" class="preview-desc">
-              {{ previewItem.description }}
-            </p>
+        <p v-if="previewItem.description" class="preview-desc">
+          {{ previewItem.description }}
+        </p>
 
-            <button class="preview-cta" @click="goToDetail">
-              {{ category === 'dishes' ? 'Xem chi tiết công thức' : 'Xem hồ sơ' }}
-            </button>
-          </div>
-        </div>
+        <button class="preview-cta" @click="goToDetail">
+          {{ category === 'dishes' ? 'Xem chi tiết công thức' : 'Xem hồ sơ' }}
+        </button>
       </div>
     </div>
   </section>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
+import { gsap } from 'gsap'
 
 const props = defineProps({
   data: { type: Array, required: true },
@@ -144,6 +139,12 @@ const props = defineProps({
 const router = useRouter()
 const carouselRef = ref(null)
 const activeIndex = ref(0)
+const previewOverlayRef = ref(null)
+const fxImageWrapRef = ref(null)
+const fxPanelRef = ref(null)
+const isPreviewAnimating = ref(false)
+let previewTl = null
+let previewOriginRect = null
 
 // dùng computed để truy cập startRank trong template
 const startRank = computed(() => props.startRank || 1)
@@ -216,7 +217,7 @@ const handleItemClick = (item, index) => {
     return
   }
 
-  openPreview(item)
+  openPreview(item, index)
 }
 
 // preview overlay
@@ -237,12 +238,168 @@ const previewTitle = computed(() => {
   return previewItem.value.title || previewItem.value.name || ''
 })
 
-const openPreview = (item) => {
+const openPreview = async (item, originIndex) => {
+  if (isPreviewAnimating.value) return
+
+  // lấy vị trí ảnh gốc để tạo hiệu ứng “phóng to từ list”
+  const container = carouselRef.value
+  const children = container?.querySelectorAll?.('.carousel-item')
+  const originImgEl =
+    children?.[originIndex]?.querySelector?.('.item-image-wrapper img')
+  previewOriginRect = originImgEl?.getBoundingClientRect?.() ?? null
+
   previewItem.value = item
+  await nextTick()
+
+  const overlayEl = previewOverlayRef.value
+  const imgWrapEl = fxImageWrapRef.value
+  const panelEl = fxPanelRef.value
+  if (!overlayEl || !imgWrapEl || !panelEl) return
+
+  isPreviewAnimating.value = true
+  if (previewTl) previewTl.kill()
+
+  // overlay fade
+  gsap.set(overlayEl, { opacity: 0 })
+
+  // start rect fallback nếu không lấy được vị trí ảnh gốc
+  const fallbackW = Math.min(window.innerWidth * 0.42, 520)
+  const fallbackH = fallbackW * 1.25
+  const startRect = previewOriginRect || {
+    left: window.innerWidth / 2 - fallbackW / 2,
+    top: window.innerHeight / 2 - fallbackH / 2,
+    width: fallbackW,
+    height: fallbackH
+  }
+
+  // target: ảnh bay về một phía, panel trượt ra
+  const isNarrow = window.innerWidth < 900
+  const imgAspect =
+    startRect.height && startRect.width
+      ? startRect.height / startRect.width
+      : 1.25
+
+  const maxImgW = isNarrow
+    ? Math.min(window.innerWidth * 0.78, 440)
+    : Math.min(window.innerWidth * 0.36, 560)
+
+  const targetImgW = maxImgW
+  const targetImgH = targetImgW * imgAspect
+
+  const targetImgLeft = isNarrow
+    ? (window.innerWidth - targetImgW) / 2
+    : Math.max(48, Math.floor(window.innerWidth * 0.10))
+
+  const targetImgTop = Math.max(84, (window.innerHeight - targetImgH) / 2)
+
+  const panelGap = 28
+  const panelW = isNarrow
+    ? Math.min(window.innerWidth * 0.88, 720)
+    : Math.min(
+        520,
+        window.innerWidth - (targetImgLeft + targetImgW + panelGap + 48)
+      )
+
+  const panelLeft = isNarrow
+    ? (window.innerWidth - panelW) / 2
+    : targetImgLeft + targetImgW + panelGap
+
+  const panelTop = isNarrow
+    ? Math.min(targetImgTop + targetImgH + 18, window.innerHeight - 240)
+    : targetImgTop + 10
+
+  // set start
+  gsap.set(imgWrapEl, {
+    opacity: 1,
+    left: startRect.left,
+    top: startRect.top,
+    width: startRect.width,
+    height: startRect.height,
+    borderRadius: 26
+  })
+
+  gsap.set(panelEl, {
+    opacity: 0,
+    x: 70,
+    left: panelLeft,
+    top: panelTop,
+    width: panelW
+  })
+
+  const imgEl = imgWrapEl.querySelector('img')
+  if (imgEl) gsap.set(imgEl, { scale: 1.06 })
+
+  previewTl = gsap.timeline({
+    defaults: { ease: 'power3.out' },
+    onComplete: () => {
+      isPreviewAnimating.value = false
+    }
+  })
+
+  previewTl
+    .to(overlayEl, { opacity: 1, duration: 0.26 }, 0)
+    .to(
+      imgWrapEl,
+      {
+        left: targetImgLeft,
+        top: targetImgTop,
+        width: targetImgW,
+        height: targetImgH,
+        duration: 0.85,
+        ease: 'power4.out'
+      },
+      0.02
+    )
+    .to(imgEl, { scale: 1, duration: 0.85 }, 0.02)
+    .to(panelEl, { opacity: 1, x: 0, duration: 0.55 }, 0.58)
 }
 
-const closePreview = () => {
-  previewItem.value = null
+const closePreview = async () => {
+  if (!previewItem.value || isPreviewAnimating.value) return
+
+  const overlayEl = previewOverlayRef.value
+  const imgWrapEl = fxImageWrapRef.value
+  const panelEl = fxPanelRef.value
+  if (!overlayEl || !imgWrapEl || !panelEl) {
+    previewItem.value = null
+    previewOriginRect = null
+    return
+  }
+
+  isPreviewAnimating.value = true
+  if (previewTl) previewTl.kill()
+
+  const backRect = previewOriginRect
+  const hasBack = !!backRect
+  const imgEl = imgWrapEl.querySelector('img')
+
+  previewTl = gsap.timeline({
+    defaults: { ease: 'power2.inOut' },
+    onComplete: () => {
+      previewItem.value = null
+      previewOriginRect = null
+      isPreviewAnimating.value = false
+    }
+  })
+
+  previewTl
+    .to(panelEl, { opacity: 0, x: 40, duration: 0.2 }, 0)
+    .to(imgEl, { scale: 1.08, duration: 0.35 }, 0)
+    .to(
+      imgWrapEl,
+      hasBack
+        ? {
+            left: backRect.left,
+            top: backRect.top,
+            width: backRect.width,
+            height: backRect.height,
+            duration: 0.5,
+            ease: 'power3.inOut'
+          }
+        : { opacity: 0, duration: 0.25 },
+      0.06
+    )
+    .to(overlayEl, { opacity: 0, duration: 0.25 }, 0.28)
 }
 
 const goToDetail = () => {
