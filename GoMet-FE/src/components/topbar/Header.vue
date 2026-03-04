@@ -1,5 +1,5 @@
 <template>
-  <header class="content-header" :class="{ 'is-scrolled': isScrolled }">
+  <header class="content-header" :class="[{ 'is-scrolled': isScrolled }, { 'theme-dark': route.meta?.isDark }]">
     
     <SearchBox />
 
@@ -59,8 +59,7 @@
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
             <span v-if="chatStore.totalUnreadCount > 0" class="badge-count">{{ chatStore.totalUnreadCount }}</span>
           </button>
-          
-          </div>
+        </div>
         
         <div class="action-wrapper" @click.stop>
           <button class="btn-icon" :class="{ active: showNoti }" title="Notifications" @click="toggleNoti">
@@ -156,33 +155,7 @@
     <Teleport to="body">
       <transition name="fade">
         <div v-if="showBugReport" class="modal-backdrop" @click.self="showBugReport = false">
-          <div class="bug-modal-content">
-            <div class="modal-head">
-              <h3>{{ $t('header.bug_modal_title') }}</h3>
-              <button class="btn-close" @click="showBugReport = false">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-              </button>
-            </div>
-            <div class="modal-body-form">
-              <div class="form-group">
-                <label>{{ $t('header.issue_type') }}</label>
-                <select v-model="bugForm.type" class="form-select">
-                  <option value="ui">{{ $t('header.bug_ui') }}</option>
-                  <option value="func">{{ $t('header.bug_func') }}</option>
-                  <option value="other">{{ $t('header.bug_other') }}</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>{{ $t('header.description') }}</label>
-                <textarea v-model="bugForm.desc" class="form-textarea" placeholder="Describe the issue you encountered..."></textarea>
-              </div>
-            </div>
-            <div class="modal-foot">
-              <button class="btn-cancel" @click="showBugReport = false">{{ $t('common.cancel') }}</button>
-              <button class="btn-submit" @click="submitBug">{{ $t('header.submit_report') }}</button>
-            </div>
-          </div>
-        </div>
+           </div>
       </transition>
       <MapModal v-if="showMapModal" @close="showMapModal = false" />
     </Teleport>
@@ -192,7 +165,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router' // 🔥 Bổ sung useRoute
 import { useAuthStore } from '@/stores/auth'
 import { useChatStore } from '@/stores/chat'
 import { useShoppingStore } from '@/stores/shopping'
@@ -208,6 +181,7 @@ const authStore = useAuthStore()
 const chatStore = useChatStore()
 const shoppingStore = useShoppingStore()
 const router = useRouter()
+const route = useRoute() // 🔥 Khởi tạo biến route để nhận biết trang hiện tại
 
 // State
 const showShopping = ref(false)
@@ -227,7 +201,6 @@ const closeAllDropdowns = () => {
   isDropdownOpen.value = false; 
   showNoti.value = false; 
   showShopping.value = false 
-  // Không đóng Chat Sidebar ở đây vì nó có cơ chế overlay riêng
 }
 
 const toggleShopping = () => { 
@@ -238,7 +211,6 @@ const toggleShopping = () => {
 }
 
 const toggleChat = () => { 
-  // Chỉ gọi Store, Sidebar sẽ tự động mở ra
   chatStore.isMessengerOpen = !chatStore.isMessengerOpen;
   closeAllDropdowns(); 
 }
@@ -320,4 +292,91 @@ onUnmounted(() => window.removeEventListener('scroll', handleScroll))
   align-items: center; justify-content: center; gap: 8px; transition: 0.2s;
 }
 .btn-map-action:hover { background: #C2410C; }
+
+/* ==================================================== */
+/* 🔥 GIAO DIỆN MÀU ĐEN (THEME DARK) CHO HEADER         */
+/* ==================================================== */
+
+/* Trạng thái mặc định: TRONG SUỐT VÀ KHÔNG VIỀN để ảnh tràn lên */
+.content-header.theme-dark {
+  background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%) !important;
+  backdrop-filter: none;
+  border-bottom: none !important;
+  box-shadow: none;
+}
+
+/* Chỉ hiện màu đen mờ khi người dùng cuộn chuột xuống */
+.content-header.theme-dark.is-scrolled {
+  background: rgba(3, 7, 18, 0.85) !important;
+  backdrop-filter: blur(15px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+  box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+}
+
+/* Đổi màu chữ của các nút thành màu sáng */
+.content-header.theme-dark .btn-create-post {
+  background: rgba(255, 255, 255, 0.1);
+  color: #FFF;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: none;
+}
+.content-header.theme-dark .btn-create-post:hover {
+  background: #EA580C;
+  border-color: #EA580C;
+}
+
+/* Đổi màu các icon (chuông, giỏ hàng, chat) */
+.content-header.theme-dark .btn-icon { background: transparent; color: #9CA3AF; }
+.content-header.theme-dark .btn-icon:hover { background: rgba(255, 255, 255, 0.1); color: #FFF; }
+.content-header.theme-dark .divider-vertical { background-color: rgba(255, 255, 255, 0.1); }
+
+/* 🔥 ÉP KIỂU KÍNH MỜ CHO COMPONENT TÌM KIẾM VÀ NGÔN NGỮ BÊN TRONG */
+:deep(.search-box-container),
+:deep(.search-input),
+:deep(.lang-switcher-btn),
+:deep(.lang-pill) {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #FFFFFF !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  backdrop-filter: blur(10px);
+}
+
+/* Sửa placeholder của thanh tìm kiếm cho dễ nhìn */
+:deep(.search-input::placeholder) { color: rgba(255, 255, 255, 0.5) !important; }
+
+/* Đổi nền dropdown khi ở chế độ Dark */
+.content-header.theme-dark .common-dropdown {
+  background: #111827 !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  color: #F3F4F6 !important;
+}
+.content-header.theme-dark .dropdown-header h3 {
+  color: #FFF !important;
+}
+.content-header.theme-dark .dropdown-header {
+  border-bottom-color: rgba(255,255,255,0.1) !important;
+}
+.content-header.theme-dark .shop-item:hover,
+.content-header.theme-dark .list-item:hover {
+  background: rgba(255,255,255,0.05) !important;
+}
+.content-header.theme-dark .name { color: #FFF !important; }
+.content-header.theme-dark .list-item { border-bottom-color: rgba(255,255,255,0.05) !important; }
+.content-header.theme-dark .empty-state { color: #9CA3AF !important; }
+
+/* User dropdown dark mode */
+.content-header.theme-dark .user-dropdown {
+  background: #111827 !important;
+  border-color: rgba(255,255,255,0.1) !important;
+}
+.content-header.theme-dark .user-header {
+  background: rgba(255,255,255,0.05) !important;
+  border-bottom-color: rgba(255,255,255,0.1) !important;
+}
+.content-header.theme-dark .header-info .name { color: #FFF !important; }
+.content-header.theme-dark .menu-list li { color: #D1D5DB !important; }
+.content-header.theme-dark .menu-list li:hover { background: rgba(255,255,255,0.1) !important; color: #FFF !important; }
+.content-header.theme-dark .divider { background: rgba(255,255,255,0.1) !important; }
+.content-header.theme-dark .admin-link { color: #FFF !important; }
+
 </style>

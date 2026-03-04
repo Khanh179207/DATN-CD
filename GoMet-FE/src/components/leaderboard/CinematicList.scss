@@ -1,0 +1,346 @@
+/* 1. CONTAINER CHÍNH */
+.cinematic-horizontal-showcase {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  min-height: 700px;
+  background-color: #000;
+  overflow: hidden;
+  font-family: 'Playfair Display', serif;
+  padding-top: 140px; /* đẩy carousel xuống dưới header */
+}
+
+/* 2. LỚP NỀN (BACKGROUND PARALLAX) */
+.bg-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.bg-image {
+  position: absolute;
+  inset: -5%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: blur(35px) brightness(0.45); /* tăng độ sáng để thấy ảnh hơn */
+  transform: scale(1.05);
+}
+
+.bg-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(0, 0, 0, 0.25), #000 80%);
+  z-index: 2;
+}
+
+/* fade cho background */
+.fade-bg-enter-active,
+.fade-bg-leave-active {
+  transition: opacity 1s ease-in-out;
+}
+
+.fade-bg-enter-from,
+.fade-bg-leave-to {
+  opacity: 0;
+}
+
+/* 3. HEADER */
+.cinematic-header {
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  text-align: center;
+  color: #fff;
+  pointer-events: none;
+}
+
+.sub-tag {
+  font-family: 'Mulish', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: #ea580c;
+  text-transform: uppercase;
+}
+
+.main-heading {
+  font-size: 3rem;
+  margin: 5px 0 0;
+  font-weight: 400;
+  letter-spacing: 2px;
+}
+
+.italic-first {
+  font-style: italic;
+  font-size: 1.2em;
+  color: #fed7aa;
+}
+
+/* 4. CAROUSEL Ở GIỮA MÀN HÌNH */
+.carousel-container {
+  position: relative;
+  z-index: 5;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 60px;
+  overflow-x: auto;
+  padding: 0 calc(50vw - 180px);
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+}
+
+.carousel-container::-webkit-scrollbar {
+  display: none;
+}
+
+.carousel-container {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.carousel-container.is-dragging {
+  scroll-snap-type: none;
+  scroll-behavior: auto;
+  cursor: grabbing;
+}
+
+/* 5. ITEM */
+.carousel-item {
+  flex: 0 0 360px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  scroll-snap-align: center;
+  transition: all 0.55s cubic-bezier(0.25, 1, 0.5, 1);
+  opacity: 0.25;
+  transform: scale(0.8);
+  cursor: pointer;
+}
+
+.carousel-item.is-active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.item-top-info {
+  margin-bottom: 18px;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.4s ease;
+}
+
+.carousel-item.is-active .item-top-info {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.rank-number {
+  font-family: 'Mulish', sans-serif;
+  color: #fed7aa;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 4px;
+}
+
+.item-image-wrapper {
+  width: 100%;
+  height: 460px;
+  border-radius: 26px;
+  overflow: hidden;
+  box-shadow: 0 20px 55px rgba(0, 0, 0, 0.75);
+  transition: all 0.55s ease;
+}
+
+.item-image-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.9s ease;
+}
+
+.carousel-item.is-active .item-image-wrapper {
+  box-shadow: 0 28px 70px rgba(234, 88, 12, 0.45);
+}
+
+.carousel-item.is-active:hover .item-image-wrapper img {
+  transform: scale(1.05);
+}
+
+.item-bottom-info {
+  margin-top: 22px;
+  text-align: center;
+  color: #fff;
+  opacity: 0;
+  transform: translateY(-18px);
+  transition: all 0.45s ease;
+}
+
+.carousel-item.is-active .item-bottom-info {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.item-title {
+  font-size: 1.9rem;
+  font-weight: 700;
+  margin: 0 0 8px;
+  line-height: 1.2;
+}
+
+.item-meta {
+  font-family: 'Mulish', sans-serif;
+  font-size: 0.85rem;
+  color: #d6d3d1;
+  font-weight: 600;
+}
+
+.meta-author {
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.meta-dot {
+  margin: 0 8px;
+  color: #78716c;
+}
+
+.meta-score {
+  color: #fed7aa;
+}
+
+/* 6. PREVIEW OVERLAY */
+.preview-overlay {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(0, 0, 0, 0.7), #000);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 30;
+}
+
+.preview-card {
+  width: min(960px, 90vw);
+  background: rgba(15, 15, 15, 0.95);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 32px 120px rgba(0, 0, 0, 0.8);
+  padding: 24px 28px 28px;
+  position: relative;
+}
+
+.preview-close {
+  position: absolute;
+  top: 18px;
+  right: 22px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.preview-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.2fr);
+  gap: 28px;
+  align-items: center;
+}
+
+.preview-image-wrap {
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.9);
+}
+
+.preview-image-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.preview-content {
+  color: #e7e5e4;
+  font-family: 'Mulish', sans-serif;
+}
+
+.preview-tag {
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #fbbf24;
+}
+
+.preview-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.1rem;
+  margin: 8px 0 12px;
+}
+
+.preview-meta {
+  font-size: 0.9rem;
+  color: #d6d3d1;
+  margin-bottom: 14px;
+}
+
+.preview-desc {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #a8a29e;
+  margin-bottom: 20px;
+}
+
+.preview-cta {
+  border: none;
+  padding: 10px 22px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ea580c, #f97316);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  cursor: pointer;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .carousel-item {
+    flex: 0 0 280px;
+  }
+
+  .carousel-container {
+    padding: 0 calc(50vw - 140px);
+    gap: 30px;
+  }
+
+  .item-image-wrapper {
+    height: 380px;
+  }
+
+  .main-heading {
+    font-size: 2.3rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .carousel-item {
+    flex: 0 0 240px;
+  }
+
+  .carousel-container {
+    padding: 0 calc(50vw - 120px);
+  }
+
+  .item-image-wrapper {
+    height: 320px;
+  }
+}

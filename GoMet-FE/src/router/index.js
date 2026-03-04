@@ -35,6 +35,7 @@ import NotificationManagement from '@/pages/admin/NotificationManagement.vue'
 import AchievementManagement from '@/pages/admin/AchievementManagement.vue'
 import Statistics from '@/pages/admin/Statistics.vue'
 
+
 const routes = [
   // 1. LANDING PAGE
   {
@@ -93,21 +94,24 @@ const routes = [
         component: ComparePage
       },
 
-      // ✨✨✨ NEW PREMIUM ROUTES (SYNCED WITH SIDEBAR) ✨✨✨
+// ✨✨✨ NEW PREMIUM ROUTES (SYNCED WITH SIDEBAR) ✨✨✨
       {
         path: 'leaderboard',
         name: 'Leaderboard',
-        component: Leaderboard
+        component: Leaderboard,
+        meta: { isDark: true } // 🔥 Gắn cờ đen
       },
       {
         path: 'suggestions',
         name: 'Suggestions',
-        component: Suggestions
+        component: Suggestions,
+        meta: { isDark: true } // 🔥 Gắn cờ đen
       },
       {
         path: 'meal-plan',
         name: 'MealPlan',
-        component: MealPlan
+        component: MealPlan,
+        meta: { isDark: true } // 🔥 Gắn cờ đen
       }
     ]
   },
