@@ -1,9 +1,5 @@
 <template>
-  <div class="search-premium-container">
-    <transition name="fade">
-      <div v-if="showSearchHistory" class="search-backdrop" @click="closeSearch"></div>
-    </transition>
-
+  <div class="search-premium-container" ref="searchWrapper">
     <div class="search-pill" :class="{ 'is-active': isSearchFocused || showSearchHistory }">
       <div class="input-section">
         <div class="icon-prefix">
@@ -74,7 +70,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue' // Đã thêm onMounted, onUnmounted
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
@@ -83,6 +79,9 @@ import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
 const router = useRouter()
 const authStore = useAuthStore()
+
+// Ref cho wrapper bao bọc ngoài cùng
+const searchWrapper = ref(null)
 
 const searchKeyword = ref('')
 const searchHistory = ref([])
@@ -189,7 +188,25 @@ const closeSearch = () => {
   isSearchFocused.value = false
 }
 
-// Gom tất cả vào 1 watch duy nhất, bỏ onMounted
+// ==========================================
+// XỬ LÝ CLICK OUTSIDE (BẤM RA NGOÀI ĐỂ ĐÓNG)
+// ==========================================
+const handleClickOutside = (event) => {
+  // Nếu khung tìm kiếm đang mở VÀ click chuột không nằm trong searchWrapper
+  if ((isSearchFocused.value || showSearchHistory.value) && searchWrapper.value && !searchWrapper.value.contains(event.target)) {
+    closeSearch()
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('mousedown', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('mousedown', handleClickOutside)
+})
+// ==========================================
+
 watch(() => authStore.user, (newUser) => {
   if (newUser && (newUser.accountID || newUser.id)) {
     loadSearchHistory()
@@ -202,8 +219,8 @@ watch(() => authStore.user, (newUser) => {
 </script>
 
 <style scoped lang="scss">
-/* Giữ nguyên toàn bộ CSS VIP của bạn (không thay đổi gì ở style) */
 @use '../../assets/styles/variables' as *;
+
 .search-premium-container { flex: 1; display: flex; justify-content: center; position: relative; z-index: 1001; }
 .search-pill { display: flex; align-items: center; width: 100%; max-width: 500px; height: 48px; background: var(--color-neutral-100); border-radius: 24px; padding: 4px; border: 1.5px solid transparent; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); position: relative; z-index: 1002; }
 .search-pill.is-active { background: #ffffff; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); }
@@ -239,10 +256,9 @@ watch(() => authStore.user, (newUser) => {
 .btn-retry { padding: 6px 16px; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
 .btn-retry:hover { background: #e5e7eb; }
 .loading-spinner { width: 24px; height: 24px; border: 2px solid #f3f3f3; border-top: 2px solid #ea580c; border-radius: 50%; animation: spin 0.8s linear infinite; }
+
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-.search-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.1); backdrop-filter: blur(4px); z-index: 1000; }
-.fade-enter-active, .fade-leave-active { transition: opacity 0.3s; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
+
 .search-pop-enter-active { transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
 .search-pop-enter-from, .search-pop-leave-to { opacity: 0; transform: translateY(10px) scale(0.98); }
 </style>

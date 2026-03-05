@@ -1,5 +1,5 @@
 <template>
-  <footer class="dashboard-footer">
+  <footer class="dashboard-footer" :class="{ 'premium-dark': isDarkTheme }">
     <div class="container footer-content">
       
       <div class="footer-col brand-col">
@@ -56,7 +56,18 @@
   </footer>
 </template>
 
+<script setup>
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+
+// Đọc cờ isDark từ Router của bạn
+const isDarkTheme = computed(() => route.meta.isDark === true)
+</script>
+
 <style scoped>
+/* ─── BASE (LIGHT THEME) ─── */
 .dashboard-footer {
   background-color: var(--color-neutral-0);
   background-image: radial-gradient(circle at 100% 0%, rgba(234, 88, 12, 0.04) 0%, transparent 45%);
@@ -66,6 +77,7 @@
   color: var(--color-neutral-900);
   position: relative;
   z-index: 1;
+  transition: all 0.5s ease; /* Hiệu ứng chuyển màu mượt mà */
 }
 
 .container { max-width: 1300px; margin: 0 auto; padding: 0 40px; }
@@ -78,23 +90,21 @@
 /* Brand */
 .brand-wrapper { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; }
 .brand-logo { width: 45px; height: 45px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-.brand-name { font-family: var(--font-display); font-size: 1.8rem; font-weight: 800; }
+.brand-name { font-family: var(--font-display); font-size: 1.8rem; font-weight: 800; transition: color 0.3s; }
 .brand-name span { color: var(--color-primary-600); }
-.brand-desc { color: var(--color-neutral-500); line-height: 1.6; font-size: 0.9rem; margin-bottom: 20px; }
+.brand-desc { color: var(--color-neutral-500); line-height: 1.6; font-size: 0.9rem; margin-bottom: 20px; transition: color 0.3s; }
 
 /* Socials */
 .socials { display: flex; gap: 10px; }
 .social-link {
   width: 44px; height: 44px; border-radius: var(--radius-md); background: var(--color-neutral-0); border: 1px solid var(--color-neutral-200);
   display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; color: var(--color-neutral-900);
-  transition: background var(--duration-fast) var(--ease-out),
-              color     var(--duration-fast) var(--ease-out),
-              border-color var(--duration-fast) var(--ease-out);
+  transition: all var(--duration-fast) var(--ease-out);
 }
 .social-link:hover { background: var(--color-primary-600); color: var(--color-neutral-0); border-color: var(--color-primary-600); }
 
 /* Links */
-h4 { font-size: 1rem; font-weight: 800; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.5px; }
+h4 { font-size: 1rem; font-weight: 800; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.5px; transition: color 0.3s; }
 .footer-links { list-style: none; padding: 0; }
 .footer-links li { margin-bottom: 10px; }
 .footer-links a { text-decoration: none; color: var(--color-neutral-500); font-size: 0.9rem; font-weight: 600; transition: color var(--duration-fast) var(--ease-out); }
@@ -102,18 +112,53 @@ h4 { font-size: 1rem; font-weight: 800; margin-bottom: 20px; text-transform: upp
 
 /* Contact */
 .contact-item { margin-bottom: 15px; display: flex; flex-direction: column; }
-.contact-item .label { font-size: 0.75rem; color: var(--color-neutral-400); font-weight: 700; text-transform: uppercase; }
-.contact-item .value { font-size: 0.95rem; font-weight: 700; color: var(--color-neutral-900); }
+.contact-item .label { font-size: 0.75rem; color: var(--color-neutral-400); font-weight: 700; text-transform: uppercase; transition: color 0.3s; }
+.contact-item .value { font-size: 0.95rem; font-weight: 700; color: var(--color-neutral-900); transition: color 0.3s; }
 
 /* Bottom */
 .footer-bottom { 
   border-top: 1px solid #E5E7EB; padding-top: 25px; text-align: center; 
-  font-size: 0.85rem; color: #9CA3AF; font-weight: 600;
+  font-size: 0.85rem; color: #9CA3AF; font-weight: 600; transition: border-color 0.3s, color 0.3s;
+}
+
+/* ─── PREMIUM DARK THEME OVERRIDES ─── */
+.dashboard-footer.premium-dark {
+  background-color: #050505;
+  background-image: radial-gradient(circle at 100% 0%, rgba(234, 88, 12, 0.1) 0%, transparent 45%);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  color: #F4F0EA;
+}
+
+.dashboard-footer.premium-dark .brand-name { color: #F4F0EA; }
+.dashboard-footer.premium-dark .brand-name span { color: #EA580C; }
+.dashboard-footer.premium-dark .brand-desc { color: rgba(244, 240, 234, 0.6); }
+
+.dashboard-footer.premium-dark h4 { color: #D4AF37; } /* Tiêu đề màu vàng Gold */
+.dashboard-footer.premium-dark .footer-links a { color: rgba(244, 240, 234, 0.5); }
+.dashboard-footer.premium-dark .footer-links a:hover { color: #EA580C; }
+
+.dashboard-footer.premium-dark .social-link {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #F4F0EA;
+}
+.dashboard-footer.premium-dark .social-link:hover {
+  background: #EA580C;
+  border-color: #EA580C;
+  color: white;
+}
+
+.dashboard-footer.premium-dark .contact-item .label { color: rgba(212, 175, 55, 0.7); } /* Label màu Gold mờ */
+.dashboard-footer.premium-dark .contact-item .value { color: #F4F0EA; }
+
+.dashboard-footer.premium-dark .footer-bottom {
+  border-top-color: rgba(255, 255, 255, 0.05);
+  color: rgba(244, 240, 234, 0.4);
 }
 
 /* Responsive */
 @media (max-width: 900px) {
-  .dashboard-footer { padding-top: 80px; } /* Mobile — reduce top padding */
+  .dashboard-footer { padding-top: 80px; }
   .footer-content { grid-template-columns: 1fr 1fr; }
   .brand-col { grid-column: span 2; }
 }
