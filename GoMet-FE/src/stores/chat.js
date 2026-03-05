@@ -1,23 +1,39 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
 export const useChatStore = defineStore('chat', () => {
-  // Currently active chat person (Object)
+  // Người đang chat hiện tại (Object)
   const activeChat = ref(null) 
   
-  // Open/close state of the header dropdown
+  // Trạng thái đóng/mở dropdown tin nhắn ở Header
   const isMessengerOpen = ref(false)
 
-  // Open chat function (called from Header)
+  // Tổng số tin nhắn chưa đọc (Hiển thị badge đỏ ở Header)
+  const totalUnreadCount = ref(0)
+
+  // Hàm mở khung chat nhỏ
   const openChat = (user) => {
+    // Đảm bảo user truyền vào có ID để MiniChatBox gọi API chính xác
     activeChat.value = user
-    isMessengerOpen.value = false // Close the header dropdown
+    isMessengerOpen.value = false 
   }
 
-  // Close chat function
+  // Hàm đóng khung chat
   const closeChat = () => {
     activeChat.value = null
   }
 
-  return { activeChat, isMessengerOpen, openChat, closeChat }
+  // Hàm cập nhật số tin nhắn chưa đọc (Gọi từ API hoặc Socket)
+  const setUnreadCount = (count) => {
+    totalUnreadCount.value = count
+  }
+
+  return { 
+    activeChat, 
+    isMessengerOpen, 
+    totalUnreadCount, 
+    openChat, 
+    closeChat,
+    setUnreadCount 
+  }
 })

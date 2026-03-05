@@ -43,6 +43,7 @@ import SystemMaintenancePage from '@/pages/admin/SystemMaintenancePage.vue'
 import WeeklyCertificatesPage from '@/pages/admin/WeeklyCertificatesPage.vue'
 import { useSystemSettingsStore } from '@/stores/systemSettings'
 
+
 const routes = [
   // 1. LANDING PAGE
   {
@@ -113,16 +114,18 @@ const routes = [
         component: ComparePage
       },
 
-      // ✨✨✨ NEW PREMIUM ROUTES (SYNCED WITH SIDEBAR) ✨✨✨
+// ✨✨✨ NEW PREMIUM ROUTES (SYNCED WITH SIDEBAR) ✨✨✨
       {
         path: 'leaderboard',
         name: 'Leaderboard',
-        component: Leaderboard
+        component: Leaderboard,
+        meta: { isDark: true } // 🔥 Gắn cờ đen
       },
       {
         path: 'suggestions',
         name: 'Suggestions',
-        component: Suggestions
+        component: Suggestions,
+        meta: { isDark: true } // 🔥 Gắn cờ đen
       },
       {
         path: 'meal-plan',
