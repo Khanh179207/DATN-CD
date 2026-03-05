@@ -34,9 +34,9 @@
               <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
             </svg>
           </div>
-          <h2 class="r-title">Password Updated!</h2>
-          <p class="r-sub">Your password has been reset successfully. You can now log in with your new password.</p>
-          <button class="btn-primary btn-full" @click="goLogin">Go to Login</button>
+          <h2 class="r-title">{{ successTitle }}</h2>
+          <p class="r-sub">{{ successSub }}</p>
+          <button class="btn-primary btn-full" @click="handleSuccessAction">{{ successActionLabel }}</button>
         </div>
 
         <!-- FORM -->
@@ -155,10 +155,13 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 import { resetPassword } from '@/services/authService'
+import { getDeviceContext } from '@/services/deviceContext'
 
 const route  = useRoute()
 const router = useRouter()
+const auth   = useAuthStore()
 
 const token           = ref('')
 const newPassword     = ref('')
@@ -168,6 +171,9 @@ const showConfirm     = ref(false)
 const state           = ref('idle')   // 'idle' | 'loading' | 'success' | 'invalid'
 const fieldErrors     = ref({ newPassword: '', confirmPassword: '' })
 const serverError     = ref('')
+const successTitle    = ref('Password Updated!')
+const successSub      = ref('Your password has been reset successfully. You can now log in with your new password.')
+const successMode     = ref('login') // 'login' | 'home' | 'mfa'
 
 // ── On mount: check token presence ───────────────────────────────────────
 onMounted(() => {
@@ -199,6 +205,11 @@ const strengthWidth = computed(() => ({ weak: '25%', fair: '50%', good: '75%', s
 
 // ── Submit guard ──────────────────────────────────────────────────────────
 const canSubmit = computed(() => newPassword.value.trim().length >= 8 && confirmPassword.value.trim().length >= 1)
+const successActionLabel = computed(() => {
+  if (successMode.value === 'home') return 'Continue to Home'
+  if (successMode.value === 'mfa') return 'Complete 2FA'
+  return 'Go to Login'
+})
 
 const validateFields = () => {
   let ok = true
@@ -229,7 +240,39 @@ const handleReset = async () => {
 
   state.value = 'loading'
   try {
-    await resetPassword(token.value, newPassword.value)
+    const ctx = getDeviceContext()
+    const result = await resetPassword({
+      token: token.value,
+      newPassword: newPassword.value,
+      autoLogin: true,
+      deviceId: ctx.deviceId,
+      deviceName: ctx.deviceName
+    })
+
+    const authPayload = result?.auth || (result?.accessToken ? result : null)
+
+    if (authPayload) {
+      auth.setAuthFromResponse(authPayload)
+      successTitle.value = 'Password Updated & Signed In!'
+      successSub.value = 'You are now logged in automatically on this trusted flow.'
+      successMode.value = 'home'
+    } else if (result?.requiresMfa) {
+      if (result?.mfaSessionToken) {
+        auth.setPendingMfaToken(result.mfaSessionToken)
+      }
+      successTitle.value = 'Password Updated'
+      successSub.value = 'Please sign in again and complete 2FA to continue securely.'
+      successMode.value = 'mfa'
+    } else if (result?.requiresDeviceVerification) {
+      successTitle.value = 'Password Updated'
+      successSub.value = 'Please verify your login from email before continuing.'
+      successMode.value = 'login'
+    } else {
+      successTitle.value = 'Password Updated!'
+      successSub.value = 'Your password has been reset successfully. You can now log in with your new password.'
+      successMode.value = 'login'
+    }
+
     state.value = 'success'
   } catch (err) {
     const msg = err?.response?.data?.message
@@ -240,6 +283,14 @@ const handleReset = async () => {
       state.value = 'idle'
     }
   }
+}
+
+const handleSuccessAction = () => {
+  if (successMode.value === 'home') {
+    router.push('/home')
+    return
+  }
+  goLogin()
 }
 
 const goLogin  = () => router.push({ path: '/', hash: '#sectionsigninlanding' })

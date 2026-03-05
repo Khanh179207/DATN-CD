@@ -75,6 +75,19 @@ async function loadPost(id) {
 
 watch(() => route.params.id, id => { if (id) loadPost(id) }, { immediate: true })
 
+// Scroll to a specific comment anchor after page loads (e.g. /post/5#comment-12)
+watch(post, async (val) => {
+  if (!val || !route.hash) return
+  await new Promise(r => setTimeout(r, 600)) // wait for comments to render
+  const el = document.querySelector(route.hash)
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    el.style.outline = '2px solid #EA580C'
+    el.style.borderRadius = '12px'
+    setTimeout(() => { el.style.outline = ''; el.style.borderRadius = '' }, 3000)
+  }
+})
+
 const goToDetail = (id) => {
   window.scrollTo({ top: 0, behavior: 'smooth' })
   router.push(`/home/post/${id}`)

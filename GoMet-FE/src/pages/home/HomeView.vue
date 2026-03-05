@@ -20,12 +20,12 @@
       <div class="marquee-slim reveal-fade">
         <div class="marquee-track">
           <div class="marquee-group">
-            <span class="marquee-item">ESSENCE OF VIETNAMESE CUISINE <span class="star">✦</span></span>
-            <span class="marquee-item">SPARK YOUR INSPIRATION <span class="star">✦</span></span>
-            <span class="marquee-item">SIGNATURE FLAVORS <span class="star">✦</span></span>
-            <span class="marquee-item">ESSENCE OF VIETNAMESE CUISINE <span class="star">✦</span></span>
-            <span class="marquee-item">SPARK YOUR INSPIRATION <span class="star">✦</span></span>
-            <span class="marquee-item">SIGNATURE FLAVORS <span class="star">✦</span></span>
+            <span class="marquee-item">{{ $t('home.marquee_1') }} <span class="star">✦</span></span>
+            <span class="marquee-item">{{ $t('home.marquee_2') }} <span class="star">✦</span></span>
+            <span class="marquee-item">{{ $t('home.marquee_3') }} <span class="star">✦</span></span>
+            <span class="marquee-item">{{ $t('home.marquee_1') }} <span class="star">✦</span></span>
+            <span class="marquee-item">{{ $t('home.marquee_2') }} <span class="star">✦</span></span>
+            <span class="marquee-item">{{ $t('home.marquee_3') }} <span class="star">✦</span></span>
           </div>
         </div>
       </div>
@@ -34,8 +34,8 @@
         <div class="bg-typo-decor" :style="{ transform: `translate(-50%, ${scrollY * 0.15}px)` }">CATEGORY</div>
         
         <div class="section-header text-center reveal-up">
-          <span class="premium-tag">EXPLORE</span>
-          <h2 class="section-title">Diverse <span class="highlight-text">Menu</span></h2>
+          <span class="premium-tag">{{ $t('home.section_explore') }}</span>
+          <h2 class="section-title">{{ $t('home.section_diverse') }} <span class="highlight-text">{{ $t('home.section_diverse_hl') }}</span></h2>
         </div>
         <div class="reveal-up delay-200"><HomeCategorySection /></div>
       </section>
@@ -43,7 +43,7 @@
       <div class="slogan-strip reveal-scale">
         <div class="slogan-content">
           <h3 class="slogan-text">
-            "Cooking is an art, and the chef is the <span class="glow-text">artist</span>."
+            {{ $t('home.slogan') }} <span class="glow-text">{{ $t('home.slogan_hl') }}</span>{{ $t('home.slogan_end') }}
           </h3>
         </div>
       </div>
@@ -64,14 +64,14 @@
         <div class="nl-content">
             <div class="nl-row">
                 <div class="nl-info">
-                    <h2 class="nl-heading">Join the <br> <span class="orange-txt">GoMet Kitchen</span></h2>
-                    <p class="nl-desc">Get exclusive secret recipes and kitchen tips delivered weekly.</p>
+                    <h2 class="nl-heading">{{ $t('home.newsletter_title') }} <br> <span class="orange-txt">{{ $t('home.newsletter_title_brand') }}</span></h2>
+                    <p class="nl-desc">{{ $t('home.newsletter_desc') }}</p>
                 </div>
                 <div class="nl-action">
                     <div class="arty-input">
-                        <input type="email" placeholder="Your email address..." />
+                        <input type="email" :placeholder="$t('home.newsletter_placeholder')" />
                         <button class="btn-submit magnetic-btn">
-                            SUBSCRIBE
+                            {{ $t('home.newsletter_btn') }}
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12H19M12 5L19 12L12 19"/></svg>
                         </button>
                     </div>
@@ -87,6 +87,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import AdPopup from '@/components/modals/AdPopup.vue'
 import HomeHero from '@/components/home/HomeHero.vue'
 import HomeCategorySection from '@/components/home/HomeCategorySection.vue'
@@ -96,6 +97,7 @@ import imgAd2 from '@/assets/images/ads/ad2.jpg'
 import imgAd3 from '@/assets/images/ads/ad3.jpg'
 
 const router = useRouter()
+const { t } = useI18n()
 const showAdPopup = ref(false)
 const currentAdImage = ref('')
 const adImages = [imgAd1, imgAd2, imgAd3]

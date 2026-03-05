@@ -494,6 +494,17 @@
 .view-slide-enter-from { opacity: 0; transform: translateX(20px); }
 .view-slide-leave-to   { opacity: 0; transform: translateX(-20px); }
 
+.mfa-fade-enter-active,
+.mfa-fade-leave-active {
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+
+.mfa-fade-enter-from,
+.mfa-fade-leave-to {
+  opacity: 0;
+  transform: translateY(6px) scale(0.98);
+}
+
 .stagger-item {
   opacity: 0;
   transform: translateY(16px);

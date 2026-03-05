@@ -9,12 +9,12 @@
             <div class="nav-left">
               <button @click="$router.back()" class="btn-back-simple">
                 <div class="icon-circle"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div>
-                <span>Cancel</span>
+                <span>{{ $t('createpost.cancel') }}</span>
               </button>
               <span class="sep">/</span>
               <div class="category-wrapper">
                 <select v-model="post.categoryID" class="category-select">
-                  <option value="" disabled>SELECT CATEGORY</option>
+                  <option value="" disabled>{{ $t('createpost.select_category') }}</option>
                   <option v-for="cat in categories" :key="cat.categoryID" :value="cat.categoryID">{{ cat.categoryName }}</option>
                 </select>
               </div>
@@ -24,7 +24,7 @@
           <textarea 
             v-model="post.title" 
             class="recipe-title-input" 
-            placeholder="Enter dish name..." 
+            :placeholder="$t('createpost.title_placeholder')" 
             rows="1"
             @input="autoResize"
           ></textarea>
@@ -32,7 +32,7 @@
           <textarea 
             v-model="post.description" 
             class="recipe-desc-input" 
-            placeholder="Write a short, enticing description of this dish..." 
+            :placeholder="$t('createpost.desc_placeholder')" 
             rows="2"
             @input="autoResize"
           ></textarea>
@@ -41,8 +41,8 @@
             <div class="meta-box">
               <span class="icon">⏱️</span>
               <div class="meta-detail">
-                <span class="label">TIME</span>
-                <input v-model="post.cookingTime" placeholder="e.g. 45min" class="meta-inp">
+                <span class="label">{{ $t('recipe.time_label') }}</span>
+                <input v-model="post.cookingTime" :placeholder="$t('createpost.time_placeholder')" class="meta-inp">
               </div>
             </div>
             <div class="meta-divider"></div>
@@ -51,11 +51,11 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
               </span>
               <div class="meta-detail">
-                <span class="label">DIFFICULTY</span>
+                <span class="label">{{ $t('recipe.difficulty_label') }}</span>
                 <select v-model="post.level" class="meta-select">
-                  <option>Easy</option>
-                  <option>Medium</option>
-                  <option>Hard</option>
+                  <option>{{ $t('createpost.level_easy') }}</option>
+                  <option>{{ $t('createpost.level_medium') }}</option>
+                  <option>{{ $t('createpost.level_hard') }}</option>
                 </select>
               </div>
             </div>
@@ -65,8 +65,8 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 22a9 9 0 1 1 18 0"/><path d="M1 22h22"/><path d="M12 13a5 5 0 0 0 5-5A5 5 0 0 0 9.8 4.2"/><path d="M12 13a5 5 0 0 1-3.5-1.5"/></svg>
               </span>
               <div class="meta-detail">
-                <span class="label">SERVINGS</span>
-                <input v-model="post.servings" placeholder="2 servings" class="meta-inp">
+                <span class="label">{{ $t('recipe.servings_label') }}</span>
+                <input v-model="post.servings" :placeholder="$t('createpost.servings_placeholder')" class="meta-inp">
               </div>
             </div>
           </div>
@@ -87,9 +87,9 @@
             <img v-if="post.image" :src="post.image" class="img-hero-cover">
             <div v-else class="upload-placeholder">
               <div class="icon-camera">📷</div>
-              <span>Upload Cover Photo (HD)</span>
+              <span>{{ $t('createpost.cover_photo') }}</span>
             </div>
-            <div v-if="post.image" class="edit-overlay"><span>Change Photo</span></div>
+            <div v-if="post.image" class="edit-overlay"><span>{{ $t('createpost.change_cover') }}</span></div>
             <input type="file" ref="fileInput" class="hidden-input" @change="handleImageUpload">
           </div>
         </div>
@@ -105,20 +105,20 @@
             <div class="premium-card ingredients-card">
               <div class="card-header-gradient">
                 <div class="header-content">
-                  <h3>🛒 Ingredients</h3>
-                  <span class="sub-text">What do you need?</span>
+                  <h3>{{ $t('createpost.ingredients_title') }}</h3>
+                  <span class="sub-text">{{ $t('createpost.ingredients_sub') }}</span>
                 </div>
               </div>
               
               <div class="ingredients-list-editor">
                 <div v-for="(ing, index) in post.ingredients" :key="index" class="ing-row-edit">
                   <div class="checkbox-visual"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-                  <input v-model="ing.name" class="ing-input-text" placeholder="e.g.: 500g beef belly..." @keyup.enter="addIngredient">
+                  <input v-model="ing.name" class="ing-input-text" :placeholder="$t('createpost.ing_placeholder')" @keyup.enter="addIngredient">
                   <button class="btn-remove" @click="removeIngredient(index)" v-if="post.ingredients.length > 1">×</button>
                 </div>
               </div>
 
-              <button class="btn-add-dashed" @click="addIngredient">+ Add ingredient row</button>
+              <button class="btn-add-dashed" @click="addIngredient">{{ $t('createpost.add_ingredient') }}</button>
             </div>
           </div>
         </aside>
@@ -126,8 +126,8 @@
         <main class="main-right-content">
           <div class="premium-card steps-card">
             <div class="steps-header-modern">
-              <h2>Recipe Steps</h2>
-              <div class="step-counter-badge">{{ post.steps.length }} Steps</div>
+              <h2>{{ $t('createpost.steps_title') }}</h2>
+              <div class="step-counter-badge">{{ post.steps.length }} {{ $t('createpost.steps_count') }}</div>
             </div>
 
             <div class="timeline-editorial">
@@ -141,14 +141,14 @@
 
                   <div class="step-content-col">
                     <div class="step-top-row">
-                      <h4 class="step-heading">STEP {{ index + 1 }}</h4>
-                      <button class="btn-del-step" @click="removeStep(index)" v-if="post.steps.length > 1">Remove</button>
+                      <h4 class="step-heading">{{ $t('createpost.step_prefix') }} {{ index + 1 }}</h4>
+                      <button class="btn-del-step" @click="removeStep(index)" v-if="post.steps.length > 1">{{ $t('createpost.step_remove') }}</button>
                     </div>
                     
                     <textarea 
                       v-model="step.desc" 
                       class="step-desc-input" 
-                      placeholder="Describe this step in detail..."
+                      :placeholder="$t('createpost.step_desc_placeholder')"
                       rows="3"
                       @input="autoResize"
                     ></textarea>
@@ -156,10 +156,10 @@
                     <div class="step-media-upload">
                       <div v-if="step.image" class="media-preview" @click="triggerStepUpload(index)">
                         <img :src="step.image">
-                        <div class="hover-change">Change image</div>
+                        <div class="hover-change">{{ $t('createpost.change_cover') }}</div>
                       </div>
                       <div v-else class="upload-trigger-small" @click="triggerStepUpload(index)">
-                        <span class="icon">📷</span> Add photo
+                        {{ $t('createpost.add_photo') }}
                       </div>
                       <input type="file" :ref="el => stepInputRefs[index] = el" class="hidden-input" @change="handleStepUpload($event, index)">
                     </div>
@@ -169,7 +169,7 @@
               </transition-group>
             </div>
 
-            <button class="btn-add-step-large" @click="addStep">Add next step</button>
+            <button class="btn-add-step-large" @click="addStep">{{ $t('createpost.add_step') }}</button>
           </div>
         </main>
 
@@ -179,12 +179,12 @@
     <div class="action-footer">
       <div class="footer-container">
         <div class="left">
-          <button class="btn-preview">👁️ Preview</button>
+          <button class="btn-preview">👁️ {{ $t('createpost.preview') }}</button>
         </div>
         <div class="right">
-          <button class="btn-draft">Save Draft</button>
+          <button class="btn-draft">{{ $t('createpost.save_draft') }}</button>
           <button class="btn-publish" :disabled="publishing" @click="handlePublish">
-              {{ publishing ? 'Publishing...' : 'Publish Post' }}
+              {{ publishing ? $t('createpost.publishing') : $t('createpost.publish') }}
             </button>
         </div>
       </div>
@@ -196,6 +196,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { getCategories } from '@/services/categoryService'
 import { createPost } from '@/services/postService'
@@ -203,6 +204,7 @@ import { uploadMedia } from '@/services/uploadService'
 import { toast } from '@/composables/useToast'
 
 const router = useRouter()
+const { t } = useI18n()
 const authStore = useAuthStore()
 const fileInput = ref(null)
 const stepInputRefs = ref([])
@@ -314,11 +316,17 @@ const handlePublish = async () => {
     }
 
     const result = await createPost(payload)
-    toast.success('Post submitted for review!')
-    const newId = result?.postID
-    if (newId) {
+    const newId  = result?.postID
+    const status = result?.status  // 'PENDING_REVIEW' | 'APPROVED' | 'HIDDEN_SPAM'
+
+    if (status === 'PENDING_REVIEW') {
+      toast.info('Your post is under review! You\'ll be notified once it\'s approved.')
+      router.push('/my-posts')
+    } else if (newId) {
+      toast.success('Post published!')
       router.push(`/post/${newId}`)
     } else {
+      toast.success('Post submitted!')
       router.push('/home')
     }
   } catch (err) {

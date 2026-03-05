@@ -424,9 +424,14 @@
 }
 
 .divider {
+  display: block !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  cursor: default !important;
   height: 1px;
   background: var(--color-neutral-100);
-  margin: var(--space-1) var(--space-3);
+  margin: var(--space-2) var(--space-3);
 }
 
 .admin-link {

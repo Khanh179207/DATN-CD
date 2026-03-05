@@ -3,7 +3,7 @@ package poly.edu.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import poly.edu.entity.Report;
+import poly.edu.dto.ReportSummaryDTO;
 import poly.edu.service.AdminReportService;
 
 import java.util.List;
@@ -18,8 +18,8 @@ public class AdminReportController {
     private final AdminReportService adminReportService;
 
     @GetMapping
-    public ResponseEntity<List<Report>> getAll() {
-        return ResponseEntity.ok(adminReportService.findAll());
+    public ResponseEntity<List<ReportSummaryDTO>> getAll() {
+        return ResponseEntity.ok(adminReportService.findAllSummaries());
     }
 
     @DeleteMapping("/{id}")

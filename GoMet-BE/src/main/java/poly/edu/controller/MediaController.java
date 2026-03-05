@@ -50,14 +50,27 @@ public class MediaController {
         }
 
         // Determine real extension from content type (never from client filename)
-        String ext = switch (originalContentType) {
-            case "image/jpeg" -> "jpg";
-            case "image/png"  -> "png";
-            case "image/gif"  -> "gif";
-            case "image/webp" -> "webp";
-            case "video/mp4"  -> "mp4";
-            default -> "bin";
-        };
+        String ext;
+        switch (originalContentType) {
+            case "image/jpeg":
+                ext = "jpg";
+                break;
+            case "image/png":
+                ext = "png";
+                break;
+            case "image/gif":
+                ext = "gif";
+                break;
+            case "image/webp":
+                ext = "webp";
+                break;
+            case "video/mp4":
+                ext = "mp4";
+                break;
+            default:
+                ext = "bin";
+                break;
+        }
 
         // Store as UUID — extension is embedded after separator __ for server-side resolution only
         String token = UUID.randomUUID().toString().replace("-", "");

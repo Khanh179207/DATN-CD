@@ -19,72 +19,68 @@ import java.util.Optional;
 
 /**
  * Handles the full forgot-password / reset-password lifecycle:
- *  - cryptographically secure token generation
+ *  - Cryptographically secure token generation
  *  - SHA-256 token hashing (only hash stored in DB)
  *  - DB-backed single-use + expiry enforcement
  *  - BCrypt hashing of the new password
  *  - DB-level rate limiting (per account + per IP)
+ *  - Revoke all active sessions after successful reset (Phase 5)
+ *  - Delegate password policy to PasswordPolicyService
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class PasswordResetService {
 
-    private static final int TOKEN_BYTES       = 64;          // 64 random bytes → 128 hex chars
-    private static final long TOKEN_TTL_MINUTES = 30;         // token valid for 30 minutes
-    private static final int  RATE_WINDOW_MIN  = 15;          // rate-limit window
-    private static final int  RATE_MAX_PER_ACC = 3;           // max 3 requests per account in window
-    private static final int  RATE_MAX_PER_IP  = 10;          // max 10 requests per IP  in window
+    private static final int  TOKEN_BYTES        = 64;   // 64 random bytes → 128 hex chars
+    private static final long TOKEN_TTL_MINUTES  = 15;   // 15-minute token (tighter than before)
+    private static final int  RATE_WINDOW_MIN    = 15;
+    private static final int  RATE_MAX_PER_ACC   = 3;
+    private static final int  RATE_MAX_PER_IP    = 10;
 
-    // Password policy constants
-    private static final int  PW_MIN_LENGTH    = 8;
-
-    private final AccountDAO            accountDAO;
-    private final PasswordResetTokenDAO tokenDAO;
-    private final EmailService          emailService;
-    private final BCryptPasswordEncoder passwordEncoder;
+    private final AccountDAO             accountDAO;
+    private final PasswordResetTokenDAO  tokenDAO;
+    private final EmailService           emailService;
+    private final BCryptPasswordEncoder  passwordEncoder;
+    private final PasswordPolicyService  policyService;
+    private final TokenService           tokenService;
+    private final AuditLogService        auditLogService;
 
     // ─── PUBLIC API ──────────────────────────────────────────────────────────
 
     /**
-     * Step 1: Look up account by email or username, generate token, store hash, send email.
-     * Always returns without revealing whether the account actually exists.
-     *
-     * @param identifier email or username (case-insensitive)
-     * @param requestIp  caller's IP for rate limiting
+     * @return true  – reset email queued successfully
+     *         false – account not found (caller should return 404)
+     *         throws RuntimeException – rate-limited (caller should return 429)
      */
     @Transactional
-    public void processForgotPassword(String identifier, String requestIp) {
-        if (identifier == null || identifier.isBlank()) return;
+    public boolean processForgotPassword(String identifier, String requestIp, String userAgent) {
+        if (identifier == null || identifier.isBlank()) return false;
         String id = identifier.trim().toLowerCase();
 
-        // Rate-limit by IP first (before any DB account lookup)
         Instant windowStart = Instant.now().minusSeconds(RATE_WINDOW_MIN * 60L);
         if (tokenDAO.countRecentByIp(requestIp, windowStart) >= RATE_MAX_PER_IP) {
-            log.warn("Rate limit hit for IP={}", requestIp);
-            return; // still silent
+            log.warn("Forgot-password rate limit hit for IP={}", requestIp);
+            throw new RuntimeException("RATE_LIMITED");
         }
 
         Optional<Account> accountOpt = accountDAO.findByEmail(id)
                 .or(() -> accountDAO.findByUsernameIgnoreCase(id));
 
-        // Do NOT reveal non-existence — just return silently if not found
         if (accountOpt.isEmpty()) {
             log.debug("No account found for identifier={}", id);
-            return;
+            return false;
         }
 
         Account account = accountOpt.get();
 
-        // Rate-limit by account
         if (tokenDAO.countRecentByAccount(account.getAccountID(), windowStart) >= RATE_MAX_PER_ACC) {
-            log.warn("Rate limit hit for accountId={}", account.getAccountID());
-            return;
+            log.warn("Forgot-password rate limit hit for accountId={}", account.getAccountID());
+            throw new RuntimeException("RATE_LIMITED");
         }
 
-        // Generate token
-        String rawToken   = generateSecureToken();
-        String tokenHash  = sha256Hex(rawToken);
+        String rawToken  = generateSecureToken();
+        String tokenHash = sha256Hex(rawToken);
 
         PasswordResetToken resetToken = PasswordResetToken.builder()
                 .accountId(account.getAccountID())
@@ -92,54 +88,66 @@ public class PasswordResetService {
                 .expiresAt(Instant.now().plusSeconds(TOKEN_TTL_MINUTES * 60L))
                 .createdAt(Instant.now())
                 .requestIp(requestIp)
+                .createdUaHash(sha256Hex(userAgent != null ? userAgent : ""))
                 .build();
 
         tokenDAO.save(resetToken);
 
         try {
             emailService.sendResetPasswordEmail(account.getEmail(), account.getUsername(), rawToken);
+            auditLogService.log(account.getAccountID(), AuditLogService.PASSWORD_RESET_REQUEST,
+                    requestIp, userAgent, java.util.Map.of("identifier", id));
         } catch (Exception e) {
             log.error("Failed to send reset email to {}: {}", account.getEmail(), e.getMessage());
-            // Don't propagate — caller gets the generic success message regardless
         }
+        return true;
     }
 
-    /**
-     * Step 2: Validate token, update password, mark token used, invalidate all other tokens.
-     *
-     * @param rawToken   the raw token from the URL query string
-     * @param newPassword plain-text new password
-     * @return true on success, false if token invalid/expired
-     */
+    /** Backward-compatible overload for callers without userAgent. */
+    @Transactional
+    public boolean processForgotPassword(String identifier, String requestIp) {
+        return processForgotPassword(identifier, requestIp, null);
+    }
+
     @Transactional
     public boolean resetPassword(String rawToken, String newPassword) {
-        validatePassword(newPassword); // throws IllegalArgumentException if bad
+        return resetPasswordAndReturnAccount(rawToken, newPassword) != null;
+    }
+
+    @Transactional
+    public Account resetPasswordAndReturnAccount(String rawToken, String newPassword) {
+        // Delegate full policy validation (12 chars, special char, common list etc.)
+        policyService.validate(newPassword);
 
         String hash = sha256Hex(rawToken);
         Optional<PasswordResetToken> tokenOpt = tokenDAO.findValid(hash, Instant.now());
 
         if (tokenOpt.isEmpty()) {
-            return false; // expired, used, or fake token
+            return null;
         }
 
         PasswordResetToken token = tokenOpt.get();
 
-        // Mark this token used
         token.setUsedAt(Instant.now());
         tokenDAO.save(token);
 
-        // Invalidate all other pending tokens for this account
         tokenDAO.invalidateAllForAccount(token.getAccountId(), Instant.now());
 
-        // Update password with BCrypt hash
         Account account = accountDAO.findById(token.getAccountId())
-                .orElseThrow(() -> new IllegalStateException("Account not found for id=" + token.getAccountId()));
+                .orElseThrow(() -> new IllegalStateException("Account not found"));
 
         account.setPassword(passwordEncoder.encode(newPassword));
+        account.setPasswordUpdatedAt(Instant.now());
         accountDAO.save(account);
 
+        // Revoke ALL active sessions (Phase 5 requirement)
+        tokenService.revokeAllSessions(account.getAccountID());
+
+        auditLogService.log(account.getAccountID(), AuditLogService.PASSWORD_RESET_SUCCESS,
+                token.getRequestIp(), null, java.util.Map.of());
+
         log.info("Password reset for accountId={}", account.getAccountID());
-        return true;
+        return account;
     }
 
     // ─── PRIVATE HELPERS ─────────────────────────────────────────────────────
@@ -150,7 +158,6 @@ public class PasswordResetService {
         return HexFormat.of().formatHex(bytes);
     }
 
-    /** SHA-256 of input string, returned as lowercase hex. */
     public static String sha256Hex(String input) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
@@ -158,28 +165,6 @@ public class PasswordResetService {
             return HexFormat.of().formatHex(hash);
         } catch (Exception e) {
             throw new RuntimeException("SHA-256 not available", e);
-        }
-    }
-
-    /**
-     * Basic password policy:
-     * - min 8 chars
-     * - at least 1 uppercase
-     * - at least 1 lowercase
-     * - at least 1 digit
-     */
-    private void validatePassword(String pw) {
-        if (pw == null || pw.length() < PW_MIN_LENGTH) {
-            throw new IllegalArgumentException("Password must be at least " + PW_MIN_LENGTH + " characters");
-        }
-        if (!pw.chars().anyMatch(Character::isUpperCase)) {
-            throw new IllegalArgumentException("Password must contain at least one uppercase letter");
-        }
-        if (!pw.chars().anyMatch(Character::isLowerCase)) {
-            throw new IllegalArgumentException("Password must contain at least one lowercase letter");
-        }
-        if (!pw.chars().anyMatch(Character::isDigit)) {
-            throw new IllegalArgumentException("Password must contain at least one number");
         }
     }
 }

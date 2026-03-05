@@ -5,7 +5,9 @@ import org.springframework.stereotype.Service;
 import poly.edu.dao.PostDAO;
 import poly.edu.dto.AdminPostDTO;
 import poly.edu.entity.Post;
+import poly.edu.entity.PostStatus;
 import poly.edu.service.PostService;
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -57,6 +59,10 @@ public class PostServiceImpl implements PostService {
     public void approvePost(Integer id) {
         Post post = postDAO.findById(id).orElseThrow();
         post.setIsApproved(1);
+        post.setIsActive(1);
+        post.setStatus(PostStatus.APPROVED);
+        post.setModeratedAt(Instant.now());
+        post.setUpdatedAt(Instant.now());
         postDAO.save(post);
     }
 
@@ -64,6 +70,8 @@ public class PostServiceImpl implements PostService {
     public void deactivePost(Integer id) {
         Post post = postDAO.findById(id).orElseThrow();
         post.setIsActive(0);
+        post.setStatus(PostStatus.HIDDEN);
+        post.setUpdatedAt(Instant.now());
         postDAO.save(post);
     }
 
@@ -72,3 +80,4 @@ public class PostServiceImpl implements PostService {
         postDAO.deleteById(id);
     }
 }
+
