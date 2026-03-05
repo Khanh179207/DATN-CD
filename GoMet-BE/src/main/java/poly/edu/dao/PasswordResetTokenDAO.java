@@ -28,4 +28,10 @@ public interface PasswordResetTokenDAO extends JpaRepository<PasswordResetToken,
     @Transactional
     @Query("UPDATE PasswordResetToken t SET t.usedAt = :now WHERE t.accountId = :accountId AND t.usedAt IS NULL")
     void invalidateAllForAccount(Integer accountId, Instant now);
+
+    /** Cleanup expired/used tokens (called by SecurityCleanupJob). */
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM PasswordResetToken t WHERE t.expiresAt < :before")
+    void deleteExpiredBefore(Instant before);
 }

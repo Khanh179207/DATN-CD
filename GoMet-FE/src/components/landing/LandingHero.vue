@@ -25,21 +25,18 @@
     <div class="hero-mask"></div>
 
     <div class="hero-content">
-      <div class="badge-pill">Mạng xã hội Ẩm thực số 2 Việt Nam</div>
+      <div class="badge-pill">{{ $t('landing.badge') }}</div>
       
       <h1 class="hero-title">
-        Kết Nối Đam Mê <br>
-        <span class="text-gradient">Ẩm Thực Việt</span>
+        {{ $t('landing.title_1') }} <br>
+        <span class="text-gradient">{{ $t('landing.title_hl') }}</span>
       </h1>
       
-      <p class="hero-desc">
-        Khám phá hơn <strong>10,000+ công thức</strong> độc quyền. 
-        Lưu giữ khoảnh khắc, chia sẻ bí quyết và trở thành đầu bếp tại gia ngay hôm nay.
-      </p>
+      <p class="hero-desc" v-html="$t('landing.desc')"></p>
 
       <div class="cta-group">
         <router-link to="/home" class="btn-primary-xl">
-          Bắt đầu ngay
+          {{ $t('landing.cta') }}
           <span class="arrow-icon">→</span>
         </router-link>
         
@@ -50,7 +47,7 @@
             <img src="https://i.pravatar.cc/100?img=43">
             <div class="more-avt">+50k</div>
           </div>
-          <span class="proof-text">Thành viên đã tham gia</span>
+          <span class="proof-text">{{ $t('landing.members') }}</span>
         </div>
       </div>
     </div>
@@ -63,6 +60,9 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
+
 // Danh sách ảnh món ăn chất lượng cao (Đã chọn lọc)
 const foodImages = [
   'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&q=80', // Món thịt

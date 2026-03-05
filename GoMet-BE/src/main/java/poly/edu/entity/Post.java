@@ -2,6 +2,7 @@ package poly.edu.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -57,6 +58,44 @@ public class Post {
 
     @Column(nullable = false)
     private LocalDate createdAt;
+
+    // ─── Moderation workflow fields ───────────────────────────────────────────
+
+    /** Moderation lifecycle status. Default = PENDING_REVIEW for all new posts. */
+    @Column(length = 30)
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private PostStatus status = PostStatus.PENDING_REVIEW;
+
+    /** Human-readable rejection reason — only exposed to post owner and admins. */
+    @Column(columnDefinition = "NVARCHAR(MAX)")
+    private String rejectionReason;
+
+    /** Short code categorising the rejection (e.g. SPAM, INAPPROPRIATE, OFF_TOPIC). */
+    @Column(length = 50)
+    private String rejectionCode;
+
+    /** Admin account that last moderated this post. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "moderated_by_id")
+    private Account moderatedBy;
+
+    /** UTC timestamp of the last moderation action. */
+    private Instant moderatedAt;
+
+    /** UTC timestamp when the post was hidden (HIDE action). */
+    private Instant hiddenAt;
+
+    /** Anti-spam score (0 = clean, higher = more suspicious). */
+    @Builder.Default
+    private Integer spamScore = 0;
+
+    /** JSON array of spam heuristic reasons (stored as string). */
+    @Column(columnDefinition = "NVARCHAR(MAX)")
+    private String spamReasons;
+
+    /** Last-updated timestamp (set on every save). */
+    private Instant updatedAt;
 
     // Relationships
     @OneToMany(mappedBy = "post")

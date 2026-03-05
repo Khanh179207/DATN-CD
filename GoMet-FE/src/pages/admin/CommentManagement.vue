@@ -56,10 +56,16 @@
             </td>
             <td class="date-cell">{{ formatDate(cmt.createdAt) }}</td>
             <td>
-              <button class="btn-delete" @click="deleteComment(cmt.commentID)" title="Delete comment">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                Delete
-              </button>
+              <div class="action-cell">
+                <a class="btn-view" :href="`/post/${cmt.postID}#comment-${cmt.commentID}`" target="_blank" title="View comment in post">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  View
+                </a>
+                <button class="btn-delete" @click="deleteComment(cmt.commentID)" title="Delete comment">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  Delete
+                </button>
+              </div>
             </td>
           </tr>
         </tbody>
@@ -167,6 +173,9 @@ const formatDate = (dateStr) => {
 .post-link { color: #EA580C; font-weight: 700; text-decoration: none; font-size: 0.85rem; }
 .post-link:hover { text-decoration: underline; }
 .date-cell { color: #94A3B8; font-size: 0.82rem; white-space: nowrap; }
+.action-cell { display: flex; gap: 8px; align-items: center; }
+.btn-view { display: inline-flex; align-items: center; gap: 5px; background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; text-decoration: none; cursor: pointer; transition: 0.2s; }
+.btn-view:hover { background: #2563EB; color: white; }
 
 .btn-delete { display: flex; align-items: center; gap: 6px; background: #FEF2F2; color: #EF4444; border: 1px solid #FECACA; padding: 7px 14px; border-radius: 8px; cursor: pointer; font-size: 0.82rem; font-weight: 700; transition: 0.2s; }
 .btn-delete:hover { background: #EF4444; color: white; border-color: #EF4444; }

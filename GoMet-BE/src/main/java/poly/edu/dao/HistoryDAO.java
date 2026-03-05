@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,5 +27,14 @@ public interface HistoryDAO extends JpaRepository<History, Integer> {
 
     /** Count total records in a user's history. */
     long countByAccount_AccountID(Integer accountID);
+
+    @Query("SELECT h.post.account.accountID, COUNT(h.historyID) " +
+           "FROM History h " +
+           "WHERE h.lastViewedAt >= :startAt AND h.lastViewedAt < :endAt " +
+           "AND h.post.isApproved = 1 AND h.post.isActive = 1 " +
+           "GROUP BY h.post.account.accountID " +
+           "ORDER BY COUNT(h.historyID) DESC")
+    List<Object[]> findTopPostAuthorsByViewsBetween(@Param("startAt") LocalDateTime startAt,
+                                                     @Param("endAt") LocalDateTime endAt);
 }
 

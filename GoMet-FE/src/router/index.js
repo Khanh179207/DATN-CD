@@ -6,6 +6,8 @@ import LandingLayout from '@/layouts/LandingLayout.vue'
 import AdminLayout from '@/layouts/AdminLayout.vue'
 
 // --- 2. IMPORT VIEWS ---
+import SecuritySettingsPage from '@/pages/profile/SecuritySettingsPage.vue'
+import MyPostsPage from '@/pages/profile/MyPostsPage.vue'
 import HomeView from '@/pages/home/HomeView.vue'
 import SearchPage from '@/pages/search/SearchPage.vue'
 import PostDetail from '@/pages/home/PostDetail.vue'
@@ -34,6 +36,12 @@ import ReportManagement from '@/pages/admin/ReportManagement.vue'
 import NotificationManagement from '@/pages/admin/NotificationManagement.vue'
 import AchievementManagement from '@/pages/admin/AchievementManagement.vue'
 import Statistics from '@/pages/admin/Statistics.vue'
+import ModerationInbox from '@/pages/admin/ModerationInbox.vue'
+import EmailJobsPage from '@/pages/admin/EmailJobsPage.vue'
+import AuditLogPage from '@/pages/admin/AuditLogPage.vue'
+import SystemMaintenancePage from '@/pages/admin/SystemMaintenancePage.vue'
+import WeeklyCertificatesPage from '@/pages/admin/WeeklyCertificatesPage.vue'
+import { useSystemSettingsStore } from '@/stores/systemSettings'
 
 
 const routes = [
@@ -77,6 +85,18 @@ const routes = [
         component: ProfilePage
       },
       {
+        path: 'settings/security',
+        name: 'SecuritySettings',
+        component: SecuritySettingsPage,
+        meta: { requiresAuth: true }
+      },
+      {
+        path: 'my-posts',
+        name: 'MyPosts',
+        component: MyPostsPage,
+        meta: { requiresAuth: true }
+      },
+      {
         path: 'profile/:id',
         name: 'ProfileById',
         component: ProfilePage
@@ -110,6 +130,12 @@ const routes = [
       {
         path: 'meal-plan',
         name: 'MealPlan',
+        component: MealPlan
+      },
+      {
+        path: 'premium',
+        name: 'Premium',
+        component: () => import('@/pages/PremiumPage.vue')
         component: MealPlan,
         meta: { isDark: true } // 🔥 Gắn cờ đen
       }
@@ -132,8 +158,20 @@ const routes = [
       { path: 'comments',      name: 'AdminComments',       component: CommentManagement },
       { path: 'reports',       name: 'AdminReports',        component: ReportManagement },
       { path: 'achievements',  name: 'AdminAchievements',   component: AchievementManagement },
-      { path: 'notifications', name: 'AdminNotifications',  component: NotificationManagement }
+      { path: 'notifications', name: 'AdminNotifications',  component: NotificationManagement },
+      { path: 'moderation',    name: 'AdminModeration',     component: ModerationInbox },
+      { path: 'email-jobs',    name: 'AdminEmailJobs',      component: EmailJobsPage },
+      { path: 'audit-log',     name: 'AdminAuditLog',       component: AuditLogPage },
+      { path: 'maintenance',   name: 'AdminMaintenance',    component: SystemMaintenancePage },
+      { path: 'weekly-certs',  name: 'AdminWeeklyCerts',    component: WeeklyCertificatesPage }
     ]
+  },
+
+  {
+    path: '/maintenance',
+    name: 'MaintenancePage',
+    component: () => import('@/pages/MaintenancePage.vue'),
+    meta: { public: true }
   },
 
   // 4. STANDALONE PAGES (no layout wrapper)
@@ -153,7 +191,15 @@ const routes = [
     component: () => import('@/pages/ResetPasswordPage.vue')
   },
 
-  // 5. NOT FOUND (404 page)
+  // 5. AUTH UTILITY PAGES (standalone, no layout)
+  {
+    path: '/auth/verify-login',
+    name: 'DeviceVerification',
+    component: () => import('@/pages/DeviceVerificationPage.vue'),
+    meta: { public: true }
+  },
+
+  // 6. NOT FOUND (404 page)
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
@@ -172,14 +218,41 @@ const router = createRouter({
 })
 
 // ─── NAVIGATION GUARDS ────────────────────────────────────────────────────────
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const userStr = localStorage.getItem('user')
-  const user    = userStr ? JSON.parse(userStr) : null
-  const isLoggedIn = !!user?.token
+  let user = null
+  if (userStr) {
+    try {
+      user = JSON.parse(userStr)
+    } catch {
+      user = null
+      localStorage.removeItem('user')
+    }
+  }
+  // Check both the dedicated key and the value stored inside the user object
+  const accessToken = localStorage.getItem('accessToken') || user?.accessToken
+  const isLoggedIn = !!(user?.token || accessToken)
   const isAdmin    = isLoggedIn && (user?.isAdmin === true || user?.isAdmin === 1 || user?.role === 'admin')
+  const matchedRoutes = Array.isArray(to?.matched) ? to.matched : []
+
+  const systemSettingsStore = useSystemSettingsStore()
+  try {
+    await systemSettingsStore.fetchPublicSettings()
+    const maintenanceOn = !!systemSettingsStore.maintenanceMode
+    const isMaintenancePage = to.path === '/maintenance'
+
+    if (maintenanceOn && !isAdmin && !isMaintenancePage) {
+      return next({ path: '/maintenance' })
+    }
+    if (!maintenanceOn && isMaintenancePage) {
+      return next(isLoggedIn ? '/home' : '/')
+    }
+  } catch {
+    // Fail-open on settings fetch errors to avoid blocking navigation on transient network failures.
+  }
 
   // 1. Admin-only routes: must be logged in AND be an admin
-  if (to.matched.some(r => r.meta?.requiresAdmin)) {
+  if (matchedRoutes.some(r => r.meta?.requiresAdmin)) {
     if (!isLoggedIn) {
       // Not logged in → go to home (landing), show a flash in query
       return next({ path: '/', query: { redirect: to.fullPath } })
@@ -191,7 +264,7 @@ router.beforeEach((to, from, next) => {
   }
 
   // 2. Auth-required routes
-  if (to.matched.some(r => r.meta?.requiresAuth)) {
+  if (matchedRoutes.some(r => r.meta?.requiresAuth)) {
     if (!isLoggedIn) {
       return next({ path: '/home', query: { login: '1' } })
     }

@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import poly.edu.dao.NotificationDAO;
 import poly.edu.dao.PostDAO;
 import poly.edu.dao.ReportDAO;
+import poly.edu.dto.ReportSummaryDTO;
 import poly.edu.entity.Notification;
 import poly.edu.entity.Post;
 import poly.edu.entity.Report;
@@ -20,6 +21,11 @@ public class AdminReportServiceImpl implements AdminReportService {
     private final ReportDAO reportDAO;
     private final PostDAO postDAO;
     private final NotificationDAO notificationDAO;
+
+    @Override
+    public List<ReportSummaryDTO> findAllSummaries() {
+        return reportDAO.findAllSummaries();
+    }
 
     @Override
     public List<Report> findAll() {

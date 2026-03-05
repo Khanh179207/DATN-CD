@@ -25,6 +25,11 @@
         </div>
         <button @click="deleteNotif(n.notificationID)" class="btn-del" title="Delete notification"><Trash2 :size="15" /></button>
       </div>
+      <div v-if="hasMore" class="load-more-wrap">
+        <button @click="loadMore" :disabled="loadingMore" class="btn-load-more">
+          <Loader2 v-if="loadingMore" :size="16" class="spin-icon" /> {{ loadingMore ? 'Loading...' : 'Load more' }}
+        </button>
+      </div>
     </div>
 
     <!-- CREATE MODAL -->
@@ -75,9 +80,13 @@ import api from '@/services/api'
 
 const notifs = ref([])
 const loading = ref(false)
+const loadingMore = ref(false)
 const error = ref('')
 const showModal = ref(false)
 const sending = ref(false)
+const currentPage = ref(0)
+const hasMore = ref(true)
+const PAGE_SIZE = 20
 
 const form = ref({ title: '', content: '', type: 'GENERAL' })
 
@@ -101,18 +110,29 @@ const getTypeClass = (type) => {
   return map[type] || 'bg-blue'
 }
 
-const fetchNotifs = async () => {
-  loading.value = true
+const fetchNotifs = async (page = 0) => {
+  if (page === 0) { loading.value = true; notifs.value = [] }
+  else loadingMore.value = true
   error.value = ''
   try {
-    const res = await api.get('/api/admin/notifications')
-    notifs.value = res.data || []
+    const res = await api.get('/api/admin/notifications', { params: { page, size: PAGE_SIZE } })
+    const data = res.data
+    // Handle both paginated and legacy array response
+    const items = Array.isArray(data) ? data : (data.content || [])
+    if (page === 0) notifs.value = items
+    else notifs.value.push(...items)
+    const total = Array.isArray(data) ? data.length : (data.totalElements || items.length)
+    hasMore.value = notifs.value.length < total
+    currentPage.value = page
   } catch (e) {
     error.value = 'Failed to load notifications. ' + (e.response?.data?.message || e.message)
   } finally {
     loading.value = false
+    loadingMore.value = false
   }
 }
+
+const loadMore = () => fetchNotifs(currentPage.value + 1)
 
 const deleteNotif = async (id) => {
   if (!confirm('Delete this notification?')) return
@@ -142,7 +162,7 @@ const sendNotif = async () => {
     await api.post('/api/admin/notifications/all', form.value)
     showToast('Notification sent to all users!')
     closeModal()
-    fetchNotifs()
+    fetchNotifs(0)
   } catch (e) {
     showToast('Send failed: ' + (e.response?.data?.message || e.message), 'error')
   } finally {
@@ -150,7 +170,7 @@ const sendNotif = async () => {
   }
 }
 
-onMounted(fetchNotifs)
+onMounted(() => fetchNotifs(0))
 </script>
 
 <style scoped>
@@ -176,6 +196,10 @@ onMounted(fetchNotifs)
 .type-tag { background: #F1F5F9; color: #475569; padding: 1px 8px; border-radius: 10px; font-weight: 700; font-size: 0.72rem; }
 .btn-del { background: transparent; border: 1px solid #EF4444; color: #EF4444; padding: 7px 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; font-size: 1rem; }
 .btn-del:hover { background: #EF4444; color: white; }
+.load-more-wrap { text-align: center; padding: 20px 0; }
+.btn-load-more { background: #F8FAFC; border: 1px solid #E2E8F0; color: #475569; padding: 10px 24px; border-radius: 10px; cursor: pointer; font-weight: 700; font-family: inherit; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; }
+.btn-load-more:hover:not(:disabled) { background: #E2E8F0; }
+.btn-load-more:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* MODAL */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(3px); }

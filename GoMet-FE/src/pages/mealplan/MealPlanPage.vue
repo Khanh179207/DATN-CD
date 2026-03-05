@@ -35,8 +35,8 @@
                   <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                 </span>
                 <div class="btn-col">
-                  <span class="main-text">{{ isLoading ? 'Đang tải...' : 'Điền Tự Động' }}</span>
-                  <span class="sub-text">Hỗ trợ bởi AI</span>
+                  <span class="main-text">{{ isAILoading ? $t('common.loading') : $t('mealplan.auto_fill') }}</span>
+                  <span class="sub-text">{{ $t('mealplan.ai_powered') }}</span>
                 </div>
               </button>
             </div>

@@ -9,8 +9,11 @@ import poly.edu.dao.FollowDAO;
 import poly.edu.dao.PostDAO;
 import poly.edu.dto.UserProfileDTO;
 import poly.edu.entity.Account;
+import poly.edu.service.EmailService;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -24,6 +27,7 @@ public class UserController {
     private final AccountDAO accountDAO;
     private final PostDAO postDAO;
     private final FollowDAO followDAO;
+    private final EmailService emailService;
 
     @GetMapping("/{id}")
     public ResponseEntity<UserProfileDTO> getProfile(@PathVariable Integer id) {
@@ -40,14 +44,36 @@ public class UserController {
         Account acc = accountDAO.findById(id).orElse(null);
         if (acc == null) return ResponseEntity.notFound().build();
 
-        if (body.containsKey("username")) acc.setUsername(body.get("username"));
-        if (body.containsKey("avatar")) acc.setAvatar(body.get("avatar"));
-        if (body.containsKey("bio")) acc.setBio(body.get("bio"));
+        List<String> changed = new ArrayList<>();
+
+        if (body.containsKey("username") && !body.get("username").equals(acc.getUsername())) {
+            acc.setUsername(body.get("username"));
+            changed.add("Display name (username)");
+        }
+        if (body.containsKey("avatar") && !body.get("avatar").equals(acc.getAvatar())) {
+            acc.setAvatar(body.get("avatar"));
+            changed.add("Profile photo (avatar)");
+        }
+        if (body.containsKey("bio")) {
+            String newBio = body.get("bio");
+            String oldBio = acc.getBio() == null ? "" : acc.getBio();
+            if (!newBio.equals(oldBio)) {
+                acc.setBio(newBio);
+                changed.add("Bio / About me");
+            }
+        }
         if (body.containsKey("password") && !body.get("password").isBlank()) {
             acc.setPassword(passwordEncoder.encode(body.get("password")));
+            changed.add("Password");
         }
 
         accountDAO.save(acc);
+
+        // Send email notification only when at least one field actually changed
+        if (!changed.isEmpty() && acc.getEmail() != null) {
+            emailService.sendProfileUpdateEmail(acc.getEmail(), acc.getUsername(), changed);
+        }
+
         return ResponseEntity.ok(toDTO(acc));
     }
 
@@ -93,6 +119,10 @@ public class UserController {
         long totalViews = acc.getPosts() != null ? acc.getPosts().stream()
                 .mapToLong(p -> p.getViews() != null ? p.getViews() : 0).sum() : 0;
         dto.setTotalViews(totalViews);
+
+        dto.setLastLoginAt(acc.getLastLoginAt());
+        dto.setLastLoginIp(acc.getLastLoginIp());
+        dto.setMfaEnabled(acc.getMfaEnabled());
 
         return dto;
     }
