@@ -41,4 +41,8 @@ public class PasswordResetToken {
     /** The IP that generated this request (for audit / rate-limiting). */
     @Column(length = 45)
     private String requestIp;
+
+    /** SHA-256 of the User-Agent string that requested this reset. */
+    @Column(length = 64)
+    private String createdUaHash;
 }

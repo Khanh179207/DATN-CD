@@ -63,6 +63,16 @@
             <div class="icon-box"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
             <span class="label">{{ $t('sidebar.kitchen') }}</span>
           </router-link>
+          <router-link to="/my-posts" class="nav-link" active-class="is-active">
+            <div class="icon-box"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
+            <span class="label">My Posts</span>
+            <span class="tooltip" v-if="isCollapsed">My Posts</span>
+          </router-link>
+          <router-link to="/settings/security" class="nav-link" active-class="is-active">
+            <div class="icon-box"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+            <span class="label">{{ $t('sidebar.security') }}</span>
+            <span class="tooltip" v-if="isCollapsed">{{ $t('sidebar.security') }}</span>
+          </router-link>
           <router-link to="/storage" class="nav-link" active-class="is-active">
             <div class="icon-box"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12"/></svg></div>
             <span class="label">{{ $t('sidebar.storage_label') }}</span>

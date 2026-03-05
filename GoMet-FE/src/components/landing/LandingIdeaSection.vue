@@ -3,17 +3,17 @@
     <div class="container idea-layout">
       
       <div class="idea-text fade-in-left">
-        <span class="sub-tag">Start Your Journey</span>
+        <span class="sub-tag">{{ $t('landing.idea_tag') }}</span>
         <h2 class="idea-title">
-          Cảm Hứng <br> 
-          <span class="highlight-text">Nấu Ăn Mỗi Ngày</span>
+          {{ $t('landing.idea_title') }} <br> 
+          <span class="highlight-text">{{ $t('landing.idea_title_hl') }}</span>
         </h2>
         <p class="idea-desc">
-          Đừng để câu hỏi "Hôm nay ăn gì?" làm khó bạn. Lưu lại công thức tâm đắc và xây dựng bộ sưu tập món ngon của riêng mình ngay hôm nay.
+          {{ $t('landing.idea_desc') }}
         </p>
         
         <button class="btn-discover">
-          Khám phá ngay
+          {{ $t('landing.idea_cta') }}
           <span class="icon-arrow">→</span>
         </button>
       </div>
@@ -54,6 +54,11 @@
     </div>
   </section>
 </template>
+
+<script setup>
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
+</script>
 
 <style scoped>
 .idea-section {

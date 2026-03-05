@@ -75,7 +75,7 @@
         </div>
 
         <div class="comments-feed">
-          <div class="comment-card" v-for="cmt in commentsList" :key="cmt.id">
+          <div class="comment-card" :id="`comment-${cmt.id}`" v-for="cmt in commentsList" :key="cmt.id">
             <img :src="cmt.avatar" class="cmt-avatar">
             <div class="cmt-body">
               <div class="cmt-meta">

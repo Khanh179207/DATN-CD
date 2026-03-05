@@ -51,16 +51,29 @@
        />
        <PremiumModal 
          :is-open="showPremium" 
-         @close="showPremium = false" 
+         @close="showPremium = false"
+         @upgraded="showPremium = false"
        />
+
+       <!-- Ban notification modal — non-dismissable -->
+       <div v-if="showBannedModal" class="banned-overlay">
+         <div class="banned-box">
+           <div class="banned-icon">🔒</div>
+           <h2 class="banned-title">Tài khoản bị khóa</h2>
+           <p class="banned-msg">Tài khoản bạn đã bị khóa. Vui lòng liên hệ admin để biết thêm chi tiết.</p>
+           <button class="banned-btn" @click="handleBannedLogout">Đóng &amp; đăng xuất</button>
+         </div>
+       </div>
     </Teleport>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useChatStore } from '@/stores/chat' 
+import { useChatStore } from '@/stores/chat'
+import { useAuthStore } from '@/stores/auth'
+import { checkAccountStatus } from '@/services/authService'
 
 import Sidebar from '@/components/sidebar/Sidebar.vue'
 import Header from '@/components/topbar/Header.vue' 
@@ -71,11 +84,47 @@ import TheFooter from '@/components/footer/TheFooter.vue'
 import CompareFloatingBar from '@/components/common/CompareFloatingBar.vue'
 
 const router = useRouter()
-const chatStore = useChatStore() 
+const chatStore = useChatStore()
+const authStore = useAuthStore()
 
-const showAuthModal = ref(false)
-const showPremium = ref(false)
-const modalTab = ref('login')
+const showAuthModal  = ref(false)
+const showPremium    = ref(false)
+const modalTab       = ref('login')
+const showBannedModal = ref(false)
+
+// ── Ban detection polling ────────────────────────────────────────────────────
+let banPollTimer = null
+
+const startBanPolling = () => {
+  if (banPollTimer) return
+  banPollTimer = setInterval(async () => {
+    if (!authStore.isAuthenticated) return
+    try {
+      const { isActive } = await checkAccountStatus()
+      if (!isActive) {
+        clearInterval(banPollTimer)
+        banPollTimer = null
+        showBannedModal.value = true
+      }
+    } catch {
+      // network error — silently ignore, retry next tick
+    }
+  }, 30_000)
+}
+
+const handleBannedLogout = () => {
+  showBannedModal.value = false
+  authStore._clearAll()
+  router.push('/').catch(() => {})
+}
+
+onMounted(() => {
+  if (authStore.isAuthenticated) startBanPolling()
+})
+
+onUnmounted(() => {
+  if (banPollTimer) { clearInterval(banPollTimer); banPollTimer = null }
+})
 
 const isAiChatting = computed(() => chatStore.activeChat?.id === 'gomet-ai')
 
@@ -187,4 +236,59 @@ const handleLogout = async () => {
   font-size: var(--text-base);
   color: var(--color-primary-700);
 }
+
+/* ─── Banned Modal ─── */
+.banned-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+.banned-box {
+  background: var(--color-neutral-0, #fff);
+  border-radius: var(--radius-2xl, 16px);
+  padding: var(--space-12, 48px) var(--space-10, 40px);
+  max-width: 420px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
+}
+
+.banned-icon {
+  font-size: 3rem;
+  margin-bottom: var(--space-4, 16px);
+}
+
+.banned-title {
+  font-size: var(--text-xl, 1.25rem);
+  font-weight: var(--font-bold, 700);
+  color: var(--color-error, #dc2626);
+  margin: 0 0 var(--space-3, 12px);
+}
+
+.banned-msg {
+  font-size: var(--text-base, 1rem);
+  color: var(--color-neutral-600, #4b5563);
+  line-height: 1.6;
+  margin: 0 0 var(--space-6, 24px);
+}
+
+.banned-btn {
+  background: var(--color-error, #dc2626);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-lg, 8px);
+  padding: var(--space-3, 12px) var(--space-8, 32px);
+  font-size: var(--text-base, 1rem);
+  font-weight: var(--font-semibold, 600);
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.banned-btn:hover { opacity: 0.85; }
 </style>

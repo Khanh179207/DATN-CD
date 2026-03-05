@@ -97,14 +97,14 @@
             <button 
               class="tab-btn" 
               :class="{ active: activeTab === 'login' }" 
-              @click="activeTab = 'login'"
+              @click="activeTab = 'login'; errorMsg = ''"
             >
               Đăng Nhập
             </button>
             <button 
               class="tab-btn" 
               :class="{ active: activeTab === 'register' }" 
-              @click="activeTab = 'register'"
+              @click="activeTab = 'register'; errorMsg = ''"
             >
               Đăng Ký
             </button>
@@ -138,12 +138,12 @@
 
               <div v-else class="fade-in-anim">
                 <div class="input-group">
-                  <label>Email hoặc Tên đăng nhập</label>
-                  <input type="text" placeholder="name@example.com" class="input-field" />
+                  <label>Email</label>
+                  <input v-model="loginForm.email" type="email" placeholder="name@example.com" class="input-field" required />
                 </div>
                 <div class="input-group">
                   <label>Mật khẩu</label>
-                  <input type="password" placeholder="Nhập mật khẩu..." class="input-field" />
+                  <input v-model="loginForm.password" type="password" placeholder="Nhập mật khẩu..." class="input-field" required />
                 </div>
                 <div class="form-actions">
                   <label class="remember">
@@ -153,8 +153,10 @@
                 </div>
               </div>
 
-              <button type="submit" class="btn-submit">
-                {{ activeTab === 'login' ? 'Đăng Nhập Ngay' : 'Đăng Ký Miễn Phí' }}
+              <div v-if="errorMsg" class="error-alert">{{ errorMsg }}</div>
+
+              <button type="submit" class="btn-submit" :disabled="isLoading">
+                {{ isLoading ? 'Đang xử lý...' : (activeTab === 'login' ? 'Đăng Nhập Ngay' : 'Đăng Ký Miễn Phí') }}
               </button>
 
               <div class="divider"><span>Hoặc tiếp tục với</span></div>
@@ -189,17 +191,39 @@
       />
     </Teleport>
 
+    <Teleport to="body">
+      <transition name="mfa-fade" appear>
+        <MfaChallengeModal
+          v-if="showMfaModal"
+          @success="onMfaSuccess"
+          @cancel="onMfaCancel"
+        />
+      </transition>
+    </Teleport>
+
   </section>
 </template>
 
 <script setup>
 import { ref, reactive } from 'vue'
-import OtpModal from '@/components/modals/OtpModal.vue' 
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import { toast } from '@/composables/useToast'
+import * as authService from '@/services/authService'
+import OtpModal from '@/components/modals/OtpModal.vue'
+import MfaChallengeModal from '@/components/modals/MfaChallengeModal.vue'
+import { getDeviceContext } from '@/services/deviceContext'
 
-const activeTab = ref('login')
+const router     = useRouter()
+const authStore  = useAuthStore()
+const activeTab  = ref('login')
 const showOtpModal = ref(false)
-const otpCode = ref('')
+const showMfaModal = ref(false)
+const otpCode    = ref('')
+const isLoading  = ref(false)
+const errorMsg   = ref('')
 
+const loginForm = reactive({ email: '', password: '' })
 const registerForm = reactive({
   username: '',
   email: '',
@@ -207,31 +231,108 @@ const registerForm = reactive({
   confirmPassword: ''
 })
 
-const handleSubmit = () => {
+const handleSubmit = async () => {
+  errorMsg.value = ''
   if (activeTab.value === 'login') {
-    alert('Đang xử lý đăng nhập...')
+    await handleLogin()
   } else {
-    if (registerForm.password !== registerForm.confirmPassword) {
-      alert('Mật khẩu xác nhận không khớp!')
-      return
-    }
-    showOtpModal.value = true
+    await handleRegister()
   }
 }
 
-const loginWithGoogle = () => {
-  alert('Đang chuyển hướng đến Google Login...')
-}
-
-const handleVerifyOtp = () => {
-  if (otpCode.value.length < 6) {
-    alert('Mã OTP chưa đủ 6 số!')
+const handleLogin = async () => {
+  if (!loginForm.email || !loginForm.password) {
+    errorMsg.value = 'Vui lòng điền đầy đủ thông tin!'
     return
   }
-  alert('Đăng ký thành công! Chào mừng ' + registerForm.username)
-  showOtpModal.value = false
-  activeTab.value = 'login'
-  otpCode.value = ''
+  isLoading.value = true
+  try {
+    const { deviceId, deviceName } = getDeviceContext()
+    const result = await authStore.login(loginForm.email, loginForm.password, deviceId, deviceName)
+    if (result.status === 'mfa') {
+      showMfaModal.value = true
+      toast.info('Vui lòng nhập mã xác thực 2 lớp để tiếp tục.')
+      return
+    }
+    if (result.status === 'device') {
+      toast.info('Đã gửi link xác minh thiết bị qua email. Vui lòng kiểm tra hộp thư.')
+      return
+    }
+    toast.success('Đăng nhập thành công! Chào mừng trở lại.')
+    router.push(result.role === 'admin' ? '/admin' : '/home')
+  } catch (err) {
+    const raw = err.message || ''
+    if (raw === 'ACCOUNT_BANNED') {
+      errorMsg.value = '🔒 Tài khoản của bạn đã bị khóa bởi quản trị viên.'
+    } else {
+      errorMsg.value = raw || 'Email hoặc mật khẩu không đúng.'
+    }
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const handleRegister = async () => {
+  if (!registerForm.username || !registerForm.email || !registerForm.password) {
+    errorMsg.value = 'Vui lòng điền đầy đủ thông tin!'
+    return
+  }
+  if (registerForm.password !== registerForm.confirmPassword) {
+    errorMsg.value = 'Mật khẩu xác nhận không khớp!'
+    return
+  }
+  isLoading.value = true
+  try {
+    await authService.sendOtp(registerForm.username, registerForm.email, registerForm.password)
+    toast.success('Đã gửi email xác thực. Kiểm tra hộp thư!')
+    otpCode.value = ''
+    showOtpModal.value = true
+  } catch (err) {
+    errorMsg.value = err.response?.data?.message || 'Đăng ký thất bại, vui lòng thử lại.'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const handleVerifyOtp = async () => {
+  if (otpCode.value.length < 6) {
+    toast.warn('Mã OTP chưa đủ 6 số!')
+    return
+  }
+  try {
+    const data = await authService.verifyOtp(registerForm.email, otpCode.value)
+    authStore.setAuthFromResponse(data)
+    toast.success('Đăng ký thành công! Chào mừng ' + data.username)
+    showOtpModal.value = false
+    router.push('/home')
+  } catch (err) {
+    toast.error(err.response?.data?.message || 'Mã OTP không hợp lệ hoặc đã hết hạn.')
+  }
+}
+
+const loginWithGoogle = async () => {
+  errorMsg.value = ''
+  isLoading.value = true
+  try {
+    const result = await authStore.loginGoogle()
+    toast.success('Đăng nhập Google thành công!')
+    router.push(result?.role === 'admin' ? '/admin' : '/home')
+  } catch (err) {
+    errorMsg.value = err.message || 'Đăng nhập Google thất bại.'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const onMfaSuccess = (result) => {
+  showMfaModal.value = false
+  toast.success('Đăng nhập thành công! Chào mừng trở lại.')
+  router.push(result?.role === 'admin' ? '/admin' : '/home')
+}
+
+const onMfaCancel = () => {
+  showMfaModal.value = false
+  authStore.clearPendingMfa()
 }
 </script>
 
@@ -338,6 +439,19 @@ const handleVerifyOtp = () => {
 .social-icon { width: 18px; height: 18px; color: #1C1917; transition: 0.2s; }
 .social-btn:hover { background: #1C1917; color: white; border-color: #1C1917; }
 .social-btn:hover .social-icon { color: white; }
+
+.mfa-fade-enter-active,
+.mfa-fade-leave-active {
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+
+.mfa-fade-enter-from,
+.mfa-fade-leave-to {
+  opacity: 0;
+  transform: translateY(6px) scale(0.98);
+}
+
+.error-alert { background: #FEF2F2; border: 1px solid #FECACA; color: #DC2626; padding: 10px 14px; border-radius: 10px; font-size: 0.85rem; font-weight: 600; margin-bottom: 12px; }
 
 .form-footer { text-align: center; margin-top: 15px; font-size: 0.75rem; color: #E7E5E4; opacity: 0.8; }
 

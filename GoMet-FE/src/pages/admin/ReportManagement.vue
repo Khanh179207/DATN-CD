@@ -118,7 +118,7 @@ const dismissReport = async (id) => {
 const deleteReportedPost = async (report) => {
   const postId = report.post?.postID || report.postID
   if (!postId) return
-  if (!confirm(`Delete the post "${report.post?.title || 'this post'}" and all its reports? This cannot be undone.`)) return
+  if (!confirm(`Delete the post "${report.post?.title || report.postTitle || 'this post'}" and all its reports? This cannot be undone.`)) return
   try {
     await api.delete(`/api/admin/reports/post/${postId}`)
     reports.value = reports.value.filter(r => (r.post?.postID || r.postID) !== postId)

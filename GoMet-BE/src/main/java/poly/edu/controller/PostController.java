@@ -1,12 +1,18 @@
 package poly.edu.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dao.*;
 import poly.edu.dto.*;
 import poly.edu.entity.*;
+import poly.edu.service.ModerationService;
+import poly.edu.service.PostAntiSpamService;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
@@ -26,6 +32,8 @@ public class PostController {
     private final AccountDAO accountDAO;
     private final CategoryDAO categoryDAO;
     private final CookingStepsDAO cookingStepsDAO;
+    private final ModerationService moderationService;
+    private final PostAntiSpamService postAntiSpamService;
 
     // ─── List latest posts (home feed) ─────────────────────────────────
     @GetMapping("/latest")
@@ -53,10 +61,19 @@ public class PostController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getDetail(@PathVariable Integer id) {
         return postDAO.findById(id).map(post -> {
-            // Increment view count
-            post.setViews(post.getViews() + 1);
-            postDAO.save(post);
-
+            // Visibility: APPROVED is public. PENDING/REJECTED/HIDDEN only visible to owner.
+            if (post.getStatus() != PostStatus.APPROVED) {
+                Integer callerId = resolveCallerAccountId();
+                Integer ownerId  = post.getAccount() != null ? post.getAccount().getAccountID() : null;
+                if (callerId == null || !callerId.equals(ownerId)) {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).<Object>build();
+                }
+            }
+            // Increment view count only for APPROVED posts
+            if (post.getStatus() == PostStatus.APPROVED) {
+                post.setViews(post.getViews() + 1);
+                postDAO.save(post);
+            }
             PostDetailDTO dto = toDetailDTO(post);
             return ResponseEntity.ok(dto);
         }).orElse(ResponseEntity.notFound().build());
@@ -279,25 +296,51 @@ public class PostController {
         return dto;
     }
 
+    // ─── My posts (all statuses — owner only) ─────────────────────────
+    @GetMapping("/me")
+    public ResponseEntity<?> getMyPosts(
+            @RequestParam(required = false) PostStatus status) {
+        Integer callerId = resolveCallerAccountId();
+        if (callerId == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        return ResponseEntity.ok(moderationService.getMyPosts(callerId, status));
+    }
+
     // ─── Create post ────────────────────────────────────────────────────
     @PostMapping
-    public ResponseEntity<?> createPost(@RequestBody Map<String, Object> body) {
+    public ResponseEntity<?> createPost(@RequestBody Map<String, Object> body,
+                                        jakarta.servlet.http.HttpServletRequest request) {
         try {
-            Integer accountID = (Integer) body.get("accountID");
+            Integer accountID  = (Integer) body.get("accountID");
             Integer categoryID = (Integer) body.get("categoryID");
-            String title = (String) body.getOrDefault("title", "");
-            String description = (String) body.getOrDefault("description", "");
-            String ingredients = (String) body.getOrDefault("ingredients", "");
-            String media = (String) body.getOrDefault("media", "");
+            String  title       = (String) body.getOrDefault("title", "");
+            String  description = (String) body.getOrDefault("description", "");
+            String  ingredients = (String) body.getOrDefault("ingredients", "");
+            String  media       = (String) body.getOrDefault("media", "");
             Integer level = body.get("level") instanceof Integer ? (Integer) body.get("level")
                          : body.get("level") != null ? Integer.parseInt(body.get("level").toString()) : 2;
             Integer cookingTime = body.get("cookingTime") instanceof Integer ? (Integer) body.get("cookingTime")
                                : body.get("cookingTime") != null ? Integer.parseInt(body.get("cookingTime").toString()) : 30;
 
             Account account = accountDAO.findById(accountID).orElse(null);
-            if (account == null) return ResponseEntity.badRequest().body("Invalid accountID");
+            if (account == null) return ResponseEntity.badRequest().body(Map.of("code", "INVALID_ACCOUNT", "message", "Invalid accountID"));
             Category category = categoryDAO.findById(categoryID).orElse(null);
-            if (category == null) return ResponseEntity.badRequest().body("Invalid categoryID");
+            if (category == null) return ResponseEntity.badRequest().body(Map.of("code", "INVALID_CATEGORY", "message", "Invalid categoryID"));
+
+            // ── Anti-spam gate ──
+            PostAntiSpamService.SpamCheckResult spamResult =
+                    postAntiSpamService.checkAndRecord(account, extractIp(request), title, description, ingredients,
+                            (List<Map<String,Object>>) body.get("steps"));
+            if (spamResult.blocked()) {
+                return ResponseEntity.status(429).body(Map.of(
+                        "code", "RATE_LIMITED",
+                        "message", spamResult.blockReason()));
+            }
+
+            PostStatus initialStatus = PostStatus.PENDING_REVIEW;
+            // Extreme spam => auto-hide
+            if (spamResult.spamScore() >= 80) {
+                initialStatus = PostStatus.HIDDEN;
+            }
 
             Post post = Post.builder()
                     .account(account)
@@ -309,9 +352,13 @@ public class PostController {
                     .level(level)
                     .cookingTime(cookingTime)
                     .views(0)
-                    .isActive(1)
-                    .isApproved(0)
+                    .isActive(initialStatus == PostStatus.APPROVED ? 1 : 0)
+                    .isApproved(initialStatus == PostStatus.APPROVED ? 1 : 0)
+                    .status(initialStatus)
+                    .spamScore(spamResult.spamScore())
+                    .spamReasons(spamResult.reasonsJson())
                     .createdAt(LocalDate.now())
+                    .updatedAt(Instant.now())
                     .build();
             post = postDAO.save(post);
 
@@ -330,9 +377,29 @@ public class PostController {
                 }
             }
 
-            return ResponseEntity.ok(Map.of("postID", post.getPostID(), "message", "Post created and pending approval"));
+            return ResponseEntity.ok(Map.of(
+                    "postID",   post.getPostID(),
+                    "status",   post.getStatus().name(),
+                    "message",  initialStatus == PostStatus.HIDDEN
+                            ? "Your post was flagged and is under review."
+                            : "Post submitted and is pending review."));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("code", "ERROR", "message", e.getMessage()));
         }
+    }
+
+    // ─── Helpers ──────────────────────────────────────────────────────────────
+
+    private Integer resolveCallerAccountId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) return null;
+        Object principal = auth.getPrincipal();
+        return (principal instanceof Integer) ? (Integer) principal : null;
+    }
+
+    private String extractIp(jakarta.servlet.http.HttpServletRequest request) {
+        if (request == null) return "0.0.0.0";
+        String xff = request.getHeader("X-Forwarded-For");
+        return (xff != null && !xff.isBlank()) ? xff.split(",")[0].trim() : request.getRemoteAddr();
     }
 }

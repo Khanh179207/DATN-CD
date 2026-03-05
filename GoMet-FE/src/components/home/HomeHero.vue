@@ -38,7 +38,7 @@
             <span class="meta-divider">•</span>
             <div class="meta-item views" :style="{ color: currentSlideData.themeColor }">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-              <span>{{ currentSlideData.views }} Views</span>
+              <span>{{ currentSlideData.views }} {{ $t('home.views_label') }}</span>
             </div>
           </div>
 
@@ -48,12 +48,12 @@
 
           <div class="cta-group">
             <button class="btn-primary" :style="{ background: currentSlideData.themeColor }" @click="$emit('view-detail', currentSlideData.id)">
-              View Recipe
+              {{ $t('home.view_recipe') }}
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </button>
             <button class="btn-secondary" :style="secondaryBtnStyle">
-              <div class="play-icon" :style="{ color: currentSlideData.themeColor, background: currentSlideData.themeColor + '20' }">▶</div>
-              <span>Tutorial Video</span>
+              <div class="play-icon" :style="{ color: currentSlideData.themeColor, background: currentSlideData.themeColor + '20' }">&#9654;</div>
+              <span>{{ $t('home.tutorial_video') }}</span>
             </button>
           </div>
         </div>

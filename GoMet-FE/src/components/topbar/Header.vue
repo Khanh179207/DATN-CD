@@ -155,13 +155,13 @@
             </div>
             
             <ul class="menu-list">
-              <li @click="goToAdmin" class="admin-link">
+              <li v-if="canSeeAdminPanel" @click="goToAdmin" class="admin-link">
                 <span class="icon">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                 </span>
                 {{ $t('header.admin_panel') }}
               </li>
-              <li class="divider"></li>
+              <li v-if="canSeeAdminPanel" class="divider"></li>
               <li @click="goToProfile">
                 <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span>
                 {{ $t('header.my_profile') }}
@@ -267,6 +267,7 @@ const notifications = ref([])
 
 const unreadMessages = computed(() => conversations.value.filter(c => !c.read).length)
 const unreadNotiCount = computed(() => notifications.value.filter(n => !n.isRead).length)
+const canSeeAdminPanel = computed(() => authStore.isAdmin)
 
 // Load real notifications from API
 const loadNotifications = async () => {

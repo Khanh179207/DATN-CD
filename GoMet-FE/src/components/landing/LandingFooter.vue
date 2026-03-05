@@ -8,7 +8,7 @@
           <span class="brand-name">GOMET</span>
         </div>
         <p class="brand-desc">
-          Mạng xã hội chia sẻ công thức nấu ăn lớn nhất dành cho sinh viên. Khơi nguồn cảm hứng vào bếp mỗi ngày.
+          {{ $t('landing.footer_brand') }}
         </p>
         
         <div class="socials">
@@ -25,38 +25,38 @@
       </div>
 
       <div class="footer-col">
-        <h4>Khám phá</h4>
+        <h4>{{ $t('landing.footer_explore') }}</h4>
         <ul class="footer-links">
-          <li><a href="#">Công thức mới</a></li>
-          <li><a href="#">Bảng xếp hạng</a></li>
-          <li><a href="#">Thử thách tuần</a></li>
-          <li><a href="#">Blog ẩm thực</a></li>
+          <li><a href="#">{{ $t('landing.footer_new') }}</a></li>
+          <li><a href="#">{{ $t('landing.footer_rank') }}</a></li>
+          <li><a href="#">{{ $t('landing.footer_challenge') }}</a></li>
+          <li><a href="#">{{ $t('landing.footer_blog') }}</a></li>
         </ul>
       </div>
 
       <div class="footer-col">
-        <h4>Về GOMET</h4>
+        <h4>{{ $t('landing.footer_about') }}</h4>
         <ul class="footer-links">
-          <li><a href="#">Giới thiệu</a></li>
-          <li><a href="#">Tuyển dụng</a></li>
-          <li><a href="#">Điều khoản</a></li>
-          <li><a href="#">Bảo mật</a></li>
+          <li><a href="#">{{ $t('landing.footer_about_us') }}</a></li>
+          <li><a href="#">{{ $t('landing.footer_jobs') }}</a></li>
+          <li><a href="#">{{ $t('landing.footer_terms') }}</a></li>
+          <li><a href="#">{{ $t('landing.footer_privacy') }}</a></li>
         </ul>
       </div>
 
       <div class="footer-col contact-col">
-        <h4>Liên hệ</h4>
+        <h4>{{ $t('landing.footer_contact') }}</h4>
         <div class="contact-item">
           <span class="icon">📧</span>
           <div class="info">
-            <span class="label">Email hỗ trợ</span>
+            <span class="label">{{ $t('landing.footer_email_lbl') }}</span>
             <span class="value">Đặng Công Minh Khánh</span>
           </div>
         </div>
         <div class="contact-item">
           <span class="icon">📞</span>
           <div class="info">
-            <span class="label">Hotline</span>
+            <span class="label">{{ $t('landing.footer_phone_lbl') }}</span>
             <span class="value">0823-024-745</span>
           </div>
         </div>
@@ -66,9 +66,9 @@
     
     <div class="footer-bottom">
       <div class="container bottom-flex">
-        <p>&copy; 2026 GOMET. All rights reserved.</p>
+        <p>{{ $t('landing.footer_rights') }}</p>
         <div class="bottom-links">
-          <a href="#">Quyền riêng tư</a>
+          <a href="#">{{ $t('landing.footer_priv_link') }}</a>
           <span class="dot">•</span>
           <a href="#">Cookie</a>
         </div>
@@ -76,6 +76,11 @@
     </div>
   </footer>
 </template>
+
+<script setup>
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
+</script>
 
 <style scoped>
 .landing-footer {

@@ -11,27 +11,35 @@
       <aside class="col-left">
         <div class="sticky-wrapper">
           <div class="id-card">
-            <div class="avatar-box">
+            <div class="avatar-box" :class="{ 'avatar-premium': user.isPremium }">
               <img :src="user.avatar" class="avatar-img" alt="Chef">
-              <div class="verify-badge">
+              <div v-if="user.isPremium" class="premium-ring-anim" aria-hidden="true"></div>
+              <div v-if="user.isPremium" class="premium-crown-badge" title="Premium Member">👑</div>
+              <div v-else class="verify-badge">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
               </div>
             </div>
             
             <h1 class="user-name">{{ user.name }}</h1>
+            <div v-if="user.isPremium" class="premium-title-badge">✦ GoMet Premium</div>
             <p class="user-handle">@{{ user.handle }}</p>
             
             <div class="bio-box">
               <p v-if="user.bio">{{ user.bio }}</p>
-              <p v-else class="bio-placeholder">{{ isOwnProfile ? 'Add a bio to tell others about yourself...' : 'No bio yet.' }}</p>
+              <p v-else class="bio-placeholder">{{ isOwnProfile ? $t('profile.bio_empty_own') : $t('profile.bio_empty_other') }}</p>
+            </div>
+
+            <div v-if="user.createdAt" class="joined-info">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              {{ $t('profile.joined') }} {{ user.createdAt }}
             </div>
 
             <div class="action-stack">
               <button v-if="isOwnProfile" class="btn-primary" @click="openEditModal">{{ $t('profile.edit') }}</button>
               <button v-else class="btn-follow" :class="{ following: isFollowing }" @click="toggleFollow" :disabled="followLoading">
                 <span v-if="followLoading">...</span>
-                <span v-else-if="isFollowing">✓ Following</span>
-                <span v-else>+ Follow</span>
+                <span v-else-if="isFollowing">✓ {{ $t('common.following') }}</span>
+                <span v-else>+ {{ $t('common.follow') }}</span>
               </button>
               <button class="btn-icon">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
@@ -104,26 +112,94 @@
                 <span class="val">{{ user.totalLikes }}</span>
                 <span class="lbl">{{ $t('profile.total_likes') }}</span>
               </div>
+              <div class="stat-cell">
+                <span class="val">{{ user.totalViews }}</span>
+                <span class="lbl">{{ $t('profile.total_views') }}</span>
+              </div>
+              <div class="stat-cell">
+                <span class="val">{{ user.point }}</span>
+                <span class="lbl">{{ $t('profile.points') }}</span>
+              </div>
             </div>
+          </div>
+
+          <!-- Account Info widget -->
+          <div class="widget-box">
+            <h3 class="w-title">{{ $t('profile.account_info') }}</h3>
+            <ul class="info-list">
+              <li v-if="user.createdAt" class="info-row">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                <span>{{ $t('profile.joined') }}</span>
+                <strong>{{ user.createdAt }}</strong>
+              </li>
+              <li v-if="user.totalViews" class="info-row">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <span>{{ $t('profile.total_views') }}</span>
+                <strong>{{ user.totalViews }}</strong>
+              </li>
+              <template v-if="isOwnProfile">
+                <li v-if="user.lastLoginAt" class="info-row">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  <span>{{ $t('profile.last_login') }}</span>
+                  <strong>{{ user.lastLoginAt }}</strong>
+                </li>
+                <li v-if="user.lastLoginIp" class="info-row">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+                  <span>{{ $t('profile.last_ip') }}</span>
+                  <strong class="mono-text">{{ user.lastLoginIp }}</strong>
+                </li>
+                <li class="info-row">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  <span>{{ $t('profile.mfa_status') }}</span>
+                  <router-link to="/settings/security" class="mfa-badge" :class="user.mfaEnabled ? 'mfa-on' : 'mfa-off'">
+                    {{ user.mfaEnabled ? $t('profile.mfa_on') : $t('profile.mfa_off') }}
+                  </router-link>
+                </li>
+              </template>
+            </ul>
           </div>
 
           <div class="widget-box">
             <h3 class="w-title">{{ $t('profile.achievements') }}</h3>
-            <ul class="award-list">
-              <li v-if="achievements.length === 0" class="award-empty">
-                <span class="icon">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                </span>
-                <span>{{ $t('profile.no_achievements') }}</span>
-              </li>
-              <li v-for="ach in achievements" :key="ach.uaid">
-                <span class="icon">{{ ach.icon }}</span>
-                <div class="award-info">
+            <div v-if="achievements.length === 0" class="award-empty">
+              <span class="icon">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              </span>
+              <span>{{ $t('profile.no_achievements') }}</span>
+            </div>
+            <div v-else class="achievement-grid">
+              <div v-for="ach in achievements" :key="ach.uaid" class="ach-card" :title="ach.description">
+                <div class="ach-icon-wrap">
+                  <span class="ach-icon">{{ ach.icon || '🏆' }}</span>
+                </div>
+                <div class="ach-info">
                   <strong>{{ ach.achievementName }}</strong>
                   <span>{{ ach.description }}</span>
                 </div>
-              </li>
-            </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="widget-box" v-if="isOwnProfile">
+            <h3 class="w-title">Bằng/Chứng nhận</h3>
+            <div v-if="certificatesLoading" class="award-empty">
+              <span class="icon">⏳</span>
+              <span>Đang tải chứng nhận...</span>
+            </div>
+            <div v-else-if="certificates.length === 0" class="award-empty">
+              <span class="icon">📄</span>
+              <span>Chưa có chứng nhận tuần.</span>
+            </div>
+            <div v-else class="achievement-grid">
+              <div v-for="cert in certificates" :key="cert.id" class="ach-card">
+                <div class="ach-icon-wrap"><span class="ach-icon">🏅</span></div>
+                <div class="ach-info">
+                  <strong>#{{ cert.rank }} - {{ cert.title }}</strong>
+                  <span>{{ cert.weekStart }} → {{ cert.weekEnd }} • Score: {{ cert.score }}</span>
+                  <span>{{ cert.certificateCode }}</span>
+                </div>
+              </div>
+            </div>
           </div>
 
         </div>
@@ -138,7 +214,7 @@
       <div v-if="showEditModal" class="edit-modal-overlay" @click.self="showEditModal = false">
         <div class="edit-modal-card">
           <div class="edit-modal-header">
-            <h2>Edit Profile</h2>
+            <h2>{{ $t('profile.edit') }}</h2>
             <button class="btn-close" @click="showEditModal = false">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
@@ -154,26 +230,26 @@
                   <input type="file" accept="image/*" class="file-hidden" @change="onAvatarChange">
                 </label>
               </div>
-              <p class="avatar-hint">Click to change photo</p>
+              <p class="avatar-hint">{{ $t('profile.hint_avatar') }}</p>
             </div>
 
             <div class="edit-field">
-              <label>Username</label>
-              <input v-model="editForm.username" type="text" placeholder="Your display name" maxlength="50">
+              <label>{{ $t('profile.label_name') }}</label>
+              <input v-model="editForm.username" type="text" :placeholder="$t('profile.label_name')" maxlength="50">
             </div>
 
             <div class="edit-field">
-              <label>Bio</label>
-              <textarea v-model="editForm.bio" placeholder="Tell others about yourself..." rows="4" maxlength="300"></textarea>
+              <label>{{ $t('profile.label_bio') }}</label>
+              <textarea v-model="editForm.bio" :placeholder="$t('profile.bio_placeholder')" rows="4" maxlength="300"></textarea>
               <span class="char-count">{{ editForm.bio.length }} / 300</span>
             </div>
           </div>
 
           <div class="edit-modal-footer">
-            <button class="btn-cancel" @click="showEditModal = false">Cancel</button>
+            <button class="btn-cancel" @click="showEditModal = false">{{ $t('common.cancel') }}</button>
             <button class="btn-save" :disabled="editSaving" @click="saveProfile">
               <span v-if="editSaving" class="spinner-sm"></span>
-              <span>{{ editSaving ? 'Saving...' : 'Save Changes' }}</span>
+              <span>{{ editSaving ? $t('profile.saving') : $t('profile.save_changes') }}</span>
             </button>
           </div>
         </div>
@@ -193,18 +269,23 @@ import { getUserAchievements } from '@/services/achievementService'
 import { checkFollow, follow, unfollow } from '@/services/socialService'
 import { uploadMedia } from '@/services/uploadService'
 import { toast } from '@/composables/useToast'
+import { getMyCertificates } from '@/services/certificateService'
 
 const route = useRoute()
 const authStore = useAuthStore()
 
 const user = ref({
   name: '', handle: '', avatar: '', bio: '',
-  postsCount: 0, followers: '0', following: 0, point: 0, totalLikes: 0
+  isPremium: false,
+  postsCount: 0, followers: '0', following: 0, point: 0, totalLikes: 0,
+  totalViews: 0, createdAt: '', lastLoginAt: '', lastLoginIp: '', mfaEnabled: 0
 })
 const allPosts = ref([])
 const postsLoading = ref(true)
 const activeCategory = ref('All')
 const achievements = ref([])
+const certificates = ref([])
+const certificatesLoading = ref(false)
 const isFollowing = ref(false)
 const followLoading = ref(false)
 
@@ -246,12 +327,24 @@ async function loadProfile() {
       handle:     (profile.username || 'chef').toLowerCase().replace(/\s+/g, '_'),
       avatar:     profile.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.username||'G')}&background=EA580C&color=fff`,
       bio:        profile.bio || '',
+      isPremium:  profile.isPremium === 1 || profile.isPremium === true,
       postsCount: profile.postCount || 0,
       followers:  profile.followerCount > 999
                     ? `${(profile.followerCount/1000).toFixed(1)}k`
                     : `${profile.followerCount || 0}`,
       following:  profile.followingCount || 0,
-      point:      profile.point || 0
+      point:      profile.point || 0,
+      totalViews: profile.totalViews > 999
+                    ? `${(profile.totalViews/1000).toFixed(1)}k`
+                    : `${profile.totalViews || 0}`,
+      createdAt:  profile.createdAt
+                    ? new Date(profile.createdAt).toLocaleDateString('vi-VN', { year: 'numeric', month: 'long', day: 'numeric' })
+                    : '',
+      lastLoginAt: profile.lastLoginAt
+                    ? new Date(profile.lastLoginAt).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })
+                    : '',
+      lastLoginIp:  profile.lastLoginIp || '',
+      mfaEnabled:   profile.mfaEnabled || 0
     }
     allPosts.value = userPosts.map(normalizePost)
     postsLoading.value = false
@@ -262,6 +355,16 @@ async function loadProfile() {
         ? `${(rawLikes / 1000).toFixed(1)}k`
         : `${rawLikes}`
     achievements.value = userAch || []
+    if (isOwnProfile.value) {
+      certificatesLoading.value = true
+      try {
+        certificates.value = await getMyCertificates()
+      } catch {
+        certificates.value = []
+      } finally {
+        certificatesLoading.value = false
+      }
+    }
     // Check follow status if viewing someone else's profile
     const myId = authStore.user?.accountID || authStore.user?.id
     if (!isOwnProfile.value && myId) {

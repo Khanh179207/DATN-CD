@@ -101,6 +101,118 @@
   font-size: $text-xs;
 }
 
+// ── Premium Avatar Frame ─────────────────────────────────────
+.avatar-premium .avatar-img {
+  border: 4px solid transparent;
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    linear-gradient(135deg, #F59E0B, #D97706, #FBBF24, #D97706) border-box;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.4), 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.premium-ring-anim {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  background: linear-gradient(135deg, #F59E0B, #FBBF24, #D97706, #F59E0B) border-box;
+  -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: destination-out;
+  mask-composite: exclude;
+  animation: rotate-ring 3s linear infinite;
+}
+
+@keyframes rotate-ring {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.premium-crown-badge {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  font-size: 1.1rem;
+  background: linear-gradient(135deg, #F59E0B, #D97706);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 8px rgba(245,158,11,0.4);
+  font-size: 0.9rem;
+}
+
+.premium-title-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #F59E0B, #D97706);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+  box-shadow: 0 3px 10px rgba(245,158,11,0.3);
+}
+
+// ── Achievement Grid Cards ───────────────────────────────────
+.achievement-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ach-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #FFFBEB, #FEF3C7);
+  border: 1px solid #FDE68A;
+  border-radius: 12px;
+  padding: 12px 14px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: default;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(245,158,11,0.15);
+  }
+}
+
+.ach-icon-wrap {
+  width: 44px;
+  height: 44px;
+  background: white;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  flex-shrink: 0;
+}
+
+.ach-icon {
+  font-size: 1.5rem;
+}
+
+.ach-info {
+  display: flex;
+  flex-direction: column;
+
+  strong {
+    font-size: 0.875rem;
+    font-weight: 800;
+    color: #92400E;
+  }
+  span {
+    font-size: 0.75rem;
+    color: #B45309;
+    margin-top: 2px;
+  }
+}
+
 .user-name {
   font-family: $font-display;
   font-size: $text-3xl;
@@ -597,3 +709,56 @@
     opacity: 0;
   }
 }
+
+/* ── New profile enhancements ─────────────────────────────────── */
+
+.joined-info {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  color: #94a3b8;
+  margin-top: 8px;
+  svg { flex-shrink: 0; opacity: 0.7; }
+}
+
+.info-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: #64748b;
+  svg { flex-shrink: 0; opacity: 0.65; }
+  span { flex: 1; }
+  strong { color: #1e293b; font-weight: 600; }
+}
+
+.mono-text {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  background: #f1f5f9;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.mfa-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 20px;
+  text-decoration: none;
+  transition: opacity 0.15s;
+  &:hover { opacity: 0.8; }
+}
+.mfa-on  { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+.mfa-off { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
