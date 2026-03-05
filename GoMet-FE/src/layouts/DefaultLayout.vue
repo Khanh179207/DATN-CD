@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container">
+  <div class="app-container" :class="{ 'is-dark-theme': route.meta?.isDark }">
     
     <Sidebar 
       class="fixed-sidebar" 
@@ -19,6 +19,9 @@
         <router-view v-slot="{ Component }">
           <transition name="page-fade" mode="out-in">
             <component :is="Component" :key="route?.fullPath || 'default-view'" />
+        <router-view v-slot="{ Component, route: currentRoute }">
+          <transition name="page-fade" mode="out-in">
+            <component :is="Component" :key="currentRoute.fullPath" />
           </transition>
         </router-view>
       </div>
@@ -26,6 +29,7 @@
       <TheFooter />
     </div>
 
+    <ChatSidebar />
     <MiniChatBox />
     <CompareFloatingBar />
 
@@ -74,12 +78,16 @@ import { useRouter, useRoute } from 'vue-router'
 import { useChatStore } from '@/stores/chat'
 import { useAuthStore } from '@/stores/auth'
 import { checkAccountStatus } from '@/services/authService'
+import { ref, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router' // 🔥 Import useRoute
+import { useChatStore } from '@/stores/chat' 
 
 import Sidebar from '@/components/sidebar/Sidebar.vue'
 import Header from '@/components/topbar/Header.vue' 
 import AuthModal from '@/components/modals/AuthModal.vue'
 import PremiumModal from '@/components/modals/PremiumModal.vue'
-import MiniChatBox from '@/components/modals/MiniChatBox.vue'
+import MiniChatBox from '@/components/chat/MiniChatBox.vue'
+import ChatSidebar from '@/components/chat/ChatSidebar.vue'
 import TheFooter from '@/components/footer/TheFooter.vue'
 import CompareFloatingBar from '@/components/common/CompareFloatingBar.vue'
 
@@ -118,6 +126,8 @@ const handleBannedLogout = () => {
   authStore._clearAll()
   router.push('/').catch(() => {})
 }
+const route = useRoute() // 🔥 Khởi tạo để theo dõi meta.isDark
+const chatStore = useChatStore() 
 
 onMounted(() => {
   if (authStore.isAuthenticated) startBanPolling()
@@ -162,6 +172,12 @@ const handleLogout = async () => {
   font-family: var(--font-body);
   color: var(--color-neutral-900);
   position: relative;
+  transition: background-color 0.4s ease; /* Chuyển màu nền mượt mà */
+}
+
+/* 🔥 Trạng thái trang Premium/Dark */
+.app-container.is-dark-theme {
+  background-color: #000000 !important; /* Biến nền layout thành đen hoàn toàn */
 }
 
 .fixed-sidebar {
@@ -177,6 +193,11 @@ const handleLogout = async () => {
   overflow-y: auto;
   scroll-behavior: smooth;
   position: relative;
+}
+
+/* 🔥 Ép nội dung tràn lên dưới Header khi ở Dark Theme */
+.is-dark-theme .page-body {
+  margin-top: calc(-1 * var(--header-height, 80px)); /* Kéo nội dung lên trên */
 }
 
 .page-body {
@@ -195,12 +216,12 @@ const handleLogout = async () => {
 .page-fade-enter-from { opacity: 0; transform: translateY(10px); }
 .page-fade-leave-to   { opacity: 0; transform: translateY(-10px); }
 
-/* ─── Floating AI Button ─── */
+/* ─── Floating UI ─── */
 .float-ai-btn {
   position: fixed;
   bottom: var(--space-8);
   right: var(--space-8);
-  z-index: var(--z-modal);
+  z-index: 99; 
   display: flex;
   align-items: center;
   gap: var(--space-3);
@@ -213,10 +234,14 @@ const handleLogout = async () => {
   transition: var(--transition-spring);
 }
 
-.float-ai-btn:hover {
-  transform: translateY(-5px) scale(1.05);
-  box-shadow: var(--shadow-primary-lg);
-  border-color: var(--color-primary-200);
+/* Đổi màu nút Assistant khi ở nền tối để không bị quá chói */
+.is-dark-theme .float-ai-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+}
+.is-dark-theme .float-ai-btn .label {
+  color: #FFF;
 }
 
 .ai-icon-bg {

@@ -63,7 +63,9 @@
                   <h3>🛒 {{ $t('post.ingredients') }}</h3>
                   <span class="sub-text">{{ $t('recipe.by') }} <b>{{ post.servings }}</b></span>
                 </div>
-                <button class="btn-add-mini" title="Thêm tất cả">+</button>
+                <button class="btn-add-mini" title="Chọn tất cả" @click="selectAllIngredients">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </button>
               </div>
               
               <div class="ingredients-scroll">
@@ -95,8 +97,17 @@
                 <div class="textarea-container">
                   <textarea v-model="userNote" :placeholder="$t('recipe.note_placeholder')"></textarea>
                 </div>
-                <div class="note-status">
+                <div class="note-status" style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
                   <span class="status-badge"><span class="dot"></span> {{ $t('recipe.private') }}</span>
+                  
+                  <button class="btn-save-note" @click="handleSaveNote" :disabled="isSavingNote">
+                    <span v-if="isSavingNote" class="loader-small"></span>
+                    <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5z"></path>
+                      <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                    </svg>
+                    {{ isSavingNote ? 'Đang lưu...' : 'Lưu ghi chú' }}
+                  </button>
                 </div>
               </div>
             </div>
@@ -144,34 +155,109 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import axios from 'axios'
+import { useShoppingStore } from '@/stores/shopping'
+import { useAuthStore } from '@/stores/auth'
+import { toast } from '@/composables/useToast'
 
 const { t } = useI18n()
-
 const props = defineProps({
   post: { type: Object, required: true }
 })
 
+const authStore = useAuthStore()
+const shoppingStore = useShoppingStore()
 const userNote = ref('')
+const isSavingNote = ref(false)
+const ingredientsList = ref([])
 
-const ingredientsList = computed(() => {
-  if (!props.post.ingredientsRaw) return []
-  return props.post.ingredientsRaw.split('•').map(item => ({ 
-    name: item.trim(), 
-    selectedForShopping: false 
-  }))
+// --- LOGIC 1: GHI CHÚ CÁ NHÂN (DATABASE) ---
+
+const fetchNote = async () => {
+  if (!authStore.isAuthenticated) return
+  try {
+    const res = await axios.get('http://localhost:8080/api/notes', {
+      params: { 
+        accountId: authStore.currentUser.accountID, 
+        postId: props.post.id 
+      }
+    })
+    if (res.data) userNote.value = res.data
+  } catch (e) {
+    console.log("Sếp chưa có ghi chú cho bài viết này.")
+  }
+}
+
+const handleSaveNote = async () => {
+  if (!authStore.isAuthenticated) {
+    toast.warn('Đăng nhập để lưu ghi chú Sếp nhé!')
+    return
+  }
+  isSavingNote.value = true
+  try {
+    await axios.post('http://localhost:8080/api/notes/save', {
+      accountId: authStore.currentUser.accountID,
+      postId: props.post.id,
+      content: userNote.value
+    })
+    toast.success('Bí quyết của Sếp đã được lưu an toàn!')
+  } catch (e) {
+    toast.error('Lỗi hệ thống, Sếp check lại Backend nhé!')
+  } finally {
+    isSavingNote.value = false
+  }
+}
+
+onMounted(() => {
+  fetchNote()
+})
+
+// --- LOGIC 2: NGUYÊN LIỆU & GIỎ HÀNG ---
+
+const selectAllIngredients = () => {
+  ingredientsList.value.forEach(item => {
+    item.selectedForShopping = true
+  })
+}
+
+watch(() => props.post.ingredientsRaw, (newVal) => {
+  if (!newVal) {
+    ingredientsList.value = []
+    return
+  }
+  ingredientsList.value = newVal
+    .split(',')
+    .map(item => item.trim())
+    .filter(item => item !== '')
+    .map(item => ({ 
+      name: item, 
+      selectedForShopping: shoppingStore.items.some(i => i.name === item)
+    }))
+}, { immediate: true })
+
+watch(() => shoppingStore.items.length, (newLength) => {
+  if (newLength === 0) {
+    ingredientsList.value.forEach(item => item.selectedForShopping = false)
+  }
 })
 
 const handleGoShopping = () => {
   const selected = ingredientsList.value.filter(i => i.selectedForShopping)
-  if (selected.length === 0) alert(t('recipe.select_ingredients_first'))
-  else alert(`Added ${selected.length} items to cart!`)
+  
+  if (selected.length === 0) {
+    toast.warn(t('recipe.select_ingredients_first') || 'Vui lòng chọn ít nhất 1 nguyên liệu nhé!')
+  } else {
+    // SỬA DÒNG NÀY: Chú ý truyền props.post.id (ID là số) CHỨ KHÔNG PHẢI props.post.title (Tên là chữ)
+    shoppingStore.addItems(selected, props.post.id) // <--- CHỖ NÀY LÀ id
+    
+    toast.success(`Đã thêm ${selected.length} món vào giỏ đi chợ trên Header!`)
+  }
 }
 
 const handleImageError = (e) => {
   e.target.style.display = 'none';
-  // Ẩn wrapper cha để không bị khoảng trống
   if(e.target.closest('.gallery-item')) e.target.closest('.gallery-item').style.display = 'none';
 }
 </script>
@@ -179,7 +265,7 @@ const handleImageError = (e) => {
 <style scoped>
 .recipe-guide-container { width: 100%; font-family: 'Mulish', sans-serif; color: #1C1917; overflow-x: hidden; }
 
-/* ================= HERO SECTION (GIỮ NGUYÊN) ================= */
+/* ================= HERO SECTION ================= */
 .hero-section-full-bleed { width: calc(100% + 80px); margin-left: -40px; margin-right: -40px; margin-top: -40px; padding: 60px 40px 60px; background-color: #fff; border-bottom: 1px solid #F3F4F6; position: relative; z-index: 1; }
 .hero-container-inner { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
 .top-nav-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
@@ -218,117 +304,66 @@ const handleImageError = (e) => {
 .premium-card { background: white; border-radius: 24px; border: 1px solid #E2E8F0; box-shadow: 0 10px 30px -5px rgba(0,0,0,0.03); overflow: hidden; transition: 0.3s; }
 .premium-card:hover { box-shadow: 0 20px 40px -5px rgba(0,0,0,0.06); }
 
-/* --- INGREDIENTS CARD (CHECKLIST VIP) --- */
-.ingredients-card .card-header-gradient { 
-  background: linear-gradient(135deg, #FFF7ED 0%, #FFFFFF 100%); 
-  padding: 25px 30px; border-bottom: 1px solid #FED7AA; 
-  display: flex; justify-content: space-between; align-items: center;
-}
+/* --- INGREDIENTS CARD --- */
+.ingredients-card .card-header-gradient { background: linear-gradient(135deg, #FFF7ED 0%, #FFFFFF 100%); padding: 25px 30px; border-bottom: 1px solid #FED7AA; display: flex; justify-content: space-between; align-items: center; }
 .header-content h3 { font-family: 'Playfair Display', serif; font-size: 1.6rem; margin: 0; color: #111827; }
 .header-content .sub-text { font-size: 0.85rem; color: #9A3412; }
 .btn-add-mini { width: 32px; height: 32px; border-radius: 8px; background: white; border: 1px solid #FDBA74; color: #EA580C; font-size: 1.2rem; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
 .btn-add-mini:hover { background: #EA580C; color: white; }
-
 .ingredients-scroll { padding: 10px 0; }
 .ingredients-list-premium { list-style: none; padding: 0; margin: 0; }
-.premium-checkbox-row { 
-  display: flex; align-items: center; gap: 16px; padding: 14px 30px; 
-  cursor: pointer; transition: 0.2s; position: relative;
-}
+.premium-checkbox-row { display: flex; align-items: center; gap: 16px; padding: 14px 30px; cursor: pointer; transition: 0.2s; position: relative; }
 .premium-checkbox-row:hover { background: #FFFAF0; }
 .premium-checkbox-row input { display: none; }
-
-.checkbox-visual {
-  width: 26px; height: 26px; border: 2px solid #CBD5E1; border-radius: 8px; 
-  display: flex; align-items: center; justify-content: center; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: white; flex-shrink: 0;
-}
+.checkbox-visual { width: 26px; height: 26px; border: 2px solid #CBD5E1; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: white; flex-shrink: 0; }
 .checkbox-visual svg { width: 16px; stroke: white; stroke-width: 3; fill: none; opacity: 0; transform: scale(0.5); transition: 0.3s; }
 .premium-checkbox-row input:checked ~ .checkbox-visual { background: #EA580C; border-color: #EA580C; box-shadow: 0 4px 10px rgba(234, 88, 12, 0.3); }
 .premium-checkbox-row input:checked ~ .checkbox-visual svg { opacity: 1; transform: scale(1); }
-
 .ing-text { font-size: 1.05rem; color: #334155; font-weight: 600; transition: 0.3s; }
 .ing-text.is_checked { color: #94A3B8; }
 .line-through-effect { position: absolute; left: 70px; right: 30px; top: 50%; height: 2px; background: #94A3B8; transform: scaleX(0); transform-origin: left; transition: transform 0.3s ease; pointer-events: none; }
 .premium-checkbox-row input:checked ~ .line-through-effect { transform: scaleX(1); }
-
-.btn-shopping-cart-lg { 
-  width: calc(100% - 60px); margin: 10px 30px 30px; padding: 14px; 
-  background: #111827; color: white; border: none; border-radius: 12px; 
-  font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.3s; 
-}
+.btn-shopping-cart-lg { width: calc(100% - 60px); margin: 10px 30px 30px; padding: 14px; background: #111827; color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.3s; }
 .btn-shopping-cart-lg:hover { background: #EA580C; box-shadow: 0 8px 20px rgba(234, 88, 12, 0.3); }
 
-/* --- NOTE CARD (GLASS NOTE) --- */
+/* --- NOTE CARD --- */
 .note-card { background: #FEFCE8; border-color: #FEF08A; padding: 0; }
 .note-decoration { height: 8px; background: repeating-linear-gradient(45deg, #FDE047, #FDE047 10px, #FEF08A 10px, #FEF08A 20px); }
 .note-inner { padding: 25px 30px; }
 .note-title { font-weight: 800; color: #854D0E; margin-bottom: 15px; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.5px; }
-.textarea-container { 
-  background: rgba(255,255,255,0.6); padding: 15px; border-radius: 16px; 
-  border: 1px solid #FEF08A; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
-}
-.note-card textarea { 
-  width: 100%; height: 100px; background: transparent; border: none; outline: none; 
-  resize: none; font-size: 1rem; color: #713F12; font-family: 'Mulish', cursive; line-height: 1.6;
-}
-.note-status { display: flex; justify-content: flex-end; margin-top: 10px; }
-.status-badge { font-size: 0.75rem; color: #A16207; font-weight: 700; display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.5); padding: 4px 10px; border-radius: 20px; }
-.status-badge .dot { width: 6px; height: 6px; background: #A16207; border-radius: 50%; }
+.textarea-container { background: rgba(255,255,255,0.6); padding: 15px; border-radius: 16px; border: 1px solid #FEF08A; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
+.note-card textarea { width: 100%; height: 100px; background: transparent; border: none; outline: none; resize: none; font-size: 1rem; color: #713F12; font-family: 'Mulish', cursive; line-height: 1.6; }
 
-/* --- STEPS CARD (EDITORIAL TIMELINE) --- */
+/* CSS MỚI CHO NÚT LƯU VÀ LOADER */
+.btn-save-note { background: #A16207; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-family: 'Mulish', sans-serif; font-weight: 700; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: 0.2s; }
+.btn-save-note:hover:not(:disabled) { background: #854D0E; transform: translateY(-2px); }
+.btn-save-note:disabled { opacity: 0.6; cursor: not-allowed; }
+.loader-small { width: 14px; height: 14px; border: 2px solid #FFF; border-bottom-color: transparent; border-radius: 50%; display: inline-block; animation: rotation 1s linear infinite; }
+@keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* --- STEPS CARD --- */
 .steps-card { padding: 40px; }
 .steps-header-modern { display: flex; justify-content: space-between; align-items: center; margin-bottom: 50px; border-bottom: 2px solid #F1F5F9; padding-bottom: 20px; }
 .steps-header-modern h2 { font-family: 'Playfair Display', serif; font-size: 2.2rem; margin: 0; color: #111827; }
 .step-counter-badge { background: #111827; color: white; padding: 6px 16px; border-radius: 20px; font-weight: 700; font-size: 0.9rem; letter-spacing: 0.5px; }
-
 .timeline-editorial { display: flex; flex-direction: column; gap: 60px; }
 .timeline-step { display: grid; grid-template-columns: 80px 1fr; gap: 30px; }
-
 .step-marker-col { display: flex; flex-direction: column; align-items: center; }
-.step-number-art {
-  width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;
-  font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 900; color: #EA580C;
-  background: #FFF7ED; border-radius: 20px; border: 2px solid #FFEDD5;
-  box-shadow: 4px 4px 0 #FED7AA; /* Bóng cứng nghệ thuật */
-  z-index: 2;
-}
+.step-number-art { width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 900; color: #EA580C; background: #FFF7ED; border-radius: 20px; border: 2px solid #FFEDD5; box-shadow: 4px 4px 0 #FED7AA; z-index: 2; }
 .step-connector { width: 2px; flex: 1; border-left: 2px dashed #E2E8F0; margin-top: 20px; }
-
-.step-content-col { padding-top: 5px; }
 .step-heading { font-size: 0.9rem; text-transform: uppercase; color: #94A3B8; font-weight: 800; margin: 0 0 12px 0; letter-spacing: 2px; }
 .step-desc-text { font-size: 1.2rem; line-height: 1.8; color: #334155; margin-bottom: 25px; }
-
-/* Floating Gallery */
 .step-gallery-floating { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
 .gallery-item { position: relative; border-radius: 20px; overflow: hidden; height: 200px; cursor: zoom-in; }
 .img-inner { width: 100%; height: 100%; position: relative; transition: 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
 .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
 .gallery-item:hover .img-inner { transform: scale(1.05) rotate(1deg); box-shadow: 0 15px 30px rgba(0,0,0,0.15); }
-.zoom-icon {
-  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
-  background: rgba(255,255,255,0.3); backdrop-filter: blur(5px);
-  width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  color: white; transition: 0.3s;
-}
-.gallery-item:hover .zoom-icon { transform: translate(-50%, -50%) scale(1); }
 
-/* Animation */
+/* ANIMATION */
 .fade-in-up { animation: fadeInUp 0.8s ease-out; }
 .slide-in-left { animation: slideInLeft 0.7s ease-out backwards; }
 .slide-in-up { animation: slideInUp 0.7s ease-out backwards; }
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes slideInLeft { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
 @keyframes slideInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-
-/* Responsive */
-@media (max-width: 1024px) {
-  .hero-section-full-bleed { margin: -20px -20px 0; width: calc(100% + 40px); padding: 40px 20px; }
-  .hero-container-inner { grid-template-columns: 1fr; gap: 40px; text-align: center; }
-  .hero-info-col { order: 2; } .hero-image-col { order: 1; }
-  .top-nav-bar, .recipe-meta-row, .author-action-row { justify-content: center; }
-  .image-frame-hero { height: 350px; }
-  .body-container-inner { grid-template-columns: 1fr; gap: 40px; }
-  .sticky-wrapper { position: static; }
-  .step-gallery-floating { grid-template-columns: 1fr; }
-}
 </style>
