@@ -1,6 +1,8 @@
 package poly.edu.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import poly.edu.dao.PostDAO;
 import poly.edu.dto.AdminPostDTO;
@@ -8,8 +10,6 @@ import poly.edu.entity.Post;
 import poly.edu.entity.PostStatus;
 import poly.edu.service.PostService;
 import java.time.Instant;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -40,19 +40,13 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public List<AdminPostDTO> findAll() {
-        return postDAO.findAll()
-                .stream()
-                .map(this::toDTO)
-                .collect(Collectors.toList());
+    public Page<AdminPostDTO> findAll(Pageable pageable) {
+        return postDAO.findAllForAdmin(pageable).map(this::toDTO);
     }
 
     @Override
-    public List<AdminPostDTO> findByApproved(Integer isApproved) {
-        return postDAO.findByIsApproved(isApproved)
-                .stream()
-                .map(this::toDTO)
-                .collect(Collectors.toList());
+    public Page<AdminPostDTO> findByApproved(Integer isApproved, Pageable pageable) {
+        return postDAO.findByIsApprovedForAdmin(isApproved, pageable).map(this::toDTO);
     }
 
     @Override

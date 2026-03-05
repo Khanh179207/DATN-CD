@@ -2,6 +2,7 @@ package poly.edu.dao;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import poly.edu.entity.Post;
 import poly.edu.entity.PostStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,7 +18,25 @@ public interface PostDAO extends JpaRepository<Post, Integer> {
 
     List<Post> findByIsApproved(Integer isApproved);
 
+    @Query(value = "SELECT p FROM Post p " +
+           "JOIN FETCH p.account " +
+           "JOIN FETCH p.category " +
+           "ORDER BY p.createdAt DESC",
+           countQuery = "SELECT COUNT(p) FROM Post p")
+    Page<Post> findAllForAdmin(Pageable pageable);
+
+    @Query(value = "SELECT p FROM Post p " +
+           "JOIN FETCH p.account " +
+           "JOIN FETCH p.category " +
+           "WHERE p.isApproved = :isApproved " +
+           "ORDER BY p.createdAt DESC",
+           countQuery = "SELECT COUNT(p) FROM Post p WHERE p.isApproved = :isApproved")
+    Page<Post> findByIsApprovedForAdmin(@Param("isApproved") Integer isApproved, Pageable pageable);
+
     List<Post> findByIsApprovedAndIsActive(Integer isApproved, Integer isActive);
+
+       @EntityGraph(attributePaths = {"account", "category"})
+       Page<Post> findByIsApprovedAndIsActiveOrderByCreatedAtDesc(Integer isApproved, Integer isActive, Pageable pageable);
 
     List<Post> findByAccount_AccountID(Integer accountID);
 
@@ -27,6 +46,9 @@ public interface PostDAO extends JpaRepository<Post, Integer> {
 
     List<Post> findByCategory_CategoryIDAndIsApprovedAndIsActive(Integer categoryID, Integer isApproved, Integer isActive);
 
+       @EntityGraph(attributePaths = {"account", "category"})
+       Page<Post> findByCategory_CategoryIDAndIsApprovedAndIsActive(Integer categoryID, Integer isApproved, Integer isActive, Pageable pageable);
+
     // ─── Public feed (APPROVED only) ──────────────────────────────────────────
 
     @Query("SELECT p FROM Post p WHERE p.status = 'APPROVED' " +
@@ -35,11 +57,37 @@ public interface PostDAO extends JpaRepository<Post, Integer> {
            "OR LOWER(p.ingredients) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     List<Post> searchByKeyword(@Param("keyword") String keyword);
 
+    @EntityGraph(attributePaths = {"account", "category"})
+    @Query(value = "SELECT p FROM Post p WHERE p.status = 'APPROVED' " +
+           "AND (LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+           "OR LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+           "OR LOWER(p.ingredients) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+           "ORDER BY p.createdAt DESC",
+           countQuery = "SELECT COUNT(p) FROM Post p WHERE p.status = 'APPROVED' " +
+                   "AND (LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+                   "OR LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+                   "OR LOWER(p.ingredients) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<Post> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
+
     @Query("SELECT p FROM Post p WHERE p.status = 'APPROVED' " +
            "AND p.category.categoryID = :categoryID " +
            "AND (LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
            "OR LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     List<Post> searchByKeywordAndCategory(@Param("keyword") String keyword, @Param("categoryID") Integer categoryID);
+
+    @EntityGraph(attributePaths = {"account", "category"})
+    @Query(value = "SELECT p FROM Post p WHERE p.status = 'APPROVED' " +
+           "AND p.category.categoryID = :categoryID " +
+           "AND (LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+           "OR LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+           "ORDER BY p.createdAt DESC",
+           countQuery = "SELECT COUNT(p) FROM Post p WHERE p.status = 'APPROVED' " +
+                   "AND p.category.categoryID = :categoryID " +
+                   "AND (LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+                   "OR LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<Post> searchByKeywordAndCategory(@Param("keyword") String keyword,
+                                          @Param("categoryID") Integer categoryID,
+                                          Pageable pageable);
 
     @Query("SELECT p FROM Post p WHERE p.status = 'APPROVED' ORDER BY p.createdAt DESC")
     List<Post> findLatest();

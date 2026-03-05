@@ -59,6 +59,7 @@ public class AdminAuditLog {
     public static final String EMAIL_JOB_FAILED   = "EMAIL_JOB_FAILED";
     public static final String USER_BANNED        = "USER_BANNED";
     public static final String USER_UNBANNED      = "USER_UNBANNED";
+    public static final String USER_FORCE_LOGOUT  = "USER_FORCE_LOGOUT";
     public static final String ROLE_ASSIGNED      = "ROLE_ASSIGNED";
     public static final String ROLE_REVOKED       = "ROLE_REVOKED";
     public static final String POST_APPROVED      = "POST_APPROVED";

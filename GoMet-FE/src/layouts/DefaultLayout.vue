@@ -16,9 +16,9 @@
       />
 
       <div class="page-body">
-        <router-view v-slot="{ Component, route }">
+        <router-view v-slot="{ Component }">
           <transition name="page-fade" mode="out-in">
-            <component :is="Component" :key="route.fullPath" />
+            <component :is="Component" :key="route?.fullPath || 'default-view'" />
           </transition>
         </router-view>
       </div>
@@ -70,7 +70,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useChatStore } from '@/stores/chat'
 import { useAuthStore } from '@/stores/auth'
 import { checkAccountStatus } from '@/services/authService'
@@ -84,6 +84,7 @@ import TheFooter from '@/components/footer/TheFooter.vue'
 import CompareFloatingBar from '@/components/common/CompareFloatingBar.vue'
 
 const router = useRouter()
+const route = useRoute()
 const chatStore = useChatStore()
 const authStore = useAuthStore()
 

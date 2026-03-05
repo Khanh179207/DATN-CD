@@ -64,6 +64,7 @@ public class Post {
     /** Moderation lifecycle status. Default = PENDING_REVIEW for all new posts. */
     @Column(length = 30)
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     private PostStatus status = PostStatus.PENDING_REVIEW;
 
     /** Human-readable rejection reason — only exposed to post owner and admins. */
@@ -86,6 +87,7 @@ public class Post {
     private Instant hiddenAt;
 
     /** Anti-spam score (0 = clean, higher = more suspicious). */
+    @Builder.Default
     private Integer spamScore = 0;
 
     /** JSON array of spam heuristic reasons (stored as string). */

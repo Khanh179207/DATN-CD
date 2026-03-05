@@ -2,7 +2,6 @@ package poly.edu.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -63,8 +62,6 @@ public class PostAntiSpamService {
 
     private static final int MAX_URLS          = 2;
     private static final int MAX_REPEAT_CHARS  = 5;   // 5+ same consecutive chars = suspicious
-    private static final int DUPLICATE_MINUTES = 60;  // same title within 60 min = duplicate
-
     private static final Pattern URL_PATTERN =
             Pattern.compile("https?://\\S+|www\\.\\S+", Pattern.CASE_INSENSITIVE);
 
@@ -97,7 +94,7 @@ public class PostAntiSpamService {
     public SpamCheckResult checkAndRecord(Account account, String ip,
                                           String title, String content,
                                           String ingredients,
-                                          List<Map<String, Object>> steps) {
+                                          List<String> stepDescriptions) {
         List<String> reasons = new ArrayList<>();
         int score = 0;
 
@@ -142,7 +139,7 @@ public class PostAntiSpamService {
         }
 
         // 3. Content heuristics
-        String fullText = joinText(title, content, ingredients, steps);
+        String fullText = joinText(title, content, ingredients, stepDescriptions);
 
         // URL count
         long urlCount = URL_PATTERN.matcher(fullText).results().count();
@@ -203,14 +200,13 @@ public class PostAntiSpamService {
     }
 
     private String joinText(String title, String content, String ingredients,
-                             List<Map<String, Object>> steps) {
+                             List<String> stepDescriptions) {
         StringBuilder sb = new StringBuilder();
         if (title != null)       sb.append(title).append(' ');
         if (content != null)     sb.append(content).append(' ');
         if (ingredients != null) sb.append(ingredients).append(' ');
-        if (steps != null) {
-            for (Map<String, Object> s : steps) {
-                Object desc = s.get("desc");
+        if (stepDescriptions != null) {
+            for (String desc : stepDescriptions) {
                 if (desc != null) sb.append(desc).append(' ');
             }
         }

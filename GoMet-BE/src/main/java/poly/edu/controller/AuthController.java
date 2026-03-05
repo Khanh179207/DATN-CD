@@ -18,6 +18,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import poly.edu.config.JwtTokenProvider;
 import poly.edu.dao.AccountDAO;
 import poly.edu.dao.RefreshTokenDAO;
 import poly.edu.dto.*;
@@ -57,6 +58,8 @@ public class AuthController {
     private final AuditLogService       auditLogService;
     private final TrustedDeviceService  trustedDeviceService;
     private final MagicLinkService      magicLinkService;
+    private final JwtTokenProvider      jwtTokenProvider;
+    private final JwtBlacklistService   jwtBlacklistService;
 
     // Field-injected because @RequiredArgsConstructor only covers final fields added before build
     @Autowired private RefreshTokenDAO refreshTokenDAO;
@@ -93,13 +96,8 @@ public class AuthController {
      *  • 429 Blocked               — rate-limit or lockout
      */
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody AuthRequestDTO req,
+    public ResponseEntity<?> login(@RequestBody @Valid AuthRequestDTO req,
                                    HttpServletRequest httpReq) {
-        if (req.getEmail() == null || req.getEmail().isBlank() ||
-            req.getPassword() == null || req.getPassword().isBlank()) {
-            return ResponseEntity.badRequest().body(err("Email and password are required."));
-        }
-
         AuthService.LoginResult result = authService.login(req, httpReq);
 
         if (result instanceof AuthService.LoginResult.Success) {
@@ -312,17 +310,24 @@ public class AuthController {
         } else {
             tokenService.revokeAllSessions(accountId);
         }
+
+        String authHeader = httpReq.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String accessToken = authHeader.substring(7).trim();
+            jwtTokenProvider.extractJti(accessToken).ifPresent(jti ->
+                    jwtTokenProvider.remainingTtl(accessToken)
+                            .ifPresent(ttl -> jwtBlacklistService.blacklist(jti, ttl))
+            );
+        }
+
         auditLogService.log(accountId, AuditLogService.SESSION_REVOKE_ALL, httpReq, Map.of());
         return ResponseEntity.ok(Map.of("message", "Logged out successfully."));
     }
 
     // ─── FORGOT PASSWORD ──────────────────────────────────────────────────────
     @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(@RequestBody ForgotPasswordRequestDTO req,
+    public ResponseEntity<?> forgotPassword(@RequestBody @Valid ForgotPasswordRequestDTO req,
                                              HttpServletRequest httpReq) {
-        if (req.getIdentifier() == null || req.getIdentifier().isBlank()) {
-            return ResponseEntity.badRequest().body(err("Identifier is required"));
-        }
         String ip        = RateLimitService.resolveIp(httpReq);
         String userAgent = httpReq.getHeader("User-Agent");
         try {
@@ -345,12 +350,8 @@ public class AuthController {
 
     // ─── RESET PASSWORD ───────────────────────────────────────────────────────
     @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequestDTO req,
+    public ResponseEntity<?> resetPassword(@RequestBody @Valid ResetPasswordRequestDTO req,
                                            HttpServletRequest httpReq) {
-        if (req.getToken() == null || req.getToken().isBlank())
-            return ResponseEntity.badRequest().body(err("Token is required"));
-        if (req.getNewPassword() == null || req.getNewPassword().isBlank())
-            return ResponseEntity.badRequest().body(err("New password is required"));
         try {
             Account account = passwordResetService.resetPasswordAndReturnAccount(req.getToken(), req.getNewPassword());
             if (account == null) {
@@ -424,9 +425,7 @@ public class AuthController {
 
     // ─── REGISTRATION (OTP flow) ──────────────────────────────────────────────
     @PostMapping("/send-otp")
-    public ResponseEntity<?> sendOtp(@RequestBody RegisterRequestDTO req) {
-        if (req.getEmail() == null || req.getUsername() == null || req.getPassword() == null)
-            return ResponseEntity.badRequest().body(err("All fields are required"));
+    public ResponseEntity<?> sendOtp(@RequestBody @Valid RegisterRequestDTO req) {
         if (req.getPassword().length() < 8)
             return ResponseEntity.badRequest().body(err("Password must be at least 8 characters"));
         if (accountDAO.findByEmail(req.getEmail()).isPresent())
@@ -446,7 +445,7 @@ public class AuthController {
     }
 
     @PostMapping("/verify-otp")
-    public ResponseEntity<?> verifyOtp(@RequestBody OtpVerifyRequestDTO req) {
+    public ResponseEntity<?> verifyOtp(@RequestBody @Valid OtpVerifyRequestDTO req) {
         if (!otpStore.verify(req.getEmail(), req.getOtp()))
             return ResponseEntity.badRequest().body(err("Invalid or expired verification code"));
 
@@ -477,7 +476,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequestDTO req) {
+    public ResponseEntity<?> register(@RequestBody @Valid RegisterRequestDTO req) {
         return sendOtp(req);
     }
 
@@ -496,9 +495,7 @@ public class AuthController {
             opt = accountDAO.findById(accountId);
         } else {
             // Fall back to legacy UUID token lookup
-            opt = accountDAO.findAll().stream()
-                    .filter(a -> token.equals(a.getToken()))
-                    .findFirst();
+            opt = accountDAO.findByTokenAndIsActive(token, 1);
         }
         if (opt.isEmpty())
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(err("Invalid token"));

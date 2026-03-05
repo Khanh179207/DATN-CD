@@ -26,6 +26,50 @@
     </div>
 
     <div class="bento-grid">
+
+      <div class="bento-card col-span-2 security-card glass-card animate-stagger" style="--i:0.5">
+        <div class="card-header">
+          <div class="h-title"><i class="fa-solid fa-shield-halved"></i> Security Pulse</div>
+          <router-link to="/admin/audit-log" class="btn-pill-xs">Open Audit</router-link>
+        </div>
+
+        <div class="security-metrics">
+          <div class="security-metric" :class="security.maintenanceMode ? 'is-warn' : 'is-ok'">
+            <span class="sec-label">Global Maintenance</span>
+            <strong>{{ security.maintenanceMode ? 'ON' : 'OFF' }}</strong>
+          </div>
+          <div class="security-metric" :class="security.moduleMaintenanceCount > 0 ? 'is-warn' : 'is-ok'">
+            <span class="sec-label">Module Lockdown</span>
+            <strong>{{ security.moduleMaintenanceCount }}</strong>
+          </div>
+          <div class="security-metric" :class="security.pendingModerationCount > 15 ? 'is-warn' : 'is-ok'">
+            <span class="sec-label">Pending Moderation</span>
+            <strong>{{ security.pendingModerationCount }}</strong>
+          </div>
+          <div class="security-metric" :class="security.failedEmailJobs > 0 ? 'is-warn' : 'is-ok'">
+            <span class="sec-label">Failed Email Jobs</span>
+            <strong>{{ security.failedEmailJobs }}</strong>
+          </div>
+        </div>
+
+        <div class="security-audit" v-if="security.recentAudit.length">
+          <div class="sec-subhead">Latest Admin Actions</div>
+          <div v-for="entry in security.recentAudit" :key="entry.id" class="audit-row">
+            <span class="audit-action">{{ entry.action }}</span>
+            <span class="audit-meta">{{ entry.actor }} • {{ entry.time }}</span>
+          </div>
+        </div>
+        <div class="security-audit empty" v-else>
+          Chưa có bản ghi audit gần đây.
+        </div>
+
+        <div class="security-actions">
+          <router-link to="/admin/maintenance" class="sec-link">Maintenance settings</router-link>
+          <router-link to="/admin/moderation" class="sec-link">Moderation inbox</router-link>
+          <router-link to="/admin/email-jobs" class="sec-link">Email jobs</router-link>
+          <router-link to="/admin/audit-log" class="sec-link">Audit timeline</router-link>
+        </div>
+      </div>
       
       <div class="bento-card col-span-2 post-card glass-card animate-stagger" style="--i:1">
         <div class="card-header">
@@ -157,9 +201,23 @@ import api from '@/services/api'
 
 const stats = reactive({ totalUsers: 0, totalPosts: 0, pendingPosts: 0, totalReports: 0, activeUsers: 0, estimatedRevenue: 0 })
 const data = reactive({ posts: [], reports: [], events: [], users: [], comments: [], categories: [], achievements: [], notifications: [] })
+const security = reactive({
+  maintenanceMode: false,
+  moduleMaintenanceCount: 0,
+  pendingModerationCount: 0,
+  failedEmailJobs: 0,
+  recentAudit: []
+})
 const loading = ref(true)
 
 const formatRevenue = (v) => v >= 1000000 ? (v / 1000000).toFixed(1) + 'M ₫' : v + ' ₫'
+
+const safeCount = (payload) => {
+  if (Array.isArray(payload)) return payload.length
+  if (typeof payload?.totalElements === 'number') return payload.totalElements
+  if (Array.isArray(payload?.content)) return payload.content.length
+  return 0
+}
 
 const fetchAll = async () => {
   loading.value = true
@@ -257,6 +315,40 @@ const fetchAll = async () => {
           content: n.title || n.content || 'Notification',
           time: n.createdAt ? new Date(n.createdAt).toLocaleDateString('en-GB') : ''
         }))
+    }
+
+    const [maintenanceRes, moderationRes, failedEmailRes, auditRes] = await Promise.allSettled([
+      api.get('/api/admin/system/settings'),
+      api.get('/api/admin/moderation/posts', { params: { status: 'PENDING_REVIEW', page: 0, size: 1 } }),
+      api.get('/api/admin/email/jobs', { params: { status: 'FAILED', page: 0, size: 1 } }),
+      api.get('/api/admin/audit', { params: { page: 0, size: 4 } })
+    ])
+
+    if (maintenanceRes.status === 'fulfilled') {
+      const maintenance = maintenanceRes.value.data || {}
+      security.maintenanceMode = !!maintenance.maintenanceMode
+      security.moduleMaintenanceCount = Array.isArray(maintenance.modules)
+        ? maintenance.modules.filter(m => !!m.enabled).length
+        : 0
+    }
+
+    if (moderationRes.status === 'fulfilled') {
+      security.pendingModerationCount = safeCount(moderationRes.value.data)
+    }
+
+    if (failedEmailRes.status === 'fulfilled') {
+      security.failedEmailJobs = safeCount(failedEmailRes.value.data)
+    }
+
+    if (auditRes.status === 'fulfilled') {
+      const auditPayload = auditRes.value.data
+      const rows = Array.isArray(auditPayload) ? auditPayload : (auditPayload?.content || [])
+      security.recentAudit = rows.slice(0, 4).map(row => ({
+        id: row.id,
+        action: row.actionType || 'ACTION',
+        actor: row.actorName || `Admin #${row.actorId || '?'}`,
+        time: row.createdAt ? new Date(row.createdAt).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' }) : '-'
+      }))
     }
 
     // Fetch recent achievements from achievement endpoint
@@ -439,6 +531,89 @@ onMounted(fetchAll)
 .dot { width: 8px; height: 8px; background: #3B82F6; border-radius: 50%; box-shadow: 0 0 5px rgba(59, 130, 246, 0.5); }
 .noti-pill .time { font-size: 0.75rem; opacity: 0.7; margin-left: auto; }
 
+/* 0. SECURITY CARD */
+.security-card { border-left: 4px solid #2563EB; }
+.security-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.security-metric {
+  border-radius: 12px;
+  padding: 10px;
+  border: 1px solid rgba(0,0,0,0.05);
+  background: rgba(255,255,255,0.65);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.security-metric .sec-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #64748B;
+  font-weight: 800;
+}
+.security-metric strong {
+  font-size: 1rem;
+  color: #0F172A;
+}
+.security-metric.is-ok strong { color: #15803D; }
+.security-metric.is-warn strong { color: #B45309; }
+
+.security-audit {
+  background: rgba(248,250,252,0.7);
+  border: 1px solid rgba(226,232,240,0.8);
+  border-radius: 12px;
+  padding: 10px;
+}
+.security-audit.empty {
+  color: #64748B;
+  font-size: 0.82rem;
+}
+.sec-subhead {
+  font-size: 0.75rem;
+  color: #64748B;
+  font-weight: 800;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.audit-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 2px;
+  border-bottom: 1px dashed rgba(148,163,184,0.25);
+}
+.audit-row:last-child { border-bottom: none; }
+.audit-action { font-weight: 800; font-size: 0.82rem; color: #1E293B; }
+.audit-meta { font-size: 0.75rem; color: #64748B; text-align: right; }
+
+.security-actions {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sec-link {
+  text-decoration: none;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #1D4ED8;
+  background: rgba(219,234,254,0.6);
+  border: 1px solid rgba(191,219,254,0.8);
+  padding: 6px 10px;
+  border-radius: 999px;
+  transition: 0.2s;
+}
+.sec-link:hover {
+  background: #1D4ED8;
+  color: #fff;
+}
+
 /* ANIMATIONS */
 .animate-enter { animation: fadeInDown 0.6s ease-out; }
 .animate-stagger { opacity: 0; animation: slideUpFade 0.5s ease-out forwards; animation-delay: calc(var(--i) * 0.1s); }
@@ -448,5 +623,12 @@ onMounted(fetchAll)
 
 /* RESPONSIVE */
 @media (max-width: 1200px) { .bento-grid { grid-template-columns: repeat(2, 1fr); } .col-span-2 { grid-column: span 2; } }
-@media (max-width: 768px) { .bento-grid { grid-template-columns: 1fr; } .col-span-2 { grid-column: span 1; } }
+@media (max-width: 1024px) { .security-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 768px) {
+  .bento-grid { grid-template-columns: 1fr; }
+  .col-span-2 { grid-column: span 1; }
+  .security-metrics { grid-template-columns: 1fr; }
+  .audit-row { flex-direction: column; align-items: flex-start; }
+  .audit-meta { text-align: left; }
+}
 </style>

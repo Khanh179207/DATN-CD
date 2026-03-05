@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.time.Instant;
+import java.time.Duration;
 import java.util.Date;
 import java.util.HexFormat;
 import java.util.Optional;
@@ -81,6 +82,23 @@ public class JwtTokenProvider {
     public Optional<String> extractEmail(String token) {
         return validateAndParse(token)
                 .map(c -> c.get("email", String.class));
+    }
+
+    public Optional<String> extractJti(String token) {
+        return validateAndParse(token)
+                .map(Claims::getId);
+    }
+
+    public Optional<Instant> extractExpiration(String token) {
+        return validateAndParse(token)
+                .map(Claims::getExpiration)
+                .map(Date::toInstant);
+    }
+
+    public Optional<Duration> remainingTtl(String token) {
+        return extractExpiration(token)
+                .map(exp -> Duration.between(Instant.now(), exp))
+                .filter(ttl -> !ttl.isNegative() && !ttl.isZero());
     }
 
     public boolean isTokenExpired(String token) {

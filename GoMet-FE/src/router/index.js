@@ -215,11 +215,20 @@ const router = createRouter({
 // ─── NAVIGATION GUARDS ────────────────────────────────────────────────────────
 router.beforeEach(async (to, from, next) => {
   const userStr = localStorage.getItem('user')
-  const user    = userStr ? JSON.parse(userStr) : null
+  let user = null
+  if (userStr) {
+    try {
+      user = JSON.parse(userStr)
+    } catch {
+      user = null
+      localStorage.removeItem('user')
+    }
+  }
   // Check both the dedicated key and the value stored inside the user object
   const accessToken = localStorage.getItem('accessToken') || user?.accessToken
   const isLoggedIn = !!(user?.token || accessToken)
   const isAdmin    = isLoggedIn && (user?.isAdmin === true || user?.isAdmin === 1 || user?.role === 'admin')
+  const matchedRoutes = Array.isArray(to?.matched) ? to.matched : []
 
   const systemSettingsStore = useSystemSettingsStore()
   try {
@@ -238,7 +247,7 @@ router.beforeEach(async (to, from, next) => {
   }
 
   // 1. Admin-only routes: must be logged in AND be an admin
-  if (to.matched.some(r => r.meta?.requiresAdmin)) {
+  if (matchedRoutes.some(r => r.meta?.requiresAdmin)) {
     if (!isLoggedIn) {
       // Not logged in → go to home (landing), show a flash in query
       return next({ path: '/', query: { redirect: to.fullPath } })
@@ -250,7 +259,7 @@ router.beforeEach(async (to, from, next) => {
   }
 
   // 2. Auth-required routes
-  if (to.matched.some(r => r.meta?.requiresAuth)) {
+  if (matchedRoutes.some(r => r.meta?.requiresAuth)) {
     if (!isLoggedIn) {
       return next({ path: '/home', query: { login: '1' } })
     }

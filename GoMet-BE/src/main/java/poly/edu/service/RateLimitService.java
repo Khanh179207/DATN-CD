@@ -2,6 +2,8 @@ package poly.edu.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,7 +17,6 @@ import java.security.MessageDigest;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HexFormat;
-import java.util.Optional;
 
 /**
  * Phase 1 — Brute-Force Protection.
@@ -50,14 +51,33 @@ public class RateLimitService {
     private static final Duration RATE_WINDOW     = Duration.ofMinutes(15);
     private static final int      MAX_PER_IP      = 20;
     private static final int      MAX_PER_IDENT   = 10;
+    private static final String   KEY_IP_PREFIX   = "rate:login:ip:";
+    private static final String   KEY_ID_PREFIX   = "rate:login:id:";
 
     private final LoginAttemptDAO loginAttemptDAO;
     private final AccountDAO      accountDAO;
+
+    @Autowired(required = false)
+    private StringRedisTemplate redisTemplate;
 
     // ── Rate-check API ────────────────────────────────────────────────────────
 
     /** Returns true if the IP should be blocked (too many failures in window). */
     public boolean isIpBlocked(String ip) {
+        if (redisTemplate != null && ip != null && !ip.isBlank()) {
+            try {
+                String key = KEY_IP_PREFIX + ip;
+                String raw = redisTemplate.opsForValue().get(key);
+                if (raw != null) {
+                    try {
+                        return Integer.parseInt(raw) >= MAX_PER_IP;
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
+            } catch (Exception ex) {
+                log.debug("Redis isIpBlocked fallback to DB: {}", ex.getMessage());
+            }
+        }
         Instant since = Instant.now().minus(RATE_WINDOW);
         long count = loginAttemptDAO.countFailedByIp(ip, since);
         return count >= MAX_PER_IP;
@@ -65,6 +85,20 @@ public class RateLimitService {
 
     /** Returns true if the identifier (email/username) is being hammered. */
     public boolean isIdentifierRateLimited(String identifier) {
+        if (redisTemplate != null && identifier != null && !identifier.isBlank()) {
+            try {
+                String key = KEY_ID_PREFIX + identifier.toLowerCase();
+                String raw = redisTemplate.opsForValue().get(key);
+                if (raw != null) {
+                    try {
+                        return Integer.parseInt(raw) >= MAX_PER_IDENT;
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
+            } catch (Exception ex) {
+                log.debug("Redis isIdentifierRateLimited fallback to DB: {}", ex.getMessage());
+            }
+        }
         Instant since = Instant.now().minus(RATE_WINDOW);
         long count = loginAttemptDAO.countFailedByIdentifier(identifier.toLowerCase(), since);
         return count >= MAX_PER_IDENT;
@@ -111,6 +145,7 @@ public class RateLimitService {
 
     public void recordAnonymousFailure(String identifier, String ip, String userAgent, String reason) {
         saveAttempt(null, identifier, ip, userAgent, "PASSWORD", false, reason);
+        incrementCounters(identifier, ip);
     }
 
     // ── Lockout remaining seconds ─────────────────────────────────────────────
@@ -136,6 +171,34 @@ public class RateLimitService {
                 .createdAt(Instant.now())
                 .build();
         loginAttemptDAO.save(attempt);
+
+        if (!success) {
+            incrementCounters(identifier, ip);
+        }
+    }
+
+    private void incrementCounters(String identifier, String ip) {
+        if (redisTemplate == null) return;
+
+        try {
+            if (ip != null && !ip.isBlank()) {
+                String ipKey = KEY_IP_PREFIX + ip;
+                Long ipCount = redisTemplate.opsForValue().increment(ipKey);
+                if (ipCount != null && ipCount == 1L) {
+                    redisTemplate.expire(ipKey, RATE_WINDOW);
+                }
+            }
+
+            if (identifier != null && !identifier.isBlank()) {
+                String identifierKey = KEY_ID_PREFIX + identifier.toLowerCase();
+                Long idCount = redisTemplate.opsForValue().increment(identifierKey);
+                if (idCount != null && idCount == 1L) {
+                    redisTemplate.expire(identifierKey, RATE_WINDOW);
+                }
+            }
+        } catch (Exception ex) {
+            log.debug("Redis incrementCounters fallback to DB-only mode: {}", ex.getMessage());
+        }
     }
 
     public static String sha256(String input) {

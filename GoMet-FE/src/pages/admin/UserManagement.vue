@@ -104,6 +104,12 @@
             <!-- Actions -->
             <div class="detail-footer-actions">
               <button
+                @click="forceLogoutUser(detailModal.user); detailModal.show = false"
+                class="detail-action-btn dab-force"
+              >
+                <i class="fa-solid fa-power-off"></i> Force logout
+              </button>
+              <button
                 @click="askBanAction(detailModal.user); detailModal.show = false"
                 class="detail-action-btn"
                 :class="detailModal.user.isActive ? 'dab-warn' : 'dab-ok'"
@@ -251,6 +257,13 @@
                   title="Xóa vĩnh viễn"
                 >
                   <i class="fa-solid fa-trash-can"></i>
+                </button>
+                <button
+                  @click="forceLogoutUser(user)"
+                  class="btn-action-icon btn-force"
+                  title="Force logout toàn bộ phiên"
+                >
+                  <i class="fa-solid fa-power-off"></i>
                 </button>
               </div>
             </td>
@@ -444,6 +457,20 @@ const deleteUser = async (id) => {
   }
 }
 
+const forceLogoutUser = async (user) => {
+  if (!user?.accountID) return
+  const ok = confirm(`Force logout toàn bộ phiên của "${user.username}" và thu hồi trusted devices?`)
+  if (!ok) return
+
+  try {
+    await api.patch(`/admin/accounts/${user.accountID}/force-logout`, { revokeDevices: true })
+    toast.success(`Đã force logout user ${user.username}`)
+  } catch (err) {
+    console.error('Lỗi force logout user:', err)
+    toast.error(err.response?.data?.message || 'Force logout thất bại!')
+  }
+}
+
 onMounted(fetchUsers)
 </script>
 
@@ -514,6 +541,8 @@ onMounted(fetchUsers)
 .btn-danger:hover  { background: #EF4444; color: white; transform: translateY(-2px); }
 .btn-view    { color: #3B82F6; border-color: #DBEAFE; }
 .btn-view:hover    { background: #DBEAFE; transform: translateY(-2px); }
+.btn-force   { color: #7C3AED; border-color: #EDE9FE; }
+.btn-force:hover   { background: #EDE9FE; transform: translateY(-2px); }
 
 /* ── DETAIL MODAL ── */
 .detail-modal-card { background: white; border-radius: 24px; padding: 0; max-width: 520px; width: 92%; position: relative; box-shadow: 0 30px 70px rgba(0,0,0,0.25); overflow: hidden; animation: modalPop 0.3s cubic-bezier(0.34,1.56,0.64,1); }
@@ -625,6 +654,8 @@ onMounted(fetchUsers)
 /* DETAIL ACTION — EMAIL */
 .dab-email { background: #EFF6FF; color: #2563EB; }
 .dab-email:hover { background: #3B82F6; color: white; }
+.dab-force { background: #F3E8FF; color: #7C3AED; }
+.dab-force:hover { background: #7C3AED; color: white; }
 
 /* SLIDE DOWN TRANSITION */
 .slide-down-enter-active, .slide-down-leave-active { transition: all 0.25s ease; }
