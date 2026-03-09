@@ -97,7 +97,7 @@ const props = defineProps({
 })
 
 // 🔥 [THÊM MỚI] Khai báo emit
-const emit = defineEmits(['save-to-plan'])
+const emit = defineEmits(['save-to-plan','unsaved'])
 
 const { t } = useI18n()
 const router = useRouter()
@@ -135,6 +135,7 @@ const toggleSave = async () => {
     if (isSaved.value) {
       await removeFavorite(uid, props.post.id)
       isSaved.value = false
+      emit('unsaved', props.post.id)
       toast.info(t('toast.unsave_ok'))
     } else {
       await addFavorite(uid, props.post.id)
