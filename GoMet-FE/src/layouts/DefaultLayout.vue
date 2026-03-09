@@ -30,8 +30,9 @@
     <MiniChatBox />
     <CompareFloatingBar />
 
+    <GometAiChat ref="aiChatRef" />
+
     <button 
-      v-if="!isAiChatting"
       class="float-ai-btn" 
       @click="openAiChat"
       title="Chat with Gomet AI"
@@ -60,7 +61,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { useRouter, useRoute } from 'vue-router' // 🔥 Import useRoute
+import { useRouter, useRoute } from 'vue-router'
 import { useChatStore } from '@/stores/chat' 
 
 import Sidebar from '@/components/sidebar/Sidebar.vue'
@@ -72,25 +73,25 @@ import ChatSidebar from '@/components/chat/ChatSidebar.vue'
 import TheFooter from '@/components/footer/TheFooter.vue'
 import CompareFloatingBar from '@/components/common/CompareFloatingBar.vue'
 
+// 🔥 Import Component GometAiChat mới tạo
+import GometAiChat from '@/components/chat/GometAiChat.vue'
+
 const router = useRouter()
-const route = useRoute() // 🔥 Khởi tạo để theo dõi meta.isDark
+const route = useRoute()
 const chatStore = useChatStore() 
 
 const showAuthModal = ref(false)
 const showPremium = ref(false)
 const modalTab = ref('login')
 
-const isAiChatting = computed(() => chatStore.activeChat?.id === 'gomet-ai')
+// Tạo biến ref để điều khiển component GometAiChat
+const aiChatRef = ref(null)
 
+// Hàm gọi mở AI Chat khi bấm vào nút cam
 const openAiChat = () => {
-  const aiBot = {
-    id: 'gomet-ai',
-    name: 'Gomet AI 🤖',
-    avatar: 'https://cdn-icons-png.flaticon.com/512/4712/4712027.png', 
-    isOnline: true,
-    lastMessage: 'Hello, how can I help you?'
+  if (aiChatRef.value) {
+    aiChatRef.value.openChat()
   }
-  chatStore.openChat(aiBot)
 }
 
 const openAuth = (tab) => { 
@@ -106,7 +107,7 @@ const handleLogout = async () => {
 </script>
 
 <style scoped>
-/* ─── Layout Shell ─── */
+/* Giữ nguyên toàn bộ CSS của sếp */
 .app-container {
   display: flex;
   height: 100vh;
@@ -115,12 +116,11 @@ const handleLogout = async () => {
   font-family: var(--font-body);
   color: var(--color-neutral-900);
   position: relative;
-  transition: background-color 0.4s ease; /* Chuyển màu nền mượt mà */
+  transition: background-color 0.4s ease;
 }
 
-/* 🔥 Trạng thái trang Premium/Dark */
 .app-container.is-dark-theme {
-  background-color: #000000 !important; /* Biến nền layout thành đen hoàn toàn */
+  background-color: #000000 !important;
 }
 
 .fixed-sidebar {
@@ -138,9 +138,8 @@ const handleLogout = async () => {
   position: relative;
 }
 
-/* 🔥 Ép nội dung tràn lên dưới Header khi ở Dark Theme */
 .is-dark-theme .page-body {
-  margin-top: calc(-1 * var(--header-height, 80px)); /* Kéo nội dung lên trên */
+  margin-top: calc(-1 * var(--header-height, 80px));
 }
 
 .page-body {
@@ -150,7 +149,6 @@ const handleLogout = async () => {
   width: 100%;
 }
 
-/* ─── Page Transition ─── */
 .page-fade-enter-active,
 .page-fade-leave-active {
   transition: opacity var(--duration-normal) var(--ease-out),
@@ -159,7 +157,7 @@ const handleLogout = async () => {
 .page-fade-enter-from { opacity: 0; transform: translateY(10px); }
 .page-fade-leave-to   { opacity: 0; transform: translateY(-10px); }
 
-/* ─── Floating UI ─── */
+/* Nút GoMet Assistant giữ nguyên */
 .float-ai-btn {
   position: fixed;
   bottom: var(--space-8);
@@ -177,7 +175,6 @@ const handleLogout = async () => {
   transition: var(--transition-spring);
 }
 
-/* Đổi màu nút Assistant khi ở nền tối để không bị quá chói */
 .is-dark-theme .float-ai-btn {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.2);

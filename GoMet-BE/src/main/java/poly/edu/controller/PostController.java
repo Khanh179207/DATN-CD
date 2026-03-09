@@ -9,6 +9,7 @@ import poly.edu.entity.*;
 
 import java.time.LocalDate;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -26,6 +27,30 @@ public class PostController {
     private final AccountDAO accountDAO;
     private final CategoryDAO categoryDAO;
     private final CookingStepsDAO cookingStepsDAO;
+
+    // ─── API MỚI: Search Mini (Đồng bộ với AI Chat) ────────────────────
+    /**
+     * API này trả về danh sách ID và Tiêu đề bài viết thu gọn.
+     * Dùng để AI Chatbot có thể tra cứu nhanh dữ liệu thực tế.
+     */
+    @GetMapping("/search-mini")
+    public ResponseEntity<List<Map<String, Object>>> searchMini(@RequestParam String q) {
+        // Tìm kiếm theo từ khóa q và chỉ lấy những bài đã duyệt + đang hoạt động
+        List<Post> posts = postDAO.searchByKeyword(q).stream()
+                .filter(p -> p.getIsApproved() == 1 && p.getIsActive() == 1)
+                .limit(10) // Giới hạn 10 kết quả để tối ưu cho AI
+                .collect(Collectors.toList());
+
+        // Chỉ map ID và Title để gửi qua AI cho nhẹ (tiết kiệm Token)
+        List<Map<String, Object>> result = posts.stream().map(p -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", p.getPostID());
+            map.put("title", p.getTitle());
+            return map;
+        }).collect(Collectors.toList());
+
+        return ResponseEntity.ok(result);
+    }
 
     // ─── List latest posts (home feed) ─────────────────────────────────
     @GetMapping("/latest")
@@ -290,9 +315,9 @@ public class PostController {
             String ingredients = (String) body.getOrDefault("ingredients", "");
             String media = (String) body.getOrDefault("media", "");
             Integer level = body.get("level") instanceof Integer ? (Integer) body.get("level")
-                         : body.get("level") != null ? Integer.parseInt(body.get("level").toString()) : 2;
+                    : body.get("level") != null ? Integer.parseInt(body.get("level").toString()) : 2;
             Integer cookingTime = body.get("cookingTime") instanceof Integer ? (Integer) body.get("cookingTime")
-                               : body.get("cookingTime") != null ? Integer.parseInt(body.get("cookingTime").toString()) : 30;
+                    : body.get("cookingTime") != null ? Integer.parseInt(body.get("cookingTime").toString()) : 30;
 
             Account account = accountDAO.findById(accountID).orElse(null);
             if (account == null) return ResponseEntity.badRequest().body("Invalid accountID");

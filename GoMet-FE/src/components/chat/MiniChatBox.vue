@@ -58,17 +58,6 @@
               {{ msg.timeStr }}
             </div>
           </div>
-
-          <div v-if="isTyping" class="msg-item not-mine is-last">
-            <div class="msg-content">
-              <div class="msg-avatar-container">
-                <img :src="chatStore.activeChat.avatar" class="msg-avatar">
-              </div>
-              <div class="bubble typing-bubble">
-                <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-              </div>
-            </div>
-          </div>
         </div>
 
         <div class="chat-footer">
@@ -81,11 +70,10 @@
               v-model="inputMsg" 
               placeholder="Nhập tin nhắn..." 
               @keyup.enter="sendMsg"
-              :disabled="isTyping"
               ref="chatInput"
             >
           </div>
-          <button class="btn-send" @click="sendMsg" :disabled="isTyping || !inputMsg.trim()" title="Gửi">
+          <button class="btn-send" @click="sendMsg" :disabled="!inputMsg.trim()" title="Gửi">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
           </button>
         </div>
@@ -98,7 +86,6 @@
 import { ref, watch, nextTick, computed, onUnmounted } from 'vue'
 import { useChatStore } from '@/stores/chat'
 import { useAuthStore } from '@/stores/auth' 
-import { chatWithAIChef } from '@/services/aiService'
 import SockJS from 'sockjs-client'
 import Stomp from 'stompjs'
 import axios from 'axios'
@@ -109,17 +96,14 @@ const isMinimized = ref(false)
 const inputMsg = ref('')
 const msgContainer = ref(null)
 const chatInput = ref(null)
-const isTyping = ref(false)
 const messages = ref([])
 const stompClient = ref(null)
 
-// Lấy ID người dùng hiện tại (ép kiểu Number để so sánh chính xác)
+// Lấy ID người dùng hiện tại
 const currentUserId = computed(() => {
   const id = authStore.user?.accountID || authStore.user?.id;
   return id ? Number(id) : null;
 })
-
-const isAiChat = computed(() => chatStore.activeChat?.id === 'gomet-ai')
 
 const formatTime = (dateInput) => {
   if (!dateInput) return 'vừa xong'
@@ -131,10 +115,9 @@ const formatTime = (dateInput) => {
 /**
  * HÀM QUAN TRỌNG: Map dữ liệu từ Backend Entity sang format hiển thị của Vue
  */
-// Trong MiniChatBox.vue
 const mapMessage = (msg) => {
   return {
-    text: msg.content, // Phải là .content vì Message Entity của sếp dùng content
+    text: msg.content, 
     isMine: Number(msg.sender?.accountID) === currentUserId.value,
     timeStr: formatTime(msg.createdAt)
   };
@@ -152,7 +135,7 @@ const connectWebSocket = (conversationId) => {
       const receivedMsg = JSON.parse(payload.body)
       
       const senderId = Number(receivedMsg.sender?.accountID || receivedMsg.senderID)
-      // Chỉ push nếu là tin nhắn của đối phương (vì mình đã tự push local khi nhấn gửi)
+      // Chỉ push nếu là tin nhắn của đối phương 
       if (senderId !== currentUserId.value) {
         messages.value.push(mapMessage(receivedMsg))
         scrollToBottom()
@@ -162,18 +145,15 @@ const connectWebSocket = (conversationId) => {
 }
 
 /**
- * HÀM LẤY LỊCH SỬ: Đã thêm log để debug
+ * HÀM LẤY LỊCH SỬ
  */
 const fetchHistory = async (convId) => {
-  if (!convId || convId === 'undefined' || convId === 'gomet-ai') return;
+  if (!convId || convId === 'undefined') return;
 
   try {
     const res = await axios.get(`http://localhost:8080/api/messages/${convId}`);
-    console.log("Dữ liệu lịch sử từ Backend:", res.data); // Xem dữ liệu thô ở F12
-
     // Chuyển đổi toàn bộ mảng tin nhắn cũ sang format hiển thị
     messages.value = res.data.map(msg => mapMessage(msg));
-    
     scrollToBottom();
   } catch (err) {
     console.error("Lỗi khi tải lịch sử chat:", err);
@@ -184,13 +164,11 @@ const fetchHistory = async (convId) => {
 watch(() => chatStore.activeChat, async (newVal) => {
   if (newVal) {
     isMinimized.value = false;
-    messages.value = []; // Reset tin nhắn cũ để tránh bị "râu ông nọ cắm cằm bà kia"
+    messages.value = []; 
     
     const convId = newVal.id || newVal.conversationID;
 
-    if (convId === 'gomet-ai') {
-      messages.value = [{ text: '👋 Xin chào! Tôi là Gomet AI, tôi có thể giúp gì cho bạn?', isMine: false, timeStr: formatTime(new Date()) }]
-    } else if (convId) {
+    if (convId) {
       // Gọi API lấy lịch sử trước, sau đó mới kết nối socket
       await fetchHistory(convId);
       connectWebSocket(convId);
@@ -200,29 +178,19 @@ watch(() => chatStore.activeChat, async (newVal) => {
   }
 }, { immediate: true })
 
-const sendMsg = async () => {
+const sendMsg = () => {
   const text = inputMsg.value.trim()
   if (!text || !chatStore.activeChat) return
 
   const conversationId = chatStore.activeChat.id || chatStore.activeChat.conversationID;
   
-  // Hiển thị tin nhắn của mình ngay lập tức lên giao diện (Optimistic UI)
+  // Hiển thị tin nhắn của mình ngay lập tức lên giao diện
   messages.value.push({ text, isMine: true, timeStr: formatTime(new Date()) })
   inputMsg.value = ''
   scrollToBottom()
 
-  if (isAiChat.value) {
-    isTyping.value = true
-    try {
-      const reply = await chatWithAIChef(messages.value.slice(1, -1), text)
-      messages.value.push({ text: reply, isMine: false, timeStr: formatTime(new Date()) })
-    } catch (err) { 
-      messages.value.push({ text: 'Có lỗi xảy ra với AI!', isMine: false, timeStr: formatTime(new Date()) })
-    } finally { 
-      isTyping.value = false
-      scrollToBottom() 
-    }
-  } else if (stompClient.value?.connected) {
+  // Gửi qua WebSocket
+  if (stompClient.value?.connected) {
     const chatMessage = {
       content: text,
       conversation: { conversationID: conversationId },
