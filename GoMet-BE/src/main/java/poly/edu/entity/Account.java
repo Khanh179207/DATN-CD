@@ -1,5 +1,6 @@
 package poly.edu.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -54,40 +55,51 @@ public class Account {
     private LocalDate deletedAt;
 
     // Relationships
-
+    @JsonIgnore
     @OneToMany(mappedBy = "account")
     private List<Post> posts;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "account")
     private List<Comment> comments;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "account")
     private List<Rating> ratings;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "account")
     private List<Favorite> favorites;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "follower")
     private List<Follow> following;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "followee")
     private List<Follow> followers;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "account")
     private List<History> histories;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "account")
     private List<Notification> notifications;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "account")
     private List<Subscription> subscriptions;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "account")
     private List<UserAchievement> userAchievements;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "account")
     private List<Error> errors;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "account")
     private List<Report> reports;
 

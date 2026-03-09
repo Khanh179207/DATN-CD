@@ -169,7 +169,7 @@ const markCompleted = async (dayIdx, type, id) => {
 }
 
 const goToSearch = (date, type) => router.push({ path: '/search', query: { planDate: date, mealType: type } })
-const showDishDetail = (dish) => dish.postId ? router.push(`/recipe/${dish.postId}`) : showToast(`Món: ${dish.name}`)
+const showDishDetail = (dish) => dish.postId ? router.push(`/post/${dish.postId}`) : showToast(`Món: ${dish.name}`)
 
 const getMealLabel = (t) => ({ 'BREAKFAST': 'Sáng', 'LUNCH': 'Trưa', 'DINNER': 'Tối' })[t]
 const getDayNameVN = (n) => ({ 'MON': 'THỨ 2', 'TUE': 'THỨ 3', 'WED': 'THỨ 4', 'THU': 'THỨ 5', 'FRI': 'THỨ 6', 'SAT': 'THỨ 7', 'SUN': 'CN' })[n]

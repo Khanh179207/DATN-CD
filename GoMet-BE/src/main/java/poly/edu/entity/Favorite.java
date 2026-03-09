@@ -4,7 +4,12 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "Favorite")
+@Table(
+        name = "Favorite",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"AccountID","PostID"})
+        }
+)
 @Data
 @Builder
 @NoArgsConstructor
@@ -15,11 +20,11 @@ public class Favorite {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer favoriteID;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "AccountID", nullable = false)
     private Account account;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "PostID", nullable = false)
     private Post post;
 }

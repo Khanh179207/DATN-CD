@@ -15,4 +15,5 @@ public interface FavoriteDAO extends JpaRepository<Favorite, Integer> {
     long countByPost_PostID(Integer postID);
 
     boolean existsByAccount_AccountIDAndPost_PostID(Integer accountID, Integer postID);
+    void deleteByAccount_AccountIDAndPost_PostID(Integer accountID, Integer postID);
 }
