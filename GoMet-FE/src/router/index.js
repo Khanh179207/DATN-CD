@@ -13,7 +13,7 @@ import CreatePost from '@/pages/CreatePost.vue'
 
 // --- 3. IMPORT NEW PAGES (EDITORIAL LUXURY) ---
 import ProfilePage from '@/pages/profile/ProfilePage.vue'
-import EventList from '@/pages/events/EventList.vue'
+import EventList from '@/pages/events/EventPage.vue'
 import EventDetail from '@/pages/events/EventDetail.vue'
 import ComparePage from '@/pages/compare/ComparePage.vue'
 
@@ -99,19 +99,19 @@ const routes = [
         path: 'leaderboard',
         name: 'Leaderboard',
         component: Leaderboard,
-        meta: { isDark: true } // 🔥 Gắn cờ đen
+        meta: { isDark: true } 
       },
       {
         path: 'suggestions',
         name: 'Suggestions',
         component: Suggestions,
-        meta: { isDark: true } // 🔥 Gắn cờ đen
+        meta: { isDark: true } 
       },
       {
         path: 'meal-plan',
         name: 'MealPlan',
         component: MealPlan,
-        meta: { isDark: true } // 🔥 Gắn cờ đen
+        meta: { isDark: true } 
       }
     ]
   },

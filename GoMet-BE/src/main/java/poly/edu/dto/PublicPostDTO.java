@@ -28,4 +28,6 @@ public class PublicPostDTO {
     private Long ratingCount;
     private Long commentCount;
     private Long favoriteCount;
+    // Thêm vào trong file PublicPostDTO.java
+    private Boolean isLiked; // Nhớ dùng Boolean (chữ B hoa) sếp nhé
 }

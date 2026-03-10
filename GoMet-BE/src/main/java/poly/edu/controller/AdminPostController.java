@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dto.AdminPostDTO;
-import poly.edu.service.PostService;
+import poly.edu.service.AdminPostService;
 
 import java.util.List;
 import java.util.Map;
@@ -15,38 +15,38 @@ import java.util.Map;
 @CrossOrigin
 public class AdminPostController {
 
-    private final PostService postService;
+    private final AdminPostService adminpostService;
 
     // Tab Tất cả
     @GetMapping
     public ResponseEntity<List<AdminPostDTO>> getAll() {
-        return ResponseEntity.ok(postService.findAll());
+        return ResponseEntity.ok(adminpostService.findAll());
     }
 
     // Tab Đã duyệt / Chờ duyệt
     @GetMapping("/approved/{status}")
     public ResponseEntity<List<AdminPostDTO>> getByApproved(@PathVariable Integer status) {
-        return ResponseEntity.ok(postService.findByApproved(status));
+        return ResponseEntity.ok(adminpostService.findByApproved(status));
     }
 
     // Duyệt bài
     @PutMapping("/approve/{id}")
     public ResponseEntity<?> approve(@PathVariable Integer id) {
-        postService.approvePost(id);
+        adminpostService.approvePost(id);
         return ResponseEntity.ok(Map.of("message", "Post approved"));
     }
 
     // Deactive bài
     @PutMapping("/deactive/{id}")
     public ResponseEntity<?> deactive(@PathVariable Integer id) {
-        postService.deactivePost(id);
+        adminpostService.deactivePost(id);
         return ResponseEntity.ok(Map.of("message", "Post deactivated"));
     }
 
     // Xóa bài
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Integer id) {
-        postService.deletePost(id);
+        adminpostService.deletePost(id);
         return ResponseEntity.ok(Map.of("message", "Post deleted"));
     }
 }

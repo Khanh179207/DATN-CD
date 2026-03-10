@@ -1,163 +1,168 @@
 <template>
   <div class="event-detail-page">
-    
     <div v-if="loading" class="post-loading"><div class="spinner-ring"></div></div>
 
     <template v-else-if="eventData">
-    <div class="event-hero">
-      <div class="hero-bg" :style="{ backgroundImage: `url(${eventData.cover})` }"></div>
-      <div class="hero-overlay"></div>
-      
-      <div class="hero-content container">
-        <span class="status-badge" :class="eventData.status">
-          {{ eventData.status === 'ongoing' ? $t('event_detail.status_ongoing') : $t('event_detail.status_ended') }}
-        </span>
-        <h1 class="event-title">{{ eventData.title }}</h1>
-        <div class="event-meta">
-          <span>📅 {{ eventData.date }}</span>
-          <span>📍 {{ eventData.location }}</span>
-          <span>👥 {{ eventData.participants }} {{ $t('event_detail.participants') }}</span>
-        </div>
-
-        <div class="hero-actions">
-          <button 
-            v-if="!isRegistered" 
-            class="btn-register"
-            @click="handleRegister"
-          >
-            {{ $t('event_detail.register_now') }}
-          </button>
-          <button 
-            v-else 
-            class="btn-submit-entry"
-            @click="openSubmitModal"
-          >
-            <span class="icon">📤</span> {{ $t('event_detail.submit_entry') }}
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div class="sticky-tabs">
-      <div class="container tabs-inner">
-        <button 
-          v-for="tab in tabs" :key="tab.id"
-          class="tab-item"
-          :class="{ active: currentTab === tab.id }"
-          @click="currentTab = tab.id"
-        >
-          {{ tab.label }}
-        </button>
-      </div>
-    </div>
-
-    <div class="container content-body">
-      <transition name="fade-slide" mode="out-in">
+      <div class="event-hero">
+        <div class="hero-bg" :style="{ backgroundImage: `url(${eventData.cover})` }"></div>
+        <div class="hero-overlay"></div>
         
-        <div v-if="currentTab === 'info'" class="info-layout">
+        <div class="hero-content container">
+          <div class="status-badge glass-effect" :class="eventData.category">
+            <span class="pulse-dot" v-if="eventData.category === 'active'"></span>
+            {{ statusText }}
+          </div>
           
-          <div class="info-main">
-            <div class="card-box">
-              <h3>{{ $t('event_detail.intro') }}</h3>
-              <p>{{ eventData.description }}</p>
-              
-              <h3>{{ $t('event_detail.rules') }}</h3>
-              <ul class="rules-list">
-                <li v-for="(rule, i) in eventData.rules" :key="i">
-                  <span class="bullet">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                  </span> {{ rule }}
-                </li>
-              </ul>
-            </div>
-
-            <div class="card-box prizes-section">
-              <h3>{{ $t('event_detail.prizes') }}</h3>
-              <div class="prizes-grid">
-                <div class="prize-card gold">
-                  <div class="prize-icon">🥇</div>
-                  <h4>{{ $t('event_detail.prize_1st') }}</h4>
-                  <p>10,000,000 VND</p>
-                  <span>{{ $t('event_detail.prize_1_bonus') }}</span>
-                </div>
-                <div class="prize-card silver">
-                  <div class="prize-icon">🥈</div>
-                  <h4>{{ $t('event_detail.prize_2nd') }}</h4>
-                  <p>5,000,000 VND</p>
-                  <span>{{ $t('event_detail.prize_2_bonus') }}</span>
-                </div>
-                <div class="prize-card bronze">
-                  <div class="prize-icon">🥉</div>
-                  <h4>{{ $t('event_detail.prize_3rd') }}</h4>
-                  <p>2,000,000 VND</p>
-                  <span>{{ $t('event_detail.prize_3_bonus') }}</span>
-                </div>
-              </div>
-            </div>
+          <h1 class="event-title">{{ eventData.title }}</h1>
+          
+          <div class="event-meta">
+            <span class="meta-pill">📅 {{ eventData.date }}</span>
+            <span class="meta-pill">👥 {{ eventData.participants }} bài dự thi</span>
+            <span class="meta-pill">🗳️ {{ totalEventVotes }} lượt bầu chọn</span>
           </div>
 
-          <div class="info-sidebar">
-            <div class="card-box">
-              <h3>{{ $t('event_detail.judges') }}</h3>
-              <div class="judges-list">
-                <div class="judge-item" v-for="judge in eventData.judges" :key="judge.name">
-                  <img :src="judge.avatar" class="judge-avt">
-                  <div>
-                    <div class="judge-name">{{ judge.name }}</div>
-                    <div class="judge-role">{{ judge.role }}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div class="hero-actions">
+            <button v-if="eventData.category === 'active'" class="btn-submit-entry" @click="handleOpenModal">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              <span>{{ hasSubmitted ? 'Gửi thêm bài dự thi' : 'Nộp bài dự thi ngay' }}</span>
+            </button>
+            <button v-else class="btn-disabled" disabled>
+              {{ eventData.category === 'upcoming' ? 'Sự kiện chưa mở cổng nộp bài' : 'Sự kiện đã kết thúc' }}
+            </button>
           </div>
         </div>
+      </div>
 
-        <div v-else class="entries-layout">
+      <div class="sticky-tabs">
+        <div class="container tabs-inner">
+          <button 
+            v-for="tab in tabs" :key="tab.id"
+            class="tab-item"
+            :class="{ active: currentTab === tab.id }"
+            @click="currentTab = tab.id"
+          >
+            {{ tab.label }}
+          </button>
+        </div>
+      </div>
+
+      <div class="container content-body">
+        <transition name="fade-slide" mode="out-in">
           
-          <div class="filter-bar">
-            <h3>{{ $t('event_detail.featured') }}</h3>
-            <div class="sort-options">
-              <button class="active">{{ $t('event_detail.most_voted') }}</button>
-              <button>{{ $t('event_detail.newest') }}</button>
-            </div>
-          </div>
+<div v-if="currentTab === 'info'" class="info-layout">
+  <div class="info-main">
+    <div class="card-box shadow-sm">
+      <h3>📖 Thể lệ & Giới thiệu</h3>
+      <p class="desc-text" style="white-space: pre-line;">{{ eventData.description }}</p>
+      
+      <h3 class="mt-8">⚖️ Quy định tham gia</h3>
+      <ul class="rules-list">
+        <li v-for="(rule, i) in eventData.rules" :key="i">
+          <span class="bullet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span> 
+          {{ rule }}
+        </li>
+      </ul>
+    </div>
 
-          <div class="entries-grid">
-            <div v-for="entry in entries" :key="entry.id" class="contest-entry-card">
-              <div class="entry-image">
-                <img :src="entry.image">
-                <div class="rank-badge" v-if="entry.rank <= 3">
-                  {{ $t('event_detail.top_rank') }} {{ entry.rank }} 👑
-                </div>
-              </div>
-              <div class="entry-body">
-                <h4>{{ entry.title }}</h4>
-                <div class="author">
-                  <img :src="entry.author.avatar">
-                  <span>{{ entry.author.name }}</span>
+   <div class="card-box prizes-section shadow-sm">
+  <h3>🏆 Cơ cấu giải thưởng</h3>
+  
+  <div class="real-reward-display">
+    <div class="reward-card-inner">
+      <div class="reward-icon-main">🎁</div>
+      <div class="reward-info">
+        <span class="reward-label">Phần thưởng cho người thắng cuộc:</span>
+        <p class="reward-text-real">{{ eventData.reward }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="prizes-grid mt-6">
+    <div class="prize-card gold small-card">
+      <div class="prize-icon">🥇</div>
+      <p>Hạng Nhất</p>
+    </div>
+    <div class="prize-card silver small-card">
+      <div class="prize-icon">🥈</div>
+      <p>Hạng Nhì</p>
+    </div>
+    <div class="prize-card bronze small-card">
+      <div class="prize-icon">🥉</div>
+      <p>Hạng Ba</p>
+    </div>
+  </div>
+</div>
+  </div>
+
+
+            <div class="info-sidebar">
+              <div class="card-box shadow-sm sticky-card">
+                <h3>⏰ Cổng bình chọn (Voting)</h3>
+                <div class="voting-timeline">
+                  <div class="time-item">
+                    <span class="label">Mở cổng:</span>
+                    <span class="value">{{ formatDateTime(eventData.voteStartAt) }}</span>
+                  </div>
+                  <div class="time-item">
+                    <span class="label">Đóng cổng:</span>
+                    <span class="value">{{ formatDateTime(eventData.voteEndAt) }}</span>
+                  </div>
+                  
+                  <div class="vote-status-msg" :class="votingStatus.type">
+                    <i class="fas" :class="votingStatus.type === 'active' ? 'fa-unlock' : 'fa-lock'"></i>
+                    {{ votingStatus.message }}
+                  </div>
                 </div>
                 
-                <div class="vote-action">
-                  <button 
-                    class="btn-vote" 
-                    :class="{ voted: entry.isVoted }"
-                    @click="handleVote(entry)"
-                  >
-                    <span class="icon">{{ entry.isVoted ? '💖' : '🤍' }}</span>
-                    {{ entry.isVoted ? $t('event_detail.voted') : $t('event_detail.vote') }}
-                  </button>
-                  <div class="vote-count">
-                    <b>{{ entry.votes }}</b> {{ $t('event_detail.votes_sfx') }}
-                  </div>
-                </div>
+                <p class="vote-note" v-if="votingStatus.type === 'active'">
+                  * Sếp có tối đa <strong>3 phiếu bầu</strong> cho mỗi sự kiện. Hãy chọn kỹ nhé!
+                </p>
               </div>
             </div>
           </div>
 
-        </div>
+          <div v-else class="entries-layout">
+            
+            <div v-if="topEntries.length > 0" class="ranking-section">
+              <h3 class="section-title">🏆 Bảng xếp hạng tạm thời</h3>
+              <div class="entries-grid">
+                <ContestEntryCard 
+                  v-for="(entry, index) in topEntries" 
+                  :key="entry.eventPostID" 
+                  :post="entry"
+                  :rank="index + 1"
+                  :can-vote="isInVotingPeriod"
+                />
+              </div>
+            </div>
 
-      </transition>
-    </div>
+            <div class="all-entries-section mt-12">
+              <h3 class="section-title">🎨 Tác phẩm tham gia ({{ entries.length }})</h3>
+              <div v-if="entries.length > 0" class="entries-grid">
+                <ContestEntryCard 
+                  v-for="entry in entries" 
+                  :key="entry.eventPostID" 
+                  :post="entry"
+                  :can-vote="isInVotingPeriod"
+                />
+              </div>
+
+              <div v-else class="empty-entries">
+                <div class="icon">📭</div>
+                <p>Chưa có bài dự thi nào. Sếp nộp bài để nhận giải ngay!</p>
+              </div>
+            </div>
+          </div>
+
+        </transition>
+      </div>
+
+      <SubmitEntryModal 
+        :is-open="isModalOpen" 
+        :event-id="eventData.id"
+        @close="isModalOpen = false"
+        @submit-success="onEntrySubmitted"
+      />
 
     </template>
   </div>
@@ -167,160 +172,174 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import api from '@/services/api'
 import { getEventById } from '@/services/eventService'
+import { useAuthStore } from '@/stores/auth'
 import { toast } from '@/composables/useToast'
+import SubmitEntryModal from '@/components/modals/SubmitEntryModal.vue'
+import ContestEntryCard from '@/components/common/EntryCard.vue' // Sửa đúng đường dẫn file của sếp
 
 const route = useRoute()
+const authStore = useAuthStore()
 const { t } = useI18n()
 
+// --- STATES ---
 const eventData = ref(null)
 const loading = ref(true)
+const currentTab = ref('info')
+const hasSubmitted = ref(false)
+const entries = ref([])
+const isModalOpen = ref(false)
 
 const tabs = computed(() => [
   { id: 'info',    label: t('event_detail.tab_info') },
-  { id: 'entries', label: t('event_detail.tab_entries') },
+  { id: 'entries', label: 'Bài dự thi' },
 ])
-const currentTab = ref('info')
-const isRegistered = ref(false)
-const entries = ref([])
 
-onMounted(async () => {
-  const id = route.params.id
+// --- LOGIC RANKING ---
+const topEntries = computed(() => {
+  // Sắp xếp theo phiếu bầu giảm dần, lấy 3 ông cao nhất
+  return [...entries.value].sort((a, b) => b.voteCount - a.voteCount).slice(0, 3)
+})
+
+const totalEventVotes = computed(() => {
+  return entries.value.reduce((sum, item) => sum + (item.voteCount || 0), 0)
+})
+
+// --- LOGIC THỜI GIAN VOTE (VÔ CÙNG QUAN TRỌNG) ---
+const isInVotingPeriod = computed(() => {
+  if (!eventData.value?.voteStartAt || !eventData.value?.voteEndAt) return false
+  const now = new Date()
+  return now >= new Date(eventData.value.voteStartAt) && now <= new Date(eventData.value.voteEndAt)
+})
+
+const votingStatus = computed(() => {
+  if (!eventData.value) return { type: '', message: '' }
+  const now = new Date()
+  const start = new Date(eventData.value.voteStartAt)
+  const end = new Date(eventData.value.voteEndAt)
+
+  if (now < start) return { type: 'upcoming', message: 'Bình chọn chưa mở' }
+  if (now > end) return { type: 'ended', message: 'Bình chọn đã đóng' }
+  return { type: 'active', message: 'Đang mở bình chọn' }
+})
+
+// --- HELPERS ---
+const formatDate = (dateStr) => {
+  if (!dateStr) return '...'
+  const d = new Date(dateStr)
+  return d.toLocaleDateString('vi-VN')
+}
+
+const formatDateTime = (dateStr) => {
+  if (!dateStr) return 'Chưa cập nhật'
+  return new Date(dateStr).toLocaleString('vi-VN', {
+    hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric'
+  })
+}
+
+const loadAllData = async () => {
+  const eventId = route.params.id
+  loading.value = true
   try {
-    const data = await getEventById(id)
+    const data = await getEventById(eventId)
+    
+    const now = new Date()
+    let currentStatus = 'upcoming'
+    if (now > new Date(data.endAt)) currentStatus = 'ended'
+    else if (now >= new Date(data.startAt) && now <= new Date(data.endAt)) currentStatus = 'active'
+
+    // 🔥 ĐỔ DỮ LIỆU THẬT TỪ DATABASE VÀO ĐÂY
     eventData.value = {
-      title: data.eventName || 'GoMet Event',
-      cover: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?q=80&w=2032&auto=format&fit=crop',
-      status: data.status || 'upcoming',
-      date: `${data.startAt || '?'} → ${data.endAt || '?'}`,
-      location: 'Online',
-      participants: Number(data.participantCount) || 0,
-      description: 'Share your recipe and join the GoMet community!',
-      rules: [
-        'Entries must include real photos/videos you created yourself.',
-        'The recipe must have detailed, clear step-by-step instructions.',
-        'Do not copy images from the internet.',
-        'Each account may submit up to 3 entries.'
-      ],
-      judges: [
-        { name: 'Admin Gomet', role: 'Organizers', avatar: 'https://ui-avatars.com/api/?name=Admin&background=EA580C&color=fff' }
-      ],
-      winnerPostTitle: data.winnerPostTitle || null
+      id: data.eventID,
+      title: data.eventName,
+      cover: data.bannerImage?.startsWith('/uploads') 
+             ? `http://localhost:8080${encodeURI(data.bannerImage)}` 
+             : (data.bannerImage || 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?q=80'),
+      category: currentStatus,
+      date: `${formatDate(data.startAt)} → ${formatDate(data.endAt)}`,
+      voteStartAt: data.voteStartAt,
+      voteEndAt: data.voteEndAt,
+      participants: data.postCount || 0,
+      
+      // Lấy từ SQL:
+      description: data.description || 'Sự kiện này chưa có mô tả chi tiết.',
+      
+      // Tách chuỗi rules bằng dấu xuống dòng để hiển thị dạng list (li)
+      rules: data.rules 
+             ? data.rules.split('\n').filter(r => r.trim() !== '') 
+             : ['Chưa có quy định cụ thể.'],
+      
+      // Lấy giải thưởng thật
+      reward: data.reward || 'Thông tin giải thưởng đang được cập nhật.'
     }
+
+    await fetchEventEntries(eventId)
   } catch (err) {
-    console.warn('EventDetail: load error', err)
-    // Fallback to placeholder
-    eventData.value = {
-      title: 'This event does not exist',
-      cover: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?q=80&w=2032&auto=format&fit=crop',
-      status: 'ended', date: '---', location: '---', participants: 0,
-      description: '', rules: [], judges: [], winnerPostTitle: null
-    }
+    toast.error('Không thể tải thông tin sự kiện!')
   } finally {
     loading.value = false
   }
-})
-
-const handleRegister = () => {
-  isRegistered.value = true
-  toast.success('Registration successful! Get your ingredients ready')
 }
 
-const openSubmitModal = () => {
-  alert('Open submission form (Similar to CreatePost but tagged with Event)')
+const fetchEventEntries = async (eventId) => {
+  try {
+    const res = await api.get(`/api/events/${eventId}/posts`)
+    entries.value = res.data
+    
+    if (authStore.user) {
+      // Check xem user hiện tại đã nộp bài chưa
+      hasSubmitted.value = entries.value.some(e => e.authorName === authStore.user.username)
+    }
+  } catch (e) {
+    entries.value = []
+  }
 }
 
-const handleVote = (entry) => {
-  entry.isVoted = !entry.isVoted
-  entry.votes += entry.isVoted ? 1 : -1
+const handleOpenModal = () => {
+  if (!authStore.isAuthenticated) return toast.warn('Sếp đăng nhập để nộp bài nhé!')
+  isModalOpen.value = true
 }
+
+const onEntrySubmitted = () => {
+  isModalOpen.value = false
+  fetchEventEntries(eventData.value.id)
+  currentTab.value = 'entries'
+  toast.success('Gửi bài dự thi thành công! Chúc sếp giật giải!')
+}
+
+onMounted(loadAllData)
 </script>
 
-<style scoped>
-.event-detail-page {
-  font-family: 'Mulish', sans-serif; color: #1C1917; padding-bottom: 80px;
+<style lang="scss">
+@import './EventDetail.scss';
+
+.section-title {
+  font-size: 1.5rem; font-weight: 800; margin-bottom: 24px; color: #1a1a1a;
+  border-left: 6px solid #EA580C; padding-left: 15px;
 }
-.container { max-width: 1100px; margin: 0 auto; width: 100%; padding: 0 20px; }
 
-/* 1. HERO BANNER */
-.event-hero { position: relative; height: 400px; display: flex; align-items: flex-end; padding-bottom: 40px; margin-bottom: 0; }
-.hero-bg { position: absolute; inset: 0; background-size: cover; background-position: center; }
-.hero-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); }
-.hero-content { position: relative; z-index: 2; color: white; width: 100%; }
-
-.status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 0.8rem; margin-bottom: 10px; background: rgba(255,255,255,0.2); backdrop-filter: blur(5px); }
-.status-badge.ongoing { color: #FCD34D; border: 1px solid #FCD34D; }
-
-.event-title { font-family: 'Playfair Display', serif; font-size: 2.8rem; line-height: 1.2; margin: 0 0 15px; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
-.event-meta { display: flex; gap: 25px; font-size: 1rem; opacity: 0.9; margin-bottom: 25px; }
-
-.hero-actions button {
-  padding: 12px 30px; border-radius: 30px; font-weight: 800; font-size: 1rem; cursor: pointer; border: none; transition: 0.2s;
+.vote-status-msg {
+  margin-top: 20px; padding: 12px; border-radius: 12px;
+  font-weight: 700; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;
+  
+  &.active { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+  &.upcoming { background: #fef9c3; color: #a16207; border: 1px solid #fde047; }
+  &.ended { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
 }
-.btn-register { background: #EA580C; color: white; box-shadow: 0 4px 15px rgba(234, 88, 12, 0.4); }
-.btn-register:hover { background: #C2410C; transform: translateY(-2px); }
-.btn-submit-entry { background: white; color: #1C1917; display: flex; align-items: center; gap: 8px; }
-.btn-submit-entry:hover { background: #F5F5F4; }
 
-/* 2. TABS */
-.sticky-tabs { position: sticky; top: 70px; background: white; border-bottom: 1px solid #E5E5E5; z-index: 99; }
-.tabs-inner { display: flex; gap: 40px; }
-.tab-item { background: none; border: none; padding: 15px 0; font-size: 1rem; font-weight: 600; color: #78716C; cursor: pointer; border-bottom: 3px solid transparent; transition: 0.2s; }
-.tab-item.active { color: #EA580C; border-bottom-color: #EA580C; }
-
-/* 3. CONTENT LAYOUT */
-.content-body { padding-top: 40px; min-height: 500px; }
-
-/* Info Tab */
-.info-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; }
-.card-box { background: white; padding: 30px; border-radius: 20px; border: 1px solid #E5E5E5; margin-bottom: 30px; }
-.card-box h3 { margin-top: 0; font-size: 1.3rem; border-bottom: 1px solid #F3F4F6; padding-bottom: 12px; margin-bottom: 20px; }
-.rules-list { list-style: none; padding: 0; }
-.rules-list li { margin-bottom: 12px; line-height: 1.5; color: #44403C; }
-
-/* Prizes */
-.prizes-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
-.prize-card { text-align: center; padding: 15px; border-radius: 12px; background: #F9FAFB; border: 1px solid #E5E5E5; }
-.prize-icon { font-size: 2rem; margin-bottom: 5px; }
-.prize-card h4 { margin: 0 0 5px; color: #1C1917; }
-.prize-card p { color: #EA580C; font-weight: 800; margin: 0; }
-.prize-card span { font-size: 0.75rem; color: #78716C; }
-.prize-card.gold { border-color: #FCD34D; background: #FFFBEB; }
-
-/* Judges */
-.judge-item { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; }
-.judge-avt { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; }
-.judge-name { font-weight: 700; color: #1C1917; }
-.judge-role { font-size: 0.85rem; color: #78716C; }
-
-/* Entries Tab (Voting) */
-.filter-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.sort-options button { background: white; border: 1px solid #E5E5E5; padding: 6px 16px; border-radius: 20px; margin-left: 10px; cursor: pointer; color: #57534E; }
-.sort-options button.active { background: #1C1917; color: white; border-color: #1C1917; }
-
-.entries-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 25px; }
-
-/* Contest Card Style */
-.contest-entry-card { background: white; border-radius: 16px; overflow: hidden; border: 1px solid #E5E5E5; transition: 0.3s; }
-.contest-entry-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-.entry-image { height: 200px; position: relative; overflow: hidden; }
-.entry-image img { width: 100%; height: 100%; object-fit: cover; }
-.rank-badge { position: absolute; top: 10px; left: 10px; background: #FFD700; color: #92400E; font-weight: 800; font-size: 0.75rem; padding: 4px 10px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-
-.entry-body { padding: 15px; }
-.entry-body h4 { margin: 0 0 10px; font-size: 1rem; line-height: 1.4; height: 42px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-.author { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #57534E; margin-bottom: 15px; }
-.author img { width: 24px; height: 24px; border-radius: 50%; }
-
-.vote-action { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #F3F4F6; padding-top: 12px; }
-.btn-vote { background: #F3F4F6; border: none; padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s; color: #57534E; }
-.btn-vote.voted { background: #FFE4E6; color: #E11D48; }
-.vote-count { font-size: 0.85rem; color: #1C1917; }
-
-/* Responsive */
-@media (max-width: 768px) {
-  .info-layout { grid-template-columns: 1fr; }
-  .event-title { font-size: 2rem; }
-  .prizes-grid { grid-template-columns: 1fr; }
+.vote-note {
+  margin-top: 15px; font-size: 0.85rem; color: #64748b; font-style: italic; line-height: 1.4;
 }
+
+.voting-timeline {
+  .time-item {
+    display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.95rem;
+    .label { color: #64748b; }
+    .value { font-weight: 700; color: #1e293b; }
+  }
+}
+
+.mt-12 { margin-top: 3rem; }
+.mb-12 { margin-bottom: 3rem; }
 </style>
