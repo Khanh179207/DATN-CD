@@ -268,7 +268,7 @@ const goToPage = (p) => {
   } 
 }
 
-const goToDetail = (id) => router.push(`/home/post/${id}`)
+const goToDetail = (id) => router.push(`/post/${id}`)
 
 // --- WATCHERS ---
 watch([filters, () => route.query.q], () => { 

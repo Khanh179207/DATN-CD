@@ -21,6 +21,9 @@ public interface PostDAO extends JpaRepository<Post, Integer> {
 
     List<Post> findByCategory_CategoryIDAndIsApprovedAndIsActive(Integer categoryID, Integer isApproved, Integer isActive);
 
+    // Thêm dòng này vào trong interface PostDAO
+    List<Post> findByAccount_AccountIDOrderByCreatedAtDesc(Integer accountId);
+
     @Query("SELECT p FROM Post p WHERE p.isApproved = 1 AND p.isActive = 1 " +
            "AND (LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
            "OR LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%')) " +

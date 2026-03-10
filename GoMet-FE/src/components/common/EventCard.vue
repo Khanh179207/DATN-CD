@@ -1,135 +1,118 @@
 <template>
   <div class="event-card" tabindex="0" :aria-label="event.title" @click="goToDetail" @keydown.enter.prevent="goToDetail">
+    
     <div class="card-image">
-      <img :src="event.image" loading="lazy">
-      <div class="date-badge">
+      <img :src="event.image" :alt="event.title" loading="lazy">
+      <div class="image-overlay"></div> <div class="date-calendar">
         <span class="month">{{ event.month }}</span>
         <span class="day">{{ event.day }}</span>
       </div>
-      <div class="type-badge" :class="event.type">
-        {{ event.typeLabel }}
+
+      <div class="countdown-badge glass-effect" :class="event.category">
+        <svg v-if="event.category !== 'ended'" class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 22h14"></path><path d="M5 2h14"></path><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"></path><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"></path>
+        </svg>
+        <svg v-else class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+        <span>{{ timeLeftText }}</span>
       </div>
     </div>
 
     <div class="card-body">
-      <h3 class="event-title">{{ event.title }}</h3>
+      <h3 class="event-title" :title="event.title">{{ event.title }}</h3>
       
       <div class="event-meta">
         <div class="meta-row">
-          <span class="icon">⏰</span> {{ event.time }}
+          <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          <span>Thời gian: <strong>{{ event.time }}</strong></span>
         </div>
         <div class="meta-row">
-          <span class="icon">📍</span> {{ event.location }}
+          <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          <span>Đã có <strong>{{ event.totalAttendees }}</strong> bài dự thi</span>
         </div>
       </div>
 
       <div class="card-footer">
-        <div class="attendees">
-          <div class="avatars">
-            <img v-for="(avt, i) in event.attendees" :key="i" :src="avt" class="attendee-avt">
-            <div class="more-count" v-if="event.totalAttendees > 3">+{{ event.totalAttendees - 3 }}</div>
-          </div>
-          <span class="attend-text">sẽ tham gia</span>
+        <div class="status-indicator">
+          <span class="pulse-dot" :class="event.category"></span>
+          <span class="text">{{ statusText }}</span>
         </div>
         
-        <button class="btn-join" :class="{ joined: event.isJoined }" @click.stop="handleJoin">
-          {{ event.isJoined ? 'Đã tham gia' : 'Tham gia' }}
+        <button v-if="event.category !== 'ended'" class="btn-action btn-join" :class="{ joined: event.isJoined }" @click.stop="handleJoin">
+          <span>{{ event.isJoined ? 'Đã tham gia' : 'Tham gia' }}</span>
+          <svg v-if="!event.isJoined" class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+        </button>
+        
+        <button v-else class="btn-action btn-view" @click.stop="goToDetail">
+          <span>Xem kết quả</span>
+          <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
         </button>
       </div>
     </div>
+    
   </div>
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 
-const props = defineProps({
-  event: Object
-})
-
+const props = defineProps({ event: Object })
 const router = useRouter()
 
-// Hàm chuyển hướng sang trang chi tiết
+const timeLeftText = computed(() => {
+  if (props.event.category === 'ended') return 'Đã kết thúc'
+  if (props.event.category === 'upcoming') return 'Sắp mở cổng'
+  if (!props.event.rawEndAt) return 'Đang diễn ra'
+
+  const end = new Date(props.event.rawEndAt)
+  const now = new Date()
+  const diffTime = Math.abs(end - now)
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+  return `Còn lại ${diffDays} ngày`
+})
+
+const statusText = computed(() => {
+  if (props.event.category === 'active') return 'Đang diễn ra'
+  if (props.event.category === 'upcoming') return 'Sắp diễn ra'
+  return 'Đã kết thúc'
+})
+
 const goToDetail = () => {
-  // Giả sử mỗi event có id, chuyển hướng tới /events/:id
-  if (props.event?.id) {
-    router.push({ name: 'EventDetail', params: { id: props.event.id } })
-  }
+  if (props.event?.id) router.push({ name: 'EventDetail', params: { id: props.event.id } })
 }
 
-// Xử lý nút tham gia nhanh (không chuyển trang)
-const handleJoin = () => {
-  // Logic gọi API tham gia ở đây
-  console.log('Toggle join event:', props.event.id)
-}
+const handleJoin = () => console.log('Toggle join event:', props.event.id)
 </script>
 
 <style scoped>
 /* ─── Card Container ─── */
 .event-card {
-  background: var(--color-neutral-0);
-  border-radius: var(--radius-lg);
+  background: #FFFFFF;
+  border-radius: 20px;
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid rgba(0, 0, 0, 0.02);
-  transition: transform var(--duration-normal) var(--ease-out),
-              box-shadow var(--duration-normal) var(--ease-out);
-  font-family: var(--font-ui);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+  border: 1px solid #F3F4F6;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: 'Mulish', sans-serif;
   cursor: pointer;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 .event-card:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--shadow-xl);
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px -10px rgba(234, 88, 12, 0.15); /* Bóng đổ ngả viền cam nhẹ */
+  border-color: #FFEDD5;
 }
 
-/* Active press feedback */
-.event-card:active {
-  transform: translateY(-1px) scale(0.98);
-  box-shadow: var(--shadow-md);
-  transition: transform var(--duration-instant) var(--ease-out),
-              box-shadow var(--duration-instant) var(--ease-out);
-}
-
-/* Keyboard focus ring */
-.event-card:focus-visible {
-  outline: 2px solid var(--color-primary-500);
-  outline-offset: 3px;
-}
-
-/* ─── SKELETON STATE ─── */
-.event-card.is-skeleton {
-  pointer-events: none;
-}
-
-.event-card.is-skeleton .card-image,
-.event-card.is-skeleton .event-title,
-.event-card.is-skeleton .meta-row,
-.event-card.is-skeleton .attendance,
-.event-card.is-skeleton .btn-join {
-  background: linear-gradient(
-    90deg,
-    var(--color-neutral-200) 25%,
-    var(--color-neutral-100) 50%,
-    var(--color-neutral-200) 75%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.4s var(--ease-in-out) infinite;
-  border-radius: var(--radius-sm);
-  color: transparent !important;
-}
-
-@keyframes shimmer {
-  0%   { background-position: -200% 0; }
-  100% { background-position:  200% 0; }
-}
-
-/* ─── Image ─── */
+/* ─── Image Area ─── */
 .card-image {
   position: relative;
-  height: 180px;
+  height: 220px; /* Cho ảnh cao lên một chút nhìn cho đã */
   overflow: hidden;
 }
 
@@ -137,85 +120,133 @@ const handleJoin = () => {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform var(--duration-slower) var(--ease-out);
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .event-card:hover .card-image img {
-  transform: scale(1.08);
+  transform: scale(1.08) rotate(1deg); /* Zoom và nghiêng cực nhẹ */
 }
 
-/* ─── Date Badge ─── */
-.date-badge {
+.image-overlay {
   position: absolute;
-  top: var(--space-3);
-  left: var(--space-3);
-  background: var(--color-neutral-0);
-  border-radius: var(--radius-md);
-  padding: var(--space-1) var(--space-3);
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 40%);
+  pointer-events: none;
+}
+
+/* ─── Calendar Badge (Đẹp như lịch thật) ─── */
+.date-calendar {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  width: 50px;
+  background: #FFFFFF;
+  border-radius: 12px;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: center;
-  box-shadow: var(--shadow-md);
-  z-index: var(--z-base);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  z-index: 10;
 }
 
-.date-badge .month {
-  font-size: var(--text-xs);
-  color: var(--color-primary-600);
-  font-weight: var(--font-extrabold);
+.date-calendar .month {
+  width: 100%;
+  background: #EA580C;
+  color: #FFFFFF;
+  font-size: 0.7rem;
+  font-weight: 800;
   text-transform: uppercase;
+  text-align: center;
+  padding: 4px 0;
+  letter-spacing: 1px;
 }
 
-.date-badge .day {
-  font-size: var(--text-lg);
-  color: var(--color-neutral-900);
-  font-weight: var(--font-extrabold);
-  line-height: var(--leading-none);
+.date-calendar .day {
+  font-size: 1.3rem;
+  color: #111827;
+  font-weight: 900;
+  padding: 4px 0 6px;
+  line-height: 1;
 }
 
-/* ─── Type Badge ─── */
-.type-badge {
+/* ─── Countdown Glass Badge ─── */
+.countdown-badge {
   position: absolute;
-  top: var(--space-3);
-  right: var(--space-3);
-  padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-full);
-  font-size: var(--text-xs);
-  font-weight: var(--font-bold);
-  color: var(--color-neutral-0);
-  backdrop-filter: blur(4px);
-  z-index: var(--z-base);
+  bottom: 16px;
+  right: 16px;
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 10;
 }
 
-.type-badge.online { background: rgba(59, 130, 246, 0.9); }
-.type-badge.offline { background: rgba(234, 88, 12, 0.9); }
+.glass-effect {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.countdown-badge.active { background: rgba(234, 88, 12, 0.85); }
+.countdown-badge.upcoming { background: rgba(2, 132, 199, 0.85); }
+.countdown-badge.ended { background: rgba(75, 85, 99, 0.85); color: #F3F4F6;}
 
 /* ─── Card Body ─── */
 .card-body {
-  padding: var(--space-4);
+  padding: 24px;
   flex: 1;
   display: flex;
   flex-direction: column;
+  background: #FFFFFF;
 }
 
 .event-title {
-  font-size: var(--text-lg);
-  font-weight: var(--font-bold);
-  color: var(--color-neutral-900);
-  margin: 0 0 var(--space-3);
-  line-height: var(--leading-snug);
+  font-family: 'Playfair Display', serif;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #111827;
+  margin: 0 0 16px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-/* ─── Meta ─── */
-.event-meta { margin-bottom: var(--space-4); }
+/* ─── Meta Info (Icons) ─── */
+.event-meta {
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 
 .meta-row {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  font-size: var(--text-sm);
-  color: var(--color-neutral-600);
-  margin-bottom: var(--space-1);
+  gap: 10px;
+  font-size: 0.9rem;
+  color: #6B7280;
+}
+
+.meta-row strong {
+  color: #111827;
+  font-weight: 700;
+}
+
+.icon-svg {
+  width: 16px;
+  height: 16px;
+  color: #9CA3AF;
+}
+.countdown-badge .icon-svg {
+  color: #FFFFFF;
 }
 
 /* ─── Footer ─── */
@@ -224,63 +255,54 @@ const handleJoin = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-top: 1px solid var(--color-neutral-100);
-  padding-top: var(--space-3);
+  border-top: 1px dashed #E5E7EB;
+  padding-top: 16px;
 }
 
-/* ─── Attendees ─── */
-.attendees { display: flex; align-items: center; gap: var(--space-2); }
-.avatars   { display: flex; align-items: center; }
+/* Chấm trạng thái có hiệu ứng nhịp tim (Pulse) */
+.status-indicator { display: flex; align-items: center; gap: 8px; }
+.pulse-dot { width: 10px; height: 10px; border-radius: 50%; position: relative; }
+.pulse-dot.active { background-color: #22C55E; box-shadow: 0 0 8px #22C55E; animation: pulseGreen 2s infinite; }
+.pulse-dot.upcoming { background-color: #3B82F6; }
+.pulse-dot.ended { background-color: #D1D5DB; }
 
-.attendee-avt {
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-full);
-  border: 2px solid var(--color-neutral-0);
-  margin-left: -10px;
-  object-fit: cover;
+@keyframes pulseGreen {
+  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
 }
-.attendee-avt:first-child { margin-left: 0; }
 
-.more-count {
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-full);
-  background: var(--color-neutral-100);
-  border: 2px solid var(--color-neutral-0);
-  font-size: var(--text-xs);
-  font-weight: var(--font-bold);
+.status-indicator .text { font-size: 0.85rem; font-weight: 800; color: #4B5563; }
+
+/* ─── Nút Hành Động ─── */
+.btn-action {
   display: flex;
   align-items: center;
-  justify-content: center;
-  margin-left: -10px;
-  color: var(--color-neutral-500);
-}
-
-.attend-text {
-  font-size: var(--text-xs);
-  color: var(--color-neutral-500);
-}
-
-/* ─── Join Button ─── */
-.btn-join {
-  background: var(--color-neutral-100);
-  color: var(--color-neutral-900);
+  gap: 6px;
   border: none;
-  padding: var(--space-1) var(--space-4);
-  border-radius: var(--radius-full);
-  font-weight: var(--font-bold);
-  font-size: var(--text-sm);
+  padding: 8px 18px;
+  border-radius: 30px;
+  font-weight: 800;
+  font-size: 0.85rem;
   cursor: pointer;
-  transition: var(--transition-fast);
+  transition: all 0.3s ease;
 }
 
-.btn-join:hover {
-  background: var(--color-neutral-200);
+.arrow-icon {
+  width: 14px; height: 14px;
+  transition: transform 0.3s ease;
 }
 
-.btn-join.joined {
-  background: var(--color-success-bg);
-  color: var(--color-success);
+.btn-action:hover .arrow-icon {
+  transform: translateX(4px); /* Hiệu ứng mũi tên bay lên */
 }
+
+/* Trạng thái nút */
+.btn-join { background: #FFF7ED; color: #EA580C; }
+.btn-join:hover { background: #EA580C; color: #FFFFFF; }
+.btn-join.joined { background: #DCFCE7; color: #16A34A; }
+.btn-join.joined:hover .arrow-icon { transform: none; }
+
+.btn-view { background: #F3F4F6; color: #374151; }
+.btn-view:hover { background: #111827; color: #FFFFFF; }
 </style>

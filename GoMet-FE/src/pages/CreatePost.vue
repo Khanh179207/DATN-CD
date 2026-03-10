@@ -195,15 +195,20 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { getCategories } from '@/services/categoryService'
 import { createPost } from '@/services/postService'
 import { uploadMedia } from '@/services/uploadService'
+import api from '@/services/api' // Cần import API để gọi hàm submit vào event
 import { toast } from '@/composables/useToast'
 
+const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+
+const eventId = route.query.eventId // Lấy ID sự kiện từ URL (nếu có)
+
 const fileInput = ref(null)
 const stepInputRefs = ref([])
 const categories = ref([])
@@ -225,12 +230,10 @@ const post = ref({
   steps: [{ id: 1, desc: '', image: null }],
 })
 
-// Load categories from API
 onMounted(async () => {
   try {
     categories.value = await getCategories()
   } catch {
-    // fallback to static
     categories.value = [
       { categoryID: 1, categoryName: 'Main Dish' },
       { categoryID: 2, categoryName: 'Breakfast' },
@@ -240,7 +243,6 @@ onMounted(async () => {
   }
 })
 
-// --- FIX: Use function instead of child component ---
 const autoResize = (event) => {
   const element = event.target
   element.style.height = 'auto'
@@ -252,7 +254,7 @@ const handleImageUpload = (e) => {
   const file = e.target.files[0]
   if (!file) return
   coverImageFile.value = file
-  post.value.image = URL.createObjectURL(file)  // preview only
+  post.value.image = URL.createObjectURL(file) 
 }
 
 const triggerStepUpload = (idx) => stepInputRefs.value[idx].click()
@@ -260,7 +262,7 @@ const handleStepUpload = (e, idx) => {
   const file = e.target.files[0]
   if (!file) return
   stepImageFiles.value[idx] = file
-  post.value.steps[idx].image = URL.createObjectURL(file)  // preview only
+  post.value.steps[idx].image = URL.createObjectURL(file) 
 }
 
 const addIngredient = () => post.value.ingredients.push({ name: '' })
@@ -282,20 +284,16 @@ const handlePublish = async () => {
     const ingredientsStr = post.value.ingredients.map(i => i.name).filter(Boolean).join(', ')
     const cookingTimeInt = parseInt(post.value.cookingTime) || 30
 
-    // Upload cover image if user selected one
     let coverMediaUrl = ''
     if (coverImageFile.value) {
-      try {
-        coverMediaUrl = await uploadMedia(coverImageFile.value)
-      } catch { /* cover upload failed — continue without image */ }
+      try { coverMediaUrl = await uploadMedia(coverImageFile.value) } 
+      catch { /* ignore */ }
     }
 
-    // Upload each step image that has a file
     const stepUrls = {}
     for (const [idx, file] of Object.entries(stepImageFiles.value)) {
-      try {
-        stepUrls[idx] = await uploadMedia(file)
-      } catch { /* step upload failed — continue without image */ }
+      try { stepUrls[idx] = await uploadMedia(file) } 
+      catch { /* ignore */ }
     }
 
     const payload = {
@@ -312,15 +310,34 @@ const handlePublish = async () => {
         image: stepUrls[i] || null
       }))
     }
-
+    
+    // Bước 1: Gọi API tạo bài viết mới
     const result = await createPost(payload)
-    toast.success('Post submitted for review!')
-    const newId = result?.postID
-    if (newId) {
-      router.push(`/post/${newId}`)
+    const newPostId = result?.postID || result?.id 
+
+    // Bước 2: Kiểm tra xem có đang tham gia event không
+    if (eventId && newPostId) {
+      try {
+        await api.post(`/api/events/submit`, {
+          EventID: parseInt(eventId),
+          PostID: newPostId
+        })
+        toast.success('🎉 Nộp bài thi thành công! Chúc sếp giật giải nhé!')
+        router.push(`/event/${eventId}`) // Chuyển về trang event
+      } catch (submitErr) {
+        toast.error('Tạo bài thành công nhưng có lỗi khi nộp vào sự kiện!')
+        router.push(`/post/${newPostId}`)
+      }
     } else {
-      router.push('/home')
+      // Đăng bài bình thường không vào sự kiện
+      toast.success('Post submitted for review!')
+      if (newPostId) {
+        router.push(`/post/${newPostId}`)
+      } else {
+        router.push('/home')
+      }
     }
+
   } catch (err) {
     toast.error('Failed to publish. Please try again.')
   } finally {

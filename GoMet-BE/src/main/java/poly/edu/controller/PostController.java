@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/posts")
 @RequiredArgsConstructor
+@CrossOrigin("*")
 public class PostController {
 
     private final PostDAO postDAO;
@@ -27,21 +28,16 @@ public class PostController {
     private final AccountDAO accountDAO;
     private final CategoryDAO categoryDAO;
     private final CookingStepsDAO cookingStepsDAO;
+    private final LikesDAO likesDAO; // 🔥 BỔ SUNG: Để giải quyết dứt điểm vụ Like về 0
 
     // ─── API MỚI: Search Mini (Đồng bộ với AI Chat) ────────────────────
-    /**
-     * API này trả về danh sách ID và Tiêu đề bài viết thu gọn.
-     * Dùng để AI Chatbot có thể tra cứu nhanh dữ liệu thực tế.
-     */
     @GetMapping("/search-mini")
     public ResponseEntity<List<Map<String, Object>>> searchMini(@RequestParam String q) {
-        // Tìm kiếm theo từ khóa q và chỉ lấy những bài đã duyệt + đang hoạt động
         List<Post> posts = postDAO.searchByKeyword(q).stream()
                 .filter(p -> p.getIsApproved() == 1 && p.getIsActive() == 1)
-                .limit(10) // Giới hạn 10 kết quả để tối ưu cho AI
+                .limit(10)
                 .collect(Collectors.toList());
 
-        // Chỉ map ID và Title để gửi qua AI cho nhẹ (tiết kiệm Token)
         List<Map<String, Object>> result = posts.stream().map(p -> {
             Map<String, Object> map = new HashMap<>();
             map.put("id", p.getPostID());
@@ -52,37 +48,53 @@ public class PostController {
         return ResponseEntity.ok(result);
     }
 
+    // ─── Lấy bài viết của User (Dùng cho trang Modal chọn bài dự thi) ───
+    @GetMapping("/account/{accountId}")
+    public ResponseEntity<List<PublicPostDTO>> getPostsByAccountAPI(
+            @PathVariable Integer accountId,
+            @RequestParam(required = false) Integer currentUserId) {
+        List<Post> posts = postDAO.findByAccount_AccountIDOrderByCreatedAtDesc(accountId);
+        // Map kèm theo currentUserId để biết bài nào user đã like
+        List<PublicPostDTO> result = posts.stream()
+                .map(p -> toPublicDTO(p, currentUserId))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(result);
+    }
+
     // ─── List latest posts (home feed) ─────────────────────────────────
     @GetMapping("/latest")
     public ResponseEntity<List<PublicPostDTO>> getLatest(
-            @RequestParam(defaultValue = "8") int limit) {
+            @RequestParam(defaultValue = "8") int limit,
+            @RequestParam(required = false) Integer accountId) { // 🔥 NHẬN ACCOUNT ID TỪ VUE
         List<Post> posts = postDAO.findLatest().stream()
                 .limit(limit)
                 .collect(Collectors.toList());
-        return ResponseEntity.ok(posts.stream().map(this::toPublicDTO).collect(Collectors.toList()));
+        return ResponseEntity.ok(posts.stream().map(p -> toPublicDTO(p, accountId)).collect(Collectors.toList()));
     }
 
     // ─── List all approved posts (paginated) ───────────────────────────
     @GetMapping
     public ResponseEntity<List<PublicPostDTO>> getAll(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "12") int size) {
+            @RequestParam(defaultValue = "12") int size,
+            @RequestParam(required = false) Integer accountId) {
         List<Post> all = postDAO.findByIsApprovedAndIsActive(1, 1);
         int from = Math.min((page - 1) * size, all.size());
         int to   = Math.min(from + size, all.size());
         List<Post> paged = all.subList(from, to);
-        return ResponseEntity.ok(paged.stream().map(this::toPublicDTO).collect(Collectors.toList()));
+        return ResponseEntity.ok(paged.stream().map(p -> toPublicDTO(p, accountId)).collect(Collectors.toList()));
     }
 
     // ─── Post detail ───────────────────────────────────────────────────
     @GetMapping("/{id}")
-    public ResponseEntity<?> getDetail(@PathVariable Integer id) {
+    public ResponseEntity<?> getDetail(
+            @PathVariable Integer id,
+            @RequestParam(required = false) Integer accountId) {
         return postDAO.findById(id).map(post -> {
-            // Increment view count
             post.setViews(post.getViews() + 1);
             postDAO.save(post);
-
-            PostDetailDTO dto = toDetailDTO(post);
+            // Detail cũng cần check isLiked để hiện tim hồng ở trang chi tiết
+            PostDetailDTO dto = toDetailDTO(post, accountId);
             return ResponseEntity.ok(dto);
         }).orElse(ResponseEntity.notFound().build());
     }
@@ -92,7 +104,8 @@ public class PostController {
     public ResponseEntity<List<PublicPostDTO>> search(
             @RequestParam(defaultValue = "") String keyword,
             @RequestParam(required = false) Integer categoryID,
-            @RequestParam(defaultValue = "newest") String sort) {
+            @RequestParam(defaultValue = "newest") String sort,
+            @RequestParam(required = false) Integer accountId) {
         List<Post> posts;
         if (keyword.isBlank() && categoryID != null) {
             posts = postDAO.findByCategory_CategoryIDAndIsApprovedAndIsActive(categoryID, 1, 1);
@@ -104,7 +117,8 @@ public class PostController {
             posts = postDAO.findByIsApprovedAndIsActive(1, 1);
         }
 
-        List<PublicPostDTO> result = posts.stream().map(this::toPublicDTO).collect(Collectors.toList());
+        List<PublicPostDTO> result = posts.stream().map(p -> toPublicDTO(p, accountId)).collect(Collectors.toList());
+        // Logic sắp xếp giữ nguyên của sếp
         if ("views".equals(sort)) {
             result.sort(Comparator.comparingInt((PublicPostDTO p) -> p.getViews() != null ? p.getViews() : 0).reversed());
         } else if ("rating".equals(sort)) {
@@ -119,12 +133,13 @@ public class PostController {
     @GetMapping("/{id}/related")
     public ResponseEntity<List<PublicPostDTO>> getRelated(
             @PathVariable Integer id,
-            @RequestParam(defaultValue = "4") int limit) {
+            @RequestParam(defaultValue = "4") int limit,
+            @RequestParam(required = false) Integer accountId) {
         return postDAO.findById(id).map(post -> {
             List<Post> related = postDAO.findRelated(post.getCategory().getCategoryID(), id);
             List<PublicPostDTO> result = related.stream()
                     .limit(limit)
-                    .map(this::toPublicDTO)
+                    .map(p -> toPublicDTO(p, accountId))
                     .collect(Collectors.toList());
             return ResponseEntity.ok(result);
         }).orElse(ResponseEntity.notFound().build());
@@ -132,9 +147,11 @@ public class PostController {
 
     // ─── Posts by user ─────────────────────────────────────────────────
     @GetMapping("/by-user/{accountID}")
-    public ResponseEntity<List<PublicPostDTO>> getByUser(@PathVariable Integer accountID) {
+    public ResponseEntity<List<PublicPostDTO>> getByUser(
+            @PathVariable Integer accountID,
+            @RequestParam(required = false) Integer currentUserId) {
         List<Post> posts = postDAO.findByAccount_AccountIDAndIsApprovedAndIsActive(accountID, 1, 1);
-        return ResponseEntity.ok(posts.stream().map(this::toPublicDTO).collect(Collectors.toList()));
+        return ResponseEntity.ok(posts.stream().map(p -> toPublicDTO(p, currentUserId)).collect(Collectors.toList()));
     }
 
     // ─── Suggest posts (for SuggestionsPage) ──────────────────────────
@@ -143,7 +160,8 @@ public class PostController {
             @RequestParam(required = false) Integer categoryID,
             @RequestParam(required = false) Integer difficulty,
             @RequestParam(required = false) Integer maxTime,
-            @RequestParam(defaultValue = "0") Integer excludeId) {
+            @RequestParam(defaultValue = "0") Integer excludeId,
+            @RequestParam(required = false) Integer accountId) {
         List<Post> all = postDAO.findByIsApprovedAndIsActive(1, 1);
         List<Post> filtered = all.stream()
                 .filter(p -> categoryID == null || categoryID.equals(p.getCategory().getCategoryID()))
@@ -153,15 +171,17 @@ public class PostController {
                 .collect(Collectors.toList());
         return ResponseEntity.ok(filtered.stream()
                 .limit(20)
-                .map(this::toPublicDTO)
+                .map(p -> toPublicDTO(p, accountId))
                 .collect(Collectors.toList()));
     }
 
     // ─── Trending (leaderboard-worthy) ────────────────────────────────
     @GetMapping("/trending")
-    public ResponseEntity<List<PublicPostDTO>> getTrending(@RequestParam(defaultValue = "10") int limit) {
+    public ResponseEntity<List<PublicPostDTO>> getTrending(
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(required = false) Integer accountId) {
         List<Post> posts = postDAO.findByIsApprovedAndIsActive(1, 1);
-        List<PublicPostDTO> result = posts.stream().map(this::toPublicDTO)
+        List<PublicPostDTO> result = posts.stream().map(p -> toPublicDTO(p, accountId))
                 .sorted(Comparator.comparingDouble((PublicPostDTO p) -> {
                     double views = p.getViews() != null ? p.getViews() / 1000.0 : 0;
                     double rating = p.getAvgRating() != null ? p.getAvgRating() : 0;
@@ -173,9 +193,9 @@ public class PostController {
         return ResponseEntity.ok(result);
     }
 
-    // ─── Mapping helpers ──────────────────────────────────────────────
+    // ─── Mapping helpers (Sửa đổi để hết lỗi Like 0) ──────────────────
 
-    PublicPostDTO toPublicDTO(Post p) {
+    public PublicPostDTO toPublicDTO(Post p, Integer accountId) {
         PublicPostDTO dto = new PublicPostDTO();
         dto.setPostID(p.getPostID());
         dto.setTitle(p.getTitle());
@@ -196,29 +216,33 @@ public class PostController {
             dto.setCategoryName(p.getCategory().getCategoryName());
         }
 
-        // Aggregate: ratings
+        // Ratings
         List<Rating> ratings = p.getRatings();
         if (ratings != null && !ratings.isEmpty()) {
-            dto.setAvgRating(ratings.stream()
-                    .mapToInt(Rating::getRate)
-                    .average()
-                    .orElse(0));
+            dto.setAvgRating(ratings.stream().mapToInt(Rating::getRate).average().orElse(0));
             dto.setRatingCount((long) ratings.size());
         } else {
             dto.setAvgRating(0.0);
             dto.setRatingCount(0L);
         }
 
-        long commentCount = p.getComments() != null ? p.getComments().size() : 0;
-        dto.setCommentCount(commentCount);
+        dto.setCommentCount(p.getComments() != null ? (long) p.getComments().size() : 0L);
 
-        long favCount = p.getFavorites() != null ? p.getFavorites().size() : 0;
-        dto.setFavoriteCount(favCount);
+        // 🔥 FIX LIKE COUNT: Đếm thật từ bảng Likes
+        long realLikes = likesDAO.countByPost_PostID(p.getPostID());
+        dto.setFavoriteCount(realLikes);
+
+        // 🔥 FIX TIM HỒNG: Check xem user đang xem đã like bài này chưa
+        boolean isLiked = false;
+        if (accountId != null) {
+            isLiked = likesDAO.existsByAccount_AccountIDAndPost_PostID(accountId, p.getPostID());
+        }
+        dto.setIsLiked(isLiked);
 
         return dto;
     }
 
-    private PostDetailDTO toDetailDTO(Post p) {
+    public PostDetailDTO toDetailDTO(Post p, Integer accountId) {
         PostDetailDTO dto = new PostDetailDTO();
         dto.setPostID(p.getPostID());
         dto.setTitle(p.getTitle());
@@ -252,7 +276,7 @@ public class PostController {
             dto.setEventName(p.getEvent().getEventName());
         }
 
-        // Ratings
+        // Ratings & Like count chuẩn
         List<Rating> ratings = p.getRatings();
         if (ratings != null && !ratings.isEmpty()) {
             dto.setAvgRating(ratings.stream().mapToInt(Rating::getRate).average().orElse(0));
@@ -263,9 +287,14 @@ public class PostController {
         }
 
         dto.setCommentCount(p.getComments() != null ? (long) p.getComments().size() : 0L);
-        dto.setFavoriteCount(p.getFavorites() != null ? (long) p.getFavorites().size() : 0L);
+        dto.setFavoriteCount(likesDAO.countByPost_PostID(p.getPostID())); // 🔥 Đếm thật
 
-        // Steps
+        // Check trạng thái like cho chi tiết
+        if (accountId != null) {
+            dto.setIsLiked(likesDAO.existsByAccount_AccountIDAndPost_PostID(accountId, p.getPostID()));
+        }
+
+        // Steps & Comments giữ nguyên...
         if (p.getCookingSteps() != null) {
             List<CookingStepDTO> steps = p.getCookingSteps().stream()
                     .sorted(Comparator.comparingInt(CookingSteps::getStepNumber))
@@ -280,8 +309,6 @@ public class PostController {
                     }).collect(Collectors.toList());
             dto.setSteps(steps);
         }
-
-        // Comments
         if (p.getComments() != null) {
             List<CommentDTO> comments = p.getComments().stream().map(c -> {
                 CommentDTO cdto = new CommentDTO();
@@ -292,7 +319,6 @@ public class PostController {
                     cdto.setAccountID(c.getAccount().getAccountID());
                     cdto.setAuthorName(c.getAccount().getUsername());
                     cdto.setAuthorAvatar(c.getAccount().getAvatar());
-                    // Try to find their rating for this post
                     ratingDAO.findByAccount_AccountIDAndPost_PostID(c.getAccount().getAccountID(), p.getPostID())
                             .ifPresent(r -> cdto.setRating(r.getRate()));
                 }
@@ -300,7 +326,6 @@ public class PostController {
             }).collect(Collectors.toList());
             dto.setComments(comments);
         }
-
         return dto;
     }
 
