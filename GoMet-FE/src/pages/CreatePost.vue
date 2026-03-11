@@ -199,8 +199,9 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { getCategories } from '@/services/categoryService'
 import { createPost } from '@/services/postService'
+// Đã mở lại import uploadMedia siêu xịn từ service chung
 import { uploadMedia } from '@/services/uploadService'
-import api from '@/services/api' // Cần import API để gọi hàm submit vào event
+import api from '@/services/api'
 import { toast } from '@/composables/useToast'
 
 const route = useRoute()
@@ -286,14 +287,28 @@ const handlePublish = async () => {
 
     let coverMediaUrl = ''
     if (coverImageFile.value) {
-      try { coverMediaUrl = await uploadMedia(coverImageFile.value) } 
-      catch { /* ignore */ }
+      try { 
+        // Gọi thẳng uploadMedia từ file service
+        coverMediaUrl = await uploadMedia(coverImageFile.value, 'posts') 
+      } 
+      catch (error) { 
+        toast.warn('Lỗi upload ảnh bìa!'); 
+        publishing.value = false;
+        return; 
+      }
     }
 
     const stepUrls = {}
     for (const [idx, file] of Object.entries(stepImageFiles.value)) {
-      try { stepUrls[idx] = await uploadMedia(file) } 
-      catch { /* ignore */ }
+      try { 
+        // Gọi thẳng uploadMedia cho từng ảnh bước
+        stepUrls[idx] = await uploadMedia(file, 'steps') 
+      } 
+      catch (error) { 
+        toast.warn(`Lỗi upload ảnh ở bước ${parseInt(idx) + 1}!`); 
+        publishing.value = false;
+        return; 
+      }
     }
 
     const payload = {

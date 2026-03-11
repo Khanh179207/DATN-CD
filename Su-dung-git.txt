@@ -30,6 +30,7 @@ git stash pop (Lấy code cất trong kho ra ráp lại vào file)
 
 git add .  (thêm các file đã code vào git trên máy)
 git commit -m "Hoan thien chuc nang ABC"  (cam kết các file này là gì ) 
+git git pull origin develop (check lại xem đã là mới nhất chưa, nếu ra chữ already thì được phép push)
 git push origin feature/ten-chuc-nang ( đẩy code của mình lên server github)
 
 👉 Sau đó: Lên GitHub -> Tạo Pull Request vào develop. 

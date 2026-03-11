@@ -228,6 +228,8 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import api from '@/services/api.js'
 import { toast } from '@/composables/useToast'
+import { uploadMedia } from '@/services/uploadService'
+
 
 const events = ref([])
 const loading = ref(true)
@@ -387,37 +389,66 @@ const viewWinner = async (ev) => {
 }
 
 const saveEvent = async () => {
-  if (!form.eventName.trim()) { toast.error('Name required!'); return }
-  validateDates()
-  if (hasErrors.value) return
+  // 1. Kiểm tra bắt buộc
+  if (!form.eventName.trim()) { 
+    toast.warn('Sếp quên nhập tên sự kiện rồi!'); 
+    return 
+  }
+  if (!form.startAt || !form.endAt || !form.voteStartAt || !form.voteEndAt) {
+    toast.error('Sếp phải điền đủ 4 mốc thời gian nhé!');
+    return
+  }
+
   saving.value = true
   try {
-    const payload = new FormData()
-    payload.append('eventName', form.eventName)
-    payload.append('description', form.description || '')
-    payload.append('rules', form.rules || '')
-    payload.append('reward', form.reward || '')
-    payload.append('maxVotes', form.maxVotes) // Gửi maxVotes xuống backend
-    if (form.startAt) payload.append('startAt', form.startAt)
-    if (form.endAt) payload.append('endAt', form.endAt)
-    if (form.voteStartAt) payload.append('voteStartAt', form.voteStartAt)
-    if (form.voteEndAt) payload.append('voteEndAt', form.voteEndAt)
-    if (form.bannerFile) payload.append('imageFile', form.bannerFile)
-    else if (form.bannerImage) payload.append('bannerImage', form.bannerImage)
+    let finalBannerUrl = form.bannerImage; // Mặc định là link cũ
 
-    let res;
-    if (isEditing.value) {
-      res = await api.put(`/api/admin/events/${form.eventID}`, payload, { headers: { 'Content-Type': 'multipart/form-data' } })
-      const idx = events.value.findIndex(e => e.eventID === form.eventID)
-      if (idx !== -1) events.value[idx] = res.data
-    } else {
-      res = await api.post('/api/admin/events', payload, { headers: { 'Content-Type': 'multipart/form-data' } })
-      events.value.unshift(res.data)
+    // 2. Nếu có file mới, đẩy lên Cloudinary lấy link trước
+    if (form.bannerFile) {
+      try {
+        finalBannerUrl = await uploadMedia(form.bannerFile, 'events');
+      } catch (err) {
+        toast.error('Lỗi upload ảnh lên Cloudinary!');
+        saving.value = false;
+        return;
+      }
     }
-    showModal.value = false; toast.success('Saved!'); loadEvents();
-  } catch (e) { toast.error('Save failed') } finally { saving.value = false }
-}
 
+    // 3. TẠO OBJECT JSON (Thay vì FormData)
+    // Cách này giúp Java nhận dữ liệu chính xác 100%, không bị NULL ngày tháng
+    const eventData = {
+      eventID: form.eventID,
+      eventName: form.eventName,
+      bannerImage: finalBannerUrl, // Gửi cái Link HTTPS xịn
+      description: form.description || '',
+      rules: form.rules || '',
+      reward: form.reward || '',
+      maxVotes: form.maxVotes,
+      startAt: form.startAt,
+      endAt: form.endAt,
+      voteStartAt: form.voteStartAt,
+      voteEndAt: form.voteEndAt,
+      winner: form.winner
+    };
+
+    // 4. Gọi API gửi JSON (Không cần để header multipart nữa)
+    if (isEditing.value) {
+      await api.put(`/api/admin/events/${form.eventID}`, eventData);
+      toast.success('Cập nhật thành công! 🚀');
+    } else {
+      await api.post('/api/admin/events', eventData);
+      toast.success('Tạo mới thành công! 🎉');
+    }
+
+    await loadEvents();
+    showModal.value = false;
+  } catch (e) { 
+    console.error("Lỗi:", e);
+    toast.error('Lỗi rồi sếp: ' + (e.response?.data?.message || 'Check Console Java')); 
+  } finally { 
+    saving.value = false; 
+  }
+}
 const deleteEvent = async (id) => {
   if (!confirm('Delete event?')) return
   try {

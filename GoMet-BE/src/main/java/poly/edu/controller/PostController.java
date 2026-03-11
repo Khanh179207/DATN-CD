@@ -330,34 +330,25 @@ public class PostController {
     }
 
     // ─── Create post ────────────────────────────────────────────────────
+// ─── Create post (Đã đồng bộ Full JSON & DTO) ───────────────────────
     @PostMapping
-    public ResponseEntity<?> createPost(@RequestBody Map<String, Object> body) {
+    public ResponseEntity<?> createPost(@RequestBody PostDTO dto) { // 🔥 Đổi thành @RequestBody PostDTO
         try {
-            Integer accountID = (Integer) body.get("accountID");
-            Integer categoryID = (Integer) body.get("categoryID");
-            String title = (String) body.getOrDefault("title", "");
-            String description = (String) body.getOrDefault("description", "");
-            String ingredients = (String) body.getOrDefault("ingredients", "");
-            String media = (String) body.getOrDefault("media", "");
-            Integer level = body.get("level") instanceof Integer ? (Integer) body.get("level")
-                    : body.get("level") != null ? Integer.parseInt(body.get("level").toString()) : 2;
-            Integer cookingTime = body.get("cookingTime") instanceof Integer ? (Integer) body.get("cookingTime")
-                    : body.get("cookingTime") != null ? Integer.parseInt(body.get("cookingTime").toString()) : 30;
-
-            Account account = accountDAO.findById(accountID).orElse(null);
+            Account account = accountDAO.findById(dto.getAccountID()).orElse(null);
             if (account == null) return ResponseEntity.badRequest().body("Invalid accountID");
-            Category category = categoryDAO.findById(categoryID).orElse(null);
+            Category category = categoryDAO.findById(dto.getCategoryID()).orElse(null);
             if (category == null) return ResponseEntity.badRequest().body("Invalid categoryID");
 
+            // 1. Tạo thực thể Post từ DTO
             Post post = Post.builder()
                     .account(account)
                     .category(category)
-                    .title(title)
-                    .description(description)
-                    .ingredients(ingredients)
-                    .media(media)
-                    .level(level)
-                    .cookingTime(cookingTime)
+                    .title(dto.getTitle() != null ? dto.getTitle() : "")
+                    .description(dto.getDescription() != null ? dto.getDescription() : "")
+                    .ingredients(dto.getIngredients() != null ? dto.getIngredients() : "")
+                    .media(dto.getMedia() != null ? dto.getMedia() : "") // Link Cloudinary
+                    .level(dto.getLevel() != null ? dto.getLevel() : 2)
+                    .cookingTime(dto.getCookingTime() != null ? dto.getCookingTime() : 30)
                     .views(0)
                     .isActive(1)
                     .isApproved(0)
@@ -365,17 +356,15 @@ public class PostController {
                     .build();
             post = postDAO.save(post);
 
-            @SuppressWarnings("unchecked")
-            List<Map<String, Object>> steps = (List<Map<String, Object>>) body.get("steps");
-            if (steps != null) {
-                final Post savedPost = post;
-                for (int i = 0; i < steps.size(); i++) {
-                    Map<String, Object> s = steps.get(i);
+            // 2. Lặp qua danh sách Steps từ DTO và lưu
+            if (dto.getSteps() != null) {
+                int stepNum = 1;
+                for (StepRequestDTO s : dto.getSteps()) {
                     CookingSteps step = new CookingSteps();
-                    step.setPost(savedPost);
-                    step.setStepNumber(i + 1);
-                    step.setContent((String) s.getOrDefault("desc", ""));
-                    step.setImage((String) s.getOrDefault("image", null));
+                    step.setPost(post);
+                    step.setStepNumber(stepNum++);
+                    step.setContent(s.getDesc() != null ? s.getDesc() : ""); // Nhận từ desc của Vue
+                    step.setImage(s.getImage()); // Link Cloudinary
                     cookingStepsDAO.save(step);
                 }
             }
@@ -384,5 +373,4 @@ public class PostController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error: " + e.getMessage());
         }
-    }
-}
+    }}

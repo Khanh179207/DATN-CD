@@ -4,7 +4,7 @@
       <div class="grid-mesh"></div>
       <div class="noise-texture"></div>
       <div class="glow-spot spotlight"></div>
-    </div>
+    </div> 
 
     <div class="planner-wrapper">
       <main class="planner-content">
@@ -58,8 +58,9 @@
                   
                   <div v-if="day.meals[mealType]" class="dish-card" @click="showDishDetail(day.meals[mealType])" :class="{'is-completed': day.meals[mealType].isCompleted}">
                     <img :src="day.meals[mealType].image || 'https://images.unsplash.com/photo-1490818387583-1b5f2223d848?w=600'" class="dish-bg" />
+                    
                     <div class="dish-overlay">
-                      <span class="dish-cat">{{ day.meals[mealType].postId ? 'Hệ thống' : 'Món tự nhập' }}</span>
+                      <span class="dish-cat">{{ day.meals[mealType].category || 'Món tự nhập' }}</span>
                       <h4 class="dish-name">{{ day.meals[mealType].name }}</h4>
                     </div>
                     
@@ -135,18 +136,30 @@ const loadWeekData = async () => {
   const days = generateWeekDays(baseDate.value)
   weekData.value = days
   try {
-    const responses = await Promise.all(days.map(day => api.get(`/api/meal-plans/user/${accountId.value}/date/${day.fullDate}`)))
+    const responses = await Promise.all(
+      days.map(day => api.get(`/api/meal-plans/user/${accountId.value}/date/${day.fullDate}`))
+    )
+    
     responses.forEach((res, index) => {
       res.data.forEach(plan => {
         if (weekData.value[index].meals[plan.mealType] !== undefined) {
+          // 🔥 ĐÃ FIX: Mapping dữ liệu sạch sẽ từ Backend mới
           weekData.value[index].meals[plan.mealType] = {
-            planId: plan.planId, postId: plan.postId, isCompleted: plan.isCompleted,
-            name: plan.customMealName || `Món ăn #${plan.postId}`, image: null 
+            planId: plan.planId,
+            postId: plan.postId,
+            isCompleted: plan.isCompleted,
+            name: plan.postTitle || plan.customMealName || `Món ăn #${plan.postId}`,
+            image: plan.postMedia || null,
+            category: plan.categoryName // Nhận tên category từ DTO
           }
         }
       })
     })
-  } catch (error) { showToast("Lỗi kết nối máy chủ!") } finally { isLoading.value = false }
+  } catch (error) { 
+    showToast("Lỗi kết nối máy chủ!") 
+  } finally { 
+    isLoading.value = false 
+  }
 }
 
 const changeWeek = (dir) => { baseDate.value.setDate(baseDate.value.getDate() + (dir * 7)); loadWeekData() }

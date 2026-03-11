@@ -321,25 +321,55 @@ function onAvatarChange(e) {
 
 async function saveProfile() {
   if (editSaving.value) return
-  const targetId = route.params.id || authStore.user?.accountID
+  
+  // Lấy ID người dùng (Ưu tiên ID từ route, nếu không có lấy từ store)
+  const targetId = route.params.id || authStore.user?.accountID || authStore.user?.id
   if (!targetId) return
+
   editSaving.value = true
   try {
-    const payload = { username: editForm.value.username, bio: editForm.value.bio }
-    // Upload new avatar if user selected a file
+    let finalAvatarUrl = user.value.avatar; // Giữ avatar cũ làm mặc định
+
+    // 1. Nếu có file mới, đẩy lên thư mục 'avatars' của Cloudinary
     if (editForm.value.avatarFile) {
       try {
-        const avatarUrl = await uploadMedia(editForm.value.avatarFile)
-        payload.avatar = avatarUrl
-      } catch { /* avatar upload failed — skip updating avatar */ }
+        // 🔥 QUAN TRỌNG: Thêm chữ 'avatars' vào tham số thứ 2
+        finalAvatarUrl = await uploadMedia(editForm.value.avatarFile, 'avatars')
+      } catch (uploadErr) { 
+        toast.error('Lỗi khi tải ảnh lên mây!');
+        editSaving.value = false;
+        return; // Dừng luôn nếu upload ảnh tạch
+      }
     }
+
+    // 2. Gom dữ liệu thành Object JSON sạch sẽ
+    const payload = { 
+      username: editForm.value.username, 
+      bio: editForm.value.bio,
+      avatar: finalAvatarUrl // Gửi cái Link HTTPS xịn
+    }
+    
+    // 3. Gửi lên Backend (Đảm bảo backend dùng @RequestBody để nhận)
     await updateUserProfile(targetId, payload)
-    // Refresh profile
+    
+    // 4. Refresh lại dữ liệu và giao diện
+// (Đoạn code trong ProfilePage.vue)
+    // 4. Refresh lại dữ liệu và giao diện
     await loadProfile()
+    
+    // 🔥 Cập nhật AuthStore & LocalStorage để Header ăn theo
+    if (authStore.user) {
+        authStore.user.avatar = finalAvatarUrl;
+        authStore.user.name = editForm.value.username; // Hoặc username
+        
+        // DÒNG QUAN TRỌNG NHẤT: Lưu đè xuống LocalStorage để F5 không bị cũ
+        localStorage.setItem('user', JSON.stringify(authStore.user));
+    }
+
     showEditModal.value = false
-    toast.success('Profile updated!')
+    toast.success('Hồ sơ đã được lưu lên mây! ☁️')
   } catch (err) {
-    toast.error('Failed to save. Please try again.')
+    toast.error('Có lỗi xảy ra khi lưu trữ.')
   } finally {
     editSaving.value = false
   }
