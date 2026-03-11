@@ -431,3 +431,4 @@ SELECT * FROM event;
 SELECT * FROM Votes;
 
 SELECT * FROM Likes;
+SELECT * FROM account;
