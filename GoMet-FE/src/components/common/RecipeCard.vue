@@ -215,6 +215,13 @@ const openLikesModal = async () => {
     isLoadingLikesList.value = false
   }
 }
+const handleSaveToPlan = () => {
+  if (!authStore.isAuthenticated) {
+    return toast.warn("Vui lòng đăng nhập để sử dụng tính năng này!");
+  }
+  // Gửi sự kiện 'save-to-plan' kèm thông tin bài viết này lên cho trang Home hoặc trang Profile xử lý
+  emit('save-to-plan', props.post);
+};
 </script>
 
 <style scoped lang="scss">

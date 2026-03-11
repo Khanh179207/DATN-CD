@@ -62,7 +62,8 @@ CREATE TABLE Event (
     EndAt DATETIME NOT NULL,
     VoteStartAt DATETIME NOT NULL,
     VoteEndAt DATETIME NOT NULL,
-    
+
+    MaxVotes INT DEFAULT 3,
     -- NGƯỜI THẮNG
     Winner INT NULL, 
     CONSTRAINT FK_Event_Account FOREIGN KEY (Winner) REFERENCES Account(AccountID)
@@ -428,3 +429,5 @@ SELECT * FROM account;
 SELECT * FROM event;
 
 SELECT * FROM Votes;
+
+SELECT * FROM Likes;

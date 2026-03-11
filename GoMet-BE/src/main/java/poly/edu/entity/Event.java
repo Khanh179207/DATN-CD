@@ -20,10 +20,18 @@ public class Event {
     private String eventName;
     private Integer winner;
 
-    // 🔥 Đổi hết sang LocalDateTime để khớp với Controller/Service
+
+    // Trong file Event.java
+    @Column(name = "StartAt")
     private LocalDateTime startAt;
+
+    @Column(name = "EndAt")
     private LocalDateTime endAt;
+
+    @Column(name = "VoteStartAt")
     private LocalDateTime voteStartAt;
+
+    @Column(name = "VoteEndAt")
     private LocalDateTime voteEndAt;
 
     private String bannerImage;

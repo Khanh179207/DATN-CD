@@ -3,7 +3,7 @@ package poly.edu.dto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 @Data
@@ -18,7 +18,7 @@ public class PostDTO {
     private String title;
     private String description;
     private String ingredients; // Vue đang gửi lên dạng String (đã join bằng dấu phẩy)
-    private String media;
+    private String media;       // Gửi Link Cloudinary
     private Integer level;
     private Integer cookingTime;
 
@@ -29,9 +29,9 @@ public class PostDTO {
     private String username;
     private String authorAvatar;
     private String categoryName;
-    private java.time.LocalDate createdAt;
-    private Integer isApproved; // Vẫn nên giữ để báo cho User biết bài mình đã được duyệt chưa
+    private LocalDate createdAt;
+    private Integer isApproved;
 
-    // Danh sách các bước nấu ăn (Vue đang gửi lên 1 mảng Steps)
-    private List<CookingStepDTO> steps;
+    // 🔥 Bây giờ nó sẽ tự động hiểu và dùng cái file StepRequestDTO.java riêng biệt ở trên
+    private List<StepRequestDTO> steps;
 }

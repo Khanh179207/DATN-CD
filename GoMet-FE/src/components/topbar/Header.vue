@@ -103,16 +103,16 @@
 
       <div v-if="authStore.isAuthenticated" class="user-menu-container">
         <div class="avatar-trigger" @click.stop="toggleDropdown">
-          <img :src="authStore.user.avatar || 'https://i.pravatar.cc/300'" class="user-avt">
+          <img :src="displayAvatar" @error="handleAvatarError" class="user-avt" alt="User">
         </div>
         
         <transition name="dropdown-anim">
           <div v-if="isDropdownOpen" class="user-dropdown" @click.stop>
             <div class="user-header">
-              <img :src="authStore.user.avatar || 'https://i.pravatar.cc/300'" class="header-avt">
+              <img :src="displayAvatar" @error="handleAvatarError" class="header-avt" alt="User">
               <div class="header-info">
-                <div class="name">{{ authStore.user.name }}</div>
-                <div class="handle">@cook_{{ authStore.user.id }}</div>
+                <div class="name">{{ authStore.user.name || authStore.user.username }}</div>
+                <div class="handle">@cook_{{ authStore.user.id || authStore.user.accountID }}</div>
               </div>
             </div>
             
@@ -165,7 +165,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router' // 🔥 Bổ sung useRoute
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useChatStore } from '@/stores/chat'
 import { useShoppingStore } from '@/stores/shopping'
@@ -181,7 +181,7 @@ const authStore = useAuthStore()
 const chatStore = useChatStore()
 const shoppingStore = useShoppingStore()
 const router = useRouter()
-const route = useRoute() // 🔥 Khởi tạo biến route để nhận biết trang hiện tại
+const route = useRoute() 
 
 // State
 const showShopping = ref(false)
@@ -195,6 +195,23 @@ const bugForm = ref({ type: 'ui', desc: '' })
 // Notifications State
 const notifications = ref([])
 const unreadNotiCount = computed(() => notifications.value.filter(n => !n.isRead).length)
+
+// 🔥 COMPUTED: Tính toán Avatar (Ưu tiên link xịn, nếu không có tự tạo avatar chữ)
+const displayAvatar = computed(() => {
+  const avt = authStore.user?.avatar;
+  // Nếu có avatar và là link thật (http) thì dùng luôn
+  if (avt && avt.startsWith('http')) return avt;
+  
+  // Nếu trống hoặc link lỗi cục bộ -> Tự render avatar theo tên
+  const name = encodeURIComponent(authStore.user?.name || authStore.user?.username || 'G');
+  return `https://ui-avatars.com/api/?name=${name}&background=EA580C&color=fff&bold=true`;
+});
+
+// 🔥 FUNCTION: Xử lý khi ảnh bị lỗi 404 (Do link cũ đã bị xóa)
+const handleAvatarError = (e) => {
+  const name = encodeURIComponent(authStore.user?.name || authStore.user?.username || 'G');
+  e.target.src = `https://ui-avatars.com/api/?name=${name}&background=EA580C&color=fff&bold=true`;
+};
 
 // Actions
 const closeAllDropdowns = () => { 
@@ -286,6 +303,43 @@ onUnmounted(() => window.removeEventListener('scroll', handleScroll))
 
 <style scoped lang="scss" src="./Header.scss"></style>
 <style scoped>
+/* 🔥 CSS ÉP CHO AVATAR LUÔN TRÒN TRỊA, KHÔNG MÉO XỆCH */
+.user-avt, .header-avt {
+  object-fit: cover !important; /* Cực kỳ quan trọng để ảnh full box */
+  background-color: #FFF7ED; /* Màu nền nhẹ nếu ảnh đang load */
+  border-radius: 50% !important;
+}
+
+/* Đảm bảo khung chứa avatar ngoài Header vuông vức */
+.avatar-trigger {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-trigger img {
+  width: 100%;
+  height: 100%;
+}
+
+.avatar-trigger:hover {
+  border-color: #EA580C;
+  transform: scale(1.05);
+}
+
+/* Đảm bảo avatar trong dropdown to và nét */
+.header-avt {
+  width: 50px;
+  height: 50px;
+  border: 2px solid #FED7AA;
+}
+
 .btn-map-action {
   width: 100%; padding: 12px; background: #EA580C; color: white; border: none; 
   border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; 

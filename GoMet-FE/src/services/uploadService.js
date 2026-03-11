@@ -1,25 +1,17 @@
 import api from './api'
 
 /**
- * Upload a single file to the media server.
- * @param {File} file - The file to upload (image or video)
- * @returns {Promise<string>} The URL to access the uploaded media, e.g. "/api/media/{token}"
+ * Hàm vạn năng để up ảnh lên Cloudinary
+ * @param {File} file - File từ input
+ * @param {String} folder - Thư mục trên mây (posts, avatars, events, reports)
  */
-export const uploadMedia = async (file) => {
+export const uploadMedia = async (file, folder = 'general') => {
   const formData = new FormData()
   formData.append('file', file)
-  const res = await api.post('/api/media/upload', formData, {
+  formData.append('folder', folder)
+
+  const res = await api.post('/api/upload/image', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   })
-  // Returns { url: "/api/media/{token}", token: "..." }
-  return res.data.url
-}
-
-/**
- * Upload multiple files concurrently.
- * @param {File[]} files - Array of files to upload
- * @returns {Promise<string[]>} Array of uploaded URLs in the same order
- */
-export const uploadMultiple = async (files) => {
-  return Promise.all(files.map(uploadMedia))
+  return res.data.url // Trả về link https://res.cloudinary.com/...
 }
