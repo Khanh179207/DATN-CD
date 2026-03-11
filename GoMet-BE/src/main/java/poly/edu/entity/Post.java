@@ -112,12 +112,12 @@ public class Post {
     private List<CookingSteps> cookingSteps;
 
     @OneToMany(mappedBy = "post")
-    private List<EventPosts> eventPosts;
-
-    @OneToMany(mappedBy = "post")
     private List<Notification> notifications;
 
     @OneToMany(mappedBy = "post")
     private List<Report> reports;
+
+    @Column(name = "LikeCount")
+    private Integer likeCount = 0; // Thêm dòng này vào
 
 }

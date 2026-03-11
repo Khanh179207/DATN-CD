@@ -7,6 +7,7 @@ import poly.edu.dao.*;
 import poly.edu.entity.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -335,7 +336,7 @@ public class AdminStatsController {
 
         // overview event stats
         long totalEvents   = allEvents.size();
-        LocalDate now      = LocalDate.now();
+        LocalDateTime now      = LocalDateTime.now();
         long activeEvents  = allEvents.stream()
                 .filter(e -> e.getStartAt() != null && e.getEndAt() != null
                           && !now.isBefore(e.getStartAt()) && !now.isAfter(e.getEndAt()))

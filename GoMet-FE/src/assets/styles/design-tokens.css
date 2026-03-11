@@ -47,10 +47,12 @@
 
   /* ─── TYPOGRAPHY ─── */
 
-  /* Font Families */
-  --font-display: 'Playfair Display', Georgia, serif;
-  --font-body:    'Quicksand', 'Segoe UI', sans-serif;
-  --font-ui:      'Mulish', 'Segoe UI', sans-serif;
+
+  /* Font Families (Đã chuẩn hóa) */
+  --font-heading: 'Playfair Display', serif;
+  --font-body:    'Mulish', sans-serif;
+  --font-accent:  'Quicksand', sans-serif;
+
 
   /* Font Scale (Major Third — 1.250 ratio, base 16px) */
   --text-xs:     0.75rem;   /* 12px */

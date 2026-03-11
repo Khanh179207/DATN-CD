@@ -57,64 +57,68 @@
         <header class="collection-header">
           <div class="header-left">
             <div class="brand-tag">GOMET ARCHIVE /// V.3.0</div>
-            <h1 class="main-title">{{ $t('storage.title').split(' ').slice(0, 2).join(' ') }} <span class="text-serif">{{ $t('storage.title').split(' ').slice(2).join(' ') }}</span></h1>
+            <h1 class="main-title">
+              {{ $t('storage.title').split(' ').slice(0, 2).join(' ') }}
+              <span class="text-serif">
+                {{ $t('storage.title').split(' ').slice(2).join(' ') }}
+              </span>
+            </h1>
           </div>
           
           <div class="header-right">
             <div class="search-bar">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
               <input type="text" :placeholder="$t('storage.search_placeholder')" v-model="searchQuery" />
             </div>
           </div>
         </header>
 
         <div class="gallery-grid" v-if="filteredPosts.length > 0">
-          <div 
-            v-for="(post, index) in filteredPosts" 
-            :key="post.id" 
-            class="archive-card"
-            @click="goToDetail(post.id)"
-          >
-            <div class="card-visual">
-              <img :src="post.image" loading="lazy" />
-              <div class="visual-overlay">
-                <span class="cat-tag">{{ post.category }}</span>
-              </div>
-            </div>
 
-            <div class="card-body">
-              <div class="meta-row">
-                <span class="date-saved">{{ $t('storage.saved_on') }} {{ post.savedDate }}</span>
-                <button class="btn-unsave" @click.stop="unsavePost(post.id)" :title="$t('storage.unsave')">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
-                </button>
-              </div>
-              
-              <h3 class="card-title">{{ post.title }}</h3>
-              
-              <div class="specs-row">
-                <div class="spec">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                  {{ post.time }}
-                </div>
-                <div class="spec">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>
-                  {{ post.difficulty }}
-                </div>
-              </div>
-            </div>
-          </div>
+          <RecipeCard
+          v-for="post in filteredPosts"
+          :key="post.id"
+          :post="post"
+          @unsaved="removeCard"
+          />
+
         </div>
 
         <div v-else class="empty-state">
           <div class="empty-icon">📂</div>
           <h3>{{ $t('common.no_data') }}</h3>
           <p>No recipes saved in this category yet.</p>
-          <button class="btn-explore" @click="$router.push('/search')">EXPLORE NOW</button>
+          <button class="btn-explore" @click="$router.push('/search')">
+            EXPLORE NOW
+          </button>
         </div>
 
       </main>
     </div>
+
+    <!-- Confirm Unsave Popup (MOVED INSIDE ROOT) -->
+    <div v-if="showConfirm" class="popup-overlay">
+      <div class="popup-box">
+        
+        <h3>{{ $t('storage.confirm_unsave') }}</h3>
+        <p>{{ $t('storage.confirm_unsave_desc') }}</p>
+
+        <div class="popup-actions">
+          <button class="btn-cancel" @click="showConfirm = false">
+            {{ $t('common.cancel') }}
+          </button>
+
+          <button class="btn-delete" @click="confirmUnsave">
+            {{ $t('storage.unsave') }}
+          </button>
+        </div>
+
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -124,6 +128,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { getFavorites, removeFavorite } from '@/services/socialService'
 import { toast } from '@/composables/useToast'
+import RecipeCard from '@/components/common/RecipeCard.vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -137,21 +142,52 @@ const loading = ref(true)
 
 const levelMap = { 1: 'Easy', 2: 'Medium', 3: 'Hard' }
 
-const normalizePost = (p) => ({
-  id: p.postID,
-  title: p.title,
-  category: p.categoryName || 'Uncategorized',
-  image: p.media || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop',
-  time: p.cookingTime ? `${p.cookingTime} min` : '?',
-  difficulty: levelMap[p.level] || 'Unknown',
-  savedDate: p.createdAt ? new Date(p.createdAt).toLocaleDateString('vi-VN') : ''
-})
+const normalizePost = (fav) => {
+  return {
+    id: fav.postID,
+
+    title: fav.title ?? 'No title',
+
+    category: fav.categoryName ?? 'Uncategorized',
+
+    image:
+      fav.media ||
+      'https://images.unsplash.com/photo-1546069901-ba9599a7e63c',
+
+    time: fav.cookingTime ? `${fav.cookingTime} min` : '30 min',
+
+    rating: fav.rating ?? 4.5,
+
+    reviews: fav.reviewCount ?? 0,
+
+    likes: fav.likeCount ?? 0,
+
+    author: {
+      name: fav.userName ?? "Gomet Chef",
+      avatar: fav.avatar ?? null
+    },
+
+    difficulty: levelMap[fav.level] ?? 'Easy',
+
+    savedDate: new Date().toLocaleDateString()
+  }
+}
 
 onMounted(async () => {
-  if (!authStore.isAuthenticated) { loading.value = false; return }
+  if (!authStore.isAuthenticated) {
+    loading.value = false
+    return
+  }
+
   try {
     const data = await getFavorites(authStore.user.accountID)
-    savedPosts.value = (data || []).map(normalizePost)
+
+    console.log("Favorites API:", data)
+
+    savedPosts.value = Array.isArray(data)
+      ? data.map(normalizePost).filter(Boolean)
+      : []
+
   } catch (err) {
     console.warn('StoragePage: load error', err)
     toast.warn(t('toast.load_error'))
@@ -180,19 +216,16 @@ const filteredPosts = computed(() => {
   return posts
 })
 
-const unsavePost = async (id) => {
-  if (!confirm(t('storage.unsave') + '?')) return
-  try {
-    await removeFavorite(authStore.user.accountID, id)
-    savedPosts.value = savedPosts.value.filter(p => p.id !== id)
-    toast.success(t('toast.unsave_ok'))
-  } catch (err) {
-    console.warn('StoragePage: remove error', err)
-    toast.error('Failed to remove, please try again.')
-  }
-}
 
-const goToDetail = (id) => router.push(`/home/post/${id}`)
+const showConfirm = ref(false)
+
+const selectedPost = ref(null)
+
+const removeCard = (postId) => {
+  savedPosts.value = savedPosts.value.filter(
+    p => p.id !== postId
+  )
+}
 </script>
 
 <style scoped>
@@ -280,39 +313,18 @@ const goToDetail = (id) => router.push(`/home/post/${id}`)
 .search-bar svg { color: #94A3B8; }
 
 /* Gallery Grid */
-.gallery-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 30px;
+.gallery-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+  gap:24px;
 }
 
-/* Card Design */
-.archive-card {
-  background: #FFF; border-radius: 16px; overflow: hidden; cursor: pointer;
-  border: 1px solid rgba(0,0,0,0.05); transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  display: flex; flex-direction: column;
-}
-.archive-card:hover {
-  transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.05); border-color: #EA580C;
-}
-
-.card-visual { position: relative; height: 180px; overflow: hidden; }
-.card-visual img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
 .archive-card:hover .card-visual img { transform: scale(1.05); }
 .visual-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.6), transparent); padding: 15px; display: flex; align-items: flex-end; }
 .cat-tag { background: #EA580C; color: #FFF; font-size: 0.65rem; font-weight: 700; padding: 4px 10px; border-radius: 4px; text-transform: uppercase; }
 
 .card-body { padding: 20px; display: flex; flex-direction: column; flex: 1; }
-.meta-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .date-saved { font-size: 0.7rem; color: #94A3B8; font-weight: 600; }
-.btn-unsave {
-  background: transparent; border: none; color: #EA580C; cursor: pointer; padding: 5px;
-  border-radius: 50%; transition: 0.2s; display: flex; align-items: center;
-}
-.btn-unsave:hover { background: #FFF7ED; transform: scale(1.1); }
-
-.card-title { font-family: 'Playfair Display', serif; font-size: 1.2rem; margin: 0 0 15px; color: #1E293B; line-height: 1.3; }
-
-.specs-row { display: flex; gap: 15px; margin-top: auto; border-top: 1px solid #F1F5F9; padding-top: 15px; }
-.spec { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 600; color: #64748B; }
 
 /* Empty State */
 .empty-state { text-align: center; padding: 80px 0; color: #94A3B8; }
@@ -328,5 +340,62 @@ const goToDetail = (id) => router.push(`/home/post/${id}`)
   .filter-group { flex: 1; display: flex; flex-direction: row; overflow-x: auto; padding-bottom: 5px; }
   .btn-filter { flex-shrink: 0; }
   .stats-box { display: none; }
+}
+
+.popup-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:1000;
+}
+
+.popup-box{
+  background:#fff;
+  padding:30px;
+  border-radius:16px;
+  width:320px;
+  text-align:center;
+  box-shadow:0 20px 40px rgba(0,0,0,0.15);
+}
+
+.popup-box h3{
+  margin-bottom:10px;
+  font-size:1.2rem;
+}
+
+.popup-box p{
+  font-size:0.9rem;
+  color:#64748B;
+  margin-bottom:20px;
+}
+
+.popup-actions{
+  display:flex;
+  gap:10px;
+  justify-content:center;
+}
+
+.btn-cancel{
+  background:#E2E8F0;
+  border:none;
+  padding:10px 16px;
+  border-radius:8px;
+  cursor:pointer;
+}
+
+.btn-delete{
+  background:#EA580C;
+  color:#fff;
+  border:none;
+  padding:10px 16px;
+  border-radius:8px;
+  cursor:pointer;
+}
+
+.btn-delete:hover{
+  background:#c2410c;
 }
 </style>

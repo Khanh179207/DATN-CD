@@ -1,5 +1,5 @@
 <template>
-  <aside class="gomet-sovereign-sidebar" :class="{ 'is-collapsed': isCollapsed }">
+  <aside class="gomet-sovereign-sidebar" :class="[{ 'is-collapsed': isCollapsed }, { 'theme-dark': route.meta?.isDark }]">
     <div class="sidebar-header">
       <div class="brand-wrapper anim-fade-in" v-if="!isCollapsed">
         <div class="logo-container-premium">
@@ -112,8 +112,11 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRoute } from 'vue-router' // 🔥 Import useRoute
+
 defineEmits(['open-premium'])
 
+const route = useRoute() // 🔥 Khởi tạo route
 const isCollapsed = ref(true)
 const toggleSidebar = () => { isCollapsed.value = !isCollapsed.value }
 </script>
@@ -233,8 +236,8 @@ const toggleSidebar = () => { isCollapsed.value = !isCollapsed.value }
   background: rgba(255, 255, 255, 0.82); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
   border-right: 1px solid rgba(255, 255, 255, 0.4);
   display: flex; flex-direction: column; position: sticky; top: 0; z-index: var(--z-sticky);
-  /* width change triggers layout — unavoidable for collapse UX, but isolated to sidebar */
-  transition: width var(--duration-slower) cubic-bezier(0.19, 1, 0.22, 1);
+  transition: width var(--duration-slower) cubic-bezier(0.19, 1, 0.22, 1),
+              background-color 0.4s ease, border-color 0.4s ease; /* Thêm transition đổi màu */
   font-family: var(--font-ui); overflow: hidden;
 }
 .gomet-sovereign-sidebar.is-collapsed { width: var(--sidebar-collapsed); }
@@ -243,7 +246,7 @@ const toggleSidebar = () => { isCollapsed.value = !isCollapsed.value }
 .is-collapsed .sidebar-header { justify-content: center; padding: 0; }
 .brand-wrapper { display: flex; align-items: center; gap: 10px; }
 .brand-logo { width: 34px; height: 34px; object-fit: cover; border-radius: 9px; }
-.brand-text .main { display: block; font-family: 'Playfair Display', serif; font-weight: 900; font-size: 19px; color: #111; letter-spacing: 0.3px; line-height: 1; }
+.brand-text .main { display: block; font-family: 'Playfair Display', serif; font-weight: 900; font-size: 19px; color: #111; letter-spacing: 0.3px; line-height: 1; transition: color 0.4s ease; }
 .brand-text .sub { font-size: 7px; font-weight: 900; color: #EA580C; letter-spacing: 2px; }
 
 .logo-mini { width: 44px; height: 44px; border-radius: 12px; border: 2px solid #EA580C; padding: 2px; transition: 0.4s; cursor: pointer; }
@@ -254,13 +257,12 @@ const toggleSidebar = () => { isCollapsed.value = !isCollapsed.value }
 .nav-container-vipro { flex: 1; overflow-y: auto; padding: 10px 15px; scrollbar-width: none; }
 .nav-container-vipro::-webkit-scrollbar { display: none; }
 .nav-group { margin-bottom: 22px; }
-.group-tag { display: block; font-size: 0.58rem; font-weight: 900; color: #d1d1d1; letter-spacing: 2px; margin-bottom: 12px; padding-left: 12px; text-transform: uppercase; }
+.group-tag { display: block; font-size: 0.58rem; font-weight: 900; color: #d1d1d1; letter-spacing: 2px; margin-bottom: 12px; padding-left: 12px; text-transform: uppercase; transition: color 0.4s ease; }
 .gold-txt { color: #D4AF37 !important; }
 
 .nav-link {
   display: flex; align-items: center; padding: 12px 14px; color: var(--color-neutral-500);
   text-decoration: none; border-radius: var(--radius-md);
-  /* Only composited props + color/background */
   transition: background     var(--duration-fast) var(--ease-out),
               color          var(--duration-fast) var(--ease-out),
               transform      var(--duration-fast) var(--ease-out);
@@ -306,4 +308,68 @@ const toggleSidebar = () => { isCollapsed.value = !isCollapsed.value }
 .is-collapsed .nav-link { justify-content: center; padding: 15px 0; }
 .tooltip { position: absolute; left: 100%; top: 50%; transform: translateY(-50%); background: rgba(20,12,5,0.72); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 10px; font-weight: 800; white-space: nowrap; opacity: 0; visibility: hidden; transition: 0.3s; margin-left: 15px; z-index: 100; border: 1px solid rgba(212, 175, 55, 0.3); }
 .nav-link:hover .tooltip { opacity: 1; visibility: visible; transform: translateY(-50%) translateX(5px); }
+
+
+/* ==================================================== */
+/* 🔥 GIAO DIỆN MÀU ĐEN (THEME DARK) CHO SIDEBAR        */
+/* ==================================================== */
+
+.gomet-sovereign-sidebar.theme-dark {
+  background: rgba(3, 7, 18, 0.95); /* Màu nền đen sâu */
+  border-right-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Đổi màu text Logo */
+.gomet-sovereign-sidebar.theme-dark .brand-text .main {
+  color: #FFFFFF;
+}
+
+/* Đổi màu nút thu gọn (Toggle button) */
+.gomet-sovereign-sidebar.theme-dark .minimal-toggle {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #9CA3AF;
+}
+.gomet-sovereign-sidebar.theme-dark .minimal-toggle:hover {
+  color: #EA580C;
+  border-color: #EA580C;
+  background: rgba(234, 88, 12, 0.1);
+}
+
+/* Đổi màu chữ nhóm Menu (Journey, Personal) */
+.gomet-sovereign-sidebar.theme-dark .group-tag:not(.gold-txt) {
+  color: #6B7280;
+}
+
+/* Đổi màu Link Menu thường */
+.gomet-sovereign-sidebar.theme-dark .nav-link {
+  color: #9CA3AF;
+}
+.gomet-sovereign-sidebar.theme-dark .nav-link:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #FFFFFF;
+}
+.gomet-sovereign-sidebar.theme-dark .nav-link:hover .icon-box {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Đổi màu Link Menu Đang Active */
+.gomet-sovereign-sidebar.theme-dark .nav-link.is-active {
+  background: rgba(234, 88, 12, 0.15); /* Nền cam nhạt */
+  border-color: rgba(234, 88, 12, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5); /* Đổ bóng tối */
+  color: #EA580C !important;
+}
+.gomet-sovereign-sidebar.theme-dark .nav-link.is-active .label {
+  color: #EA580C;
+}
+
+/* Hiệu chỉnh lại Card Premium cho hợp nền tối */
+.gomet-sovereign-sidebar.theme-dark .premium-core-card {
+  background: rgba(212, 175, 55, 0.05);
+  border-color: rgba(212, 175, 55, 0.2);
+}
+.gomet-sovereign-sidebar.theme-dark .text p {
+  color: #9CA3AF;
+}
 </style>

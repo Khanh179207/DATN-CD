@@ -1,0 +1,376 @@
+$gold: #D4AF37;
+$gold-light: #FCEABB;
+$deep-bg: #050505;
+$cream: #F4F0EA;
+
+.tarot-ritual-master {
+  /* FIX BỐ CỤC: Chiếm toàn bộ không gian còn lại, không dùng 100vh cứng nữa */
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%; 
+  perspective: 2000px;
+  position: relative;
+  overflow: hidden;
+  padding: 10px 20px 20px; /* Giảm padding để có thêm không gian */
+}
+
+/* ================= VŨ TRỤ: ÁNH SÁNG & HẠT PARTICLES ================= */
+.divine-light {
+  position: absolute;
+  top: -40%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 150vw;
+  height: 100vh;
+  background: radial-gradient(ellipse at top, rgba($gold, 0.15) 0%, transparent 70%);
+  filter: blur(40px);
+  z-index: 0;
+  pointer-events: none;
+  animation: pulseRay 4s infinite alternate;
+}
+
+@keyframes pulseRay {
+  0% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
+.cosmic-particles {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+  
+  .particle {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: $gold-light;
+    border-radius: 50%;
+    box-shadow: 0 0 8px 2px rgba($gold-light, 0.6);
+  }
+}
+
+/* ================= BỐ CỤC CHÍNH ================= */
+.ritual-wrapper {
+  text-align: center;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* Đẩy header lên trên, stage ở giữa, nút ở dưới */
+}
+
+.ritual-header-premium {
+  margin-top: 10px;
+  flex-shrink: 0; /* Không cho header bị bóp méo */
+
+  .ritual-tagline {
+    color: $gold;
+    letter-spacing: 6px;
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+  }
+
+  .ritual-main-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 3.5vw, 3rem); /* Size chữ co giãn theo màn hình */
+    color: $cream;
+    margin: 5px 0 0 0;
+    transition: all 0.5s;
+
+    &.neon-glow {
+      color: $gold-light;
+      text-shadow:
+        0 0 15px rgba($gold, 0.6),
+        0 0 30px rgba($gold, 0.3);
+    }
+  }
+}
+
+/* Khu vực biểu diễn trung tâm (Tự động co giãn lấy phần không gian còn lại) */
+.the-sacred-stage {
+  position: relative;
+  flex: 1; 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 330px; /* Đảm bảo đủ chỗ cho lá bài */
+}
+
+/* ================= TRẠNG THÁI XÀO BÀI ================= */
+.shuffle-deck {
+  position: relative;
+  width: 200px;
+  height: 310px;
+}
+
+.card-artifact {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  box-shadow: -5px 5px 15px rgba(0, 0, 0, 0.8);
+}
+
+/* Thiết kế mặt lưng bài huyền bí (Đã nâng cấp) */
+.back-design-mystic {
+  background: linear-gradient(145deg, rgba(20,20,20,0.9), rgba(5,5,5,0.95)); /* Làm nền sáng hơn một chút để thấy chiều sâu */
+  /* Loại bỏ viền liền cứng nhắc, thay bằng viền mỏng và nhạt hơn */
+  border: 1px solid rgba($gold, 0.15); 
+  /* Thêm hiệu ứng phát sáng nhẹ ở các cạnh */
+  box-shadow: inset 0 0 20px rgba($gold, 0.05);
+
+  /* Khung viền mảnh bên trong (Thanh lịch hơn) */
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 6px; /* Thu hẹp khoảng cách viền trong để thẻ trông tinh tế hơn */
+    /* Sử dụng viền đứt nét hoặc gradient mỏng thay vì solid */
+    border: 1px solid rgba($gold, 0.1); 
+    border-radius: 8px;
+    pointer-events: none;
+  }
+
+  /* Biểu tượng ✧ ở giữa */
+  &::after {
+    content: '✧';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    /* Tăng cường hiệu ứng glow cho biểu tượng */
+    color: rgba($gold, 0.4); 
+    font-size: 5rem; /* Thu nhỏ lại một chút để cân đối với lá bài nhỏ */
+    font-family: serif;
+    text-shadow: 0 0 30px rgba($gold, 0.5); /* Thêm ánh sáng lan tỏa */
+  }
+}
+/* ================= LÁ BÀI 3D & AURA (ĐÃ FIX SIZE NHỎ LẠI) ================= */
+.hand-of-fate {
+  display: flex;
+  gap: 40px; /* Thu hẹp khoảng cách giữa các bài */
+  position: relative;
+  z-index: 20;
+  justify-content: center;
+}
+
+.tarot-card-v3 {
+  width: 200px; /* GIẢM TỪ 260px XUỐNG 200px */
+  height: 310px; /* GIẢM TỪ 390px XUỐNG 310px */
+  cursor: pointer;
+  perspective: 1200px;
+  position: relative;
+}
+
+.card-under-glow {
+  position: absolute;
+  inset: -15px;
+  background: radial-gradient(circle, rgba($gold, 0.6) 0%, transparent 70%);
+  border-radius: 50%;
+  filter: blur(25px);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.card-inner-3d {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  z-index: 2;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.9);
+  border-radius: 12px;
+}
+
+.face-3d {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.back {
+  @extend .back-design-mystic;
+}
+
+.front {
+  background: linear-gradient(to bottom, #fbf6f1, #eae0d5);
+  transform: rotateY(180deg);
+  padding: 20px;
+  color: $deep-bg;
+  border: 2px solid $gold;
+
+  .inner-frame {
+    position: absolute;
+    inset: 8px;
+    border: 1px solid rgba($gold, 0.4);
+    border-radius: 6px;
+  }
+  
+  .content-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 2;
+  }
+
+  .symbol {
+    font-size: 4rem; /* Nhỏ lại chút cho vừa thẻ */
+    margin-bottom: 15px;
+    filter: drop-shadow(0 5px 8px rgba(0, 0, 0, 0.2));
+  }
+
+  .name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: $deep-bg;
+    text-transform: uppercase;
+  }
+
+  .desc {
+    font-size: 0.8rem;
+    color: #555;
+    margin-top: 10px;
+    font-style: italic;
+    font-weight: 600;
+    text-align: center;
+    padding: 0 5px;
+  }
+}
+
+/* HIỆU ỨNG ÁNH SÁNG */
+.shimmer-effect {
+  position: absolute;
+  width: 200%;
+  height: 200%;
+  top: -50%;
+  left: -50%;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.8) 0%, transparent 40%);
+  opacity: 0;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  z-index: 3;
+}
+
+.cinematic-sweep {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: linear-gradient(
+    105deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.8) 40%,
+    rgba($gold-light, 0.9) 50%,
+    rgba(255, 255, 255, 0.8) 60%,
+    transparent 80%
+  );
+  mix-blend-mode: screen;
+  z-index: 10;
+  pointer-events: none;
+  transform: translateX(-150%);
+}
+
+/* ================= BÀN TAY MA THUẬT (INTERACTIVE FIX) ================= */
+.oracle-hand-wrap {
+  position: absolute;
+  bottom: 0;
+  
+  /* ĐẨY QUA BÊN TRÁI */
+  /* Thay 'right: 10%;' thành 'left: 10%;' (hoặc left: 5% nếu muốn sát lề hơn) */
+  left: 10%; 
+  
+  transform-origin: center bottom; /* Giữ nguyên tâm xoay ở cổ tay */
+  z-index: 60;
+  pointer-events: none;
+  
+  .hand-inner-float {
+    position: relative;
+    /* Xóa bỏ transform: translate(20%, 20%); nếu có, để tay không bị lệch */
+    
+    .real-hand-img {
+      /* LÀM TAY BỰ HƠN 1 TÍ */
+      /* Tăng từ 180px lên 220px (hoặc tùy ý bạn) */
+      width: 350px; 
+      
+      filter: drop-shadow(-10px -10px 30px rgba($gold, 0.4)) sepia(0.5) contrast(1.2);
+      border-radius: 50%;
+      mask-image: radial-gradient(circle, black 65%, transparent 100%);
+      -webkit-mask-image: radial-gradient(circle, black 65%, transparent 100%);
+      
+      /* Lật ảnh (tùy chọn): Nếu bạn muốn ngón tay chỉ từ trái qua phải cho thuận mắt */
+      /* transform: scaleX(-1); */ 
+    }
+
+    .hand-essence-glow {
+      position: absolute;
+      top: 30%;
+      left: 30%;
+      width: 50px; /* Chỉnh to hơn chút cho hợp với tay to */
+      height: 50px;
+      background: $gold;
+      border-radius: 50%;
+      filter: blur(25px);
+      opacity: 0.8;
+      animation: pulseEnergy 1.5s infinite alternate;
+    }
+  }
+}
+@keyframes pulseEnergy {
+  0% { transform: scale(1); opacity: 0.5; }
+  100% { transform: scale(2); opacity: 1; }
+}
+
+/* ================= NÚT BẮT ĐẦU ================= */
+.ritual-actions {
+  margin-bottom: 20px;
+  flex-shrink: 0;
+}
+
+.btn-invoke-oracle {
+  position: relative;
+  padding: 15px 45px;
+  background: transparent;
+  color: $gold;
+  border: 1px solid $gold;
+  font-weight: 800;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: 0.4s;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+
+  .btn-flare {
+    position: absolute;
+    inset: 0;
+    background: $gold;
+    opacity: 0;
+    transition: 0.4s;
+    z-index: -1;
+  }
+
+  &:hover {
+    color: $deep-bg;
+    box-shadow: 0 0 30px rgba($gold, 0.4);
+    border-color: transparent;
+    transform: translateY(-2px);
+
+    .btn-flare {
+      opacity: 1;
+    }
+  }
+}

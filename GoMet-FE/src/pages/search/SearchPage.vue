@@ -41,7 +41,15 @@
 
         <div class="filter-right">
           <button class="btn-filter-trigger" @click="showAdvanced = !showAdvanced" :class="{ active: showAdvanced }">
-            <span class="icon-filter"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg></span>
+            <span class="icon-filter">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line>
+                <line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line>
+                <line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line>
+                <line x1="17" y1="16" x2="23" y2="16"></line>
+              </svg>
+            </span>
             {{ $t('search.filters') }}
           </button>
           <div class="sort-select-wrapper">
@@ -91,11 +99,11 @@
             class="grid-item"
             :style="{ '--delay': index * 0.08 + 's' }" 
             @click="goToDetail(post.id)"
-            @save="handleSave(post.id)"
+            @save-to-plan="handleOpenPlanModal"
           />
         </transition-group>
 
-        <div v-if="paginatedPosts.length === 0" class="empty-state-depth">
+        <div v-if="paginatedPosts.length === 0 && !loading" class="empty-state-depth">
           <div class="icon-3d">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M3 11l19-9-9 19-2-8-8-2z"/><circle cx="12" cy="12" r="3"/></svg>
           </div>
@@ -120,63 +128,100 @@
         </div>
         <button class="page-nav" :disabled="currentPage === totalPages" @click="goToPage(currentPage + 1)">→</button>
       </div>
-
     </div>
+
+    <MealPlanModal 
+      :is-open="isPlanModalOpen" 
+      :recipe="selectedRecipeForPlan" 
+      @close="isPlanModalOpen = false"
+      @success="onPlanSaved"
+    />
+
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+
+// Components
 import RecipeCard from '@/components/common/RecipeCard.vue'
+import MealPlanModal from '@/components/modals/MealPlanModal.vue'
+
+// Services
 import { normalizePost } from '@/services/postService'
 import { getCategories } from '@/services/categoryService'
 import { toast } from '@/composables/useToast'
 import api from '@/services/api'
 
 const { t } = useI18n()
-
 const router = useRouter()
 const route = useRoute()
 
+// --- UI STATES ---
 const showAdvanced = ref(false)
 const currentPage = ref(1)
 const itemsPerPage = 8
 const isStuck = ref(false)
 const loading = ref(false)
 
+// --- DATA & FILTERS ---
 const categories = ref([{ id: null, name: 'All' }])
 const allPosts = ref([])
 const filters = ref({ category: null, difficulty: '', time: '', sort: 'newest' })
-
 const diffLevelMap = { 'Easy': 1, 'Medium': 2, 'Hard': 3 }
 
+// --- MEAL PLAN MODAL LOGIC ---
+const isPlanModalOpen = ref(false)
+const selectedRecipeForPlan = ref(null)
+
+const handleOpenPlanModal = (recipeData) => {
+  selectedRecipeForPlan.value = recipeData
+  isPlanModalOpen.value = true
+}
+
+const onPlanSaved = () => {
+  // Có thể hiển thị toast thông báo thành công (nếu modal chưa làm)
+  toast.success(t('mealPlan.save_success'))
+}
+
+// --- FETCHING LOGIC ---
 async function fetchPostsRaw() {
   loading.value = true
   try {
     const keyword = route.query.q || ''
     const sortMap = { newest: 'newest', popular: 'views', rating: 'rating' }
-    const res = await api.get('/api/posts/search', { params: {
-      keyword,
-      categoryID: filters.value.category || undefined,
-      sort: sortMap[filters.value.sort] || 'newest'
-    }})
+    
+    const res = await api.get('/api/posts/search', { 
+      params: {
+        keyword,
+        categoryID: filters.value.category || undefined,
+        sort: sortMap[filters.value.sort] || 'newest'
+      }
+    })
+
     let mapped = res.data.map(dto => ({
       ...normalizePost(dto),
       _level: dto.level,
       _cookingTime: dto.cookingTime || 0,
       _categoryID: dto.categoryID
     }))
+
+    // Lọc Difficulty (local)
     if (filters.value.difficulty) {
       const level = diffLevelMap[filters.value.difficulty]
       mapped = mapped.filter(p => p._level === level)
     }
+
+    // Lọc Cooking Time (local)
     if (filters.value.time === 'short') mapped = mapped.filter(p => p._cookingTime <= 30)
-    if (filters.value.time === 'medium') mapped = mapped.filter(p => p._cookingTime > 30 && p._cookingTime <= 60)
-    if (filters.value.time === 'long') mapped = mapped.filter(p => p._cookingTime > 60)
+    else if (filters.value.time === 'medium') mapped = mapped.filter(p => p._cookingTime > 30 && p._cookingTime <= 60)
+    else if (filters.value.time === 'long') mapped = mapped.filter(p => p._cookingTime > 60)
+
     allPosts.value = mapped
   } catch (err) {
+    console.error(err)
     toast.warn(t('toast.search_error'))
     allPosts.value = []
   } finally {
@@ -184,6 +229,7 @@ async function fetchPostsRaw() {
   }
 }
 
+// --- COMPUTED PROPERTIES ---
 const totalResults = computed(() => allPosts.value.length)
 const totalPages = computed(() => Math.ceil(totalResults.value / itemsPerPage))
 const paginatedPosts = computed(() => {
@@ -207,31 +253,62 @@ const visiblePages = computed(() => {
   return pages
 })
 
+// --- ACTIONS ---
 const quickFilter = (keyword) => { router.push({ query: { q: keyword } }) }
-const resetFilters = () => { filters.value = { category: null, difficulty: '', time: '', sort: 'newest' }; router.push({ query: {} }) }
-const goToPage = (p) => { if (p !== '...') { currentPage.value = p; window.scrollTo({ top: 400, behavior: 'smooth' }) } }
-const goToDetail = (id) => router.push(`/home/post/${id}`)
-const handleSave = (id) => console.log('Saved', id)
 
-watch([filters, () => route.query.q], () => { currentPage.value = 1; fetchPostsRaw() }, { deep: true })
+const resetFilters = () => { 
+  filters.value = { category: null, difficulty: '', time: '', sort: 'newest' }
+  router.push({ query: {} }) 
+}
+
+const goToPage = (p) => { 
+  if (p !== '...') { 
+    currentPage.value = p
+    window.scrollTo({ top: 400, behavior: 'smooth' }) 
+  } 
+}
+
+const goToDetail = (id) => router.push(`/post/${id}`)
+
+// --- WATCHERS ---
+watch([filters, () => route.query.q], () => { 
+  currentPage.value = 1
+  fetchPostsRaw() 
+}, { deep: true })
+
+// --- LIFECYCLE ---
+const handleScroll = () => {
+  isStuck.value = window.scrollY > 350
+}
 
 onMounted(async () => {
-  window.addEventListener('scroll', () => { isStuck.value = window.scrollY > 350 })
-  const cats = await getCategories().catch(() => [])
-  categories.value = [{ id: null, name: t('common.category_all') }, ...cats.map(c => ({ id: c.categoryID, name: c.categoryName }))]
+  window.addEventListener('scroll', handleScroll)
+  
+  // Load categories
+  try {
+    const cats = await getCategories()
+    categories.value = [
+      { id: null, name: t('common.category_all') }, 
+      ...cats.map(c => ({ id: c.categoryID, name: c.categoryName }))
+    ]
+  } catch (e) {
+    categories.value = [{ id: null, name: 'All' }]
+  }
+
   await fetchPostsRaw()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
 })
 </script>
 
 <style scoped>
-.search-page-container { width: 100%; min-height: 100vh; background-color: #FAFAF9; font-family: 'Mulish', sans-serif; }
+/* Giữ nguyên style của bạn */
+.search-page-wrapper { width: 100%; min-height: 100vh; background-color: #FAFAF9; font-family: 'Mulish', sans-serif; }
 
-/* 1. HERO DEPTH (AURORA) */
-.hero-depth {
-  position: relative; padding: 100px 20px 140px; text-align: center;
-  background: #FFF; overflow: hidden;
-}
-/* Soft blurry blob background effect */
+/* 1. HERO DEPTH */
+.hero-depth { position: relative; padding: 100px 20px 140px; text-align: center; background: #FFF; overflow: hidden; }
 .blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.6; z-index: 0; animation: float 10s infinite alternate; }
 .blob-1 { width: 300px; height: 300px; background: #FFEDD5; top: -50px; left: -50px; }
 .blob-2 { width: 400px; height: 400px; background: #E0F2FE; bottom: -100px; right: -50px; animation-delay: 5s; }
@@ -243,90 +320,69 @@ onMounted(async () => {
 .hero-title .highlight { background: linear-gradient(120deg, transparent 0%, transparent 60%, #FED7AA 60%, #FED7AA 100%); }
 .hero-text { font-size: 1.25rem; color: #57534E; line-height: 1.6; margin-bottom: 50px; }
 
-/* Trending Pills */
 .trending-pills { display: flex; flex-direction: column; align-items: center; gap: 10px; }
 .trending-pills .label { font-size: 0.85rem; color: #A8A29E; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
 .pills-scroll { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
-.pill-item {
-  background: rgba(255,255,255,0.8); border: 1px solid #E7E5E4; backdrop-filter: blur(4px);
-  padding: 10px 24px; border-radius: 50px; font-size: 0.95rem; font-weight: 700; color: #44403C;
-  cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-}
+.pill-item { background: rgba(255,255,255,0.8); border: 1px solid #E7E5E4; backdrop-filter: blur(4px); padding: 10px 24px; border-radius: 50px; font-size: 0.95rem; font-weight: 700; color: #44403C; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
 .pill-item:hover { transform: translateY(-3px); border-color: #EA580C; color: #EA580C; box-shadow: 0 10px 20px rgba(234, 88, 12, 0.15); }
 
 /* 2. MAIN BODY */
 .main-body-container { max-width: 1240px; margin: -60px auto 0; padding: 0 20px 100px; position: relative; z-index: 10; }
 
-/* STICKY FILTER GLASS */
-.sticky-filter-glass {
-  background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(16px);
-  border: 1px solid rgba(255,255,255,0.5); border-radius: 20px; padding: 15px 25px;
-  display: flex; justify-content: space-between; align-items: center;
-  box-shadow: 0 20px 40px -10px rgba(0,0,0,0.05); margin-bottom: 50px;
-  transition: all 0.3s ease;
-}
-.sticky-filter-glass.is-stuck { position: sticky; top: 20px; box-shadow: 0 20px 50px -10px rgba(0,0,0,0.1); border-color: #E5E5E5; }
+.sticky-filter-glass { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.5); border-radius: 20px; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 20px 40px -10px rgba(0,0,0,0.05); margin-bottom: 50px; transition: all 0.3s ease; }
+.sticky-filter-glass.is-stuck { position: sticky; top: 20px; box-shadow: 0 20px 50px -10px rgba(0,0,0,0.1); border-color: #E5E5E5; z-index: 100; }
 
 .filter-left { display: flex; gap: 30px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
-.tab-link {
-  background: none; border: none; font-size: 1rem; font-weight: 600; color: #78716C;
-  cursor: pointer; padding: 5px 0; position: relative; white-space: nowrap; transition: 0.3s;
-}
+.tab-link { background: none; border: none; font-size: 1rem; font-weight: 600; color: #78716C; cursor: pointer; padding: 5px 0; position: relative; white-space: nowrap; transition: 0.3s; }
 .tab-link:hover { color: #1C1917; }
 .tab-link.active { color: #1C1917; font-weight: 800; }
 .tab-link.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: #EA580C; border-radius: 3px; }
 
 .filter-right { display: flex; align-items: center; gap: 20px; }
-.btn-filter-trigger {
-  display: flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 12px;
-  background: #F5F5F4; border: none; font-weight: 700; color: #44403C; cursor: pointer; transition: 0.3s;
-}
+.btn-filter-trigger { display: flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 12px; background: #F5F5F4; border: none; font-weight: 700; color: #44403C; cursor: pointer; transition: 0.3s; }
 .btn-filter-trigger:hover, .btn-filter-trigger.active { background: #1C1917; color: white; }
 .sort-select-wrapper select { padding: 10px; border-radius: 12px; border: 1px solid #E7E5E4; background: white; font-weight: 600; cursor: pointer; outline: none; }
 
-/* ADVANCED PANEL */
-.advanced-panel-depth {
-  background: white; border-radius: 20px; margin-top: -30px; margin-bottom: 50px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #F3F4F6;
-}
+/* 3. ADVANCED PANEL */
+.advanced-panel-depth { background: white; border-radius: 20px; margin-top: -30px; margin-bottom: 50px; box-shadow: 0 20px 40px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #F3F4F6; }
 .panel-grid { display: grid; grid-template-columns: 1fr 1fr auto; gap: 40px; padding: 40px; }
 .filter-col h4 { font-family: 'Playfair Display', serif; font-size: 1.2rem; margin: 0 0 15px; color: #1C1917; }
 .chip-group { display: flex; flex-wrap: wrap; gap: 10px; }
 .radio-chip { cursor: pointer; }
 .radio-chip input { display: none; }
-.radio-chip span {
-  display: inline-block; padding: 8px 16px; border-radius: 20px; border: 1px solid #E7E5E4;
-  font-size: 0.9rem; color: #57534E; transition: 0.2s; background: white;
-}
+.radio-chip span { display: inline-block; padding: 8px 16px; border-radius: 20px; border: 1px solid #E7E5E4; font-size: 0.9rem; color: #57534E; transition: 0.2s; background: white; }
 .radio-chip input:checked + span { background: #FFF7ED; border-color: #FED7AA; color: #C2410C; font-weight: 700; }
 .btn-reset-text { background: none; border: none; text-decoration: underline; color: #78716C; cursor: pointer; font-weight: 600; transition: 0.2s; }
 .btn-reset-text:hover { color: #EF4444; }
 
-/* RESULTS GRID */
+/* 4. RESULTS GRID */
 .results-grid-container { min-height: 400px; }
 .grid-layout { display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px; }
 
-/* Pagination Floating */
-.pagination-floating {
-  display: inline-flex; align-items: center; gap: 10px; background: white;
-  padding: 10px 20px; border-radius: 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-  position: absolute; bottom: 0; left: 50%; transform: translate(-50%, 50%);
-  border: 1px solid #F3F4F6;
-}
+.empty-state-depth { text-align: center; padding: 80px 0; }
+.icon-3d { margin-bottom: 20px; color: #D6D3D1; }
+.empty-state-depth h3 { font-size: 1.5rem; color: #1C1917; margin-bottom: 10px; }
+.empty-state-depth p { color: #78716C; margin-bottom: 30px; }
+.btn-back-all { background: #1C1917; color: white; border: none; padding: 12px 30px; border-radius: 12px; font-weight: 700; cursor: pointer; }
+
+/* 5. PAGINATION */
+.pagination-floating { display: inline-flex; align-items: center; gap: 10px; background: white; padding: 10px 20px; border-radius: 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); position: relative; margin-top: 50px; left: 50%; transform: translateX(-50%); border: 1px solid #F3F4F6; }
 .page-nav { width: 40px; height: 40px; border-radius: 50%; border: 1px solid #E5E5E5; background: white; cursor: pointer; font-weight: 700; transition: 0.2s; }
 .page-nav:hover:not(:disabled) { border-color: #EA580C; color: #EA580C; }
+.page-nav:disabled { opacity: 0.4; cursor: not-allowed; }
 .page-dots { display: flex; gap: 8px; }
 .dot { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 50%; cursor: pointer; font-weight: 600; color: #57534E; transition: 0.2s; }
 .dot.active { background: #1C1917; color: white; }
 .dot:hover:not(.active):not(.spacer) { background: #F5F5F4; }
 
-/* Transitions */
+/* TRANSITIONS */
 .grid-item { opacity: 0; animation: fadeInUp 0.6s ease-out forwards; animation-delay: var(--delay); }
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
 .expand-enter-active, .expand-leave-active { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); max-height: 500px; }
 .expand-enter-from, .expand-leave-to { max-height: 0; opacity: 0; }
 
-/* Responsive */
+/* RESPONSIVE */
 @media (max-width: 1024px) {
   .hero-title { font-size: 3rem; }
   .grid-layout { grid-template-columns: repeat(2, 1fr); }
@@ -336,6 +392,5 @@ onMounted(async () => {
   .grid-layout { grid-template-columns: 1fr; }
   .sticky-filter-glass { flex-direction: column; align-items: flex-start; gap: 15px; }
   .filter-right { width: 100%; justify-content: space-between; }
-  .filter-left { width: 100%; padding-bottom: 10px; border-bottom: 1px solid #F3F4F6; }
 }
 </style>
