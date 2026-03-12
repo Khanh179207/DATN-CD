@@ -8,5 +8,6 @@
             "default": true
         }
     ],
-    "java.project.outputPath": "target/classes"
+    "java.project.outputPath": "target/classes",
+    "java.debug.settings.onBuildFailureProceed": true
 }

@@ -24,6 +24,72 @@
   &.is-scrolled { box-shadow: var(--shadow-md); }
 }
 
+// ── Search ───────────────────────────────────────────────────
+.search-wrapper-centered {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  margin: 0 var(--space-5);
+}
+
+.search-box-vip {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 480px;
+  background: var(--color-neutral-100);
+  border-radius: var(--radius-full);
+  padding: var(--space-1) var(--space-1) var(--space-1) var(--space-5);
+  border: 1.5px solid transparent;
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    background   var(--duration-fast) var(--ease-out),
+    box-shadow   var(--duration-fast) var(--ease-out);
+
+  &.is-focused {
+    background: var(--color-neutral-0);
+    border-color: var(--color-primary-500);
+    box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.10), var(--shadow-primary-sm);
+  }
+}
+
+.search-icon {
+  color: var(--color-neutral-400);
+  margin-right: var(--space-3);
+  display: flex;
+  flex-shrink: 0;
+}
+
+.search-box-vip input {
+  border: none;
+  background: transparent;
+  flex: 1;
+  outline: none;
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--color-neutral-900);
+  min-width: 0;
+}
+
+.btn-search-submit {
+  padding: var(--space-2) var(--space-5);
+  border-radius: var(--radius-full);
+  font-weight: var(--font-bold);
+  cursor: pointer;
+  background: var(--color-neutral-900);
+  color: var(--color-neutral-0);
+  border: none;
+  font-size: var(--text-xs);
+  margin-left: var(--space-2);
+  min-height: 36px;
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    transform  var(--duration-instant) var(--ease-out);
+
+  &:hover  { background: var(--color-primary-600); }
+  &:active { transform: scale(0.96); }
+}
+
 // ── Right Actions ────────────────────────────────────────────
 .header-right {
   display: flex;
@@ -682,49 +748,4 @@
     width: 38px;
     height: 38px;
   }
-  .btn-map-action {
-  width: 100%; padding: 12px; background: #EA580C; color: white; border: none; 
-  border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; 
-  align-items: center; justify-content: center; gap: 8px; transition: 0.2s;
-}
-.btn-map-action:hover { background: #C2410C; }
-
-/* 🔥 GIAO DIỆN MÀU ĐEN (THEME DARK) CHO HEADER */
-.content-header {
-  transition: background-color 0.4s ease, border-color 0.4s ease;
-}
-
-/* Ghi đè CSS gốc khi theme-dark được kích hoạt */
-.content-header.theme-dark {
-  background-color: rgba(17, 24, 39, 0.95) !important; /* Đen nhám, hơi trong suốt */
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 4px 30px rgba(0,0,0,0.5);
-}
-
-/* Đổi màu chữ của các nút thành màu sáng */
-.content-header.theme-dark .btn-create-post {
-  background: rgba(255, 255, 255, 0.1);
-  color: #FFF;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-.content-header.theme-dark .btn-create-post:hover {
-  background: #EA580C;
-  border-color: #EA580C;
-}
-
-/* Đổi màu các icon (chuông, giỏ hàng, chat) */
-.content-header.theme-dark .btn-icon {
-  background: rgba(255, 255, 255, 0.05);
-  color: #D1D5DB;
-}
-.content-header.theme-dark .btn-icon:hover {
-  background: rgba(255, 255, 255, 0.15);
-  color: #FFF;
-}
-
-/* Đường kẻ chia cắt dọc */
-.content-header.theme-dark .divider-vertical {
-  background-color: rgba(255, 255, 255, 0.1);
-}
 }

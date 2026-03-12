@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import poly.edu.dao.AccountDAO;
 import poly.edu.entity.Account;
+import poly.edu.service.JwtBlacklistService;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -37,6 +38,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final AccountDAO        accountDAO;
+    private final JwtBlacklistService jwtBlacklistService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -53,6 +55,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         // ── Try JWT first ────────────────────────────────────────────────────
         Optional<Claims> claims = jwtTokenProvider.validateAndParse(bearerToken);
         if (claims.isPresent()) {
+            String jti = claims.get().getId();
+            if (jwtBlacklistService.isBlacklisted(jti)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
             authenticateFromJwt(claims.get(), request);
             filterChain.doFilter(request, response);
             return;
@@ -84,11 +91,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private void authenticateFromLegacyToken(String token, HttpServletRequest request) {
         try {
-            Optional<Account> accOpt = accountDAO.findAll().stream()
-                    .filter(a -> token.equals(a.getToken()))
-                    .findFirst();
+            Optional<Account> accOpt = accountDAO.findByTokenAndIsActive(token, 1);
 
-            if (accOpt.isEmpty() || !accOpt.get().isAccountActive()) return;
+            if (accOpt.isEmpty()) return;
 
             Account acc = accOpt.get();
             List<SimpleGrantedAuthority> authorities = acc.isAdminAccount()

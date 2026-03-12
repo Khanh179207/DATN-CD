@@ -8,9 +8,38 @@ export default defineConfig({
   define: {
     global: 'window',
   },
+  build: {
+    chunkSizeWarningLimit: 650,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return
+
+          if (id.includes('/vue/') || id.includes('/pinia/') || id.includes('/vue-router/') || id.includes('/vue-i18n/')) {
+            return 'framework'
+          }
+
+          if (id.includes('/gsap/')) {
+            return 'motion'
+          }
+
+          if (id.includes('/socket.io-client/') || id.includes('/sockjs-client/') || id.includes('/stompjs/')) {
+            return 'realtime'
+          }
+
+          if (id.includes('/@google/generative-ai/')) {
+            return 'ai'
+          }
+
+          return 'vendor'
+        },
+      },
+    },
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      stompjs: path.resolve(__dirname, './node_modules/stompjs/lib/stomp.js'),
     },
   },
   css: {

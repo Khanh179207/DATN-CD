@@ -17,13 +17,21 @@ public class Event {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer eventID;
 
+    @Column(nullable = false)
     private String eventName;
     private Integer winner;
 
     // 🔥 Đổi hết sang LocalDateTime để khớp với Controller/Service
+    @Column(nullable = false)
     private LocalDateTime startAt;
+
+    @Column(nullable = false)
     private LocalDateTime endAt;
+
+    @Column(nullable = false)
     private LocalDateTime voteStartAt;
+
+    @Column(nullable = false)
     private LocalDateTime voteEndAt;
 
     private String bannerImage;

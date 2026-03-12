@@ -16,9 +16,9 @@
       />
 
       <div class="page-body">
-        <router-view v-slot="{ Component, route }">
+        <router-view v-slot="{ Component }">
           <transition name="page-fade" mode="out-in">
-            <component :is="Component" :key="route.fullPath" />
+            <component :is="Component" :key="route?.fullPath || 'default-view'" />
           </transition>
         </router-view>
       </div>
@@ -70,7 +70,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useChatStore } from '@/stores/chat'
 import { useAuthStore } from '@/stores/auth'
 import { checkAccountStatus } from '@/services/authService'
@@ -79,11 +79,12 @@ import Sidebar from '@/components/sidebar/Sidebar.vue'
 import Header from '@/components/topbar/Header.vue' 
 import AuthModal from '@/components/modals/AuthModal.vue'
 import PremiumModal from '@/components/modals/PremiumModal.vue'
-import MiniChatBox from '@/components/modals/MiniChatBox.vue'
+import MiniChatBox from '@/components/chat/MiniChatBox.vue'
 import TheFooter from '@/components/footer/TheFooter.vue'
 import CompareFloatingBar from '@/components/common/CompareFloatingBar.vue'
 
 const router = useRouter()
+const route = useRoute()
 const chatStore = useChatStore()
 const authStore = useAuthStore()
 

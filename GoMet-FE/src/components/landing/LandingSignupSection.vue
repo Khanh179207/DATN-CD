@@ -6,53 +6,53 @@
       
       <div class="bg-column col-slow">
         <div class="scroll-track">
-          <img src="@/assets/images/intro/bun.jpg" alt="Food">
-          <img src="@/assets/images/intro/bunbo.jpg" alt="Food">
-          <img src="@/assets/images/intro/banhmi.jpg" alt="Food">
-          <img src="@/assets/images/intro/com.jpg" alt="Food">
-          <img src="@/assets/images/intro/bun.jpg" alt="Food">
-          <img src="@/assets/images/intro/bunbo.jpg" alt="Food">
-          <img src="@/assets/images/intro/banhmi.jpg" alt="Food">
-          <img src="@/assets/images/intro/com.jpg" alt="Food">
+          <img src="@/assets/images/intro/bun.jpg" alt="" aria-hidden="true" loading="lazy" decoding="async">
+          <img src="@/assets/images/intro/bunbo.jpg" alt="" aria-hidden="true" loading="lazy" decoding="async">
+          <img src="@/assets/images/intro/banhmi.jpg" alt="" aria-hidden="true" loading="lazy" decoding="async">
+          <img src="@/assets/images/intro/com.jpg" alt="" aria-hidden="true" loading="lazy" decoding="async">
+          <img src="@/assets/images/intro/bun.jpg" alt="" aria-hidden="true" loading="lazy" decoding="async">
+          <img src="@/assets/images/intro/bunbo.jpg" alt="" aria-hidden="true" loading="lazy" decoding="async">
+          <img src="@/assets/images/intro/banhmi.jpg" alt="" aria-hidden="true" loading="lazy" decoding="async">
+          <img src="@/assets/images/intro/com.jpg" alt="" aria-hidden="true" loading="lazy" decoding="async">
         </div>
       </div>
 
       <div class="bg-column col-fast offset-down">
         <div class="scroll-track reverse">
-          <img src="@/assets/images/intro/banh.jpg" alt="Food">
-          <img src="@/assets/images/intro/goi.jpg" alt="Food">
-          <img src="@/assets/images/intro/bun.jpg" alt="Food">
-          <img src="@/assets/images/intro/bunbo.jpg" alt="Food">
-          <img src="@/assets/images/intro/banh.jpg" alt="Food">
-          <img src="@/assets/images/intro/goi.jpg" alt="Food">
-          <img src="@/assets/images/intro/bun.jpg" alt="Food">
-          <img src="@/assets/images/intro/bunbo.jpg" alt="Food">
+          <img src="@/assets/images/intro/banh.jpg" alt="" aria-hidden="true" loading="lazy" decoding="async">
+          <img src="@/assets/images/intro/goi.jpg" alt="" aria-hidden="true" loading="lazy" decoding="async">
+          <img src="@/assets/images/intro/bun.jpg" alt="" aria-hidden="true" loading="lazy" decoding="async">
+          <img src="@/assets/images/intro/bunbo.jpg" alt="" aria-hidden="true" loading="lazy" decoding="async">
+          <img src="@/assets/images/intro/banh.jpg" alt="" aria-hidden="true" loading="lazy" decoding="async">
+          <img src="@/assets/images/intro/goi.jpg" alt="" aria-hidden="true" loading="lazy" decoding="async">
+          <img src="@/assets/images/intro/bun.jpg" alt="" aria-hidden="true" loading="lazy" decoding="async">
+          <img src="@/assets/images/intro/bunbo.jpg" alt="" aria-hidden="true" loading="lazy" decoding="async">
         </div>
       </div>
 
       <div class="bg-column col-medium">
         <div class="scroll-track">
-          <img src="@/assets/images/intro/banhmi.jpg" alt="Food">
-          <img src="@/assets/images/intro/com.jpg" alt="Food">
-          <img src="@/assets/images/intro/banh.jpg" alt="Food">
-          <img src="@/assets/images/intro/goi.jpg" alt="Food">
-          <img src="@/assets/images/intro/banhmi.jpg" alt="Food">
-          <img src="@/assets/images/intro/com.jpg" alt="Food">
-          <img src="@/assets/images/intro/banh.jpg" alt="Food">
-          <img src="@/assets/images/intro/goi.jpg" alt="Food">
+          <img src="@/assets/images/intro/banhmi.jpg" alt="" aria-hidden="true" loading="lazy" decoding="async">
+          <img src="@/assets/images/intro/com.jpg" alt="" aria-hidden="true" loading="lazy" decoding="async">
+          <img src="@/assets/images/intro/banh.jpg" alt="" aria-hidden="true" loading="lazy" decoding="async">
+          <img src="@/assets/images/intro/goi.jpg" alt="" aria-hidden="true" loading="lazy" decoding="async">
+          <img src="@/assets/images/intro/banhmi.jpg" alt="" aria-hidden="true" loading="lazy" decoding="async">
+          <img src="@/assets/images/intro/com.jpg" alt="" aria-hidden="true" loading="lazy" decoding="async">
+          <img src="@/assets/images/intro/banh.jpg" alt="" aria-hidden="true" loading="lazy" decoding="async">
+          <img src="@/assets/images/intro/goi.jpg" alt="" aria-hidden="true" loading="lazy" decoding="async">
         </div>
       </div>
 
       <div class="bg-column col-fast offset-down mobile-hidden">
         <div class="scroll-track reverse">
-          <img src="@/assets/images/intro/bun.jpg" alt="Food">
-          <img src="@/assets/images/intro/goi.jpg" alt="Food">
-          <img src="@/assets/images/intro/banh.jpg" alt="Food">
-          <img src="@/assets/images/intro/com.jpg" alt="Food">
-          <img src="@/assets/images/intro/bun.jpg" alt="Food">
-          <img src="@/assets/images/intro/goi.jpg" alt="Food">
-          <img src="@/assets/images/intro/banh.jpg" alt="Food">
-          <img src="@/assets/images/intro/com.jpg" alt="Food">
+          <img src="@/assets/images/intro/bun.jpg" alt="" aria-hidden="true" loading="lazy" decoding="async">
+          <img src="@/assets/images/intro/goi.jpg" alt="" aria-hidden="true" loading="lazy" decoding="async">
+          <img src="@/assets/images/intro/banh.jpg" alt="" aria-hidden="true" loading="lazy" decoding="async">
+          <img src="@/assets/images/intro/com.jpg" alt="" aria-hidden="true" loading="lazy" decoding="async">
+          <img src="@/assets/images/intro/bun.jpg" alt="" aria-hidden="true" loading="lazy" decoding="async">
+          <img src="@/assets/images/intro/goi.jpg" alt="" aria-hidden="true" loading="lazy" decoding="async">
+          <img src="@/assets/images/intro/banh.jpg" alt="" aria-hidden="true" loading="lazy" decoding="async">
+          <img src="@/assets/images/intro/com.jpg" alt="" aria-hidden="true" loading="lazy" decoding="async">
         </div>
       </div>
     </div>
@@ -139,7 +139,7 @@
               <div v-else class="fade-in-anim">
                 <div class="input-group">
                   <label>Email</label>
-                  <input v-model="loginForm.email" type="email" placeholder="name@example.com" class="input-field" required />
+                  <input v-model="loginForm.email" type="text" autocomplete="username" placeholder="Email hoặc tên đăng nhập" class="input-field" required />
                 </div>
                 <div class="input-group">
                   <label>Mật khẩu</label>
@@ -259,7 +259,7 @@ const handleLogin = async () => {
       return
     }
     toast.success('Đăng nhập thành công! Chào mừng trở lại.')
-    router.push(result.role === 'admin' ? '/admin' : '/home')
+    router.push(result.role === 'admin' ? '/admin' : '/home').catch(() => {})
   } catch (err) {
     const raw = err.message || ''
     if (raw === 'ACCOUNT_BANNED') {
@@ -304,7 +304,7 @@ const handleVerifyOtp = async () => {
     authStore.setAuthFromResponse(data)
     toast.success('Đăng ký thành công! Chào mừng ' + data.username)
     showOtpModal.value = false
-    router.push('/home')
+    router.push('/home').catch(() => {})
   } catch (err) {
     toast.error(err.response?.data?.message || 'Mã OTP không hợp lệ hoặc đã hết hạn.')
   }
@@ -316,7 +316,7 @@ const loginWithGoogle = async () => {
   try {
     const result = await authStore.loginGoogle()
     toast.success('Đăng nhập Google thành công!')
-    router.push(result?.role === 'admin' ? '/admin' : '/home')
+    router.push(result?.role === 'admin' ? '/admin' : '/home').catch(() => {})
   } catch (err) {
     errorMsg.value = err.message || 'Đăng nhập Google thất bại.'
   } finally {
@@ -327,7 +327,7 @@ const loginWithGoogle = async () => {
 const onMfaSuccess = (result) => {
   showMfaModal.value = false
   toast.success('Đăng nhập thành công! Chào mừng trở lại.')
-  router.push(result?.role === 'admin' ? '/admin' : '/home')
+  router.push(result?.role === 'admin' ? '/admin' : '/home').catch(() => {})
 }
 
 const onMfaCancel = () => {

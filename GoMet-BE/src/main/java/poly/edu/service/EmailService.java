@@ -1,13 +1,24 @@
 package poly.edu.service;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import jakarta.mail.internet.MimeMessage;
-import lombok.RequiredArgsConstructor;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EmailService {
@@ -20,15 +31,15 @@ public class EmailService {
     @Value("${app.frontend.url:http://localhost:5173}")
     private String frontendUrl;
 
+    private static final String DEFAULT_RECIPIENT_NAME = "Chef";
+
     /**
      * Send a beautifully styled HTML email containing the 6-digit OTP code.
      */
     public void sendOtpEmail(String toEmail, String toName, String otp) {
         try {
             MimeMessage msg = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(msg, true, "UTF-8");
-
-            helper.setFrom(fromAddress, "GoMet - Culinary Community");
+        MimeMessageHelper helper = prepareHelper(msg, "GoMet - Culinary Community");
             helper.setTo(toEmail);
             helper.setSubject("GoMet — Your Verification Code");
             helper.setText(buildHtml(toName, otp, toEmail), true);
@@ -40,7 +51,10 @@ public class EmailService {
     }
 
     private String buildHtml(String name, String otp, String email) {
-        String verifyLink = frontendUrl + "/verify-email?email=" + email + "&token=" + otp;
+      String verifyLink = buildFrontendUrl("/verify-email", Map.of(
+        "email", email,
+        "token", otp
+      ));
         return """
         <!DOCTYPE html>
         <html lang="en">
@@ -126,7 +140,7 @@ public class EmailService {
           </table>
         </body>
         </html>
-        """.formatted(name, verifyLink, otp);
+        """.formatted(displayName(name), verifyLink, otp);
     }
 
     // ─── RESET PASSWORD EMAIL ─────────────────────────────────────────────────
@@ -138,9 +152,7 @@ public class EmailService {
     public void sendResetPasswordEmail(String toEmail, String toName, String rawToken) {
         try {
             MimeMessage msg = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(msg, true, "UTF-8");
-
-            helper.setFrom(fromAddress, "GoMet - Culinary Community");
+        MimeMessageHelper helper = prepareHelper(msg, "GoMet - Culinary Community");
             helper.setTo(toEmail);
             helper.setSubject("GoMet — Reset Your Password");
             helper.setText(buildResetHtml(toName, rawToken), true);
@@ -152,7 +164,7 @@ public class EmailService {
     }
 
     private String buildResetHtml(String name, String rawToken) {
-        String resetLink = frontendUrl + "/reset-password?token=" + rawToken;
+      String resetLink = buildFrontendUrl("/reset-password", Map.of("token", rawToken));
         return """
         <!DOCTYPE html>
         <html lang="en">
@@ -219,7 +231,7 @@ public class EmailService {
           </table>
         </body>
         </html>
-        """.formatted(name, resetLink, resetLink);
+        """.formatted(displayName(name), resetLink, resetLink);
     }
     // ─── SUSPICIOUS LOGIN EMAIL ───────────────────────────────────────────────
 
@@ -232,9 +244,7 @@ public class EmailService {
                                           String ip, String deviceName) {
         try {
             MimeMessage msg = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(msg, true, "UTF-8");
-
-            helper.setFrom(fromAddress, "GoMet Security");
+        MimeMessageHelper helper = prepareHelper(msg, "GoMet Security");
             helper.setTo(toEmail);
             helper.setSubject("⚠️ GoMet — Verify New Login from " + deviceName);
             helper.setText(buildSuspiciousLoginHtml(toName, verifyToken, wasntMeToken, ip, deviceName), true);
@@ -247,8 +257,11 @@ public class EmailService {
 
     private String buildSuspiciousLoginHtml(String name, String verifyToken, String wasntMeToken,
                                              String ip, String deviceName) {
-        String verifyLink   = frontendUrl + "/auth/verify-login?token=" + verifyToken;
-        String wasntMeLink  = frontendUrl + "/auth/verify-login?token=" + wasntMeToken + "&action=wasnt-me";
+  String verifyLink = buildFrontendUrl("/auth/verify-login", Map.of("token", verifyToken));
+  String wasntMeLink = buildFrontendUrl("/auth/verify-login", Map.of(
+    "token", wasntMeToken,
+    "action", "wasnt-me"
+  ));
         return """
         <!DOCTYPE html>
         <html lang="en">
@@ -310,7 +323,7 @@ public class EmailService {
           </table>
         </body>
         </html>
-        """.formatted(name, deviceName, ip, verifyLink, wasntMeLink);
+        """.formatted(displayName(name), deviceName, ip, verifyLink, wasntMeLink);
     }
 
     // ─── PROFILE UPDATE EMAIL ─────────────────────────────────────────────────
@@ -322,9 +335,7 @@ public class EmailService {
     public void sendProfileUpdateEmail(String toEmail, String toName, java.util.List<String> changedFields) {
         try {
             MimeMessage msg = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(msg, true, "UTF-8");
-
-            helper.setFrom(fromAddress, "GoMet - Culinary Community");
+        MimeMessageHelper helper = prepareHelper(msg, "GoMet - Culinary Community");
             helper.setTo(toEmail);
             helper.setSubject("GoMet — Your Profile Has Been Updated");
             helper.setText(buildProfileUpdateHtml(toName, changedFields), true);
@@ -332,17 +343,17 @@ public class EmailService {
             mailSender.send(msg);
         } catch (Exception e) {
             // Non-critical: log but don't throw — profile was already saved
-            System.err.println("[EmailService] Failed to send profile-update email: " + e.getMessage());
+            log.warn("Failed to send profile-update email to {}: {}", toEmail, e.getMessage());
         }
     }
 
     private String buildProfileUpdateHtml(String name, java.util.List<String> changedFields) {
-        String fieldListHtml = changedFields.stream()
+          String fieldListHtml = safeChangedFields(changedFields).stream()
             .map(f -> "<li style=\"margin:6px 0;color:#57534E;font-size:14px;\">✔ " + f + "</li>")
-            .collect(java.util.stream.Collectors.joining("\n"));
+            .collect(Collectors.joining("\n"));
 
-        String time = java.time.ZonedDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh"))
-            .format(java.time.format.DateTimeFormatter.ofPattern("HH:mm, dd/MM/yyyy"));
+          String time = ZonedDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"))
+            .format(DateTimeFormatter.ofPattern("HH:mm, dd/MM/yyyy"));
 
         return """
         <!DOCTYPE html>
@@ -393,5 +404,51 @@ public class EmailService {
           </table>
         </body>
         </html>
-        """.formatted(name, time, fieldListHtml, frontendUrl);
-    }}
+        """.formatted(displayName(name), time, fieldListHtml, normalizeFrontendUrl());
+      }
+
+      private MimeMessageHelper prepareHelper(MimeMessage message, String senderName) throws Exception {
+        assertMailConfigured();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, StandardCharsets.UTF_8.name());
+        helper.setFrom(fromAddress, senderName);
+        return helper;
+      }
+
+      private void assertMailConfigured() {
+        if (fromAddress == null || fromAddress.isBlank()) {
+          throw new IllegalStateException("SMTP sender address is not configured. Set SMTP_USERNAME before sending email.");
+        }
+      }
+
+      private String buildFrontendUrl(String path, Map<String, String> queryParams) {
+        String query = queryParams.entrySet().stream()
+            .map(entry -> urlEncode(entry.getKey()) + "=" + urlEncode(entry.getValue()))
+            .collect(Collectors.joining("&"));
+        return normalizeFrontendUrl() + path + (query.isBlank() ? "" : "?" + query);
+      }
+
+      private String normalizeFrontendUrl() {
+        if (frontendUrl == null || frontendUrl.isBlank()) {
+          return "http://localhost:5173";
+        }
+        return frontendUrl.endsWith("/") ? frontendUrl.substring(0, frontendUrl.length() - 1) : frontendUrl;
+      }
+
+      private String displayName(String name) {
+        if (name == null || name.isBlank()) {
+          return DEFAULT_RECIPIENT_NAME;
+        }
+        return name.trim();
+      }
+
+      private List<String> safeChangedFields(List<String> changedFields) {
+        if (changedFields == null || changedFields.isEmpty()) {
+          return List.of("Profile details");
+        }
+        return changedFields;
+      }
+
+      private String urlEncode(String value) {
+        return URLEncoder.encode(value == null ? "" : value, StandardCharsets.UTF_8);
+      }
+    }

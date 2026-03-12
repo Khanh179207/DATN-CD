@@ -123,6 +123,9 @@ public class MaintenanceModeFilter extends OncePerRequestFilter {
 
     private boolean isAlwaysAllowed(String path) {
         return "/api/system/settings/public".equals(path)
+                || path.startsWith("/api/media/")
+                || path.startsWith("/api/share/")
+                || path.startsWith("/share/")
                 || "/error".equals(path)
                 || path.startsWith("/v3/api-docs")
                 || path.startsWith("/swagger-ui");

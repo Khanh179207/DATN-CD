@@ -1,12 +1,23 @@
 package poly.edu.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import poly.edu.dao.*;
+import poly.edu.dao.AccountDAO;
+import poly.edu.dao.CategoryDAO;
+import poly.edu.dao.CommentDAO;
+import poly.edu.dao.CookingStepsDAO;
+import poly.edu.dao.FavoriteDAO;
+import poly.edu.dao.FollowDAO;
+import poly.edu.dao.PostDAO;
+import poly.edu.dao.RatingDAO;
 import poly.edu.dto.*;
 import poly.edu.entity.*;
 import poly.edu.service.ModerationService;
@@ -17,6 +28,7 @@ import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @RestController
@@ -26,8 +38,8 @@ public class PostController {
 
     private final PostDAO postDAO;
     private final RatingDAO ratingDAO;
-    private final FavoriteDAO favoriteDAO;
     private final CommentDAO commentDAO;
+    private final FavoriteDAO favoriteDAO;
     private final FollowDAO followDAO;
     private final AccountDAO accountDAO;
     private final CategoryDAO categoryDAO;
@@ -42,7 +54,7 @@ public class PostController {
         List<Post> posts = postDAO.findLatest().stream()
                 .limit(limit)
                 .collect(Collectors.toList());
-        return ResponseEntity.ok(posts.stream().map(this::toPublicDTO).collect(Collectors.toList()));
+        return ResponseEntity.ok(toPublicDTOList(posts));
     }
 
     // ─── List all approved posts (paginated) ───────────────────────────
@@ -50,11 +62,11 @@ public class PostController {
     public ResponseEntity<List<PublicPostDTO>> getAll(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "12") int size) {
-        List<Post> all = postDAO.findByIsApprovedAndIsActive(1, 1);
-        int from = Math.min((page - 1) * size, all.size());
-        int to   = Math.min(from + size, all.size());
-        List<Post> paged = all.subList(from, to);
-        return ResponseEntity.ok(paged.stream().map(this::toPublicDTO).collect(Collectors.toList()));
+        int safePage = Math.max(0, page - 1);
+        int safeSize = Math.min(100, Math.max(1, size));
+        Pageable pageable = PageRequest.of(safePage, safeSize);
+        Page<Post> paged = postDAO.findByIsApprovedAndIsActiveOrderByCreatedAtDesc(1, 1, pageable);
+        return ResponseEntity.ok(toPublicDTOList(paged.getContent()));
     }
 
     // ─── Post detail ───────────────────────────────────────────────────
@@ -84,25 +96,36 @@ public class PostController {
     public ResponseEntity<List<PublicPostDTO>> search(
             @RequestParam(defaultValue = "") String keyword,
             @RequestParam(required = false) Integer categoryID,
-            @RequestParam(defaultValue = "newest") String sort) {
-        List<Post> posts;
+            @RequestParam(defaultValue = "newest") String sort,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        int safePage = Math.max(0, page - 1);
+        int safeSize = Math.min(100, Math.max(1, size));
+        Pageable pageable = PageRequest.of(safePage, safeSize);
+
+        Page<Post> posts;
         if (keyword.isBlank() && categoryID != null) {
-            posts = postDAO.findByCategory_CategoryIDAndIsApprovedAndIsActive(categoryID, 1, 1);
+            posts = postDAO.findByCategory_CategoryIDAndIsApprovedAndIsActive(categoryID, 1, 1, pageable);
         } else if (!keyword.isBlank() && categoryID != null) {
-            posts = postDAO.searchByKeywordAndCategory(keyword, categoryID);
+            posts = postDAO.searchByKeywordAndCategory(keyword, categoryID, pageable);
         } else if (!keyword.isBlank()) {
-            posts = postDAO.searchByKeyword(keyword);
+            posts = postDAO.searchByKeyword(keyword, pageable);
         } else {
-            posts = postDAO.findByIsApprovedAndIsActive(1, 1);
+            posts = postDAO.findByIsApprovedAndIsActiveOrderByCreatedAtDesc(1, 1, pageable);
         }
 
-        List<PublicPostDTO> result = posts.stream().map(this::toPublicDTO).collect(Collectors.toList());
-        if ("views".equals(sort)) {
-            result.sort(Comparator.comparingInt((PublicPostDTO p) -> p.getViews() != null ? p.getViews() : 0).reversed());
-        } else if ("rating".equals(sort)) {
-            result.sort(Comparator.comparingDouble((PublicPostDTO p) -> p.getAvgRating() != null ? p.getAvgRating() : 0).reversed());
-        } else {
-            result.sort(Comparator.comparing((PublicPostDTO p) -> p.getCreatedAt() != null ? p.getCreatedAt().toString() : "").reversed());
+        List<PublicPostDTO> result = toPublicDTOList(posts.getContent());
+        switch (sort) {
+            case "views" -> result.sort(java.util.Comparator.comparingInt((PublicPostDTO p) -> {
+                Integer views = p.getViews();
+                return views != null ? views : 0;
+            }).reversed());
+            case "rating" -> result.sort(java.util.Comparator.comparingDouble((PublicPostDTO p) -> {
+                Double rating = p.getAvgRating();
+                return rating != null ? rating : 0.0;
+            }).reversed());
+            default -> {
+            }
         }
         return ResponseEntity.ok(result);
     }
@@ -114,10 +137,7 @@ public class PostController {
             @RequestParam(defaultValue = "4") int limit) {
         return postDAO.findById(id).map(post -> {
             List<Post> related = postDAO.findRelated(post.getCategory().getCategoryID(), id);
-            List<PublicPostDTO> result = related.stream()
-                    .limit(limit)
-                    .map(this::toPublicDTO)
-                    .collect(Collectors.toList());
+            List<PublicPostDTO> result = toPublicDTOList(related.stream().limit(limit).collect(Collectors.toList()));
             return ResponseEntity.ok(result);
         }).orElse(ResponseEntity.notFound().build());
     }
@@ -126,7 +146,7 @@ public class PostController {
     @GetMapping("/by-user/{accountID}")
     public ResponseEntity<List<PublicPostDTO>> getByUser(@PathVariable Integer accountID) {
         List<Post> posts = postDAO.findByAccount_AccountIDAndIsApprovedAndIsActive(accountID, 1, 1);
-        return ResponseEntity.ok(posts.stream().map(this::toPublicDTO).collect(Collectors.toList()));
+        return ResponseEntity.ok(toPublicDTOList(posts));
     }
 
     // ─── Suggest posts (for SuggestionsPage) ──────────────────────────
@@ -145,18 +165,18 @@ public class PostController {
                 .collect(Collectors.toList());
         return ResponseEntity.ok(filtered.stream()
                 .limit(20)
-                .map(this::toPublicDTO)
-                .collect(Collectors.toList()));
+            .collect(Collectors.collectingAndThen(Collectors.toList(), this::toPublicDTOList)));
     }
 
     // ─── Trending (leaderboard-worthy) ────────────────────────────────
     @GetMapping("/trending")
     public ResponseEntity<List<PublicPostDTO>> getTrending(@RequestParam(defaultValue = "10") int limit) {
         List<Post> posts = postDAO.findByIsApprovedAndIsActive(1, 1);
-        List<PublicPostDTO> result = posts.stream().map(this::toPublicDTO)
+        List<PublicPostDTO> result = toPublicDTOList(posts).stream()
                 .sorted(Comparator.comparingDouble((PublicPostDTO p) -> {
                     double views = p.getViews() != null ? p.getViews() / 1000.0 : 0;
-                    double rating = p.getAvgRating() != null ? p.getAvgRating() : 0;
+                    Double avgRating = p.getAvgRating();
+                    double rating = avgRating != null ? avgRating : 0;
                     double fav = p.getFavoriteCount() != null ? p.getFavoriteCount() / 10.0 : 0;
                     return views + rating + fav;
                 }).reversed())
@@ -167,7 +187,49 @@ public class PostController {
 
     // ─── Mapping helpers ──────────────────────────────────────────────
 
-    PublicPostDTO toPublicDTO(Post p) {
+        private List<PublicPostDTO> toPublicDTOList(List<Post> posts) {
+        if (posts == null || posts.isEmpty()) {
+            return List.of();
+        }
+
+        List<Integer> postIds = posts.stream()
+            .map(Post::getPostID)
+            .filter(Objects::nonNull)
+            .toList();
+
+        List<Object[]> ratingSummaries = ratingDAO.summarizeByPostIds(postIds);
+
+        Map<Integer, Double> avgRatings = ratingSummaries.stream()
+            .collect(Collectors.toMap(
+                row -> (Integer) row[0],
+                row -> row[1] == null ? 0.0 : ((Number) row[1]).doubleValue()
+            ));
+
+        Map<Integer, Long> ratingCounts = ratingSummaries.stream()
+            .collect(Collectors.toMap(
+                row -> (Integer) row[0],
+                row -> row[2] == null ? 0L : ((Number) row[2]).longValue()
+            ));
+
+        Map<Integer, Long> commentCounts = commentDAO.countByPostIds(postIds).stream()
+            .collect(Collectors.toMap(
+                row -> (Integer) row[0],
+                row -> row[1] == null ? 0L : ((Number) row[1]).longValue()
+            ));
+
+        Map<Integer, Long> favoriteCounts = favoriteDAO.countByPostIds(postIds).stream()
+            .collect(Collectors.toMap(
+                row -> (Integer) row[0],
+                row -> row[1] == null ? 0L : ((Number) row[1]).longValue()
+            ));
+
+        return posts.stream()
+            .map(post -> toPublicDTO(post, avgRatings, ratingCounts, commentCounts, favoriteCounts))
+            .collect(Collectors.toList());
+        }
+
+        PublicPostDTO toPublicDTO(Post p, Map<Integer, Double> avgRatings, Map<Integer, Long> ratingCounts,
+                      Map<Integer, Long> commentCounts, Map<Integer, Long> favoriteCounts) {
         PublicPostDTO dto = new PublicPostDTO();
         dto.setPostID(p.getPostID());
         dto.setTitle(p.getTitle());
@@ -188,24 +250,11 @@ public class PostController {
             dto.setCategoryName(p.getCategory().getCategoryName());
         }
 
-        // Aggregate: ratings
-        List<Rating> ratings = p.getRatings();
-        if (ratings != null && !ratings.isEmpty()) {
-            dto.setAvgRating(ratings.stream()
-                    .mapToInt(Rating::getRate)
-                    .average()
-                    .orElse(0));
-            dto.setRatingCount((long) ratings.size());
-        } else {
-            dto.setAvgRating(0.0);
-            dto.setRatingCount(0L);
-        }
-
-        long commentCount = p.getComments() != null ? p.getComments().size() : 0;
-        dto.setCommentCount(commentCount);
-
-        long favCount = p.getFavorites() != null ? p.getFavorites().size() : 0;
-        dto.setFavoriteCount(favCount);
+        Integer postId = p.getPostID();
+        dto.setAvgRating(avgRatings.getOrDefault(postId, 0.0));
+        dto.setRatingCount(ratingCounts.getOrDefault(postId, 0L));
+        dto.setCommentCount(commentCounts.getOrDefault(postId, 0L));
+        dto.setFavoriteCount(favoriteCounts.getOrDefault(postId, 0L));
 
         return dto;
     }
@@ -307,85 +356,74 @@ public class PostController {
 
     // ─── Create post ────────────────────────────────────────────────────
     @PostMapping
-    public ResponseEntity<?> createPost(@RequestBody Map<String, Object> body,
+        public ResponseEntity<?> createPost(@RequestBody @Valid CreatePostRequestDTO body,
                                         jakarta.servlet.http.HttpServletRequest request) {
-        try {
-            Integer accountID  = (Integer) body.get("accountID");
-            Integer categoryID = (Integer) body.get("categoryID");
-            String  title       = (String) body.getOrDefault("title", "");
-            String  description = (String) body.getOrDefault("description", "");
-            String  ingredients = (String) body.getOrDefault("ingredients", "");
-            String  media       = (String) body.getOrDefault("media", "");
-            Integer level = body.get("level") instanceof Integer ? (Integer) body.get("level")
-                         : body.get("level") != null ? Integer.parseInt(body.get("level").toString()) : 2;
-            Integer cookingTime = body.get("cookingTime") instanceof Integer ? (Integer) body.get("cookingTime")
-                               : body.get("cookingTime") != null ? Integer.parseInt(body.get("cookingTime").toString()) : 30;
+        Integer accountID = body.getAccountID();
+        Integer categoryID = body.getCategoryID();
+        String title = body.getTitle();
+        String description = body.getDescription();
+        String ingredients = body.getIngredients();
+        String media = Objects.toString(body.getMedia(), "");
+        int level = body.getLevel() != null ? body.getLevel() : 2;
+        int cookingTime = body.getCookingTime() != null ? body.getCookingTime() : 30;
 
-            Account account = accountDAO.findById(accountID).orElse(null);
-            if (account == null) return ResponseEntity.badRequest().body(Map.of("code", "INVALID_ACCOUNT", "message", "Invalid accountID"));
-            Category category = categoryDAO.findById(categoryID).orElse(null);
-            if (category == null) return ResponseEntity.badRequest().body(Map.of("code", "INVALID_CATEGORY", "message", "Invalid categoryID"));
+        Account account = accountDAO.findById(accountID)
+            .orElseThrow(() -> new IllegalArgumentException("Invalid accountID"));
+        Category category = categoryDAO.findById(categoryID)
+            .orElseThrow(() -> new IllegalArgumentException("Invalid categoryID"));
 
-            // ── Anti-spam gate ──
-            PostAntiSpamService.SpamCheckResult spamResult =
-                    postAntiSpamService.checkAndRecord(account, extractIp(request), title, description, ingredients,
-                            (List<Map<String,Object>>) body.get("steps"));
-            if (spamResult.blocked()) {
-                return ResponseEntity.status(429).body(Map.of(
-                        "code", "RATE_LIMITED",
-                        "message", spamResult.blockReason()));
-            }
+        List<String> stepDescriptions = body.getSteps().stream()
+            .map(s -> s.getDesc() != null ? s.getDesc() : "")
+            .collect(Collectors.toList());
 
-            PostStatus initialStatus = PostStatus.PENDING_REVIEW;
-            // Extreme spam => auto-hide
-            if (spamResult.spamScore() >= 80) {
-                initialStatus = PostStatus.HIDDEN;
-            }
-
-            Post post = Post.builder()
-                    .account(account)
-                    .category(category)
-                    .title(title)
-                    .description(description)
-                    .ingredients(ingredients)
-                    .media(media)
-                    .level(level)
-                    .cookingTime(cookingTime)
-                    .views(0)
-                    .isActive(initialStatus == PostStatus.APPROVED ? 1 : 0)
-                    .isApproved(initialStatus == PostStatus.APPROVED ? 1 : 0)
-                    .status(initialStatus)
-                    .spamScore(spamResult.spamScore())
-                    .spamReasons(spamResult.reasonsJson())
-                    .createdAt(LocalDate.now())
-                    .updatedAt(Instant.now())
-                    .build();
-            post = postDAO.save(post);
-
-            @SuppressWarnings("unchecked")
-            List<Map<String, Object>> steps = (List<Map<String, Object>>) body.get("steps");
-            if (steps != null) {
-                final Post savedPost = post;
-                for (int i = 0; i < steps.size(); i++) {
-                    Map<String, Object> s = steps.get(i);
-                    CookingSteps step = new CookingSteps();
-                    step.setPost(savedPost);
-                    step.setStepNumber(i + 1);
-                    step.setContent((String) s.getOrDefault("desc", ""));
-                    step.setImage((String) s.getOrDefault("image", null));
-                    cookingStepsDAO.save(step);
-                }
-            }
-
-            return ResponseEntity.ok(Map.of(
-                    "postID",   post.getPostID(),
-                    "status",   post.getStatus().name(),
-                    "message",  initialStatus == PostStatus.HIDDEN
-                            ? "Your post was flagged and is under review."
-                            : "Post submitted and is pending review."));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("code", "ERROR", "message", e.getMessage()));
+        PostAntiSpamService.SpamCheckResult spamResult =
+            postAntiSpamService.checkAndRecord(account, extractIp(request), title, description, ingredients, stepDescriptions);
+        if (spamResult.blocked()) {
+            return ResponseEntity.status(429).body(java.util.Map.of(
+                "code", "RATE_LIMITED",
+                "message", spamResult.blockReason()));
         }
+
+        PostStatus initialStatus = spamResult.spamScore() >= 80 ? PostStatus.HIDDEN : PostStatus.PENDING_REVIEW;
+
+        Post post = Post.builder()
+            .account(account)
+            .category(category)
+            .title(title)
+            .description(description)
+            .ingredients(ingredients)
+            .media(media)
+            .level(level)
+            .cookingTime(cookingTime)
+            .views(0)
+            .isActive(initialStatus == PostStatus.APPROVED ? 1 : 0)
+            .isApproved(initialStatus == PostStatus.APPROVED ? 1 : 0)
+            .status(initialStatus)
+            .spamScore(spamResult.spamScore())
+            .spamReasons(spamResult.reasonsJson())
+            .createdAt(LocalDate.now())
+            .updatedAt(Instant.now())
+            .build();
+        post = postDAO.save(post);
+
+        List<CreatePostStepRequestDTO> steps = body.getSteps();
+        final Post savedPost = post;
+        for (int i = 0; i < steps.size(); i++) {
+            CreatePostStepRequestDTO s = steps.get(i);
+            CookingSteps step = new CookingSteps();
+            step.setPost(savedPost);
+            step.setStepNumber(i + 1);
+            step.setContent(s.getDesc() != null ? s.getDesc() : "");
+            step.setImage(s.getImage());
+            cookingStepsDAO.save(step);
+        }
+
+        return ResponseEntity.ok(java.util.Map.of(
+            "postID",   post.getPostID(),
+            "status",   post.getStatus().name(),
+            "message",  initialStatus == PostStatus.HIDDEN
+                ? "Your post was flagged and is under review."
+                : "Post submitted and is pending review."));
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────

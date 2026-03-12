@@ -11,6 +11,14 @@ public class UserProfileDTO {
     private String email;
     private String avatar;
     private String bio;
+    private String profileBannerUrl;
+    private String premiumAvatarFrame;
+    private String premiumThemePrimary;
+    private String premiumThemeSecondary;
+    private String premiumThemeAccent;
+    private String premiumPostCardBackground;
+    private String profileSocialLinksJson;
+    private String premiumShareCardStyle;
     private Integer point;
     private Integer isPremium;
     private Integer isAdmin;

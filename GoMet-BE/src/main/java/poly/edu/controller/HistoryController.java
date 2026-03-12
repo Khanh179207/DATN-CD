@@ -49,8 +49,7 @@ public class HistoryController {
                         && h.getPost().getIsApproved() == 1
                         && h.getPost().getIsActive() == 1)
                 .limit(limit)
-                // 🔥 ĐÃ FIX LỖI Ở ĐÂY: Truyền thêm accountID vào để check trạng thái Like
-                .map(h -> postController.toPublicDTO(h.getPost(), accountID))
+            .map(h -> postController.toPublicDTO(h.getPost()))
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(result);

@@ -1,4 +1,4 @@
-import api from './api'
+import api, { getStoredTokens } from './api'
 
 // ─── Core Auth ─────────────────────────────────────────────────────────────
 
@@ -86,6 +86,103 @@ export const revokeAllSessions = () =>
 /** List trusted devices. */
 export const getTrustedDevices = () =>
   api.get('/api/sessions/devices').then(r => r.data)
+
+export const getSecurityEvents = (page = 0, size = 12) =>
+  api.get('/api/sessions/events', { params: { page, size } }).then(r => r.data)
+
+export const getSecurityRisk = () =>
+  api.get('/api/sessions/risk').then(r => r.data)
+
+export const sendSecurityEventFeedback = (eventId, action) => {
+  const refreshToken = localStorage.getItem('refreshToken') || null
+  return api.post(
+    `/api/sessions/events/${eventId}/feedback`,
+    { action },
+    {
+      headers: refreshToken ? { 'X-Refresh-Token': refreshToken } : {}
+    }
+  ).then(r => r.data)
+}
+
+export function subscribeSecurityEventsStream ({ signal, onEvent, onConnected, onError }) {
+  const { accessToken, legacyToken } = getStoredTokens()
+  const bearer = accessToken || legacyToken
+
+  if (!bearer) {
+    throw new Error('Missing auth token for security event stream')
+  }
+
+  const baseUrl = api.defaults.baseURL || 'http://localhost:8080'
+
+  ;(async () => {
+    try {
+      const response = await fetch(`${baseUrl}/api/sessions/events/stream`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${bearer}`,
+          Accept: 'text/event-stream'
+        },
+        signal,
+        credentials: 'include'
+      })
+
+      if (!response.ok || !response.body) {
+        throw new Error(`Security stream failed: ${response.status}`)
+      }
+
+      onConnected?.()
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder('utf-8')
+      let buffer = ''
+
+      while (true) {
+        const { value, done } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+
+        const chunks = buffer.split('\n\n')
+        buffer = chunks.pop() || ''
+
+        for (const chunk of chunks) {
+          const lines = chunk.split(/\r?\n/)
+          let eventName = 'message'
+          const dataLines = []
+
+          for (const line of lines) {
+            if (line.startsWith('event:')) {
+              eventName = line.slice(6).trim()
+            } else if (line.startsWith('data:')) {
+              dataLines.push(line.slice(5).trim())
+            }
+          }
+
+          if (!dataLines.length) {
+            continue
+          }
+
+          const payloadText = dataLines.join('\n')
+          let payload = payloadText
+          try {
+            payload = JSON.parse(payloadText)
+          } catch {
+            // Keep raw text payload when server sends plain text.
+          }
+
+          const streamEvent = payload?.event || payload
+          const streamRisk = payload?.risk || null
+
+          onEvent?.({ event: eventName, data: streamEvent, risk: streamRisk, raw: payload })
+        }
+      }
+    } catch (error) {
+      if (signal?.aborted) {
+        return
+      }
+      onError?.(error)
+    }
+  })()
+}
 
 export const revokeDevice = (deviceId) =>
   api.delete(`/api/sessions/devices/${deviceId}`).then(r => r.data)

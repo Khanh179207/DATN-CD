@@ -15,9 +15,15 @@ const router = useRouter()
 const systemSettingsStore = useSystemSettingsStore()
 
 let maintenanceTimer = null
+let maintenanceFailureCount = 0
 
 function isAdminUser () {
-  const user = JSON.parse(localStorage.getItem('user') || 'null')
+  let user = null
+  try {
+    user = JSON.parse(localStorage.getItem('user') || 'null')
+  } catch {
+    user = null
+  }
   return !!(user && (user.isAdmin === true || user.isAdmin === 1 || user.role === 'admin'))
 }
 
@@ -37,9 +43,22 @@ async function syncMaintenanceAndRedirect (force = false) {
       const user = JSON.parse(localStorage.getItem('user') || 'null')
       router.replace(user ? '/home' : '/').catch(() => {})
     }
+    return true
   } catch {
-    // ignore transient network errors
+    return false
   }
+}
+
+function scheduleMaintenanceSync (delayMs) {
+  if (maintenanceTimer) {
+    clearTimeout(maintenanceTimer)
+  }
+  maintenanceTimer = setTimeout(async () => {
+    const ok = await syncMaintenanceAndRedirect(true)
+    maintenanceFailureCount = ok ? 0 : Math.min(maintenanceFailureCount + 1, 3)
+    const nextDelay = ok ? 30000 : 30000 * (maintenanceFailureCount + 1)
+    scheduleMaintenanceSync(nextDelay)
+  }, delayMs)
 }
 
 function onMaintenanceSignal () {
@@ -57,10 +76,10 @@ function onStorageChange (e) {
 }
 
 onMounted(() => {
-  syncMaintenanceAndRedirect(true)
-  maintenanceTimer = setInterval(() => {
-    syncMaintenanceAndRedirect(true)
-  }, 5000)
+  syncMaintenanceAndRedirect(true).then(ok => {
+    maintenanceFailureCount = ok ? 0 : 1
+    scheduleMaintenanceSync(ok ? 30000 : 60000)
+  })
 
   window.addEventListener('system:maintenance-on', onMaintenanceSignal)
   window.addEventListener('system:maintenance-module-on', onModuleMaintenanceSignal)
@@ -70,7 +89,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (maintenanceTimer) {
-    clearInterval(maintenanceTimer)
+    clearTimeout(maintenanceTimer)
     maintenanceTimer = null
   }
   window.removeEventListener('system:maintenance-on', onMaintenanceSignal)

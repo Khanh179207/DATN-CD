@@ -1,15 +1,13 @@
 package poly.edu.service;
 
-import poly.edu.dto.PostDTO;
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import poly.edu.dto.AdminPostDTO;
 
 public interface PostService {
-    // Lưu bài viết mới (khi sếp bấm Publish ở Vue)
-    PostDTO createPost(PostDTO postDTO);
-
-    // Lấy danh sách bài để nộp sự kiện (Cái API vừa bị 404 lúc nãy)
-    List<PostDTO> getPostsByAccountId(Integer accountId);
-
-    // Lấy chi tiết bài viết để hiển thị
-    PostDTO getPostById(Integer postId);
+    Page<AdminPostDTO> findAll(Pageable pageable);
+    Page<AdminPostDTO> findByApproved(Integer isApproved, Pageable pageable);
+    void approvePost(Integer id);
+    void deactivePost(Integer id);
+    void deletePost(Integer id);
 }

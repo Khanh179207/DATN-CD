@@ -283,7 +283,7 @@ const handlePublish = async () => {
     const accountID = currentUser.value.accountID || currentUser.value.id
     const ingredientsStr = post.value.ingredients.map(i => i.name).filter(Boolean).join(', ')
     const cookingTimeInt = parseInt(post.value.cookingTime) || 30
-
+    
     // Upload cover image if user selected one
     let coverMediaUrl = ''
     if (coverImageFile.value) {

@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import poly.edu.entity.AuditLog;
 
 import java.time.Instant;
+import java.util.Collection;
 
 public interface AuditLogDAO extends JpaRepository<AuditLog, Long> {
 
@@ -17,6 +18,11 @@ public interface AuditLogDAO extends JpaRepository<AuditLog, Long> {
 
     /** Find logs by event type (admin view). */
     Page<AuditLog> findByEventTypeOrderByCreatedAtDesc(String eventType, Pageable pageable);
+
+    /** User-scoped filtered security event timeline. */
+    Page<AuditLog> findByUserIdAndEventTypeInOrderByCreatedAtDesc(Integer userId,
+                                                                  Collection<String> eventTypes,
+                                                                  Pageable pageable);
 
     /** Cleanup old audit logs (configured retention period). */
     @Modifying

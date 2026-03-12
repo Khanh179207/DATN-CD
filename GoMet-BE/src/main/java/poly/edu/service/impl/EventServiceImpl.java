@@ -3,11 +3,12 @@ package poly.edu.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import poly.edu.dao.EventDAO;
+import poly.edu.dao.EventPostsDAO;
 import poly.edu.dto.EventDTO;
 import poly.edu.entity.Event;
 import poly.edu.service.EventService;
 
-import java.time.LocalDateTime; // 🔥 Nhớ dùng LocalDateTime
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -15,13 +16,13 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class EventServiceImpl implements EventService {
     private final EventDAO eventDAO;
+    private final EventPostsDAO eventPostsDAO;
 
     @Override
     public List<EventDTO> getAllEvents() {
         return eventDAO.findAll().stream().map(this::toDTO).collect(Collectors.toList());
     }
 
-    // 🔥 Sửa tên hàm này từ getById thành getEventById
     @Override
     public EventDTO getEventById(Integer id) {
         return eventDAO.findById(id).map(this::toDTO).orElse(null);
@@ -29,39 +30,41 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public List<EventDTO> getActiveEvents() {
-        // 🔥 Đổi từ LocalDate sang LocalDateTime cho đồng bộ DB
         LocalDateTime now = LocalDateTime.now();
         return eventDAO.findActiveEvents(now).stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
 
-    private EventDTO toDTO(Event e) {
+    private EventDTO toDTO(Event event) {
         EventDTO dto = new EventDTO();
-        dto.setEventID(e.getEventID());
-        dto.setEventName(e.getEventName());
-        dto.setStartAt(e.getStartAt());
-        dto.setEndAt(e.getEndAt());
-        dto.setBannerImage(e.getBannerImage());
-        dto.setWinnerPostID(e.getWinner());
+        dto.setEventID(event.getEventID());
+        dto.setEventName(event.getEventName());
+        dto.setStartAt(event.getStartAt());
+        dto.setEndAt(event.getEndAt());
+        dto.setVoteStartAt(event.getVoteStartAt());
+        dto.setVoteEndAt(event.getVoteEndAt());
+        dto.setBannerImage(event.getBannerImage());
+        dto.setWinnerPostID(event.getWinner());
+        dto.setDescription(event.getDescription());
+        dto.setRules(event.getRules());
+        dto.setReward(event.getReward());
 
-        // Mapping các trường Vote mới
-        dto.setVoteStartAt(e.getVoteStartAt());
-        dto.setVoteEndAt(e.getVoteEndAt());
-        dto.setDescription(e.getDescription()); // 🔥 Thiếu dòng này là nó null ngay!
-        dto.setRules(e.getRules());             // 🔥 Thiếu dòng này là nó null ngay!
-        dto.setReward(e.getReward());
-
-        long count = (e.getEventPosts() != null) ? e.getEventPosts().size() : 0;
-        dto.setPostCount(count);
+        long participantCount = event.getEventID() != null
+            ? eventPostsDAO.countByEvent_EventID(event.getEventID())
+            : 0L;
+        dto.setParticipantCount(participantCount);
+        dto.setPostCount(participantCount);
 
         LocalDateTime now = LocalDateTime.now();
-        if (now.isBefore(e.getStartAt())) dto.setStatus("upcoming");
-        else if (now.isAfter(e.getEndAt())) dto.setStatus("ended");
-        else dto.setStatus("active");
+        if (event.getStartAt() != null && now.isBefore(event.getStartAt())) {
+            dto.setStatus("upcoming");
+        } else if (event.getEndAt() != null && now.isAfter(event.getEndAt())) {
+            dto.setStatus("ended");
+        } else {
+            dto.setStatus("active");
+        }
 
         return dto;
-
     }
-
 }

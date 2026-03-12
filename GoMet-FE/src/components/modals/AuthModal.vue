@@ -23,7 +23,10 @@
               <span class="logo-text-art">GOMET.</span>
             </div>
             <div class="quote-wrap">
-              <h3 class="quote-text" v-html="$t('auth.quote')"></h3>
+              <h3 class="quote-text">
+                {{ $t('auth.quote_line_1') }}<br>
+                {{ $t('auth.quote_line_2') }}
+              </h3>
               <div class="quote-decor"></div>
             </div>
           </div>
@@ -49,7 +52,7 @@
 
                 <form @submit.prevent="handleLogin" class="art-form">
                   <div class="input-field-art stagger-item" style="--delay: 0.2s">
-                    <input v-model="email" type="email" id="login-email" required placeholder=" " />
+                    <input v-model="email" type="text" id="login-email" required autocomplete="username" placeholder=" " />
                     <label for="login-email">{{ $t('auth.email') }}</label>
                     <span class="input-highlight"></span>
                   </div>
@@ -75,7 +78,7 @@
                     <span v-if="isBannedError">🔒 </span>{{ loginError }}
                   </div>
 
-                  <button class="btn-submit-art stagger-item" style="--delay: 0.5s" :disabled="loginLoading || maintenanceMode">
+                  <button class="btn-submit-art stagger-item" style="--delay: 0.5s" :disabled="loginLoading">
                     <span>{{ loginLoading ? $t('common.loading') : $t('auth.sign_in_btn') }}</span>
                     <div class="btn-shine"></div>
                   </button>
@@ -307,10 +310,6 @@ const switchView = (name) => {
 const isBannedError = computed(() => loginError.value === 'Tài khoản của bạn đã bị khóa bởi quản trị viên.')
 
 const handleLogin = async () => {
-  if (maintenanceMode.value) {
-    loginError.value = maintenanceMessage.value
-    return
-  }
   if (loginLoading.value) return
   loginError.value = ''
   loginLoading.value = true
@@ -328,7 +327,7 @@ const handleLogin = async () => {
     // status === 'ok'
     toast.success(t('toast.login_ok'))
     emit('close')
-    router.push(result.role === 'admin' ? '/admin' : '/home')
+    router.push(result.role === 'admin' ? '/admin' : '/home').catch(() => {})
   } catch (err) {
     const raw = err.message || ''
     if (raw === 'ACCOUNT_BANNED') {
@@ -345,7 +344,7 @@ const onMfaSuccess = (result) => {
   showMfaModal.value = false
   toast.success(t('toast.login_ok'))
   emit('close')
-  router.push(result?.role === 'admin' ? '/admin' : '/home')
+  router.push(result?.role === 'admin' ? '/admin' : '/home').catch(() => {})
 }
 
 const onMfaCancel = () => {
@@ -393,7 +392,7 @@ const handleOtpVerify = async () => {
     authStore.setAuthFromResponse(data)
     toast.success(t('toast.register_ok'))
     emit('close')
-    router.push('/home')
+    router.push('/home').catch(() => {})
   } catch (err) {
     otpError.value = err.response?.data?.message || t('auth.error_otp')
   }
@@ -430,7 +429,7 @@ const handleGoogleLogin = async () => {
     const result = await authStore.loginGoogle(deviceId)
     toast.success(t('toast.login_ok'))
     emit('close')
-    router.push(result?.role === 'admin' ? '/admin' : '/home')
+    router.push(result?.role === 'admin' ? '/admin' : '/home').catch(() => {})
   } catch (err) {
     loginError.value = err.message || t('auth.error_login')
   } finally {

@@ -4,8 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dao.CategoryDAO;
+import poly.edu.dao.PostDAO;
 import poly.edu.dto.CategoryDTO;
-import poly.edu.entity.Category;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 public class CategoryController {
 
     private final CategoryDAO categoryDAO;
+    private final PostDAO postDAO;
 
     @GetMapping
     public ResponseEntity<List<CategoryDTO>> getAll() {
@@ -23,8 +24,7 @@ public class CategoryController {
             CategoryDTO dto = new CategoryDTO();
             dto.setCategoryID(c.getCategoryID());
             dto.setCategoryName(c.getCategoryName());
-            dto.setPostCount(c.getPosts() == null ? 0L :
-                    c.getPosts().stream().filter(p -> p.getIsApproved() == 1 && p.getIsActive() == 1).count());
+            dto.setPostCount(postDAO.countVisibleByCategoryId(c.getCategoryID()));
             return dto;
         }).collect(Collectors.toList());
         return ResponseEntity.ok(result);
@@ -36,8 +36,7 @@ public class CategoryController {
             CategoryDTO dto = new CategoryDTO();
             dto.setCategoryID(c.getCategoryID());
             dto.setCategoryName(c.getCategoryName());
-            dto.setPostCount(c.getPosts() == null ? 0L :
-                    c.getPosts().stream().filter(p -> p.getIsApproved() == 1 && p.getIsActive() == 1).count());
+            dto.setPostCount(postDAO.countVisibleByCategoryId(c.getCategoryID()));
             return ResponseEntity.ok(dto);
         }).orElse(ResponseEntity.notFound().build());
     }

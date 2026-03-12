@@ -17,21 +17,21 @@ public class Note {
     @Column(name = "NoteID")
     private Integer noteId;
 
-    @Column(name = "AccountID")
+    @Column(name = "AccountID", nullable = false)
     private Integer accountId;
 
-    @Column(name = "PostID")
+    @Column(name = "PostID", nullable = false)
     private Integer postId;
 
-    @Column(name = "Content")
+    @Column(name = "Content", nullable = false)
     private String content;
 
-    @Column(name = "CreatedAt")
+    @Column(name = "CreatedAt", nullable = false)
     private LocalDate createdAt;
 
     @Column(name = "DeletedAt")
     private LocalDate deletedAt;
 
-    @Column(name = "isActive")
+    @Column(name = "isActive", nullable = false)
     private Integer isActive;
 }

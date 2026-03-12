@@ -1,47 +1,40 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-// --- 1. IMPORT LAYOUTS ---
-import DefaultLayout from '@/layouts/DefaultLayout.vue'
-import LandingLayout from '@/layouts/LandingLayout.vue'
-import AdminLayout from '@/layouts/AdminLayout.vue'
-
-// --- 2. IMPORT VIEWS ---
-import SecuritySettingsPage from '@/pages/profile/SecuritySettingsPage.vue'
-import MyPostsPage from '@/pages/profile/MyPostsPage.vue'
-import HomeView from '@/pages/home/HomeView.vue'
-import SearchPage from '@/pages/search/SearchPage.vue'
-import PostDetail from '@/pages/home/PostDetail.vue'
-import CreatePost from '@/pages/CreatePost.vue'
-
-// --- 3. IMPORT NEW PAGES (EDITORIAL LUXURY) ---
-import ProfilePage from '@/pages/profile/ProfilePage.vue'
-import EventList from '@/pages/events/EventList.vue'
-import EventDetail from '@/pages/events/EventDetail.vue'
-import ComparePage from '@/pages/compare/ComparePage.vue'
-
-// 🚀 NEW PREMIUM FEATURES RECENTLY ADDED
-import Leaderboard from '@/pages/Leaderboard.vue'
-// Note: If the two files below haven't been created yet, create empty placeholder files in the pages folder to avoid import errors
-import Suggestions from '@/pages/suggestions/SuggestionsPage.vue' 
-import MealPlan from '@/pages/mealplan/MealPlanPage.vue'
-
-// --- ADMIN PAGES ---
-import AdminDashboard from '@/pages/admin/Dashboard.vue'
-import PostManagement from '@/pages/admin/PostManagement.vue'
-import CategoryManagement from '@/pages/admin/CategoryManagement.vue'
-import UserManagement from '@/pages/admin/UserManagement.vue'
-import EventManagement from '@/pages/admin/EventManagement.vue'
-import CommentManagement from '@/pages/admin/CommentManagement.vue'
-import ReportManagement from '@/pages/admin/ReportManagement.vue'
-import NotificationManagement from '@/pages/admin/NotificationManagement.vue'
-import AchievementManagement from '@/pages/admin/AchievementManagement.vue'
-import Statistics from '@/pages/admin/Statistics.vue'
-import ModerationInbox from '@/pages/admin/ModerationInbox.vue'
-import EmailJobsPage from '@/pages/admin/EmailJobsPage.vue'
-import AuditLogPage from '@/pages/admin/AuditLogPage.vue'
-import SystemMaintenancePage from '@/pages/admin/SystemMaintenancePage.vue'
-import WeeklyCertificatesPage from '@/pages/admin/WeeklyCertificatesPage.vue'
 import { useSystemSettingsStore } from '@/stores/systemSettings'
+
+const DefaultLayout = () => import('@/layouts/DefaultLayout.vue')
+const LandingLayout = () => import('@/layouts/LandingLayout.vue')
+const AdminLayout = () => import('@/layouts/AdminLayout.vue')
+
+const SecuritySettingsPage = () => import('@/pages/profile/SecuritySettingsPage.vue')
+const MyPostsPage = () => import('@/pages/profile/MyPostsPage.vue')
+const HomeView = () => import('@/pages/home/HomeView.vue')
+const SearchPage = () => import('@/pages/search/SearchPage.vue')
+const PostDetail = () => import('@/pages/home/PostDetail.vue')
+const CreatePost = () => import('@/pages/CreatePost.vue')
+const ProfilePage = () => import('@/pages/profile/ProfilePage.vue')
+const EventList = () => import('@/pages/events/EventPage.vue')
+const EventDetail = () => import('@/pages/events/EventDetail.vue')
+const ComparePage = () => import('@/pages/compare/ComparePage.vue')
+const Leaderboard = () => import('@/pages/Leaderboard.vue')
+const Suggestions = () => import('@/pages/suggestions/SuggestionsPage.vue')
+const MealPlan = () => import('@/pages/mealplan/MealPlanPage.vue')
+
+const AdminDashboard = () => import('@/pages/admin/Dashboard.vue')
+const PostManagement = () => import('@/pages/admin/PostManagement.vue')
+const CategoryManagement = () => import('@/pages/admin/CategoryManagement.vue')
+const UserManagement = () => import('@/pages/admin/UserManagement.vue')
+const EventManagement = () => import('@/pages/admin/EventManagement.vue')
+const CommentManagement = () => import('@/pages/admin/CommentManagement.vue')
+const ReportManagement = () => import('@/pages/admin/ReportManagement.vue')
+const NotificationManagement = () => import('@/pages/admin/NotificationManagement.vue')
+const AchievementManagement = () => import('@/pages/admin/AchievementManagement.vue')
+const Statistics = () => import('@/pages/admin/Statistics.vue')
+const ModerationInbox = () => import('@/pages/admin/ModerationInbox.vue')
+const EmailJobsPage = () => import('@/pages/admin/EmailJobsPage.vue')
+const AuditLogPage = () => import('@/pages/admin/AuditLogPage.vue')
+const SystemMaintenancePage = () => import('@/pages/admin/SystemMaintenancePage.vue')
+const WeeklyCertificatesPage = () => import('@/pages/admin/WeeklyCertificatesPage.vue')
 
 const routes = [
   // 1. LANDING PAGE
@@ -215,11 +208,20 @@ const router = createRouter({
 // ─── NAVIGATION GUARDS ────────────────────────────────────────────────────────
 router.beforeEach(async (to, from, next) => {
   const userStr = localStorage.getItem('user')
-  const user    = userStr ? JSON.parse(userStr) : null
+  let user = null
+  if (userStr) {
+    try {
+      user = JSON.parse(userStr)
+    } catch {
+      user = null
+      localStorage.removeItem('user')
+    }
+  }
   // Check both the dedicated key and the value stored inside the user object
   const accessToken = localStorage.getItem('accessToken') || user?.accessToken
   const isLoggedIn = !!(user?.token || accessToken)
   const isAdmin    = isLoggedIn && (user?.isAdmin === true || user?.isAdmin === 1 || user?.role === 'admin')
+  const matchedRoutes = Array.isArray(to?.matched) ? to.matched : []
 
   const systemSettingsStore = useSystemSettingsStore()
   try {
@@ -238,7 +240,7 @@ router.beforeEach(async (to, from, next) => {
   }
 
   // 1. Admin-only routes: must be logged in AND be an admin
-  if (to.matched.some(r => r.meta?.requiresAdmin)) {
+  if (matchedRoutes.some(r => r.meta?.requiresAdmin)) {
     if (!isLoggedIn) {
       // Not logged in → go to home (landing), show a flash in query
       return next({ path: '/', query: { redirect: to.fullPath } })
@@ -250,7 +252,7 @@ router.beforeEach(async (to, from, next) => {
   }
 
   // 2. Auth-required routes
-  if (to.matched.some(r => r.meta?.requiresAuth)) {
+  if (matchedRoutes.some(r => r.meta?.requiresAuth)) {
     if (!isLoggedIn) {
       return next({ path: '/home', query: { login: '1' } })
     }

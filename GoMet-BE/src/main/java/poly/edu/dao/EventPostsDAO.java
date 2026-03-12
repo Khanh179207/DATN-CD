@@ -12,6 +12,8 @@ public interface EventPostsDAO extends JpaRepository<EventPosts, Integer> {
     // Lấy bài dự thi theo EventID (Trả về Entity)
     List<EventPosts> findByEvent_EventID(Integer eventId);
 
+    long countByEvent_EventID(Integer eventId);
+
     // 🔥 API lấy danh sách bài dự thi kèm thông tin tác giả (Hàm sếp gọi ở Controller)
     @Query("SELECT new poly.edu.dto.EventPostDTO(ep.eventPostID, p.postID, p.title, p.media, a.username, a.avatar, ep.voteCount, ep.createdAt) " +
             "FROM EventPosts ep " +

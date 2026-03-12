@@ -13,8 +13,10 @@ import poly.edu.dto.AuditLogDTO;
 import poly.edu.entity.AuditLog;
 
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -27,6 +29,7 @@ import java.util.stream.Collectors;
 public class AuditLogService {
 
     private final AuditLogDAO   auditLogDAO;
+    private final SecurityEventStreamService securityEventStreamService;
     // ObjectMapper is thread-safe; instantiate directly to avoid Spring Boot 4 bean lookup issues
     private static final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
 
@@ -56,6 +59,25 @@ public class AuditLogService {
     public static final String DEVICE_REVOKE_ALL          = "DEVICE_REVOKE_ALL";
     public static final String MAGIC_LINK_VERIFIED        = "MAGIC_LINK_VERIFIED";
 
+        private static final List<String> SECURITY_TIMELINE_EVENTS = Arrays.asList(
+            LOGIN_SUCCESS,
+            LOGIN_SUSPICIOUS,
+            DEVICE_TRUSTED,
+            DEVICE_REVOKED,
+            DEVICE_REVOKE_ALL,
+            MFA_ENABLED,
+            MFA_DISABLED,
+            MFA_CHALLENGE_SUCCESS,
+            MFA_BACKUP_CODE_USED,
+            SESSION_REVOKE,
+            SESSION_REVOKE_ALL,
+            REFRESH_TOKEN_REUSE,
+            THIS_WASNT_ME,
+            PASSWORD_CHANGE,
+            PASSWORD_RESET_SUCCESS,
+            MAGIC_LINK_VERIFIED
+        );
+
     // ─── Post moderation events ───────────────────────────────────────────────
     public static final String POST_APPROVED              = "POST_APPROVED";
     public static final String POST_REJECTED              = "POST_REJECTED";
@@ -82,6 +104,7 @@ public class AuditLogService {
                     .createdAt(Instant.now())
                     .build();
             auditLogDAO.save(entry);
+            securityEventStreamService.publish(toDto(entry), userId);
         } catch (JsonProcessingException e) {
             log.error("Failed to serialize audit log meta for event={}: {}", eventType, e.getMessage());
         }
@@ -101,6 +124,24 @@ public class AuditLogService {
                 .stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
+    }
+
+        public List<AuditLogDTO> getSecurityTimelineForUser(Integer userId, int page, int size) {
+        return auditLogDAO
+            .findByUserIdAndEventTypeInOrderByCreatedAtDesc(
+                userId,
+                SECURITY_TIMELINE_EVENTS,
+                PageRequest.of(page, size)
+            )
+            .stream()
+            .map(this::toDto)
+            .collect(Collectors.toList());
+        }
+
+    public Optional<AuditLog> getSecurityTimelineEvent(Integer userId, Long eventId) {
+        return auditLogDAO.findById(eventId)
+                .filter(entry -> entry.getUserId().equals(userId))
+                .filter(entry -> SECURITY_TIMELINE_EVENTS.contains(entry.getEventType()));
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────

@@ -16,12 +16,12 @@ public class Votes {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer voteID;
 
-    @ManyToOne
-    @JoinColumn(name = "AccountID")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "AccountID", nullable = false)
     private Account account;
 
-    @ManyToOne
-    @JoinColumn(name = "EventPostID")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "EventPostID", nullable = false)
     private EventPosts eventPost;
 
     private LocalDateTime createdAt = LocalDateTime.now();

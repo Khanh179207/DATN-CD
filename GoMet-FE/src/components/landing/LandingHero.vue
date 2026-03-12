@@ -4,20 +4,20 @@
     <div class="marquee-container">
       <div class="marquee-row scroll-left">
         <div class="marquee-track">
-          <img v-for="n in 6" :key="'r1-'+n" :src="getImage(n)" alt="Food">
-          <img v-for="n in 6" :key="'r1-dup-'+n" :src="getImage(n)" alt="Food">
+          <img v-for="n in 6" :key="'r1-'+n" :src="getImage(n)" alt="" aria-hidden="true" loading="lazy" decoding="async" fetchpriority="low">
+          <img v-for="n in 6" :key="'r1-dup-'+n" :src="getImage(n)" alt="" aria-hidden="true" loading="lazy" decoding="async" fetchpriority="low">
         </div>
       </div>
       <div class="marquee-row scroll-right">
         <div class="marquee-track">
-          <img v-for="n in 6" :key="'r2-'+n" :src="getImage(n+6)" alt="Food">
-          <img v-for="n in 6" :key="'r2-dup-'+n" :src="getImage(n+6)" alt="Food">
+          <img v-for="n in 6" :key="'r2-'+n" :src="getImage(n+6)" alt="" aria-hidden="true" loading="lazy" decoding="async" fetchpriority="low">
+          <img v-for="n in 6" :key="'r2-dup-'+n" :src="getImage(n+6)" alt="" aria-hidden="true" loading="lazy" decoding="async" fetchpriority="low">
         </div>
       </div>
       <div class="marquee-row scroll-left">
         <div class="marquee-track">
-          <img v-for="n in 6" :key="'r3-'+n" :src="getImage(n+12)" alt="Food">
-          <img v-for="n in 6" :key="'r3-dup-'+n" :src="getImage(n+12)" alt="Food">
+          <img v-for="n in 6" :key="'r3-'+n" :src="getImage(n+12)" alt="" aria-hidden="true" loading="lazy" decoding="async" fetchpriority="low">
+          <img v-for="n in 6" :key="'r3-dup-'+n" :src="getImage(n+12)" alt="" aria-hidden="true" loading="lazy" decoding="async" fetchpriority="low">
         </div>
       </div>
     </div>
@@ -32,7 +32,11 @@
         <span class="text-gradient">{{ $t('landing.title_hl') }}</span>
       </h1>
       
-      <p class="hero-desc" v-html="$t('landing.desc')"></p>
+      <p class="hero-desc">
+        {{ $t('landing.desc_lead') }}
+        <strong class="hero-desc-strong">{{ $t('landing.desc_highlight') }}</strong>
+        {{ $t('landing.desc_tail') }}
+      </p>
 
       <div class="cta-group">
         <router-link to="/home" class="btn-primary-xl">
@@ -204,6 +208,11 @@ const scrollToSignup = () => {
   margin: 0 auto 45px;
   max-width: 600px;
   line-height: 1.6;
+}
+
+.hero-desc-strong {
+  color: #1C1917;
+  font-weight: 800;
 }
 
 /* CTA Group */

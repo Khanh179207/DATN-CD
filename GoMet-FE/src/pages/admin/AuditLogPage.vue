@@ -149,9 +149,15 @@ const filters = ref({ actorId: '', action: '', from: '', to: '' })
 
 const totalPages = computed(() => Math.max(1, Math.ceil(totalItems.value / pageSize.value)))
 
+const toInstantParam = (value) => {
+  if (!value) return ''
+  const parsed = new Date(value)
+  return Number.isNaN(parsed.getTime()) ? '' : parsed.toISOString()
+}
+
 const actionTypes = [
   'EMAIL_JOB_CREATED', 'EMAIL_JOB_QUEUED', 'EMAIL_JOB_CANCELED',
-  'USER_BANNED', 'USER_UNBANNED', 'USER_HARD_DELETED',
+  'USER_BANNED', 'USER_UNBANNED', 'USER_FORCE_LOGOUT', 'USER_HARD_DELETED',
   'POST_DELETED', 'POST_APPROVED', 'POST_REJECTED',
   'ROLE_ASSIGNED', 'ROLE_REVOKED',
   'REPORT_RESOLVED', 'COMMENT_DELETED',
@@ -163,8 +169,10 @@ async function fetchLogs () {
     const params = new URLSearchParams()
     if (filters.value.actorId) params.set('actorId', filters.value.actorId)
     if (filters.value.action)  params.set('action',  filters.value.action)
-    if (filters.value.from)    params.set('from',    filters.value.from)
-    if (filters.value.to)      params.set('to',      filters.value.to)
+    const from = toInstantParam(filters.value.from)
+    const to = toInstantParam(filters.value.to)
+    if (from) params.set('from', from)
+    if (to) params.set('to', to)
     params.set('page', page.value)
     params.set('size', pageSize.value)
 

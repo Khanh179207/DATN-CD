@@ -42,6 +42,4 @@ public class PostDetailDTO {
 
     // Comments
     private List<CommentDTO> comments;
-    // Thêm vào trong file PostDetailDTO.java
-    private Boolean isLiked;
 }

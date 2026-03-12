@@ -19,8 +19,7 @@ public interface AdminAuditLogDAO extends JpaRepository<AdminAuditLog, Long> {
                      "WHERE (:actorId IS NULL OR l.actorId = :actorId) " +
                      "AND (:action IS NULL OR l.actionType = :action) " +
                      "AND (:from IS NULL OR l.createdAt >= :from) " +
-                     "AND (:to IS NULL OR l.createdAt <= :to) " +
-                     "ORDER BY l.createdAt DESC")
+                     "AND (:to IS NULL OR l.createdAt <= :to)")
     Page<AdminAuditLog> search(
         @Param("actorId") Integer actorId,
         @Param("action")  String  action,

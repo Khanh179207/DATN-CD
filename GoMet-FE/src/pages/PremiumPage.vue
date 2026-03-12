@@ -139,8 +139,11 @@ const features = [
   { name: 'Kế hoạch ăn uống',      sub: 'Thực đơn tự động',        free: false,   pro: true       },
   { name: 'Danh sách đi chợ',      sub: 'Tự động báo giá',         free: false,   pro: true       },
   { name: 'Bảng xếp hạng Hot',     sub: 'Top món xu hướng',        free: false,   pro: true       },
-  { name: 'Khung avatar Premium',   sub: 'Nổi bật giữa cộng đồng', free: false,   pro: true       },
-  { name: 'Danh hiệu đặc quyền',   sub: 'Huy hiệu & tiêu đề VIP', free: false,   pro: true       },
+  { name: 'Avatar frame động + avatar GIF', sub: 'Frame xoay và avatar ảnh động', free: false, pro: true },
+  { name: 'Banner hồ sơ ảnh / GIF', sub: 'Hero banner cá nhân hóa', free: false, pro: true },
+  { name: 'Gradient username + profile theme', sub: 'Đổi màu nền profile theo style riêng', free: false, pro: true },
+  { name: 'Đổi màu card bài viết', sub: 'Recipe card trong profile mang màu cá nhân', free: false, pro: true },
+  { name: 'Social links icon', sub: 'Facebook, Instagram, Discord, TikTok, YouTube, Website', free: false, pro: true },
 ]
 
 function scrollToPlans() {

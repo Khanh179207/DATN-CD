@@ -15,12 +15,12 @@ public class EventPosts {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer eventPostID;
 
-    @ManyToOne
-    @JoinColumn(name = "EventID")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "EventID", nullable = false)
     private Event event;
 
-    @ManyToOne
-    @JoinColumn(name = "PostID")
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "PostID", nullable = false)
     private Post post;
 
     @Builder.Default // 🔥 Thêm cái này để lúc nộp bài nó mặc định là 0 vote

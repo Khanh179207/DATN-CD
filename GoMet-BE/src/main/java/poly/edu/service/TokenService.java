@@ -143,6 +143,16 @@ public class TokenService {
     }
 
     @Transactional
+    public void revokeOtherSessions(Integer userId, String currentRefreshToken) {
+        String currentHash = sha256(currentRefreshToken);
+        Instant now = Instant.now();
+
+        refreshTokenDAO.findActiveSessions(userId, now).stream()
+                .filter(token -> !token.getTokenHash().equals(currentHash))
+                .forEach(token -> refreshTokenDAO.revokeById(token.getId(), now));
+    }
+
+    @Transactional
     public void revokeSessionsCreatedBefore(Integer userId, Instant before) {
         refreshTokenDAO.revokeAllCreatedBefore(userId, before, Instant.now());
     }

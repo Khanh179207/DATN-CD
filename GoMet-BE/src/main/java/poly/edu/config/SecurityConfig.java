@@ -90,8 +90,11 @@ public class SecurityConfig {
                     "/api/posts/**",
                     "/api/categories/**",
                     "/api/events/**",
+                    "/api/media/**",
                     "/api/search/**",
-                    "/api/leaderboard/**"
+                    "/api/leaderboard/**",
+                    "/api/share/**",
+                    "/share/**"
                 ).permitAll()
                 // Everything else requires authentication
                 .anyRequest().authenticated()

@@ -33,6 +33,30 @@ public class Account {
     @Column(columnDefinition = "NVARCHAR(500)")
     private String bio;
 
+    @Column(name = "profile_banner_url", length = 1000)
+    private String profileBannerUrl;
+
+    @Column(name = "premium_avatar_frame", length = 32)
+    private String premiumAvatarFrame;
+
+    @Column(name = "premium_theme_primary", length = 32)
+    private String premiumThemePrimary;
+
+    @Column(name = "premium_theme_secondary", length = 32)
+    private String premiumThemeSecondary;
+
+    @Column(name = "premium_theme_accent", length = 32)
+    private String premiumThemeAccent;
+
+    @Column(name = "premium_post_card_background", length = 32)
+    private String premiumPostCardBackground;
+
+    @Column(name = "profile_social_links_json", columnDefinition = "NVARCHAR(MAX)")
+    private String profileSocialLinksJson;
+
+    @Column(name = "premium_share_card_style", length = 32)
+    private String premiumShareCardStyle;
+
     /** Legacy UUID bearer token — kept for backward-compat during JWT migration. */
     @Column(nullable = false)
     private String token;
