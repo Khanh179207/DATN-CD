@@ -47,6 +47,15 @@ public class PostController {
     private final ModerationService moderationService;
     private final PostAntiSpamService postAntiSpamService;
 
+    public PublicPostDTO toPublicDTO(Post post) {
+        if (post == null) {
+            return null;
+        }
+        return toPublicDTOList(List.of(post)).stream()
+                .findFirst()
+                .orElse(null);
+    }
+
     // ─── List latest posts (home feed) ─────────────────────────────────
     @GetMapping("/latest")
     public ResponseEntity<List<PublicPostDTO>> getLatest(
