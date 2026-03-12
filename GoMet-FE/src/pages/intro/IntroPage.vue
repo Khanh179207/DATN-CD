@@ -50,4 +50,14 @@ onMounted(() => {
 .intro-page {
   width: 100%;
 }
+
+/* Hiệu ứng chớp sáng khi cuộn từ Header xuống (Thêm phần này) */
+:deep(#sectionsigninlanding.highlight-section) {
+  box-shadow: 0 0 35px rgba(249, 115, 22, 0.6); /* Sáng màu cam Gomet */
+  transform: scale(1.01);
+  border-radius: 12px;
+  transition: all 0.4s ease-in-out;
+  position: relative;
+  z-index: 10;
+}
 </style>

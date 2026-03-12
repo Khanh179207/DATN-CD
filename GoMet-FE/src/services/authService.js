@@ -21,3 +21,7 @@ export const forgotPassword = (identifier) =>
 /** Submit the reset token (from email link) and the new password. */
 export const resetPassword = (token, newPassword) =>
   api.post('/api/auth/reset-password', { token, newPassword }).then(r => r.data)
+
+/** Google Login: Gửi ID Token của Google xuống Backend để xác thực và lấy thông tin user */
+export const googleLogin = (idToken) =>
+  api.post('/api/auth/google', { token: idToken }).then(r => r.data)

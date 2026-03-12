@@ -11,10 +11,10 @@
 
       <div class="header-right">
         <LangSwitcher />
-        <a href="#" class="btn-text" @click.prevent="$emit('open-auth', 'login')">
+        <a href="#" class="btn-text" @click.prevent="handleAuthAction('login')">
           {{ $t('auth.login') }}
         </a>
-        <a href="#" class="btn-primary" @click.prevent="$emit('open-auth', 'register')">
+        <a href="#" class="btn-primary" @click.prevent="handleAuthAction('register')">
           <span>{{ $t('auth.register') }}</span>
           <div class="arrow-icon">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -27,15 +27,47 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { useRoute } from 'vue-router'
 import LangSwitcher from '@/components/common/LangSwitcher.vue'
 
-defineEmits(['open-auth'])
+const emit = defineEmits(['open-auth'])
+const route = useRoute()
 
 const isScrolled = ref(false)
 
 const handleScroll = () => {
   // Nếu cuộn quá 50px thì kích hoạt hiệu ứng đổi màu nền
   isScrolled.value = window.scrollY > 50
+}
+
+// Hàm xử lý chung cho cả Đăng nhập và Đăng ký
+const handleAuthAction = (type) => {
+  // 1. Kiểm tra xem user có đang ở trang chủ (Landing Page) không
+  if (route.path === '/') {
+    // 2. Tìm section đăng nhập bằng ID
+    const loginSection = document.getElementById('sectionsigninlanding')
+    
+    if (loginSection) {
+      // Bắn event qua CustomEvent của trình duyệt để form bên dưới bắt được (chuyển tab)
+      window.dispatchEvent(new CustomEvent('switch-auth-tab', { detail: type }))
+
+      // Cuộn mượt mà xuống phần form
+      loginSection.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      
+      // Thêm hiệu ứng highlight để thu hút sự chú ý
+      loginSection.classList.add('highlight-section')
+      
+      // Tự động tắt highlight sau 1.5 giây
+      setTimeout(() => {
+        loginSection.classList.remove('highlight-section')
+      }, 1500)
+      
+      return // Dừng hàm lại, KHÔNG mở modal popup
+    }
+  }
+
+  // 3. Nếu đang ở trang khác (như trang nghe nhạc) hoặc không thấy section -> Mở Popup
+  emit('open-auth', type)
 }
 
 onMounted(() => {

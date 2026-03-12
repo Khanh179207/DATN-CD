@@ -1,5 +1,6 @@
 package poly.edu.controller;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -10,10 +11,11 @@ import poly.edu.dao.AccountDAO;
 import poly.edu.dto.*;
 import poly.edu.entity.Account;
 import poly.edu.service.EmailService;
+import poly.edu.service.GoogleAuthService;
 import poly.edu.service.OtpStore;
 import poly.edu.service.PasswordResetService;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime; // ĐÃ ĐỔI TỪ LocalDate SANG LocalDateTime
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
@@ -29,6 +31,78 @@ public class AuthController {
     private final OtpStore             otpStore;
     private final PasswordResetService passwordResetService;
     private final BCryptPasswordEncoder passwordEncoder;
+
+    // VŨ KHÍ MỚI: Inject GoogleAuthService
+    private final GoogleAuthService    googleAuthService;
+
+    // ─── GOOGLE LOGIN & REGISTER ──────────────────────────────────────────────
+    @PostMapping("/google")
+    public ResponseEntity<?> googleLogin(@RequestBody Map<String, String> request) {
+        try {
+            // FIX LỖI: Đổi "idToken" thành "token" để khớp với data từ Frontend gửi xuống
+            String idTokenString = request.get("token");
+
+            if (idTokenString == null || idTokenString.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of("message", "ID Token is missing"));
+            }
+
+            // 1. Xác thực token với nhà Google
+            GoogleIdToken.Payload payload = googleAuthService.verifyToken(idTokenString);
+
+            // 2. Lấy thông tin
+            String email = payload.getEmail();
+            String name = (String) payload.get("name");
+            String avatarUrl = (String) payload.get("picture");
+
+            Optional<Account> opt = accountDAO.findByEmail(email);
+            Account acc;
+
+            if (opt.isPresent()) {
+                // TÌNH HUỐNG 1: ĐÃ CÓ TÀI KHOẢN -> ĐĂNG NHẬP
+                acc = opt.get();
+                if (acc.getIsActive() == 0) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body(Map.of("message", "ACCOUNT_BANNED"));
+                }
+            } else {
+                // TÌNH HUỐNG 2: CHƯA CÓ TÀI KHOẢN -> TỰ ĐỘNG ĐĂNG KÝ
+
+                // Xử lý trùng lặp Username (nếu tên từ Google bị trùng với user khác)
+                String finalUsername = name.replaceAll("\\s+", ""); // Xóa khoảng trắng
+                if (accountDAO.findByUsername(finalUsername).isPresent()) {
+                    finalUsername = finalUsername + "_" + new Random().nextInt(10000);
+                }
+
+                // Mã hóa một chuỗi ngẫu nhiên làm mật khẩu để bảo vệ DB
+                String randomPassword = passwordEncoder.encode(UUID.randomUUID().toString());
+
+                acc = Account.builder()
+                        .username(finalUsername)
+                        .email(email)
+                        .password(randomPassword)
+                        .avatar(avatarUrl)
+                        .point(0)
+                        .isAdmin(0)
+                        .isPremium(0)
+                        .isActive(1)
+                        .createdAt(LocalDateTime.now()) // ĐÃ SỬA THÀNH LocalDateTime.now()
+                        .build();
+            }
+
+            // 3. Tạo Token phiên đăng nhập (Giống hệt luồng Login bình thường của sếp)
+            String newToken = UUID.randomUUID().toString();
+            acc.setToken(newToken);
+            accountDAO.save(acc);
+
+            // 4. Trả về Frontend thông qua buildResponse chuẩn form
+            return ResponseEntity.ok(buildResponse(acc));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "Google authentication failed: " + e.getMessage()));
+        }
+    }
+
 
     // ─── LOGIN ────────────────────────────────────────────────────────────────
     @PostMapping("/login")
@@ -112,6 +186,7 @@ public class AuthController {
         Account acc = Account.builder()
                 .username(pending.username())
                 .email(req.getEmail())
+                // Sếp lưu ý: Nếu muốn an toàn, sếp nên dùng passwordEncoder.encode(pending.password()) ở đây nhé!
                 .password(pending.password())
                 .avatar("")
                 .token(token)
@@ -119,7 +194,7 @@ public class AuthController {
                 .isAdmin(0)
                 .isPremium(0)
                 .isActive(1)
-                .createdAt(LocalDate.now())
+                .createdAt(LocalDateTime.now()) // ĐÃ SỬA THÀNH LocalDateTime.now()
                 .build();
 
         accountDAO.save(acc);
@@ -134,10 +209,6 @@ public class AuthController {
     }
 
     // ─── FORGOT PASSWORD ──────────────────────────────────────────────────────
-    /**
-     * Step 1: Request a password-reset email.
-     * Always returns 200 with a generic message — never reveals account existence.
-     */
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(
             @RequestBody ForgotPasswordRequestDTO req,
@@ -150,16 +221,12 @@ public class AuthController {
         String ip = resolveClientIp(httpRequest);
         passwordResetService.processForgotPassword(req.getIdentifier(), ip);
 
-        // Always return 200 — do NOT reveal if the account exists
         return ResponseEntity.ok(Map.of(
                 "message", "If an account with that email or username exists, we've sent a password reset link."
         ));
     }
 
     // ─── RESET PASSWORD ───────────────────────────────────────────────────────
-    /**
-     * Step 2: Submit a new password using the token from the email link.
-     */
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequestDTO req) {
         if (req.getToken() == null || req.getToken().isBlank()) {
@@ -211,7 +278,6 @@ public class AuthController {
         return res;
     }
 
-    /** Extract real client IP, respecting common proxy headers. */
     private String resolveClientIp(HttpServletRequest req) {
         String forwarded = req.getHeader("X-Forwarded-For");
         if (forwarded != null && !forwarded.isBlank()) {
