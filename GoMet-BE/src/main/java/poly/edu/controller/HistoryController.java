@@ -21,13 +21,14 @@ import java.util.stream.Collectors;
 /**
  * Browsing-history feature.
  * Endpoints:
- *   GET    /api/history/{accountID}           - list recent history (newest first)
- *   POST   /api/history                       - record a post view
- *   DELETE /api/history/{accountID}/clear     - wipe all history for user
+ * GET    /api/history/{accountID}           - list recent history (newest first)
+ * POST   /api/history                       - record a post view
+ * DELETE /api/history/{accountID}/clear     - wipe all history for user
  */
 @RestController
 @RequestMapping("/api/history")
 @RequiredArgsConstructor
+@CrossOrigin("*") // Thêm CrossOrigin để tránh lỗi chặn từ trình duyệt sếp nhé
 public class HistoryController {
 
     private final HistoryDAO    historyDAO;
@@ -48,7 +49,7 @@ public class HistoryController {
                         && h.getPost().getIsApproved() == 1
                         && h.getPost().getIsActive() == 1)
                 .limit(limit)
-                .map(h -> postController.toPublicDTO(h.getPost()))
+            .map(h -> postController.toPublicDTO(h.getPost()))
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(result);

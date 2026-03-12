@@ -85,9 +85,10 @@
                      <input type="password" placeholder="CVC" class="v-input">
                    </div>
                 </div>
-                <button class="btn-submit-premium" @click="handlePay">
-                  KÍCH HOẠT PREMIUM ({{ activePrice }}đ)
+                <button class="btn-submit-premium" @click="handlePay" :disabled="paying">
+                  {{ paying ? 'ĐANG XỬ LÝ...' : `KÍCH HOẠT PREMIUM (${activePrice}đ)` }}
                 </button>
+                <p v-if="payError" style="color:#EF4444;font-size:0.8rem;margin-top:8px;text-align:center;">{{ payError }}</p>
                 <p class="footer-note">🔒 Bảo mật SSL 256-bit</p>
               </div>
             </section>
@@ -101,11 +102,17 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+import api from '@/services/api'
 
 defineProps({ isOpen: Boolean })
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'upgraded'])
 const backdropRef = ref(null)
 const closeModal = () => emit('close')
+const authStore = useAuthStore()
+
+const paying = ref(false)
+const payError = ref('')
 
 onMounted(() => {
   document.body.style.overflow = 'hidden'
@@ -117,11 +124,12 @@ onUnmounted(() => {
 
 const selectedPlan = ref('yearly')
 const plans = [
-  { id: 'monthly', name: 'Gói Tháng', desc: 'Trải nghiệm linh hoạt', price: '25.000', unit: 'tháng' },
-  { id: 'yearly', name: 'Gói Năm', desc: 'Sử dụng bền vững', price: '240.000', unit: 'năm' }
+  { id: 'monthly', name: 'Gói Tháng', desc: 'Trải nghiệm linh hoạt', price: '25.000', unit: 'tháng', planType: 1 },
+  { id: 'yearly', name: 'Gói Năm', desc: 'Sử dụng bền vững', price: '240.000', unit: 'năm', planType: 2 }
 ]
 
-const activePrice = computed(() => plans.find(p => p.id === selectedPlan.value).price)
+const activePrice = computed(() => plans.find(p => p.id === selectedPlan.value)?.price || '')
+const activePlanType = computed(() => plans.find(p => p.id === selectedPlan.value)?.planType || 1)
 
 const features = [
   { name: 'Không quảng cáo', sub: 'Trải nghiệm liền mạch', free: true, pro: true },
@@ -130,9 +138,38 @@ const features = [
   { name: 'Kế hoạch ăn uống', sub: 'Thực đơn tự động', free: false, pro: true },
   { name: 'Danh sách đi chợ', sub: 'Tự động báo giá', free: false, pro: true },
   { name: 'Bảng xếp hạng Hot', sub: 'Top món xu hướng', free: false, pro: true },
+  { name: 'Avatar frame động + avatar GIF', sub: 'Frame xoay và avatar ảnh động', free: false, pro: true },
+  { name: 'Banner hồ sơ ảnh / GIF', sub: 'Hero banner cá nhân hóa', free: false, pro: true },
+  { name: 'Gradient username + profile theme', sub: 'Đổi màu nền profile theo style riêng', free: false, pro: true },
+  { name: 'Đổi màu card bài viết', sub: 'Recipe card trong profile mang màu cá nhân', free: false, pro: true },
+  { name: 'Social links icon', sub: 'Facebook, Instagram, Discord, TikTok, YouTube, Website', free: false, pro: true },
 ]
 
-const handlePay = () => alert('Đang kết nối thanh toán...')
+const handlePay = async () => {
+  const accountID = authStore.user?.accountID || authStore.user?.id
+  if (!accountID) {
+    payError.value = 'Vui lòng đăng nhập để nâng cấp Premium!'
+    return
+  }
+  paying.value = true
+  payError.value = ''
+  try {
+    const res = await api.post('/api/subscription/upgrade', {
+      accountID,
+      plan: activePlanType.value
+    })
+    // Update local auth store so isPremium reflects immediately
+    if (authStore.user) {
+      authStore.user.isPremium = 1
+    }
+    emit('upgraded', res.data)
+    closeModal()
+  } catch (e) {
+    payError.value = e.response?.data?.message || 'Lỗi kích hoạt premium. Vui lòng thử lại!'
+  } finally {
+    paying.value = false
+  }
+}
 </script>
 
 <style scoped>

@@ -1,12 +1,14 @@
 package poly.edu.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dto.AdminPostDTO;
 import poly.edu.service.PostService;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -19,14 +21,25 @@ public class AdminPostController {
 
     // Tab Tất cả
     @GetMapping
-    public ResponseEntity<List<AdminPostDTO>> getAll() {
-        return ResponseEntity.ok(postService.findAll());
+    public ResponseEntity<Page<AdminPostDTO>> getAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        int safePage = Math.max(0, page);
+        int safeSize = Math.min(100, Math.max(1, size));
+        Pageable pageable = PageRequest.of(safePage, safeSize);
+        return ResponseEntity.ok(postService.findAll(pageable));
     }
 
     // Tab Đã duyệt / Chờ duyệt
     @GetMapping("/approved/{status}")
-    public ResponseEntity<List<AdminPostDTO>> getByApproved(@PathVariable Integer status) {
-        return ResponseEntity.ok(postService.findByApproved(status));
+    public ResponseEntity<Page<AdminPostDTO>> getByApproved(
+            @PathVariable Integer status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        int safePage = Math.max(0, page);
+        int safeSize = Math.min(100, Math.max(1, size));
+        Pageable pageable = PageRequest.of(safePage, safeSize);
+        return ResponseEntity.ok(postService.findByApproved(status, pageable));
     }
 
     // Duyệt bài

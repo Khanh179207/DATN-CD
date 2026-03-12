@@ -23,7 +23,10 @@
               <span class="logo-text-art">GOMET.</span>
             </div>
             <div class="quote-wrap">
-              <h3 class="quote-text" v-html="$t('auth.quote')"></h3>
+              <h3 class="quote-text">
+                {{ $t('auth.quote_line_1') }}<br>
+                {{ $t('auth.quote_line_2') }}
+              </h3>
               <div class="quote-decor"></div>
             </div>
           </div>
@@ -43,9 +46,13 @@
                   <p class="art-desc">{{ $t('auth.welcome_sub') }}</p>
                 </div>
 
+                <div v-if="maintenanceMode" class="auth-error-msg auth-error-banned" style="margin-bottom: 12px;">
+                  🔧 {{ maintenanceMessage }}
+                </div>
+
                 <form @submit.prevent="handleLogin" class="art-form">
                   <div class="input-field-art stagger-item" style="--delay: 0.2s">
-                    <input v-model="email" type="email" id="login-email" required placeholder=" " />
+                    <input v-model="email" type="text" id="login-email" required autocomplete="username" placeholder=" " />
                     <label for="login-email">{{ $t('auth.email') }}</label>
                     <span class="input-highlight"></span>
                   </div>
@@ -71,16 +78,18 @@
                     <span v-if="isBannedError">🔒 </span>{{ loginError }}
                   </div>
 
-                  <button class="btn-submit-art stagger-item" style="--delay: 0.5s">
-                    <span>{{ $t('auth.sign_in_btn') }}</span>
+                  <button class="btn-submit-art stagger-item" style="--delay: 0.5s" :disabled="loginLoading">
+                    <span>{{ loginLoading ? $t('common.loading') : $t('auth.sign_in_btn') }}</span>
                     <div class="btn-shine"></div>
                   </button>
                 </form>
 
                 <div class="social-section stagger-item" style="--delay: 0.6s">
                   <div class="divider"><span>{{ $t('common.or', 'Or') }}</span></div>
-                  <button class="btn-google-art">
-                    <img src="https://cdn-icons-png.flaticon.com/512/2991/2991148.png" width="20"> {{ $t('auth.login_google') }}
+                  <button class="btn-google-art" @click="handleGoogleLogin" :disabled="googleLoading || maintenanceMode">
+                    <img v-if="!googleLoading" src="https://cdn-icons-png.flaticon.com/512/2991/2991148.png" width="20">
+                    <span v-if="googleLoading" class="btn-spinner" style="width:20px;height:20px;display:inline-block;"></span>
+                    {{ googleLoading ? $t('common.loading') : $t('auth.login_google') }}
                   </button>
                 </div>
                 <p class="footer-prompt stagger-item" style="--delay: 0.7s">{{ $t('auth.new_here') }} <a href="#" @click.prevent="switchView('register')">{{ $t('auth.join_now') }}</a></p>
@@ -90,6 +99,10 @@
                 <div class="form-header stagger-item" style="--delay: 0.1s">
                   <h2 class="art-title">{{ $t('auth.create_account') }}</h2>
                   <p class="art-desc">{{ $t('auth.create_sub') }}</p>
+                </div>
+
+                <div v-if="maintenanceMode" class="auth-error-msg auth-error-banned" style="margin-bottom: 12px;">
+                  🔧 {{ maintenanceMessage }}
                 </div>
 
                 <form @submit.prevent="handleRegisterRequest" class="art-form">
@@ -117,7 +130,7 @@
                   </div>
                   <div v-if="regError" class="auth-error-msg">{{ regError }}</div>
 
-                  <button class="btn-submit-art btn-orange stagger-item" :disabled="sendingOtp" style="--delay: 0.5s">
+                  <button class="btn-submit-art btn-orange stagger-item" :disabled="sendingOtp || maintenanceMode" style="--delay: 0.5s">
                     <span>{{ sendingOtp ? $t('auth.sending_otp') : $t('auth.register_btn') }}</span>
                     <div class="btn-shine"></div>
                   </button>
@@ -220,6 +233,17 @@
       </div>
     </div>
   </transition>
+
+  <!-- MFA Challenge — shown on top when login requires 2FA -->
+  <Teleport to="body">
+    <transition name="mfa-fade" appear>
+      <MfaChallengeModal
+        v-if="showMfaModal"
+        @success="onMfaSuccess"
+        @cancel="onMfaCancel"
+      />
+    </transition>
+  </Teleport>
 </template>
 
 <script setup>
@@ -231,6 +255,9 @@ import logoGroup from '@/assets/images/gomet.jpg'
 import { toast } from '@/composables/useToast'
 import * as authService from '@/services/authService'
 import { forgotPassword } from '@/services/authService'
+import MfaChallengeModal from '@/components/modals/MfaChallengeModal.vue'
+import { getDeviceContext } from '@/services/deviceContext'
+import { useSystemSettingsStore } from '@/stores/systemSettings'
 
 const { t } = useI18n()
 const props = defineProps({ initialView: { type: String, default: 'login' } })
@@ -245,10 +272,12 @@ const otpDigits = ref(['', '', '', '', '', ''])
 const sendingOtp = ref(false)
 
 const authStore = useAuthStore()
+const systemSettingsStore = useSystemSettingsStore()
 const router = useRouter()
 
 const email = ref('')
 const password = ref('')
+const loginLoading = ref(false)
 const loginError = ref('')
 const regError = ref('')
 const otpError = ref('')
@@ -257,6 +286,13 @@ const regForm = reactive({ name: '', email: '', password: '', confirmPassword: '
 const forgotIdentifier = ref('')
 const forgotState      = ref('idle')   // 'idle' | 'loading' | 'sent'
 const forgotError      = ref('')
+const googleLoading    = ref(false)
+const maintenanceMode = computed(() => systemSettingsStore.maintenanceMode)
+const maintenanceMessage = computed(() => systemSettingsStore.message || 'Hệ thống đang bảo trì. Vui lòng quay lại sau.')
+
+// ── MFA challenge ──────────────────────────────────────────────────────────────
+const showMfaModal = ref(false)
+const hasAutoShownMfa = ref(false)
 
 watch(() => props.initialView, (val) => { currentView.value = val })
 const switchView = (name) => {
@@ -274,23 +310,54 @@ const switchView = (name) => {
 const isBannedError = computed(() => loginError.value === 'Tài khoản của bạn đã bị khóa bởi quản trị viên.')
 
 const handleLogin = async () => {
+  if (loginLoading.value) return
   loginError.value = ''
+  loginLoading.value = true
   try {
-    const role = await authStore.login(email.value, password.value)
+    const { deviceId, deviceName } = getDeviceContext()
+    const result = await authStore.login(email.value, password.value, deviceId, deviceName)
+    if (result.status === 'mfa') {
+      showMfaModal.value = true
+      return
+    }
+    if (result.status === 'device') {
+      toast.info('Đã gửi link xác minh thiết bị qua email. Vui lòng kiểm tra hộp thư.')
+      return
+    }
+    // status === 'ok'
     toast.success(t('toast.login_ok'))
     emit('close')
-    router.push(role === 'admin' ? '/admin' : '/home')
+    router.push(result.role === 'admin' ? '/admin' : '/home').catch(() => {})
   } catch (err) {
     const raw = err.message || ''
     if (raw === 'ACCOUNT_BANNED') {
-      loginError.value = 'Tài khoản của bạn đã bị khóa bởi quản trị viên.'
+      loginError.value = 'T\u00e0i kho\u1ea3n c\u1ee7a b\u1ea1n \u0111\u00e3 b\u1ecb kh\u00f3a b\u1edfi qu\u1ea3n tr\u1ecb vi\u00ean.'
     } else {
       loginError.value = raw || t('auth.error_login')
     }
+  } finally {
+    loginLoading.value = false
   }
 }
 
+const onMfaSuccess = (result) => {
+  showMfaModal.value = false
+  toast.success(t('toast.login_ok'))
+  emit('close')
+  router.push(result?.role === 'admin' ? '/admin' : '/home').catch(() => {})
+}
+
+const onMfaCancel = () => {
+  showMfaModal.value = false
+  hasAutoShownMfa.value = false
+  authStore.clearPendingMfa()
+}
+
 const handleRegisterRequest = async () => {
+  if (maintenanceMode.value) {
+    regError.value = maintenanceMessage.value
+    return
+  }
   regError.value = ''
   if (!regForm.name || !regForm.email || !regForm.password) {
     regError.value = t('auth.error_required')
@@ -322,23 +389,10 @@ const handleOtpVerify = async () => {
   }
   try {
     const data = await authService.verifyOtp(regForm.email, code)
-    // Store user session from response
-    authStore.user = {
-      id:        data.accountID,
-      accountID: data.accountID,
-      name:      data.username,
-      username:  data.username,
-      email:     data.email,
-      avatar:    data.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username)}&background=EA580C&color=fff`,
-      isAdmin:   data.isAdmin,
-      isPremium: data.isPremium,
-      token:     data.token,
-      role:      data.isAdmin ? 'admin' : 'user'
-    }
-    localStorage.setItem('user', JSON.stringify(authStore.user))
+    authStore.setAuthFromResponse(data)
     toast.success(t('toast.register_ok'))
     emit('close')
-    router.push('/home')
+    router.push('/home').catch(() => {})
   } catch (err) {
     otpError.value = err.response?.data?.message || t('auth.error_otp')
   }
@@ -356,12 +410,47 @@ const handleForgotPassword = async () => {
     await forgotPassword(forgotIdentifier.value.trim())
     forgotState.value = 'sent'
   } catch (err) {
-    // Show generic message (security best practice - no account enumeration)
-    forgotState.value = 'sent'
+    const msg = err?.response?.data?.message
+    forgotError.value = msg || 'Something went wrong. Please try again.'
+    forgotState.value = 'idle'
   }
 }
 
+const handleGoogleLogin = async () => {
+  if (maintenanceMode.value) {
+    loginError.value = maintenanceMessage.value
+    return
+  }
+  if (googleLoading.value) return
+  loginError.value = ''
+  googleLoading.value = true
+  try {
+    const { deviceId } = getDeviceContext()
+    const result = await authStore.loginGoogle(deviceId)
+    toast.success(t('toast.login_ok'))
+    emit('close')
+    router.push(result?.role === 'admin' ? '/admin' : '/home').catch(() => {})
+  } catch (err) {
+    loginError.value = err.message || t('auth.error_login')
+  } finally {
+    googleLoading.value = false
+  }
+}
+
+watch(
+  () => [isOpen.value, currentView.value, authStore.isMfaPending],
+  ([open, view, pending]) => {
+    if (!open || view !== 'login' || !pending) return
+    if (hasAutoShownMfa.value || showMfaModal.value) return
+    hasAutoShownMfa.value = true
+    showMfaModal.value = true
+    toast.info('Vui lòng hoàn tất xác thực 2 lớp để tiếp tục.')
+  },
+  { immediate: true }
+)
+
 onMounted(() => {
+  systemSettingsStore.fetchPublicSettings().catch(() => {})
   isOpen.value = true
   document.body.style.overflow = 'hidden'
   nextTick(() => { overlayRef.value?.focus() })

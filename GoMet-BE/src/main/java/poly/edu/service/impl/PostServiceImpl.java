@@ -1,13 +1,15 @@
 package poly.edu.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import poly.edu.dao.PostDAO;
 import poly.edu.dto.AdminPostDTO;
 import poly.edu.entity.Post;
+import poly.edu.entity.PostStatus;
 import poly.edu.service.PostService;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
@@ -38,25 +40,23 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public List<AdminPostDTO> findAll() {
-        return postDAO.findAll()
-                .stream()
-                .map(this::toDTO)
-                .collect(Collectors.toList());
+    public Page<AdminPostDTO> findAll(Pageable pageable) {
+        return postDAO.findAllForAdmin(pageable).map(this::toDTO);
     }
 
     @Override
-    public List<AdminPostDTO> findByApproved(Integer isApproved) {
-        return postDAO.findByIsApproved(isApproved)
-                .stream()
-                .map(this::toDTO)
-                .collect(Collectors.toList());
+    public Page<AdminPostDTO> findByApproved(Integer isApproved, Pageable pageable) {
+        return postDAO.findByIsApprovedForAdmin(isApproved, pageable).map(this::toDTO);
     }
 
     @Override
     public void approvePost(Integer id) {
         Post post = postDAO.findById(id).orElseThrow();
         post.setIsApproved(1);
+        post.setIsActive(1);
+        post.setStatus(PostStatus.APPROVED);
+        post.setModeratedAt(Instant.now());
+        post.setUpdatedAt(Instant.now());
         postDAO.save(post);
     }
 
@@ -64,6 +64,8 @@ public class PostServiceImpl implements PostService {
     public void deactivePost(Integer id) {
         Post post = postDAO.findById(id).orElseThrow();
         post.setIsActive(0);
+        post.setStatus(PostStatus.HIDDEN);
+        post.setUpdatedAt(Instant.now());
         postDAO.save(post);
     }
 
@@ -72,3 +74,4 @@ public class PostServiceImpl implements PostService {
         postDAO.deleteById(id);
     }
 }
+

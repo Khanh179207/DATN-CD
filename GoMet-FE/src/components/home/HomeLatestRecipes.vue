@@ -82,10 +82,14 @@ const goToSearch = () => router.push('/search')
 
 onMounted(async () => {
   try {
-    const [rawPosts, rawCats] = await Promise.all([
+    const [postsResult, catsResult] = await Promise.allSettled([
       getLatestPosts(16),
       getCategories()
     ])
+
+    const rawPosts = postsResult.status === 'fulfilled' ? postsResult.value : []
+    const rawCats = catsResult.status === 'fulfilled' ? catsResult.value : []
+
     categories.value = rawCats
     posts.value = rawPosts.map(dto => ({
       ...normalizePost(dto),

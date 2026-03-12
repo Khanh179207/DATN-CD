@@ -36,7 +36,14 @@
               <button class="btn-follow-sm">{{ $t('common.follow') }}</button>
             </div>
             <div class="action-group">
-              <button class="btn-save-primary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg><span>{{ $t('common.save') }}</span></button>
+              <button class="btn-save-primary" @click="toggleFavorite">
+                <svg width="20" height="20" viewBox="0 0 24 24":fill="isFavorite ? 'currentColor' : 'none'"stroke="currentColor" stroke-width="2">
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                </svg>
+                
+                <span>{{ isFavorite ? $t('common.saved') : $t('common.save') }}</span>
+              
+              </button>
               <button class="btn-share-circle"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg></button>
             </div>
           </div>
@@ -154,20 +161,21 @@
   </div>
 </template>
 
-<script setup>
+<script setup>  
 import { ref, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import axios from 'axios'
 import { useShoppingStore } from '@/stores/shopping'
 import { useAuthStore } from '@/stores/auth'
 import { toast } from '@/composables/useToast'
+import { addFavorite, removeFavorite, checkFavorite } from '@/services/socialService'
 
 const { t } = useI18n()
 const props = defineProps({
   post: { type: Object, required: true }
 })
 
-const authStore = useAuthStore()
+const authStore = useAuthStore()  
 const shoppingStore = useShoppingStore()
 const userNote = ref('')
 const isSavingNote = ref(false)
@@ -209,10 +217,6 @@ const handleSaveNote = async () => {
     isSavingNote.value = false
   }
 }
-
-onMounted(() => {
-  fetchNote()
-})
 
 // --- LOGIC 2: NGUYÊN LIỆU & GIỎ HÀNG ---
 
@@ -260,10 +264,71 @@ const handleImageError = (e) => {
   e.target.style.display = 'none';
   if(e.target.closest('.gallery-item')) e.target.closest('.gallery-item').style.display = 'none';
 }
+// Favorite
+const isFavorite = ref(false)
+
+const checkFavoriteStatus = async () => {
+  if (!authStore.isAuthenticated) return
+
+  try {
+    const res = await checkFavorite(
+      authStore.currentUser.accountID,
+      props.post.id
+    )
+
+    isFavorite.value = res   // ✅ đúng
+
+  } catch (e) {
+    console.log("Check favorite error", e)
+  }
+}
+
+onMounted(() => {
+  fetchNote()
+  checkFavoriteStatus()
+})
+
+
+const toggleFavorite = async () => {
+
+  if (!authStore.isAuthenticated) {
+    toast.warn('Đăng nhập để lưu công thức nhé!')
+    return
+  }
+
+  try {
+
+    if (isFavorite.value) {
+
+      await removeFavorite(
+        authStore.currentUser.accountID,
+        props.post.id
+      )
+
+      isFavorite.value = false
+      toast.success('Đã bỏ lưu công thức')
+
+    } else {
+
+      await addFavorite(
+        authStore.currentUser.accountID,
+        props.post.id
+      )
+
+      isFavorite.value = true
+      toast.success('Đã lưu công thức')
+
+    }
+
+  } catch (e) {
+    toast.error('Lỗi hệ thống')
+  }
+}
 </script>
 
 <style scoped>
 .recipe-guide-container { width: 100%; font-family: 'Mulish', sans-serif; color: #1C1917; overflow-x: hidden; }
+
 
 /* ================= HERO SECTION ================= */
 .hero-section-full-bleed { width: calc(100% + 80px); margin-left: -40px; margin-right: -40px; margin-top: -40px; padding: 60px 40px 60px; background-color: #fff; border-bottom: 1px solid #F3F4F6; position: relative; z-index: 1; }

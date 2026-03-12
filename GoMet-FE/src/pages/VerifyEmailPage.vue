@@ -209,20 +209,7 @@ async function handleVerify () {
 
   try {
     const data = await verifyOtp(emailProp.value, fullCode.value)
-    // Store auth session — mirrors AuthModal.handleOtpVerify
-    authStore.user = {
-      id:        data.accountID,
-      accountID: data.accountID,
-      name:      data.username,
-      username:  data.username,
-      email:     data.email,
-      avatar:    data.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username)}&background=EA580C&color=fff`,
-      isAdmin:   data.isAdmin,
-      isPremium: data.isPremium,
-      token:     data.token,
-      role:      data.isAdmin ? 'admin' : 'user'
-    }
-    localStorage.setItem('user', JSON.stringify(authStore.user))
+    authStore.setAuthFromResponse(data)
     state.value = 'success'
     // auto redirect after 2 s
     setTimeout(() => router.push('/home'), 2000)

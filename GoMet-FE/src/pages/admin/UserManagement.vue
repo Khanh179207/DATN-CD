@@ -26,6 +26,21 @@
       </div>
     </div>
 
+    <!-- Bulk email action bar -->
+    <Transition name="slide-down">
+      <div v-if="selectedUsers.size > 0" class="bulk-action-bar">
+        <span class="bulk-count"><i class="fa-solid fa-check-circle"></i> Đã chọn {{ selectedUsers.size }} người dùng</span>
+        <div class="bulk-actions">
+          <button class="btn-bulk-email" @click="openBulkEmail">
+            <i class="fa-solid fa-envelope"></i> Gửi Gmail ({{ selectedUsers.size }})
+          </button>
+          <button class="btn-bulk-clear" @click="selectedUsers.clear()">
+            <i class="fa-solid fa-xmark"></i> Bỏ chọn
+          </button>
+        </div>
+      </div>
+    </Transition>
+
     <!-- ══ USER DETAIL MODAL ══ -->
     <Transition name="modal-fade">
       <div v-if="detailModal.show" class="modal-overlay" @click.self="detailModal.show = false">
@@ -89,12 +104,24 @@
             <!-- Actions -->
             <div class="detail-footer-actions">
               <button
+                @click="forceLogoutUser(detailModal.user); detailModal.show = false"
+                class="detail-action-btn dab-force"
+              >
+                <i class="fa-solid fa-power-off"></i> Force logout
+              </button>
+              <button
                 @click="askBanAction(detailModal.user); detailModal.show = false"
                 class="detail-action-btn"
                 :class="detailModal.user.isActive ? 'dab-warn' : 'dab-ok'"
               >
                 <i :class="detailModal.user.isActive ? 'fa-solid fa-lock' : 'fa-solid fa-unlock'"></i>
                 {{ detailModal.user.isActive ? 'Khóa tài khoản' : 'Mở khóa' }}
+              </button>
+              <button
+                @click="openSingleEmail(detailModal.user); detailModal.show = false"
+                class="detail-action-btn dab-email"
+              >
+                <i class="fa-solid fa-envelope"></i> Gửi Gmail
               </button>
               <button @click="detailModal.show = false" class="detail-action-btn dab-neutral">Đóng</button>
             </div>
@@ -138,6 +165,15 @@
       <table v-else class="data-table">
         <thead>
           <tr>
+            <th class="col-check">
+              <input
+                type="checkbox"
+                class="check-all"
+                :checked="selectedUsers.size > 0 && selectedUsers.size === filteredUsers.length"
+                :indeterminate.prop="selectedUsers.size > 0 && selectedUsers.size < filteredUsers.length"
+                @change="toggleAll"
+              />
+            </th>
             <th>ID</th>
             <th>Người dùng</th>
             <th>Email</th>
@@ -148,7 +184,20 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="user in filteredUsers" :key="user.accountID" class="table-row">
+          <tr
+            v-for="user in filteredUsers"
+            :key="user.accountID"
+            class="table-row"
+            :class="{ 'row-selected': selectedUsers.has(user.accountID) }"
+          >
+            <td class="col-check">
+              <input
+                type="checkbox"
+                class="row-check"
+                :checked="selectedUsers.has(user.accountID)"
+                @change="toggleSelectUser(user)"
+              />
+            </td>
             <td class="col-id">#{{ user.accountID }}</td>
             <td>
               <div class="user-cell">
@@ -209,12 +258,19 @@
                 >
                   <i class="fa-solid fa-trash-can"></i>
                 </button>
+                <button
+                  @click="forceLogoutUser(user)"
+                  class="btn-action-icon btn-force"
+                  title="Force logout toàn bộ phiên"
+                >
+                  <i class="fa-solid fa-power-off"></i>
+                </button>
               </div>
             </td>
           </tr>
 
           <tr v-if="filteredUsers.length === 0 && !isLoading">
-            <td colspan="7" class="empty-state">
+            <td colspan="8" class="empty-state">
               <i class="fa-regular fa-folder-open"></i>
               <p>{{ searchQuery ? 'Không tìm thấy tài khoản nào.' : 'Chưa có tài khoản nào trên hệ thống.' }}</p>
             </td>
@@ -222,6 +278,14 @@
         </tbody>
       </table>
     </div>
+
+    <!-- Compose Email Modal -->
+    <ComposeEmailModal
+      :show="emailModal.show"
+      :recipients="emailModal.recipients"
+      @close="emailModal.show = false"
+      @sent="onEmailSent"
+    />
   </div>
 </template>
 
@@ -230,6 +294,7 @@ import { ref, computed, onMounted } from 'vue'
 import { Star } from 'lucide-vue-next'
 import api from '@/services/api'
 import { toast } from '@/composables/useToast'
+import ComposeEmailModal from '@/components/modals/ComposeEmailModal.vue'
 
 const users       = ref([])
 const isLoading   = ref(true)
@@ -240,6 +305,48 @@ const banModal = ref({ show: false, action: 'ban', accountID: null, username: ''
 
 // Detail modal state
 const detailModal = ref({ show: false, loading: false, user: null, stats: null })
+
+// ── Selection state ──────────────────────────────────────────────────────────
+const selectedUsers = ref(new Set())
+
+const toggleSelectUser = (user) => {
+  if (selectedUsers.value.has(user.accountID)) {
+    selectedUsers.value.delete(user.accountID)
+  } else {
+    selectedUsers.value.add(user.accountID)
+  }
+  selectedUsers.value = new Set(selectedUsers.value) // trigger reactivity
+}
+
+const toggleAll = () => {
+  if (selectedUsers.value.size === filteredUsers.value.length) {
+    selectedUsers.value = new Set()
+  } else {
+    selectedUsers.value = new Set(filteredUsers.value.map(u => u.accountID))
+  }
+}
+
+// ── Email modal state ─────────────────────────────────────────────────────────
+const emailModal = ref({ show: false, recipients: [] })
+
+const openBulkEmail = () => {
+  const list = filteredUsers.value
+    .filter(u => selectedUsers.value.has(u.accountID))
+    .map(u => ({ userId: u.accountID, email: u.email, username: u.username }))
+  emailModal.value = { show: true, recipients: list }
+}
+
+const openSingleEmail = (user) => {
+  emailModal.value = {
+    show: true,
+    recipients: [{ userId: user.accountID, email: user.email, username: user.username }]
+  }
+}
+
+const onEmailSent = () => {
+  selectedUsers.value = new Set()
+  toast.success('Email đã được xếp hàng thành công!')
+}
 
 const openDetail = async (user) => {
   detailModal.value = { show: true, loading: true, user: null, stats: null }
@@ -350,6 +457,20 @@ const deleteUser = async (id) => {
   }
 }
 
+const forceLogoutUser = async (user) => {
+  if (!user?.accountID) return
+  const ok = confirm(`Force logout toàn bộ phiên của "${user.username}" và thu hồi trusted devices?`)
+  if (!ok) return
+
+  try {
+    await api.patch(`/admin/accounts/${user.accountID}/force-logout`, { revokeDevices: true })
+    toast.success(`Đã force logout user ${user.username}`)
+  } catch (err) {
+    console.error('Lỗi force logout user:', err)
+    toast.error(err.response?.data?.message || 'Force logout thất bại!')
+  }
+}
+
 onMounted(fetchUsers)
 </script>
 
@@ -420,6 +541,8 @@ onMounted(fetchUsers)
 .btn-danger:hover  { background: #EF4444; color: white; transform: translateY(-2px); }
 .btn-view    { color: #3B82F6; border-color: #DBEAFE; }
 .btn-view:hover    { background: #DBEAFE; transform: translateY(-2px); }
+.btn-force   { color: #7C3AED; border-color: #EDE9FE; }
+.btn-force:hover   { background: #EDE9FE; transform: translateY(-2px); }
 
 /* ── DETAIL MODAL ── */
 .detail-modal-card { background: white; border-radius: 24px; padding: 0; max-width: 520px; width: 92%; position: relative; box-shadow: 0 30px 70px rgba(0,0,0,0.25); overflow: hidden; animation: modalPop 0.3s cubic-bezier(0.34,1.56,0.64,1); }
@@ -495,4 +618,46 @@ onMounted(fetchUsers)
 /* ANIMATION */
 .animate-enter { animation: fadeIn 0.5s ease-out; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* BULK ACTION BAR */
+.bulk-action-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  background: linear-gradient(135deg, #FFF7ED, #FFFBF5);
+  border: 1px solid #FED7AA; border-radius: 12px;
+  padding: 12px 20px; margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(249,115,22,0.1);
+}
+.bulk-count { font-size: 0.9rem; font-weight: 700; color: #C2410C; display: flex; align-items: center; gap: 8px; }
+.bulk-actions { display: flex; gap: 10px; }
+.btn-bulk-email {
+  display: flex; align-items: center; gap: 7px;
+  background: linear-gradient(135deg, #F97316, #EA580C);
+  color: white; border: none; border-radius: 10px;
+  padding: 8px 18px; font-weight: 800; font-size: 0.875rem;
+  cursor: pointer; font-family: 'Mulish', sans-serif;
+  box-shadow: 0 3px 10px rgba(249,115,22,0.35); transition: 0.2s;
+}
+.btn-bulk-email:hover { transform: translateY(-2px); box-shadow: 0 5px 14px rgba(249,115,22,0.45); }
+.btn-bulk-clear {
+  display: flex; align-items: center; gap: 6px;
+  background: white; border: 1px solid #E2E8F0; border-radius: 10px;
+  padding: 8px 14px; font-weight: 700; font-size: 0.875rem;
+  color: #64748B; cursor: pointer; font-family: 'Mulish', sans-serif; transition: 0.2s;
+}
+.btn-bulk-clear:hover { background: #FEE2E2; border-color: #FECACA; color: #EF4444; }
+
+/* CHECKBOX COLUMN */
+.col-check { width: 44px; text-align: center; }
+.check-all, .row-check { width: 16px; height: 16px; cursor: pointer; accent-color: #EA580C; }
+.row-selected td { background: rgba(255, 247, 237, 0.5) !important; }
+
+/* DETAIL ACTION — EMAIL */
+.dab-email { background: #EFF6FF; color: #2563EB; }
+.dab-email:hover { background: #3B82F6; color: white; }
+.dab-force { background: #F3E8FF; color: #7C3AED; }
+.dab-force:hover { background: #7C3AED; color: white; }
+
+/* SLIDE DOWN TRANSITION */
+.slide-down-enter-active, .slide-down-leave-active { transition: all 0.25s ease; }
+.slide-down-enter-from, .slide-down-leave-to { opacity: 0; transform: translateY(-10px); }
 </style>

@@ -49,6 +49,10 @@
           <div class="icon-orb"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7"></path></svg></div>
           <span>Quản lý Bình luận</span>
         </router-link>
+        <router-link to="/admin/moderation" class="nav-link-lux warning-vibe" active-class="active">
+          <div class="icon-orb"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></div>
+          <span>Kiểm duyệt nội dung</span>
+        </router-link>
       </div>
 
       <div class="nav-section anim-stagger" style="--d: 0.3s">
@@ -78,6 +82,14 @@
           <div class="icon-orb"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path></svg></div>
           <span>Quản lý Khiếu Nại</span>
           <span class="count-badge">5</span>
+        </router-link>
+        <router-link to="/admin/maintenance" class="nav-link-lux" active-class="active">
+          <div class="icon-orb"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.7 6.3a1 1 0 0 1 1.4 1.4l-1.2 1.2 1.6 1.6 1.2-1.2a1 1 0 0 1 1.4 1.4l-1.2 1.2 1.7 1.7a1 1 0 0 1-1.4 1.4l-1.7-1.7-1.2 1.2a1 1 0 0 1-1.4-1.4l1.2-1.2-1.6-1.6-6 6a2 2 0 0 1-2.8 0l-1.4-1.4a2 2 0 0 1 0-2.8l6-6-1.6-1.6-1.2 1.2a1 1 0 1 1-1.4-1.4l1.2-1.2-1.7-1.7A1 1 0 1 1 6.7 1.3L8.4 3l1.2-1.2a1 1 0 0 1 1.4 1.4L9.8 4.4l1.6 1.6z"></path></svg></div>
+          <span>Bảo trì hệ thống</span>
+        </router-link>
+        <router-link to="/admin/weekly-certs" class="nav-link-lux" active-class="active">
+          <div class="icon-orb"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 15l-3.5 1.8.7-3.8-2.8-2.7 3.9-.6L12 6l1.7 3.7 3.9.6-2.8 2.7.7 3.8z"></path><path d="M5 20h14"></path></svg></div>
+          <span>Top tuần &amp; Cấp bằng</span>
         </router-link>
       </div>
 

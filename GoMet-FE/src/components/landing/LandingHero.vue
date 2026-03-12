@@ -4,20 +4,20 @@
     <div class="marquee-container">
       <div class="marquee-row scroll-left">
         <div class="marquee-track">
-          <img v-for="n in 6" :key="'r1-'+n" :src="getImage(n)" alt="Food">
-          <img v-for="n in 6" :key="'r1-dup-'+n" :src="getImage(n)" alt="Food">
+          <img v-for="n in 6" :key="'r1-'+n" :src="getImage(n)" alt="" aria-hidden="true" loading="lazy" decoding="async" fetchpriority="low">
+          <img v-for="n in 6" :key="'r1-dup-'+n" :src="getImage(n)" alt="" aria-hidden="true" loading="lazy" decoding="async" fetchpriority="low">
         </div>
       </div>
       <div class="marquee-row scroll-right">
         <div class="marquee-track">
-          <img v-for="n in 6" :key="'r2-'+n" :src="getImage(n+6)" alt="Food">
-          <img v-for="n in 6" :key="'r2-dup-'+n" :src="getImage(n+6)" alt="Food">
+          <img v-for="n in 6" :key="'r2-'+n" :src="getImage(n+6)" alt="" aria-hidden="true" loading="lazy" decoding="async" fetchpriority="low">
+          <img v-for="n in 6" :key="'r2-dup-'+n" :src="getImage(n+6)" alt="" aria-hidden="true" loading="lazy" decoding="async" fetchpriority="low">
         </div>
       </div>
       <div class="marquee-row scroll-left">
         <div class="marquee-track">
-          <img v-for="n in 6" :key="'r3-'+n" :src="getImage(n+12)" alt="Food">
-          <img v-for="n in 6" :key="'r3-dup-'+n" :src="getImage(n+12)" alt="Food">
+          <img v-for="n in 6" :key="'r3-'+n" :src="getImage(n+12)" alt="" aria-hidden="true" loading="lazy" decoding="async" fetchpriority="low">
+          <img v-for="n in 6" :key="'r3-dup-'+n" :src="getImage(n+12)" alt="" aria-hidden="true" loading="lazy" decoding="async" fetchpriority="low">
         </div>
       </div>
     </div>
@@ -25,21 +25,22 @@
     <div class="hero-mask"></div>
 
     <div class="hero-content">
-      <div class="badge-pill">Mạng xã hội Ẩm thực số 2 Việt Nam</div>
+      <div class="badge-pill">{{ $t('landing.badge') }}</div>
       
       <h1 class="hero-title">
-        Kết Nối Đam Mê <br>
-        <span class="text-gradient">Ẩm Thực Việt</span>
+        {{ $t('landing.title_1') }} <br>
+        <span class="text-gradient">{{ $t('landing.title_hl') }}</span>
       </h1>
       
       <p class="hero-desc">
-        Khám phá hơn <strong>10,000+ công thức</strong> độc quyền. 
-        Lưu giữ khoảnh khắc, chia sẻ bí quyết và trở thành đầu bếp tại gia ngay hôm nay.
+        {{ $t('landing.desc_lead') }}
+        <strong class="hero-desc-strong">{{ $t('landing.desc_highlight') }}</strong>
+        {{ $t('landing.desc_tail') }}
       </p>
 
       <div class="cta-group">
         <router-link to="/home" class="btn-primary-xl">
-          Bắt đầu ngay
+          {{ $t('landing.cta') }}
           <span class="arrow-icon">→</span>
         </router-link>
         
@@ -50,7 +51,7 @@
             <img src="https://i.pravatar.cc/100?img=43">
             <div class="more-avt">+50k</div>
           </div>
-          <span class="proof-text">Thành viên đã tham gia</span>
+          <span class="proof-text">{{ $t('landing.members') }}</span>
         </div>
       </div>
     </div>
@@ -63,6 +64,9 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
+
 // Danh sách ảnh món ăn chất lượng cao (Đã chọn lọc)
 const foodImages = [
   'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&q=80', // Món thịt
@@ -204,6 +208,11 @@ const scrollToSignup = () => {
   margin: 0 auto 45px;
   max-width: 600px;
   line-height: 1.6;
+}
+
+.hero-desc-strong {
+  color: #1C1917;
+  font-weight: 800;
 }
 
 /* CTA Group */

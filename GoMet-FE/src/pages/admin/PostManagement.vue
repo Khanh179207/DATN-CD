@@ -87,6 +87,12 @@
           </tr>
         </tbody>
       </table>
+
+      <div class="pager" v-if="totalPages > 1">
+        <button class="pager-btn" :disabled="page === 0 || loading" @click="changePage(page - 1)">Prev</button>
+        <span class="pager-info">Page {{ page + 1 }} / {{ totalPages }} • {{ totalElements }} posts</span>
+        <button class="pager-btn" :disabled="page >= totalPages - 1 || loading" @click="changePage(page + 1)">Next</button>
+      </div>
     </div>
 
     <div v-if="showModal" class="modal-overlay" @click.self="closeDetail">
@@ -139,6 +145,10 @@ const searchQuery = ref('')
 const currentTab = ref('all')
 const showModal = ref(false)
 const selectedPost = ref({})
+const page = ref(0)
+const size = ref(20)
+const totalPages = ref(0)
+const totalElements = ref(0)
 
 const tabs = [
   { key: 'all', label: 'All' },
@@ -171,8 +181,16 @@ const fetchPosts = async () => {
   loading.value = true
   error.value = ''
   try {
-    const res = await api.get('/api/admin/posts')
-    posts.value = res.data.map(p => ({ ...p, _status: getStatus(p) }))
+    const res = await api.get('/api/admin/posts', { params: { page: page.value, size: size.value } })
+    const content = Array.isArray(res.data?.content) ? res.data.content : []
+    posts.value = content.map(p => ({
+      ...p,
+      accountName: p.accountName || p.username || 'Unknown',
+      image: p.image || p.media || null,
+      _status: getStatus(p)
+    }))
+    totalPages.value = Number(res.data?.totalPages || 0)
+    totalElements.value = Number(res.data?.totalElements || 0)
   } catch (e) {
     error.value = 'Failed to load posts. ' + (e.response?.data?.message || e.message)
   } finally {
@@ -229,6 +247,12 @@ const deletePost = async (id) => {
 const openDetail = (post) => { selectedPost.value = post; showModal.value = true }
 const closeDetail = () => { showModal.value = false }
 
+const changePage = (nextPage) => {
+  if (nextPage < 0 || nextPage >= totalPages.value) return
+  page.value = nextPage
+  fetchPosts()
+}
+
 // --- TOAST ---
 const toast = ref({ show: false, msg: '', type: 'success' })
 const showToast = (msg, type = 'success') => {
@@ -256,6 +280,10 @@ const showToast = (msg, type = 'success') => {
 
 /* TABLE */
 .table-wrapper { background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #F1F5F9; }
+.pager { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-top: 1px solid #E2E8F0; background: #F8FAFC; }
+.pager-btn { background: #fff; border: 1px solid #CBD5E1; color: #334155; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+.pager-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.pager-info { color: #475569; font-size: 0.9rem; font-weight: 600; }
 .data-table { width: 100%; border-collapse: collapse; }
 .data-table th { text-align: left; padding: 15px 20px; background: #F8FAFC; color: #64748B; font-weight: 600; font-size: 0.85rem; border-bottom: 1px solid #E2E8F0; }
 .data-table td { padding: 15px 20px; border-bottom: 1px solid #F1F5F9; vertical-align: middle; }

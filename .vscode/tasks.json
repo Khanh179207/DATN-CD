@@ -1,0 +1,65 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "BE: dev",
+      "type": "shell",
+      "command": "cmd",
+      "args": [
+        "/c",
+        "set SPRING_PROFILES_ACTIVE=dev&& set JPA_DDL_AUTO=update&& GoMet-BE\\mvnw.cmd -f GoMet-BE\\pom.xml -Dmaven.test.skip=true spring-boot:run -Dspring-boot.run.arguments=--server.port=8080"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "BE: prod validate",
+      "type": "shell",
+      "command": "cmd",
+      "args": [
+        "/c",
+        "set SPRING_PROFILES_ACTIVE=prod&& set JPA_DDL_AUTO=validate&& GoMet-BE\\mvnw.cmd -f GoMet-BE\\pom.xml -Dmaven.test.skip=true spring-boot:run -Dspring-boot.run.arguments=--server.port=8082"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "FE: dev",
+      "type": "shell",
+      "command": "npm",
+      "args": [
+        "run",
+        "dev",
+        "--",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "5173"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}\\GoMet-FE"
+      },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "FE: build",
+      "type": "shell",
+      "command": "npm",
+      "args": [
+        "run",
+        "build"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}\\GoMet-FE"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

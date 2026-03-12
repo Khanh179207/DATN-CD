@@ -86,6 +86,15 @@ public class AchievementController {
         return ResponseEntity.ok(result);
     }
 
+    @GetMapping("/recent")
+    public ResponseEntity<List<UserAchievementDTO>> getRecentAchievements() {
+        List<UserAchievementDTO> result = userAchievementDAO.findTop5ByOrderByReceivedAtDesc()
+                .stream()
+                .map(this::toUserDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(result);
+    }
+
     // â”€â”€ DTO helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     private AchievementDTO toDTO(Achievement a) {
         AchievementDTO dto = new AchievementDTO();
@@ -100,6 +109,11 @@ public class AchievementController {
         UserAchievementDTO dto = new UserAchievementDTO();
         dto.setUaid(ua.getUaid());
         dto.setReceivedAt(ua.getReceivedAt());
+        if (ua.getAccount() != null) {
+            dto.setAccountID(ua.getAccount().getAccountID());
+            dto.setUsername(ua.getAccount().getUsername());
+            dto.setAccountName(ua.getAccount().getUsername());
+        }
         if (ua.getAchievement() != null) {
             dto.setAchievementID(ua.getAchievement().getAchievementID());
             dto.setAchievementName(ua.getAchievement().getAchievementName());
