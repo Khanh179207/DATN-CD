@@ -141,16 +141,16 @@
 
       <div v-if="authStore.isAuthenticated" class="user-menu-container">
         <div class="avatar-trigger" @click.stop="toggleDropdown">
-          <img :src="authStore.user.avatar || 'https://i.pravatar.cc/300'" class="user-avt">
+          <img :src="displayAvatar" @error="handleAvatarError" class="user-avt" alt="User">
         </div>
         
         <transition name="dropdown-anim">
           <div v-if="isDropdownOpen" class="user-dropdown" @click.stop>
             <div class="user-header">
-              <img :src="authStore.user.avatar || 'https://i.pravatar.cc/300'" class="header-avt">
+              <img :src="displayAvatar" @error="handleAvatarError" class="header-avt" alt="User">
               <div class="header-info">
-                <div class="name">{{ authStore.user.name }}</div>
-                <div class="handle">@cook_{{ authStore.user.id }}</div>
+                <div class="name">{{ authStore.user.name || authStore.user.username }}</div>
+                <div class="handle">@cook_{{ authStore.user.id || authStore.user.accountID }}</div>
               </div>
             </div>
             
@@ -238,6 +238,7 @@ import { toast } from '@/composables/useToast'
 import { useI18n } from 'vue-i18n'
 import { getNotifications, markAllNotificationsRead, markNotificationRead } from '@/services/notificationService'
 
+const emit = defineEmits(['open-login', 'open-register', 'open-premium'])
 const { t } = useI18n()
 const authStore = useAuthStore()
 const chatStore = useChatStore()
@@ -268,6 +269,18 @@ const notifications = ref([])
 const unreadMessages = computed(() => conversations.value.filter(c => !c.read).length)
 const unreadNotiCount = computed(() => notifications.value.filter(n => !n.isRead).length)
 const canSeeAdminPanel = computed(() => authStore.isAdmin)
+
+const displayAvatar = computed(() => {
+  const avt = authStore.user?.avatar
+  if (avt && avt.startsWith('http')) return avt
+  const name = encodeURIComponent(authStore.user?.name || authStore.user?.username || 'G')
+  return `https://ui-avatars.com/api/?name=${name}&background=EA580C&color=fff&bold=true`
+})
+
+const handleAvatarError = (e) => {
+  const name = encodeURIComponent(authStore.user?.name || authStore.user?.username || 'G')
+  e.target.src = `https://ui-avatars.com/api/?name=${name}&background=EA580C&color=fff&bold=true`
+}
 
 // Load real notifications from API
 const loadNotifications = async () => {

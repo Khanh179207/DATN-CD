@@ -1862,25 +1862,41 @@ function clearBanner() {
 
 async function saveProfile() {
   if (editSaving.value) return
-  const targetId = route.params.id || authStore.user?.accountID
+  
+  // Lấy ID người dùng (Ưu tiên ID từ route, nếu không có lấy từ store)
+  const targetId = route.params.id || authStore.user?.accountID || authStore.user?.id
   if (!targetId) return
+
   editSaving.value = true
   try {
-    const payload = { username: editForm.value.username, bio: editForm.value.bio }
-    // Upload new avatar if user selected a file
+    let finalAvatarUrl = user.value.avatar
+
     if (editForm.value.avatarFile) {
       try {
-        const avatarUrl = await uploadMedia(editForm.value.avatarFile)
-        payload.avatar = avatarUrl
-      } catch { /* avatar upload failed — skip updating avatar */ }
+        finalAvatarUrl = await uploadMedia(editForm.value.avatarFile, 'avatars')
+      } catch (uploadErr) { 
+        toast.error('Lỗi khi tải ảnh đại diện.')
+        editSaving.value = false
+        return
+      }
+    }
+
+    const payload = {
+      username: editForm.value.username,
+      bio: editForm.value.bio,
+      avatar: finalAvatarUrl
     }
 
     if (user.value.isPremium) {
       let bannerUrl = editForm.value.removeBanner ? null : premiumProfile.value.bannerUrl || null
       if (editForm.value.bannerFile) {
         try {
-          bannerUrl = await uploadMedia(editForm.value.bannerFile)
-        } catch { /* banner upload failed — keep previous banner */ }
+          bannerUrl = await uploadMedia(editForm.value.bannerFile, 'banners')
+        } catch {
+          toast.error('Lỗi khi tải ảnh bìa.')
+          editSaving.value = false
+          return
+        }
       }
 
       payload.profileBannerUrl = bannerUrl
@@ -1899,10 +1915,19 @@ async function saveProfile() {
           .filter(item => item.url)
       )
     }
-
     await updateUserProfile(targetId, payload)
-    // Refresh profile
+    
+    // Refresh lại dữ liệu và giao diện
     await loadProfile()
+    
+    // Update AuthStore and localStorage so the header reflects the new profile immediately.
+    if (authStore.user) {
+        authStore.user.avatar = finalAvatarUrl
+        authStore.user.name = editForm.value.username
+        authStore.user.username = editForm.value.username
+        localStorage.setItem('user', JSON.stringify(authStore.user))
+    }
+
     showEditModal.value = false
     toast.success('Profile đã được cập nhật.')
   } catch (err) {

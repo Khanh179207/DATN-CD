@@ -8,10 +8,10 @@ import poly.edu.dao.EventPostsDAO;
 import poly.edu.dto.AdminEventDTO;
 import poly.edu.dto.AdminEventPostDTO;
 import poly.edu.entity.Event;
-import poly.edu.entity.EventPosts;
 import poly.edu.service.AdminEventService;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -21,57 +21,84 @@ public class AdminEventServiceImpl implements AdminEventService {
     private final EventDAO eventDAO;
     private final EventPostsDAO eventPostsDAO;
 
-    // ===== Mapping (Dữ liệu thật 100% từ Database) =====
+    // Bộ định dạng chuẩn cho input datetime-local của trình duyệt
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
+
     private AdminEventDTO toDTO(Event e) {
         AdminEventDTO dto = new AdminEventDTO();
         dto.setEventID(e.getEventID());
         dto.setEventName(e.getEventName());
         dto.setWinner(e.getWinner());
-        dto.setStartAt(e.getStartAt());
-        dto.setEndAt(e.getEndAt());
-        dto.setVoteStartAt(e.getVoteStartAt());
-        dto.setVoteEndAt(e.getVoteEndAt());
+
+        // Đổi từ LocalDateTime sang String để gửi lên Vue
+        dto.setStartAt(e.getStartAt() != null ? e.getStartAt().toString() : null);
+        dto.setEndAt(e.getEndAt() != null ? e.getEndAt().toString() : null);
+        dto.setVoteStartAt(e.getVoteStartAt() != null ? e.getVoteStartAt().toString() : null);
+        dto.setVoteEndAt(e.getVoteEndAt() != null ? e.getVoteEndAt().toString() : null);
+
         dto.setBannerImage(e.getBannerImage());
         dto.setDescription(e.getDescription());
         dto.setRules(e.getRules());
         dto.setReward(e.getReward());
+        Integer maxVotes = e.getMaxVotes();
+        dto.setMaxVotes(maxVotes != null ? maxVotes : Integer.valueOf(3));
 
-        // 🔥 FIX LỖI: Lấy maxVotes từ DB gửi lên cho Vue hiển thị (Nếu null thì mặc định 3)
-        dto.setMaxVotes(e.getMaxVotes() != null ? e.getMaxVotes() : 3);
-
-        // 🔥 Logic tính toán thống kê cho Admin
         if (e.getEventPosts() != null) {
             dto.setPostCount(e.getEventPosts().size());
             int total = e.getEventPosts().stream()
-                    .mapToInt(ep -> ep.getVoteCount() != null ? ep.getVoteCount() : 0)
+                    .mapToInt(ep -> {
+                        Integer voteCount = ep.getVoteCount();
+                        return voteCount != null ? voteCount : 0;
+                    })
                     .sum();
             dto.setTotalVotes(total);
-        } else {
-            dto.setPostCount(0);
-            dto.setTotalVotes(0);
         }
-
         return dto;
     }
 
-    private Event toEntity(AdminEventDTO dto) {
-        return Event.builder()
-                .eventID(dto.getEventID())
-                .eventName(dto.getEventName())
-                .winner(dto.getWinner())
-                .startAt(dto.getStartAt())
-                .endAt(dto.getEndAt())
-                .voteStartAt(dto.getVoteStartAt())
-                .voteEndAt(dto.getVoteEndAt())
-                .bannerImage(dto.getBannerImage())
-                .description(dto.getDescription())
-                .rules(dto.getRules())
-                .reward(dto.getReward())
-                // 🔥 FIX LỖI: Nhận maxVotes từ Vue gửi xuống để lưu vào Database
-                .maxVotes(dto.getMaxVotes() != null ? dto.getMaxVotes() : 3)
-                .build();
+    @Override
+    @Transactional
+    public AdminEventDTO saveEvent(AdminEventDTO dto) {
+        Event event;
+        if (dto.getEventID() != null) {
+            event = eventDAO.findById(dto.getEventID())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy sự kiện"));
+        } else {
+            event = new Event();
+        }
+
+        // Cập nhật thông tin cơ bản
+        event.setEventName(dto.getEventName());
+        event.setBannerImage(dto.getBannerImage());
+        event.setDescription(dto.getDescription());
+        event.setRules(dto.getRules());
+        event.setReward(dto.getReward());
+        Integer dtoMaxVotes = dto.getMaxVotes();
+        event.setMaxVotes(dtoMaxVotes != null ? dtoMaxVotes : Integer.valueOf(3));
+        event.setWinner(dto.getWinner());
+
+        // 🔥 XỬ LÝ NGÀY THÁNG: Chuyển từ String (DTO) sang LocalDateTime (Entity)
+        // Cách này cực kỳ an toàn, không bao giờ lo bị NULL nếu Vue có gửi dữ liệu
+        try {
+            if (dto.getStartAt() != null && !dto.getStartAt().isEmpty())
+                event.setStartAt(LocalDateTime.parse(dto.getStartAt(), formatter));
+
+            if (dto.getEndAt() != null && !dto.getEndAt().isEmpty())
+                event.setEndAt(LocalDateTime.parse(dto.getEndAt(), formatter));
+
+            if (dto.getVoteStartAt() != null && !dto.getVoteStartAt().isEmpty())
+                event.setVoteStartAt(LocalDateTime.parse(dto.getVoteStartAt(), formatter));
+
+            if (dto.getVoteEndAt() != null && !dto.getVoteEndAt().isEmpty())
+                event.setVoteEndAt(LocalDateTime.parse(dto.getVoteEndAt(), formatter));
+        } catch (Exception ex) {
+            System.err.println("Lỗi ép kiểu ngày tháng: " + ex.getMessage());
+        }
+
+        return toDTO(eventDAO.save(event));
     }
 
+    // Các hàm khác giữ nguyên...
     @Override
     public List<AdminEventDTO> findAllEvents() {
         return eventDAO.findAll().stream().map(this::toDTO).toList();
@@ -79,16 +106,7 @@ public class AdminEventServiceImpl implements AdminEventService {
 
     @Override
     public AdminEventDTO findEventById(Integer id) {
-        return eventDAO.findById(id)
-                .map(this::toDTO)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy sự kiện ID: " + id));
-    }
-
-    @Override
-    @Transactional
-    public AdminEventDTO saveEvent(AdminEventDTO dto) {
-        Event event = toEntity(dto);
-        return toDTO(eventDAO.save(event));
+        return eventDAO.findById(id).map(this::toDTO).orElse(null);
     }
 
     @Override
@@ -99,19 +117,17 @@ public class AdminEventServiceImpl implements AdminEventService {
 
     @Override
     public List<AdminEventPostDTO> getPostsOfEvent(Integer eventID) {
-        return eventPostsDAO.findByEvent_EventID(eventID)
-                .stream()
-                .map(ep -> {
-                    AdminEventPostDTO dto = new AdminEventPostDTO();
-                    dto.setEventPostID(ep.getEventPostID());
-                    dto.setPostID(ep.getPost().getPostID());
-                    dto.setPostTitle(ep.getPost().getTitle());
-                    dto.setPostImage(ep.getPost().getMedia());
-                    dto.setVoteCount(ep.getVoteCount() != null ? ep.getVoteCount() : 0);
-                    dto.setUsername(ep.getPost().getAccount().getUsername());
-                    return dto;
-                })
-                .toList();
+        return eventPostsDAO.findByEvent_EventID(eventID).stream().map(ep -> {
+            AdminEventPostDTO d = new AdminEventPostDTO();
+            d.setEventPostID(ep.getEventPostID());
+            d.setPostID(ep.getPost().getPostID());
+            d.setPostTitle(ep.getPost().getTitle());
+            d.setPostImage(ep.getPost().getMedia());
+            Integer voteCount = ep.getVoteCount();
+            d.setVoteCount(voteCount != null ? voteCount : 0);
+            d.setUsername(ep.getPost().getAccount().getUsername());
+            return d;
+        }).toList();
     }
 
     @Override

@@ -69,13 +69,18 @@ public class MealPlanServiceImpl implements MealPlanService {
     private MealPlanDTO mapToDTO(MealPlan plan) {
         return MealPlanDTO.builder()
                 .planId(plan.getPlanId())
-                .accountId(plan.getAccount().getAccountID()) // GỌI ĐÚNG HÀM getAccountID
-                .postId(plan.getPost() != null ? plan.getPost().getPostID() : null) // GỌI ĐÚNG HÀM getPostID
+                .accountId(plan.getAccount().getAccountID())
+                .postId(plan.getPost() != null ? plan.getPost().getPostID() : null)
                 .customMealName(plan.getCustomMealName())
                 .planDate(plan.getPlanDate())
                 .mealType(plan.getMealType())
                 .notes(plan.getNotes())
                 .isCompleted(plan.getIsCompleted() != null && plan.getIsCompleted() == 1)
+                // 🔥 THÊM 2 DÒNG NÀY ĐỂ LẤY THÔNG TIN BÀI VIẾT
+                .postMedia(plan.getPost() != null ? plan.getPost().getMedia() : null)
+                .postTitle(plan.getPost() != null ? plan.getPost().getTitle() : null)
+                .categoryName(plan.getPost() != null && plan.getPost().getCategory() != null
+                        ? plan.getPost().getCategory().getCategoryName() : null)
                 .build();
     }
 }

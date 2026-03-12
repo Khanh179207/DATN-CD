@@ -200,6 +200,7 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { getCategories } from '@/services/categoryService'
 import { createPost } from '@/services/postService'
+// Đã mở lại import uploadMedia siêu xịn từ service chung
 import { uploadMedia } from '@/services/uploadService'
 import { toast } from '@/composables/useToast'
 
@@ -287,17 +288,27 @@ const handlePublish = async () => {
     // Upload cover image if user selected one
     let coverMediaUrl = ''
     if (coverImageFile.value) {
-      try {
-        coverMediaUrl = await uploadMedia(coverImageFile.value)
-      } catch { /* cover upload failed — continue without image */ }
+      try { 
+        coverMediaUrl = await uploadMedia(coverImageFile.value, 'posts') 
+      } 
+      catch (error) { 
+        toast.warn('Lỗi upload ảnh bìa!'); 
+        publishing.value = false;
+        return; 
+      }
     }
 
     // Upload each step image that has a file
     const stepUrls = {}
     for (const [idx, file] of Object.entries(stepImageFiles.value)) {
-      try {
-        stepUrls[idx] = await uploadMedia(file)
-      } catch { /* step upload failed — continue without image */ }
+      try { 
+        stepUrls[idx] = await uploadMedia(file, 'steps') 
+      } 
+      catch (error) { 
+        toast.warn(`Lỗi upload ảnh ở bước ${parseInt(idx) + 1}!`); 
+        publishing.value = false;
+        return; 
+      }
     }
 
     const payload = {

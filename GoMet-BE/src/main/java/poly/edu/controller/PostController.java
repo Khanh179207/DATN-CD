@@ -365,7 +365,7 @@ public class PostController {
 
     // ─── Create post ────────────────────────────────────────────────────
     @PostMapping
-        public ResponseEntity<?> createPost(@RequestBody @Valid CreatePostRequestDTO body,
+    public ResponseEntity<?> createPost(@RequestBody @Valid CreatePostRequestDTO body,
                                         jakarta.servlet.http.HttpServletRequest request) {
         Integer accountID = body.getAccountID();
         Integer categoryID = body.getCategoryID();
@@ -381,7 +381,9 @@ public class PostController {
         Category category = categoryDAO.findById(categoryID)
             .orElseThrow(() -> new IllegalArgumentException("Invalid categoryID"));
 
-        List<String> stepDescriptions = body.getSteps().stream()
+        List<CreatePostStepRequestDTO> steps = body.getSteps() != null ? body.getSteps() : List.of();
+
+        List<String> stepDescriptions = steps.stream()
             .map(s -> s.getDesc() != null ? s.getDesc() : "")
             .collect(Collectors.toList());
 
@@ -415,7 +417,6 @@ public class PostController {
             .build();
         post = postDAO.save(post);
 
-        List<CreatePostStepRequestDTO> steps = body.getSteps();
         final Post savedPost = post;
         for (int i = 0; i < steps.size(); i++) {
             CreatePostStepRequestDTO s = steps.get(i);
@@ -434,8 +435,6 @@ public class PostController {
                 ? "Your post was flagged and is under review."
                 : "Post submitted and is pending review."));
     }
-
-    // ─── Helpers ──────────────────────────────────────────────────────────────
 
     private Integer resolveCallerAccountId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();

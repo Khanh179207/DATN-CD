@@ -21,17 +21,16 @@ public class Event {
     private String eventName;
     private Integer winner;
 
-    // 🔥 Đổi hết sang LocalDateTime để khớp với Controller/Service
-    @Column(nullable = false)
+    @Column(name = "StartAt", nullable = false)
     private LocalDateTime startAt;
 
-    @Column(nullable = false)
+    @Column(name = "EndAt", nullable = false)
     private LocalDateTime endAt;
 
-    @Column(nullable = false)
+    @Column(name = "VoteStartAt", nullable = false)
     private LocalDateTime voteStartAt;
 
-    @Column(nullable = false)
+    @Column(name = "VoteEndAt", nullable = false)
     private LocalDateTime voteEndAt;
 
     private String bannerImage;

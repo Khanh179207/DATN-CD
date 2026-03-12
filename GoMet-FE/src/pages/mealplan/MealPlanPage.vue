@@ -4,6 +4,7 @@
     <div class="bg-layer">
       <div class="grid-mesh"></div>
       <div class="noise-texture"></div>
+      <div class="glow-spot spotlight"></div>
     </div>
 
     <div class="planner-wrapper">
@@ -88,10 +89,11 @@
                 <div v-for="mealType in ['breakfast', 'lunch', 'dinner']" :key="mealType" class="meal-slot">
                   <span class="slot-label">{{ getMealLabel(mealType) }}</span>
                   
-                  <div v-if="day.meals[mealType]" class="dish-card" @click="showDishDetail(day.meals[mealType])">
-                    <img :src="day.meals[mealType].image" class="dish-bg" />
+                  <div v-if="day.meals[mealType]" class="dish-card" @click="showDishDetail(day.meals[mealType])" :class="{'is-completed': day.meals[mealType].isCompleted}">
+                    <img :src="day.meals[mealType].image || 'https://images.unsplash.com/photo-1490818387583-1b5f2223d848?w=600'" class="dish-bg" />
+                    
                     <div class="dish-overlay">
-                      <span class="dish-cat">{{ day.meals[mealType].cat }}</span>
+                      <span class="dish-cat">{{ day.meals[mealType].category || 'Món tự nhập' }}</span>
                       <h4 class="dish-name">{{ day.meals[mealType].name }}</h4>
                     </div>
                     <button class="btn-remove" @click.stop="removeDish(dIndex, mealType)" title="Remove this dish">
@@ -115,66 +117,22 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 import { useI18n } from 'vue-i18n'
+import api from '@/services/api'
 import { generateAIMealPlan } from '@/services/aiService'
 
 const router = useRouter()
+const authStore = useAuthStore()
 const { t } = useI18n()
-
-// --- LOGIC ---
-
-// 1. Simulated week display
-const currentWeekDisplay = ref('Feb 02 — 08, 2026')
-
-const changeWeek = (direction) => {
-  // Demo text swap, real implementation will call API to load the new week
-  if(direction > 0) currentWeekDisplay.value = 'Feb 09 — 15, 2026'
-  else currentWeekDisplay.value = 'Jan 26 — Feb 01, 2026'
-  showToast('Loading new week data...')
-}
-
-// 2. Core functions
-const goToSearch = (day, meal) => {
-  console.log(`Searching for ${day} - ${meal}`)
-  router.push('/search')
-}
-
-const removeDish = (dayIndex, mealType) => {
-  if(confirm(t('mealplan.remove_confirm'))) {
-    weekData.value[dayIndex].meals[mealType] = null
-  }
-}
-
-const showDishDetail = (dish) => {
-  showToast(`Viewing details: ${dish.name}`)
-}
-
+const baseDate = ref(new Date())
+const accountId = computed(() => authStore.user?.accountID || authStore.user?.id || null)
+const isLoading = ref(false)
 const isAILoading = ref(false)
 
-const autoFillAI = async () => {
-  if (isAILoading.value) return
-  isAILoading.value = true
-  showToast(t('mealplan.ai_powered') + '...')
-  try {
-    const plan = await generateAIMealPlan()
-    weekData.value = plan
-    showToast('AI đã tạo thực đơn tuần cho bạn!')
-  } catch (e) {
-    showToast('Không thể tạo thực đơn AI. Vui lòng thử lại!')
-    console.error('AI meal plan error:', e)
-  } finally {
-    isAILoading.value = false
-  }
-}
-
-const exportMenu = () => {
-  showToast('Exporting PDF...')
-}
-
 const showToast = (msg) => {
-  // Simple notification — can be replaced with a Toast component
   const el = document.createElement('div')
   el.textContent = msg
   Object.assign(el.style, {
@@ -188,43 +146,131 @@ const showToast = (msg) => {
   setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 400) }, 2600)
 }
 
+const generateWeekDays = (date) => {
+  const current = new Date(date)
+  const dayOfWeek = current.getDay() === 0 ? 6 : current.getDay() - 1
+  current.setDate(current.getDate() - dayOfWeek)
+  const dayNames = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
+
+  return dayNames.map((name, index) => {
+    const day = new Date(current)
+    day.setDate(current.getDate() + index)
+    return {
+      name,
+      date: String(day.getDate()).padStart(2, '0'),
+      fullDate: day.toISOString().split('T')[0],
+      isToday: day.toDateString() === new Date().toDateString(),
+      meals: {
+        breakfast: null,
+        lunch: null,
+        dinner: null,
+      },
+    }
+  })
+}
+
+const formatWeekDisplay = (days) => {
+  if (!days.length) return ''
+  const start = new Date(days[0].fullDate)
+  const end = new Date(days[days.length - 1].fullDate)
+  const fmt = new Intl.DateTimeFormat('en-GB', { month: 'short', day: '2-digit' })
+  return `${fmt.format(start)} — ${fmt.format(end)}, ${end.getFullYear()}`
+}
+
+const weekData = ref(generateWeekDays(baseDate.value))
+const currentWeekDisplay = computed(() => formatWeekDisplay(weekData.value))
+
+const loadWeekData = async () => {
+  const days = generateWeekDays(baseDate.value)
+  weekData.value = days
+  if (!accountId.value) return
+
+  isLoading.value = true
+  try {
+    const responses = await Promise.all(
+      days.map(day => api.get(`/api/meal-plans/user/${accountId.value}/date/${day.fullDate}`))
+    )
+
+    responses.forEach((res, index) => {
+      res.data.forEach(plan => {
+        const mealKey = String(plan.mealType || '').toLowerCase()
+        if (weekData.value[index]?.meals && mealKey in weekData.value[index].meals) {
+          weekData.value[index].meals[mealKey] = {
+            planId: plan.planId,
+            postId: plan.postId,
+            isCompleted: plan.isCompleted,
+            name: plan.postTitle || plan.customMealName || `Meal #${plan.planId}`,
+            image: plan.postMedia || null,
+            category: plan.categoryName || null,
+          }
+        }
+      })
+    })
+  } catch {
+    showToast(t('common.error') || 'Server connection error')
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const changeWeek = (direction) => {
+  baseDate.value = new Date(baseDate.value)
+  baseDate.value.setDate(baseDate.value.getDate() + direction * 7)
+  void loadWeekData()
+}
+
+const goToSearch = (day, meal) => {
+  router.push({ path: '/search', query: { day, meal } })
+}
+
+const removeDish = async (dayIndex, mealType) => {
+  if (confirm(t('mealplan.remove_confirm'))) {
+    const planId = weekData.value[dayIndex]?.meals?.[mealType]?.planId
+    if (planId) {
+      try {
+        await api.delete(`/api/meal-plans/${planId}`)
+      } catch {
+        showToast(t('common.error') || 'Unable to remove meal')
+        return
+      }
+    }
+    weekData.value[dayIndex].meals[mealType] = null
+  }
+}
+
+const showDishDetail = (dish) => {
+  showToast(`Viewing details: ${dish.name}`)
+}
+
+const autoFillAI = async () => {
+  if (isAILoading.value) return
+  isAILoading.value = true
+  showToast(t('mealplan.ai_powered') + '...')
+  try {
+    const plan = await generateAIMealPlan()
+    weekData.value = plan
+    showToast('AI da tao thuc don tuan cho ban!')
+  } catch (e) {
+    showToast('Khong the tao thuc don AI. Vui long thu lai!')
+    console.error('AI meal plan error:', e)
+  } finally {
+    isAILoading.value = false
+  }
+}
+
+const exportMenu = () => {
+  showToast('Exporting PDF...')
+}
+
 const getMealLabel = (type) => ({
   breakfast: t('mealplan.slot_breakfast'),
-  lunch:     t('mealplan.slot_lunch'),
-  dinner:    t('mealplan.slot_dinner')
+  lunch: t('mealplan.slot_lunch'),
+  dinner: t('mealplan.slot_dinner')
 })[type]
 
-// 3. Sample data
-const weekData = ref([
-  { 
-    name: 'MON', date: '02', isToday: false,
-    meals: {
-      breakfast: { name: 'Banh Mi Sunny-Side Up', cat: 'Vietnamese', image: 'https://images.unsplash.com/photo-1525351484164-3963b40d604c?w=600' },
-      lunch: null,
-      dinner: { name: 'Tuna Salad', cat: 'Healthy', image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600' }
-    }
-  },
-  { 
-    name: 'TUE', date: '03', isToday: true,
-    meals: {
-      breakfast: { name: 'Milk Oats', cat: 'Healthy', image: 'https://images.unsplash.com/photo-1517673132405-a56a62b18caf?w=600' },
-      lunch: { name: 'Hainanese Chicken Rice', cat: 'Asian', image: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=600' },
-      dinner: { name: 'Beef Tenderloin Steak', cat: 'Western', image: 'https://images.unsplash.com/photo-1600891964092-4316c288032e?w=600' }
-    }
-  },
-  { name: 'WED', date: '04', isToday: false, meals: { breakfast: null, lunch: null, dinner: null } },
-  { 
-    name: 'THU', date: '05', isToday: false,
-    meals: {
-      breakfast: null,
-      lunch: { name: 'Hanoi Bun Cha', cat: 'Vietnamese', image: 'https://images.unsplash.com/photo-1585325701165-351af916e581?w=600' },
-      dinner: null
-    }
-  },
-  { name: 'FRI', date: '06', isToday: false, meals: {} },
-  { name: 'SAT', date: '07', isToday: false, meals: {} },
-  { name: 'SUN', date: '08', isToday: false, meals: {} },
-])
+onMounted(() => {
+  void loadWeekData()
+})
 </script>
 
 <style scoped>
@@ -363,7 +409,7 @@ const weekData = ref([
   position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.1)); padding: 12px; display: flex; flex-direction: column; justify-content: flex-end;
 }
 .dish-cat { font-size: 0.55rem; color: #EA580C; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-.dish-name { color: #FFF; font-size: 0.85rem; font-weight: 700; margin: 2px 0 0; line-height: 1.25; text-shadow: 0 2px 4px rgba(0,0,0,0.5); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.dish-name { color: #FFF; font-size: 0.85rem; font-weight: 700; margin: 2px 0 0; line-height: 1.25; text-shadow: 0 2px 4px rgba(0,0,0,0.5); display: -webkit-box; line-clamp: 2; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
 .btn-remove {
   position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; color: #FFF; cursor: pointer; opacity: 0; transition: 0.2s; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px);

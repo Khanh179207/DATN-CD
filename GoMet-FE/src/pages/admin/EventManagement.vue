@@ -60,7 +60,7 @@
         
         <div class="card-main">
           <div class="img-frame">
-            <img :src="ev.cover || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=300'" :alt="ev.eventName" />
+            <img :src="ev.bannerImage || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=300'" :alt="ev.eventName" />
             <div class="id-tag">#{{ ev.eventID }}</div>
           </div>
           <div class="info-block">
@@ -105,21 +105,57 @@
         <div class="modal-form">
           <div class="mf-header">
             <h3>{{ isEditing ? 'Edit Event' : 'Create New Event' }}</h3>
-            <button class="btn-x" @click="showModal = false">âœ•</button>
+            <button class="btn-x" @click="showModal = false">x</button>
           </div>
           <div class="form-group">
             <label>Event Name <span class="req">*</span></label>
             <input v-model="form.eventName" type="text" placeholder="E.g.: Top Chef: Vietnamese Flavors">
           </div>
+          <div class="form-group">
+            <label>Banner Image</label>
+            <input type="file" accept="image/*" @change="handleBannerChange">
+          </div>
+          <div class="form-group">
+            <label>Banner URL</label>
+            <input v-model="form.bannerImage" type="text" placeholder="https://...">
+          </div>
           <div class="form-row">
             <div class="form-group">
-              <label>Start Date</label>
-              <input v-model="form.startAt" type="date">
+              <label>Start At</label>
+              <input v-model="form.startAt" type="datetime-local">
             </div>
             <div class="form-group">
-              <label>End Date</label>
-              <input v-model="form.endAt" type="date">
+              <label>End At</label>
+              <input v-model="form.endAt" type="datetime-local">
             </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Vote Start At</label>
+              <input v-model="form.voteStartAt" type="datetime-local">
+            </div>
+            <div class="form-group">
+              <label>Vote End At</label>
+              <input v-model="form.voteEndAt" type="datetime-local">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Reward</label>
+              <input v-model="form.reward" type="text" placeholder="Prize or reward details">
+            </div>
+            <div class="form-group">
+              <label>Max Votes</label>
+              <input v-model.number="form.maxVotes" type="number" min="1" placeholder="3">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea v-model="form.description" rows="3" placeholder="Describe the event briefly"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Rules</label>
+            <textarea v-model="form.rules" rows="3" placeholder="Participation rules"></textarea>
           </div>
           <div class="form-group">
             <label>Winner Account ID</label>
@@ -128,7 +164,7 @@
           <div class="mf-actions">
             <button @click="showModal = false" class="btn-cancel">Cancel</button>
             <button @click="saveEvent" class="btn-save" :disabled="saving">
-              <span v-if="saving">Savingâ€¦</span><span v-else>{{ isEditing ? 'Update' : 'Create' }}</span>
+              <span v-if="saving">Saving...</span><span v-else>{{ isEditing ? 'Update' : 'Create' }}</span>
             </button>
           </div>
         </div>
@@ -141,6 +177,8 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import api from '@/services/api.js'
+import { toast } from '@/composables/useToast'
+import { uploadMedia } from '@/services/uploadService'
 
 const events = ref([])
 const loading = ref(true)
@@ -150,7 +188,21 @@ const statusFilter = ref('')
 const showModal = ref(false)
 const isEditing = ref(false)
 const saving = ref(false)
-const form = reactive({ eventID: null, eventName: '', startAt: '', endAt: '', winner: null })
+const form = reactive({
+  eventID: null,
+  eventName: '',
+  bannerImage: '',
+  bannerFile: null,
+  description: '',
+  rules: '',
+  reward: '',
+  maxVotes: 3,
+  startAt: '',
+  endAt: '',
+  voteStartAt: '',
+  voteEndAt: '',
+  winner: null,
+})
 
 const ongoingCount = computed(() => events.value.filter(e => getStatus(e) === 'active').length)
 const upcomingCount = computed(() => events.value.filter(e => getStatus(e) === 'upcoming').length)
@@ -188,47 +240,129 @@ const getStatus = (ev) => {
 
 const getStatusText = (ev) => ({ ended: 'Ended', upcoming: 'Upcoming', active: 'Ongoing' }[getStatus(ev)])
 
-const formatDate = (d) => { if (!d) return 'â€”'; return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) }
+const formatDate = (d) => { if (!d) return '-'; return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) }
+
+const toInputDateTime = (value) => {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return String(value).slice(0, 16)
+  const offset = date.getTimezoneOffset()
+  const localDate = new Date(date.getTime() - offset * 60000)
+  return localDate.toISOString().slice(0, 16)
+}
+
+const resetForm = () => {
+  Object.assign(form, {
+    eventID: null,
+    eventName: '',
+    bannerImage: '',
+    bannerFile: null,
+    description: '',
+    rules: '',
+    reward: '',
+    maxVotes: 3,
+    startAt: '',
+    endAt: '',
+    voteStartAt: '',
+    voteEndAt: '',
+    winner: null,
+  })
+}
+
+const handleBannerChange = (event) => {
+  const [file] = event.target.files || []
+  form.bannerFile = file || null
+}
 
 const openCreateModal = () => {
   isEditing.value = false
-  Object.assign(form, { eventID: null, eventName: '', startAt: '', endAt: '', winner: null })
+  resetForm()
   showModal.value = true
 }
 
 const openEditModal = (ev) => {
   isEditing.value = true
-  form.eventID = ev.eventID; form.eventName = ev.eventName
-  form.startAt = ev.startAt?.substring(0, 10) || ''; form.endAt = ev.endAt?.substring(0, 10) || ''
-  form.winner = ev.winner || null
+  Object.assign(form, {
+    eventID: ev.eventID,
+    eventName: ev.eventName || '',
+    bannerImage: ev.bannerImage || '',
+    bannerFile: null,
+    description: ev.description || '',
+    rules: ev.rules || '',
+    reward: ev.reward || '',
+    maxVotes: ev.maxVotes || 3,
+    startAt: toInputDateTime(ev.startAt),
+    endAt: toInputDateTime(ev.endAt),
+    voteStartAt: toInputDateTime(ev.voteStartAt),
+    voteEndAt: toInputDateTime(ev.voteEndAt),
+    winner: ev.winner || null,
+  })
   showModal.value = true
 }
 
 const saveEvent = async () => {
-  if (!form.eventName.trim()) return alert('Event name is required!')
+  if (!form.eventName.trim()) { 
+    toast.warn('Event name is required.')
+    return 
+  }
+  if (!form.startAt || !form.endAt || !form.voteStartAt || !form.voteEndAt) {
+    toast.error('Please fill in all four event timestamps.')
+    return
+  }
+
   saving.value = true
   try {
-    const payload = { eventName: form.eventName, startAt: form.startAt || null, endAt: form.endAt || null, winner: form.winner || null }
-    if (isEditing.value) {
-      const res = await api.put(`/api/admin/events/${form.eventID}`, payload)
-      const idx = events.value.findIndex(e => e.eventID === form.eventID)
-      if (idx !== -1) events.value[idx] = res.data
-    } else {
-      const res = await api.post('/api/admin/events', payload)
-      events.value.unshift(res.data)
-    }
-    showModal.value = false
-  } catch (e) {
-    alert(e.response?.data?.message || 'Save failed')
-  } finally { saving.value = false }
-}
+    let finalBannerUrl = form.bannerImage
 
+    if (form.bannerFile) {
+      try {
+        finalBannerUrl = await uploadMedia(form.bannerFile, 'events')
+      } catch (err) {
+        toast.error('Failed to upload event banner.')
+        saving.value = false
+        return
+      }
+    }
+
+    const eventData = {
+      eventID: form.eventID,
+      eventName: form.eventName,
+      bannerImage: finalBannerUrl,
+      description: form.description || '',
+      rules: form.rules || '',
+      reward: form.reward || '',
+      maxVotes: form.maxVotes,
+      startAt: form.startAt,
+      endAt: form.endAt,
+      voteStartAt: form.voteStartAt,
+      voteEndAt: form.voteEndAt,
+      winner: form.winner
+    };
+
+    if (isEditing.value) {
+      await api.put(`/api/admin/events/${form.eventID}`, eventData)
+      toast.success('Event updated successfully.')
+    } else {
+      await api.post('/api/admin/events', eventData)
+      toast.success('Event created successfully.')
+    }
+
+    await loadEvents()
+    showModal.value = false
+  } catch (e) { 
+    console.error('Failed to save event', e)
+    toast.error(e.response?.data?.message || 'Failed to save event.')
+  } finally { 
+    saving.value = false 
+  }
+}
 const deleteEvent = async (id) => {
   if (!confirm('Delete this event permanently?')) return
   try {
     await api.delete(`/api/admin/events/${id}`)
     events.value = events.value.filter(e => e.eventID !== id)
-  } catch (e) { alert(e.response?.data?.message || 'Delete failed') }
+    toast.success('Event deleted.')
+  } catch (e) { toast.error(e.response?.data?.message || 'Delete failed') }
 }
 </script>
 

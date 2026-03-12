@@ -155,6 +155,13 @@ const formatNumber = (num) => {
   if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
   return num;
 }
+const handleSaveToPlan = () => {
+  if (!authStore.isAuthenticated) {
+    return toast.warn("Vui lòng đăng nhập để sử dụng tính năng này!");
+  }
+  // Gửi sự kiện 'save-to-plan' kèm thông tin bài viết này lên cho trang Home hoặc trang Profile xử lý
+  emit('save-to-plan', props.post);
+};
 </script>
 
 <style scoped lang="scss" src="./RecipeCard.scss"></style>
