@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-
+import { toast } from '@/composables/useToast'
 // --- 1. IMPORT LAYOUTS ---
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import LandingLayout from '@/layouts/LandingLayout.vue'
@@ -20,7 +20,7 @@ import ComparePage from '@/pages/compare/ComparePage.vue'
 // 🚀 NEW PREMIUM FEATURES RECENTLY ADDED
 import Leaderboard from '@/pages/Leaderboard.vue'
 // Note: If the two files below haven't been created yet, create empty placeholder files in the pages folder to avoid import errors
-import Suggestions from '@/pages/suggestions/SuggestionsPage.vue' 
+import Suggestions from '@/pages/suggestions/SuggestionsPage.vue'
 import MealPlan from '@/pages/mealplan/MealPlanPage.vue'
 
 // --- ADMIN PAGES ---
@@ -45,27 +45,27 @@ const routes = [
       {
         path: '',
         name: 'IntroPage',
-        component: () => import('@/pages/intro/IntroPage.vue') 
+        component: () => import('@/pages/intro/IntroPage.vue')
       }
     ]
   },
 
   // 2. MAIN APP (Default Layout) - CORE USER FEATURES
   {
-    path: '/', 
+    path: '/',
     component: DefaultLayout,
     children: [
       { path: 'home', name: 'Home', component: HomeView },
       { path: 'search', name: 'Search', component: SearchPage },
       { path: 'post/:id', name: 'PostDetail', component: PostDetail, props: true },
-      
+
       // ✅ Events Routes
       { path: 'events', name: 'Events', component: EventList },
       { path: 'events/:id', name: 'EventDetail', component: EventDetail },
-      
-      { 
-        path: 'create-post', 
-        name: 'CreatePost', 
+
+      {
+        path: 'create-post',
+        name: 'CreatePost',
         component: CreatePost,
         meta: { requiresAuth: true }
       },
@@ -94,24 +94,24 @@ const routes = [
         component: ComparePage
       },
 
-// ✨✨✨ NEW PREMIUM ROUTES (SYNCED WITH SIDEBAR) ✨✨✨
+      // ✨✨✨ NEW PREMIUM ROUTES (SYNCED WITH SIDEBAR) ✨✨✨
       {
         path: 'leaderboard',
         name: 'Leaderboard',
         component: Leaderboard,
-        meta: { isDark: true } 
+        meta: { requiresPremium: true, isDark: true }
       },
       {
         path: 'suggestions',
         name: 'Suggestions',
         component: Suggestions,
-        meta: { isDark: true } 
+        meta: { requiresPremium: true, isDark: true }
       },
       {
         path: 'meal-plan',
         name: 'MealPlan',
         component: MealPlan,
-        meta: { isDark: true } 
+        meta: { requiresPremium: true, isDark: true }
       }
     ]
   },
@@ -123,16 +123,16 @@ const routes = [
     redirect: '/admin/dashboard',
     meta: { requiresAdmin: true },
     children: [
-      { path: 'dashboard',     name: 'AdminDashboard',      component: AdminDashboard },
-      { path: 'statistics',    name: 'AdminStatistics',     component: Statistics },
-      { path: 'posts',         name: 'AdminPosts',          component: PostManagement },
-      { path: 'categories',    name: 'AdminCategories',     component: CategoryManagement },
-      { path: 'users',         name: 'AdminUsers',          component: UserManagement },
-      { path: 'events',        name: 'AdminEvents',         component: EventManagement },
-      { path: 'comments',      name: 'AdminComments',       component: CommentManagement },
-      { path: 'reports',       name: 'AdminReports',        component: ReportManagement },
-      { path: 'achievements',  name: 'AdminAchievements',   component: AchievementManagement },
-      { path: 'notifications', name: 'AdminNotifications',  component: NotificationManagement }
+      { path: 'dashboard', name: 'AdminDashboard', component: AdminDashboard },
+      { path: 'statistics', name: 'AdminStatistics', component: Statistics },
+      { path: 'posts', name: 'AdminPosts', component: PostManagement },
+      { path: 'categories', name: 'AdminCategories', component: CategoryManagement },
+      { path: 'users', name: 'AdminUsers', component: UserManagement },
+      { path: 'events', name: 'AdminEvents', component: EventManagement },
+      { path: 'comments', name: 'AdminComments', component: CommentManagement },
+      { path: 'reports', name: 'AdminReports', component: ReportManagement },
+      { path: 'achievements', name: 'AdminAchievements', component: AchievementManagement },
+      { path: 'notifications', name: 'AdminNotifications', component: NotificationManagement }
     ]
   },
 
@@ -174,17 +174,20 @@ const router = createRouter({
 // ─── NAVIGATION GUARDS ────────────────────────────────────────────────────────
 router.beforeEach((to, from, next) => {
   const userStr = localStorage.getItem('user')
-  const user    = userStr ? JSON.parse(userStr) : null
+  const user = userStr ? JSON.parse(userStr) : null
   const isLoggedIn = !!user?.token
-  const isAdmin    = isLoggedIn && (user?.isAdmin === true || user?.isAdmin === 1 || user?.role === 'admin')
+  const isPremium = isLoggedIn && (user?.isPremium === true || user?.isPremium === 1 || user?.role === 'premium')
+  const isAdmin = isLoggedIn && (user?.isAdmin === true || user?.isAdmin === 1 || user?.role === 'admin')
 
   // 1. Admin-only routes: must be logged in AND be an admin
   if (to.matched.some(r => r.meta?.requiresAdmin)) {
     if (!isLoggedIn) {
+      toast.error('Vui lòng đăng nhập để truy cập trang này')
       // Not logged in → go to home (landing), show a flash in query
       return next({ path: '/', query: { redirect: to.fullPath } })
     }
     if (!isAdmin) {
+      toast.error('Bạn không có quyền truy cập trang này')
       // Logged in but not admin → redirect to main home
       return next({ path: '/home' })
     }
@@ -193,7 +196,22 @@ router.beforeEach((to, from, next) => {
   // 2. Auth-required routes
   if (to.matched.some(r => r.meta?.requiresAuth)) {
     if (!isLoggedIn) {
+      toast.error('Vui lòng đăng nhập để truy cập trang này')
       return next({ path: '/home', query: { login: '1' } })
+    }
+  }
+
+  // 3. Premium-only routes
+  if (to.matched.some(r => r.meta?.requiresPremium)) {
+
+    if (!isLoggedIn) {
+      toast.warn('Vui lòng đăng nhập để sử dụng tính năng Premium')
+      return next({ path: '/home', query: { login: '1' } })
+    }
+
+    if (!isPremium) {
+      toast.warn('Tính năng này chỉ dành cho Premium users')
+      return next({ path: '/home' })
     }
   }
 
