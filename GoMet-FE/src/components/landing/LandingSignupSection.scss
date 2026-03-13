@@ -155,10 +155,38 @@ $font-serif: 'Playfair Display', serif;
 .remember { color: $text-muted; cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 500; }
 
 /* Buttons */
+/* Tìm và thay thế đoạn .btn-submit cũ bằng đoạn này */
 .btn-submit { 
-  width: 100%; padding: 14px; border: none; border-radius: 12px; 
-  background: $text-dark; color: white; font-weight: 800; font-size: 1rem; 
-  cursor: pointer; transition: 0.3s; box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+  width: 100%; 
+  padding: 14px; 
+  border: none; 
+  border-radius: 12px; 
+  background: $text-dark; 
+  color: white; 
+  font-weight: 800; 
+  font-size: 1rem; 
+  cursor: pointer; 
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+
+  &:hover:not(:disabled) { 
+    background: $primary; 
+    transform: translateY(-2px); 
+    box-shadow: 0 15px 25px rgba($primary, 0.3); 
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  &:disabled {
+    background: #D6D3D1 !important; // Màu xám đá (biến $text-muted-light của sếp)
+    color: #A8A29E;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+    opacity: 0.8;
+  }
 }
 .btn-submit:hover { background: $primary; transform: translateY(-2px); box-shadow: 0 15px 25px rgba($primary, 0.3); }
 .btn-submit:disabled { background: #A8A29E; cursor: not-allowed; transform: none; box-shadow: none;}
@@ -294,4 +322,67 @@ $font-serif: 'Playfair Display', serif;
 
 @keyframes checkStroke {
   to { stroke-dashoffset: 0; }
+}
+.input-group-checkbox {
+  margin: 15px 0;
+  
+  .checkbox-container {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 12px;
+    color: #57534E;
+    user-select: none;
+
+    input {
+      position: absolute;
+      opacity: 0;
+      cursor: pointer;
+      height: 0; width: 0;
+    }
+
+    .checkmark {
+      flex-shrink: 0;
+      height: 18px;
+      width: 18px;
+      background-color: rgba(255, 255, 255, 0.5);
+      border: 1.5px solid #D6D3D1;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+      position: relative;
+
+      &::after {
+        content: "";
+        position: absolute;
+        display: none;
+        left: 5px; top: 1px;
+        width: 5px; height: 10px;
+        border: solid white;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+      }
+    }
+
+    &:hover input ~ .checkmark {
+      border-color: $primary;
+      background-color: rgba($primary, 0.05);
+    }
+
+    input:checked ~ .checkmark {
+      background-color: $primary;
+      border-color: $primary;
+      &::after { display: block; }
+    }
+
+    .label-text {
+      line-height: 1.5;
+      a {
+        color: $primary;
+        font-weight: 700;
+        text-decoration: none;
+        &:hover { text-decoration: underline; }
+      }
+    }
+  }
 }

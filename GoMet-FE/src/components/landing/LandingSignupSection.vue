@@ -112,24 +112,34 @@
 
             <form @submit.prevent="handleSubmit">
               
-              <div v-if="activeTab === 'register'" class="fade-in-anim">
-                <div class="input-group">
-                  <label>Tên đăng nhập</label>
-                  <input v-model="registerForm.username" type="text" placeholder="VD: masterchef_vn" class="input-field" required />
-                </div>
-                <div class="input-group">
-                  <label>Email</label>
-                  <input v-model="registerForm.email" type="email" placeholder="name@example.com" class="input-field" required />
-                </div>
-                <div class="input-group">
-                  <label>Mật khẩu</label>
-                  <input v-model="registerForm.password" type="password" placeholder="Tối thiểu 6 ký tự" class="input-field" required />
-                </div>
-                <div class="input-group">
-                  <label>Xác nhận mật khẩu</label>
-                  <input v-model="registerForm.confirmPassword" type="password" placeholder="Nhập lại mật khẩu" class="input-field" required />
-                </div>
-              </div>
+<div v-if="activeTab === 'register'" class="fade-in-anim">
+  <div class="input-group">
+    <label>Tên đăng nhập</label>
+    <input v-model="registerForm.username" type="text" placeholder="VD: masterchef_vn" class="input-field" required />
+  </div>
+  <div class="input-group">
+    <label>Email</label>
+    <input v-model="registerForm.email" type="email" placeholder="name@example.com" class="input-field" required />
+  </div>
+  <div class="input-group">
+    <label>Mật khẩu</label>
+    <input v-model="registerForm.password" type="password" placeholder="Tối thiểu 6 ký tự" class="input-field" required />
+  </div>
+  <div class="input-group">
+    <label>Xác nhận mật khẩu</label>
+    <input v-model="registerForm.confirmPassword" type="password" placeholder="Nhập lại mật khẩu" class="input-field" required />
+  </div>
+
+<div class="input-group-checkbox">
+  <label class="checkbox-container">
+    <input type="checkbox" v-model="registerForm.agreeTerms" required>
+    <span class="checkmark"></span>
+    <span class="label-text">
+      Tôi đồng ý với <router-link to="/terms">Điều khoản</router-link> và <router-link to="/policy">Chính sách bảo mật</router-link>
+    </span>
+  </label>
+</div>
+</div>
 
               <div v-else-if="activeTab === 'login'" class="fade-in-anim">
                 <div class="input-group">
@@ -182,11 +192,14 @@
                 </div>
               </div>
 
-              <button type="submit" class="btn-submit" :disabled="isLoading" v-if="activeTab !== 'forgot-password'">
-                <span v-if="isLoading" class="spinner-border" role="status" aria-hidden="true"></span>
-                <span v-else>{{ activeTab === 'login' ? 'Đăng Nhập Ngay' : 'Đăng Ký Miễn Phí' }}</span>
-              </button>
-
+<button 
+  type="submit" 
+  class="btn-submit" 
+  :disabled="isLoading || (activeTab === 'register' && !registerForm.agreeTerms)"
+>
+  <span v-if="isLoading" class="spinner-border" role="status" aria-hidden="true"></span>
+  <span v-else>{{ activeTab === 'login' ? 'Đăng Nhập Ngay' : 'Đăng Ký Miễn Phí' }}</span>
+</button>
               <div class="divider" v-if="activeTab !== 'forgot-password'"><span>Hoặc tiếp tục với</span></div>
               
               <div class="social-buttons custom-google-wrapper" v-if="activeTab !== 'forgot-password'">
@@ -244,7 +257,13 @@ const isLoading = ref(false)
 const signupSection = ref(null)
 
 const loginForm = reactive({ email: '', password: '' })
-const registerForm = reactive({ username: '', email: '', password: '', confirmPassword: '' })
+const registerForm = reactive({ 
+  username: '', 
+  email: '', 
+  password: '', 
+  confirmPassword: '',
+  agreeTerms: false // 👈 Thêm dòng này sếp nhé
+})
 
 // State cho Quên mật khẩu
 const forgotIdentifier = ref('')
@@ -316,6 +335,10 @@ const handleSubmit = async () => {
 
   // Xử lý Đăng Ký
   } else if (activeTab.value === 'register') {
+    if (!registerForm.agreeTerms) {
+    toast.warn('Vui lòng đồng ý với điều khoản dịch vụ!')
+    return
+  }
     if (registerForm.password !== registerForm.confirmPassword) {
       toast.warn('Mật khẩu xác nhận không khớp!')
       return

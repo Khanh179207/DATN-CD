@@ -35,7 +35,6 @@ import NotificationManagement from '@/pages/admin/NotificationManagement.vue'
 import AchievementManagement from '@/pages/admin/AchievementManagement.vue'
 import Statistics from '@/pages/admin/Statistics.vue'
 
-
 const routes = [
   // 1. LANDING PAGE
   {
@@ -57,11 +56,26 @@ const routes = [
     children: [
       { path: 'home', name: 'Home', component: HomeView },
       { path: 'search', name: 'Search', component: SearchPage },
-      { path: 'post/:id', name: 'PostDetail', component: PostDetail, props: true },
+      
+      // 🔒 KHÓA: Xem chi tiết bài viết phải đăng nhập
+      { 
+        path: 'post/:id', 
+        name: 'PostDetail', 
+        component: PostDetail, 
+        props: true,
+        meta: { requiresAuth: true } 
+      },
 
       // ✅ Events Routes
-      { path: 'events', name: 'Events', component: EventList },
-      { path: 'events/:id', name: 'EventDetail', component: EventDetail },
+      { path: 'events', name: 'Events', component: EventList }, // Danh sách sự kiện thì cho xem thoải mái
+      
+      // 🔒 KHÓA: Xem chi tiết sự kiện phải đăng nhập
+      { 
+        path: 'events/:id', 
+        name: 'EventDetail', 
+        component: EventDetail,
+        meta: { requiresAuth: true } 
+      },
 
       {
         path: 'create-post',
@@ -74,17 +88,20 @@ const routes = [
       {
         path: 'profile',
         name: 'Profile',
-        component: ProfilePage
+        component: ProfilePage,
+        meta: { requiresAuth: true } // Em khóa luôn trang cá nhân lại cho hợp logic
       },
       {
         path: 'profile/:id',
         name: 'ProfileById',
-        component: ProfilePage
+        component: ProfilePage,
+        meta: { requiresAuth: true } // Khóa luôn xem trang cá nhân người khác
       },
       {
         path: 'storage',
         name: 'Storage',
-        component: () => import('@/pages/storage/StoragePage.vue') // Lazy load for lighter bundle
+        component: () => import('@/pages/storage/StoragePage.vue'),
+        meta: { requiresAuth: true } // Khóa luôn Kho lưu trữ
       },
 
       // ✅ Compare Routes
@@ -183,33 +200,31 @@ router.beforeEach((to, from, next) => {
   if (to.matched.some(r => r.meta?.requiresAdmin)) {
     if (!isLoggedIn) {
       toast.error('Vui lòng đăng nhập để truy cập trang này')
-      // Not logged in → go to home (landing), show a flash in query
       return next({ path: '/', query: { redirect: to.fullPath } })
     }
     if (!isAdmin) {
       toast.error('Bạn không có quyền truy cập trang này')
-      // Logged in but not admin → redirect to main home
       return next({ path: '/home' })
     }
   }
 
-  // 2. Auth-required routes
+  // 2. Auth-required routes (Khóa các trang yêu cầu đăng nhập)
   if (to.matched.some(r => r.meta?.requiresAuth)) {
     if (!isLoggedIn) {
-      toast.error('Vui lòng đăng nhập để truy cập trang này')
-      return next({ path: '/home', query: { login: '1' } })
+      toast.error('Vui lòng đăng nhập để xem chi tiết')
+      // Đá về trang chủ, gắn kèm biến login=1 để kích hoạt AuthModal (nếu sếp có setup)
+      return next({ path: '/home', query: { login: '1' } }) 
     }
   }
 
   // 3. Premium-only routes
   if (to.matched.some(r => r.meta?.requiresPremium)) {
-
     if (!isLoggedIn) {
       toast.warn('Vui lòng đăng nhập để sử dụng tính năng Premium')
       return next({ path: '/home', query: { login: '1' } })
     }
 
-    if (!isPremium && !isAdmin) { // Cho phép admin truy cập tất cả, kể cả premium features
+    if (!isPremium && !isAdmin) { 
       toast.warn('Tính năng này chỉ dành cho Premium users')
       return next({ path: '/home' })
     }

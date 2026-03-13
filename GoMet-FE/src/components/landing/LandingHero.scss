@@ -1,0 +1,191 @@
+// ================= VARIABLES =================
+$primary: #EA580C;
+$primary-light: #FDBA74;
+$text-dark: #1C1917; 
+$text-muted: #57534E;
+$bg-cream: #FFF7ED;
+
+.hero-section {
+  position: relative;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: $bg-cream;
+  font-family: 'Quicksand', sans-serif;
+}
+
+/* --- MÀN SƯƠNG ĐEN --- */
+.cinematic-lens {
+  position: absolute; inset: 0; background-color: #050505; z-index: 9999; pointer-events: none;
+}
+
+/* --- MAGIC DUST --- */
+.magic-dust-container { position: absolute; inset: 0; z-index: 3; pointer-events: none; overflow: hidden; }
+.magic-dust { position: absolute; width: 4px; height: 4px; background: white; border-radius: 50%; box-shadow: 0 0 8px 2px rgba($primary-light, 0.8); top: 50%; left: 50%; }
+
+/* --- CAMERA RIG & MARQUEE (CSS KHÔNG ĐIỂM MÙ) --- */
+.marquee-camera-rig {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  transform-style: preserve-3d; 
+  perspective: 1500px;
+  z-index: 0;
+}
+
+.marquee-container {
+  position: absolute;
+  width: 180vw; // Mở rộng kịch trần để bao phủ màn hình lớn
+  height: 150vh; 
+  display: flex; flex-direction: column; justify-content: center; gap: 30px;
+  opacity: 0.55; 
+}
+
+.marquee-row { 
+  display: flex; overflow: hidden; width: 100%; 
+}
+
+.marquee-track { 
+  display: flex; 
+  gap: 30px; 
+  width: max-content; 
+  padding-right: 30px; // Gap bù trừ cho vòng lặp chuẩn
+  will-change: transform;
+}
+
+.marquee-track img {
+  width: 320px; height: 210px; object-fit: cover;
+  border-radius: 24px;
+  box-shadow: 0 30px 60px rgba(0,0,0,0.3);
+  filter: grayscale(30%) contrast(1.2) brightness(0.9); 
+  flex-shrink: 0; // Giữ nguyên kích thước ảnh
+}
+
+/* Bí quyết lặp vô tận mượt mà: 
+  Vì có 3 set ảnh y hệt nhau, ta dịch chuyển đúng 1/3 quãng đường (33.33333%).
+  Khi chạy hết 1/3, nó nhảy về số 0 nhưng mắt thường nhìn sẽ thấy Y CHANG nhau.
+*/
+.scroll-left .marquee-track { animation: scrollLeft 50s linear infinite; }
+.scroll-right .marquee-track { animation: scrollRight 50s linear infinite; }
+
+@keyframes scrollLeft { 
+  from { transform: translateX(0); } 
+  to { transform: translateX(calc(-33.33333%)); } 
+}
+@keyframes scrollRight { 
+  from { transform: translateX(calc(-33.33333%)); } 
+  to { transform: translateX(0); } 
+}
+
+/* --- HERO MASK --- */
+.hero-mask {
+  position: absolute; inset: 0; z-index: 1;
+  background: radial-gradient(circle at center, rgba($bg-cream, 0.7) 0%, rgba($bg-cream, 0.95) 50%, rgba($bg-cream, 1) 100%);
+}
+
+/* --- LIGHT ORBS --- */
+.light-effects-wrapper { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
+.light-orb { position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.6; mix-blend-mode: multiply; }
+.orb-1 { width: 600px; height: 600px; background: rgba($primary, 0.4); top: -10%; left: 0%; }
+.orb-2 { width: 700px; height: 700px; background: rgba(#F59E0B, 0.3); bottom: -10%; right: -5%; }
+.orb-center { width: 800px; height: 800px; background: radial-gradient(circle, rgba($primary-light, 0.3) 0%, transparent 70%); top: 50%; left: 50%; transform: translate(-50%, -50%); }
+
+/* --- CONTENT --- */
+.hero-content {
+  position: relative; z-index: 10; text-align: center; max-width: 1000px; padding: 0 20px;
+}
+
+/* GSAP Utils */
+.reveal-wrapper { overflow: hidden; display: flex; justify-content: center; padding: 15px; margin: -15px; }
+.perspective-box { perspective: 1000px; } 
+.block { display: block; will-change: transform, opacity; }
+
+/* Badge */
+.badge-pill {
+  position: relative; display: inline-flex; align-items: center;
+  background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(20px);
+  color: $primary; font-weight: 800; padding: 12px 32px; border-radius: 50px;
+  margin-bottom: 20px; box-shadow: 0 15px 35px rgba($primary, 0.2); font-size: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.9); overflow: hidden; letter-spacing: 0.5px;
+}
+
+.badge-glow {
+  position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.9), transparent);
+  animation: badgeSweep 3s infinite ease-in-out;
+}
+@keyframes badgeSweep { 0% { left: -100%; } 20% { left: 200%; } 100% { left: 200%; } }
+
+/* Title */
+.hero-title {
+  font-family: 'Playfair Display', serif; font-size: 6.5rem; font-weight: 900;
+  line-height: 1.05; color: $text-dark; margin-bottom: 30px; letter-spacing: -2.5px;
+}
+
+.text-shadow-glow { text-shadow: 0 20px 60px rgba(255, 255, 255, 1), 0 5px 20px rgba($primary, 0.15); }
+
+.text-gradient {
+  background: linear-gradient(100deg, $primary 20%, #F59E0B 40%, #FCD34D 60%, $primary 80%);
+  background-size: 200% auto; color: $primary; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  animation: shineText 5s linear infinite; display: inline-block; padding-bottom: 15px; 
+}
+@keyframes shineText { to { background-position: 200% center; } }
+
+/* Desc */
+.hero-desc { font-size: 1.4rem; color: $text-muted; margin: 0 auto 55px; max-width: 750px; line-height: 1.8; font-weight: 500; }
+.glow-text { color: $primary; font-weight: 900; text-shadow: 0 0 30px rgba($primary, 0.5); font-size: 1.55rem; letter-spacing: 1px; }
+
+/* CTA Group */
+.cta-group { display: flex; flex-direction: column; align-items: center; gap: 40px; position: relative; z-index: 20;}
+
+.btn-primary-xl {
+  background: $text-dark; color: white; text-decoration: none; font-weight: 800; font-size: 1.3rem;
+  padding: 22px 75px; border-radius: 60px; display: inline-flex; align-items: center; gap: 15px;
+  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); 
+  box-shadow: 0 20px 50px rgba(0,0,0,0.25), 0 0 0 6px rgba($text-dark, 0.05);
+  position: relative; overflow: hidden;
+}
+
+.btn-primary-xl::before {
+  content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); transition: 0.6s;
+}
+
+.btn-primary-xl:hover { 
+  background: $primary; 
+  transform: translateY(-8px) scale(1.05); 
+  box-shadow: 0 30px 60px rgba($primary, 0.4), 0 0 0 8px rgba($primary, 0.1); 
+}
+.btn-primary-xl:hover::before { left: 100%; }
+
+.arrow-icon { transition: 0.4s; display: flex; svg { width: 28px; height: 28px; } }
+.btn-primary-xl:hover .arrow-icon { transform: translateX(10px) scale(1.1); }
+
+/* Social Proof */
+.social-proof { display: flex; align-items: center; gap: 20px; }
+.avatars { display: flex; align-items: center; }
+.avatars img, .more-avt {
+  width: 52px; height: 52px; border-radius: 50%; border: 4px solid $bg-cream;
+  margin-left: -20px; object-fit: cover; box-shadow: 0 8px 20px rgba(0,0,0,0.15); transition: 0.3s;
+}
+.avatars img:hover { transform: translateY(-5px); z-index: 10; position: relative; }
+.avatars img:first-child { margin-left: 0; }
+.more-avt { background: #FED7AA; color: #9A3412; font-size: 0.9rem; font-weight: 900; display: flex; align-items: center; justify-content: center; }
+.proof-text { font-weight: 800; color: $text-muted; font-size: 1.05rem; letter-spacing: 0.5px; }
+
+/* Scroll Mouse */
+.scroll-mouse {
+  position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); z-index: 10;
+  width: 30px; height: 50px; border: 2px solid rgba($text-muted, 0.5); border-radius: 20px;
+  display: flex; justify-content: center; cursor: pointer; opacity: 0.7; transition: 0.3s;
+}
+.scroll-mouse:hover { opacity: 1; border-color: $primary; transform: translateX(-50%) translateY(-5px); }
+.wheel { width: 4px; height: 10px; background: $primary; border-radius: 2px; margin-top: 8px; animation: scrollWheel 2s infinite; }
+@keyframes scrollWheel { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(16px); } }
+
+/* --- Responsive --- */
+@media (max-width: 1200px) { .hero-title { font-size: 5.5rem; } }
+@media (max-width: 900px) { .hero-title { font-size: 4.5rem; } .hero-desc { font-size: 1.2rem; } .btn-primary-xl { padding: 18px 50px; font-size: 1.15rem; } .marquee-track img { width: 250px; height: 160px; } }
+@media (max-width: 600px) { .hero-title { font-size: 3.2rem; letter-spacing: -1px; } .hero-desc { font-size: 1.05rem; } .btn-primary-xl { padding: 16px 40px; font-size: 1.1rem; width: 100%; justify-content: center;} .marquee-track img { width: 200px; height: 130px; } .hero-mask { background: radial-gradient(circle, rgba($bg-cream, 0.9) 40%, rgba($bg-cream, 0.8) 100%); } .social-proof { flex-direction: column; gap: 10px; } }

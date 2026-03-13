@@ -116,9 +116,20 @@
                       <input v-model="regForm.confirmPassword" type="password" id="reg-confirm" required placeholder="Nhập lại mật khẩu" />
                     </div>
                   </div>
+
+                  <div class="input-group-checkbox stagger-item" style="--delay: 0.45s">
+                    <label class="checkbox-container">
+                      <input type="checkbox" v-model="regForm.agreeTerms" required>
+                      <span class="checkmark"></span>
+                      <span class="label-text">
+                        Tôi đồng ý với <router-link to="/terms" @click="$emit('close')">Điều khoản</router-link> và <router-link to="/policy" @click="$emit('close')">Chính sách bảo mật</router-link>
+                      </span>
+                    </label>
+                  </div>
+
                   <div v-if="regError" class="auth-error-msg">{{ regError }}</div>
 
-                  <button class="btn-submit-art stagger-item" :disabled="sendingOtp" style="--delay: 0.5s">
+                  <button class="btn-submit-art stagger-item" :disabled="sendingOtp || !regForm.agreeTerms" style="--delay: 0.5s">
                     <span v-if="sendingOtp" class="spinner-border" role="status" aria-hidden="true"></span>
                     <span v-else>{{ $t('auth.register_btn', 'Đăng Ký Miễn Phí') }}</span>
                   </button>
@@ -211,7 +222,6 @@ import { ref, reactive, watch, onMounted, onUnmounted, nextTick, computed } from
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useI18n } from 'vue-i18n'
-// Import đúng logo
 import logoGroup from '@/assets/images/gomet.jpg'
 import { toast } from '@/composables/useToast'
 import * as authService from '@/services/authService'
@@ -224,7 +234,6 @@ const emit = defineEmits(['close'])
 
 const isOpen = ref(false)
 const overlayRef = ref(null)
-// Gán logo vào biến để bind lên template
 const groupLogoUrl = logoGroup
 const currentView = ref(props.initialView)
 const showPassword = ref(false)
@@ -239,7 +248,15 @@ const password = ref('')
 const loginError = ref('')
 const regError = ref('')
 const otpError = ref('')
-const regForm = reactive({ name: '', email: '', password: '', confirmPassword: '' })
+
+// 🌟 ĐÃ CẬP NHẬT regForm ĐỂ THÊM agreeTerms 🌟
+const regForm = reactive({ 
+  name: '', 
+  email: '', 
+  password: '', 
+  confirmPassword: '',
+  agreeTerms: false 
+})
 
 const forgotIdentifier = ref('')
 const forgotState      = ref('idle')
@@ -289,16 +306,16 @@ const handleGoogleCallback = async (response) => {
     const data = await authService.googleLogin(idToken)
 
     authStore.user = {
-      id:        data.accountID,
+      id:         data.accountID,
       accountID: data.accountID,
-      name:      data.username,
-      username:  data.username,
-      email:     data.email,
-      avatar:    data.avatar,
-      isAdmin:   data.isAdmin,
+      name:       data.username,
+      username:   data.username,
+      email:      data.email,
+      avatar:     data.avatar,
+      isAdmin:    data.isAdmin,
       isPremium: data.isPremium,
-      token:     data.token,
-      role:      data.isAdmin ? 'admin' : 'user'
+      token:      data.token,
+      role:       data.isAdmin ? 'admin' : 'user'
     }
     localStorage.setItem('user', JSON.stringify(authStore.user))
     toast.success(t('toast.login_ok', 'Đăng nhập Google thành công!'))
@@ -313,6 +330,14 @@ const handleGoogleCallback = async (response) => {
 
 const handleRegisterRequest = async () => {
   regError.value = ''
+  
+  // 🌟 THÊM VALIDATE NÚT TICK Ở ĐÂY 🌟
+  if (!regForm.agreeTerms) {
+    regError.value = "Bạn cần đồng ý với điều khoản dịch vụ"
+    toast.warn(regError.value)
+    return
+  }
+
   if (!regForm.name || !regForm.email || !regForm.password) {
     regError.value = t('auth.error_required', 'Vui lòng điền đầy đủ thông tin')
     toast.warn(regError.value)
@@ -348,16 +373,16 @@ const handleOtpVerify = async () => {
   try {
     const data = await authService.verifyOtp(regForm.email, code)
     authStore.user = {
-      id:        data.accountID,
+      id:         data.accountID,
       accountID: data.accountID,
-      name:      data.username,
-      username:  data.username,
-      email:     data.email,
-      avatar:    data.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username)}&background=EA580C&color=fff`,
-      isAdmin:   data.isAdmin,
+      name:       data.username,
+      username:   data.username,
+      email:      data.email,
+      avatar:     data.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username)}&background=EA580C&color=fff`,
+      isAdmin:    data.isAdmin,
       isPremium: data.isPremium,
-      token:     data.token,
-      role:      data.isAdmin ? 'admin' : 'user'
+      token:      data.token,
+      role:       data.isAdmin ? 'admin' : 'user'
     }
     localStorage.setItem('user', JSON.stringify(authStore.user))
     toast.success(t('toast.register_ok', 'Đăng ký thành công!'))
