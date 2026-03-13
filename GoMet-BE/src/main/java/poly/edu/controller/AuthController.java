@@ -2,9 +2,6 @@ package poly.edu.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.gson.GsonFactory;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -25,9 +22,7 @@ import poly.edu.dto.*;
 import poly.edu.entity.Account;
 import poly.edu.entity.MagicLinkToken;
 import poly.edu.service.*;
-
-import java.time.Instant;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -83,6 +78,78 @@ public class AuthController {
                 googleClientId.length() > 12 ? googleClientId.substring(googleClientId.length() - 4) : "");
         }
     }
+
+    // VŨ KHÍ MỚI: Inject GoogleAuthService
+    private final GoogleAuthService    googleAuthService;
+
+    // ─── GOOGLE LOGIN & REGISTER ──────────────────────────────────────────────
+    @PostMapping("/google")
+    public ResponseEntity<?> googleLogin(@RequestBody Map<String, String> request) {
+        try {
+            // FIX LỖI: Đổi "idToken" thành "token" để khớp với data từ Frontend gửi xuống
+            String idTokenString = request.get("token");
+
+            if (idTokenString == null || idTokenString.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of("message", "ID Token is missing"));
+            }
+
+            // 1. Xác thực token với nhà Google
+            GoogleIdToken.Payload payload = googleAuthService.verifyToken(idTokenString);
+
+            // 2. Lấy thông tin
+            String email = payload.getEmail();
+            String name = (String) payload.get("name");
+            String avatarUrl = (String) payload.get("picture");
+
+            Optional<Account> opt = accountDAO.findByEmail(email);
+            Account acc;
+
+            if (opt.isPresent()) {
+                // TÌNH HUỐNG 1: ĐÃ CÓ TÀI KHOẢN -> ĐĂNG NHẬP
+                acc = opt.get();
+                if (acc.getIsActive() == 0) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body(Map.of("message", "ACCOUNT_BANNED"));
+                }
+            } else {
+                // TÌNH HUỐNG 2: CHƯA CÓ TÀI KHOẢN -> TỰ ĐỘNG ĐĂNG KÝ
+
+                // Xử lý trùng lặp Username (nếu tên từ Google bị trùng với user khác)
+                String finalUsername = name.replaceAll("\\s+", ""); // Xóa khoảng trắng
+                if (accountDAO.findByUsername(finalUsername).isPresent()) {
+                    finalUsername = finalUsername + "_" + new Random().nextInt(10000);
+                }
+
+                // Mã hóa một chuỗi ngẫu nhiên làm mật khẩu để bảo vệ DB
+                String randomPassword = passwordEncoder.encode(UUID.randomUUID().toString());
+
+                acc = Account.builder()
+                        .username(finalUsername)
+                        .email(email)
+                        .password(randomPassword)
+                        .avatar(avatarUrl)
+                        .point(0)
+                        .isAdmin(0)
+                        .isPremium(0)
+                        .isActive(1)
+                        .createdAt(LocalDateTime.now()) // ĐÃ SỬA THÀNH LocalDateTime.now()
+                        .build();
+            }
+
+            // 3. Tạo Token phiên đăng nhập (Giống hệt luồng Login bình thường của sếp)
+            String newToken = UUID.randomUUID().toString();
+            acc.setToken(newToken);
+            accountDAO.save(acc);
+
+            // 4. Trả về Frontend thông qua buildResponse chuẩn form
+            return ResponseEntity.ok(buildResponse(acc));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "Google authentication failed: " + e.getMessage()));
+        }
+    }
+
 
     // ─── LOGIN ────────────────────────────────────────────────────────────────
     /**
@@ -466,7 +533,7 @@ public class AuthController {
                 .isAdmin(0)
                 .isPremium(0)
                 .isActive(1)
-                .createdAt(LocalDate.now())
+                .createdAt(LocalDateTime.now()) // ĐÃ SỬA THÀNH LocalDateTime.now()
                 .build();
         accountDAO.save(acc);
         otpStore.remove(req.getEmail());
@@ -503,64 +570,6 @@ public class AuthController {
         return ResponseEntity.ok(authService.buildResponse(opt.get(), null, null));
     }
 
-    // ─── GOOGLE SIGN-IN ───────────────────────────────────────────────────────
-    @PostMapping("/google")
-    public ResponseEntity<?> googleLogin(@RequestBody Map<String, String> body,
-                                          HttpServletRequest httpReq) {
-        String idTokenString = body.get("idToken");
-        if (idTokenString == null || idTokenString.isBlank())
-            return ResponseEntity.badRequest().body(err("idToken is required"));
-        try {
-            GoogleIdToken.Payload payload = verifyGoogleToken(idTokenString);
-            if (payload == null)
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(err("Invalid Google token"));
-
-            String email  = payload.getEmail();
-            String name   = (String) payload.get("name");
-            String avatar = (String) payload.get("picture");
-            if (name == null || name.isBlank()) name = email.split("@")[0];
-
-            Optional<Account> existing = accountDAO.findByEmail(email);
-            Account acc;
-            if (existing.isPresent()) {
-                acc = existing.get();
-                if (!acc.isAccountActive())
-                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(err("ACCOUNT_BANNED"));
-                if ((acc.getAvatar() == null || acc.getAvatar().isBlank()) && avatar != null)
-                    acc.setAvatar(avatar);
-            } else {
-                acc = Account.builder()
-                        .username(generateUniqueUsername(name))
-                        .email(email)
-                        .password(passwordEncoder.encode(UUID.randomUUID().toString()))
-                        .avatar(avatar != null ? avatar : "")
-                        .token("")
-                        .point(0).isAdmin(0).isPremium(0).isActive(1)
-                        .createdAt(LocalDate.now())
-                        .build();
-                accountDAO.save(acc);
-            }
-
-            String ip        = RateLimitService.resolveIp(httpReq);
-            String userAgent = httpReq.getHeader("User-Agent");
-            TokenService.TokenPair pair = tokenService.issueTokenPair(
-                    acc, body.get("deviceId"), ip, userAgent);
-
-            acc.setToken(UUID.randomUUID().toString()); // refresh legacy token
-            acc.setLastLoginAt(Instant.now());
-            acc.setLastLoginIp(ip);
-            accountDAO.save(acc);
-
-            auditLogService.log(acc.getAccountID(), AuditLogService.LOGIN_SUCCESS, httpReq,
-                    Map.of("method", "GOOGLE"));
-
-            return ResponseEntity.ok(authService.buildResponse(acc, pair.accessToken(), pair.refreshToken()));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(err("Google authentication failed: " + e.getMessage()));
-        }
-    }
-
     // ─── HELPERS ─────────────────────────────────────────────────────────────
     /** Extract the authenticated accountId from the Spring Security context. */
     private Integer resolveAccountId() {
@@ -569,26 +578,6 @@ public class AuthController {
         Object principal = auth.getPrincipal();
         if (principal instanceof Integer) return (Integer) principal;
         return null;
-    }
-
-    private GoogleIdToken.Payload verifyGoogleToken(String idTokenString) throws Exception {
-        GoogleIdTokenVerifier.Builder builder = new GoogleIdTokenVerifier.Builder(
-                new NetHttpTransport(), GsonFactory.getDefaultInstance());
-        if (googleClientId != null && !googleClientId.isBlank())
-            builder.setAudience(Collections.singletonList(googleClientId));
-        GoogleIdToken idToken = builder.build().verify(idTokenString);
-        return idToken != null ? idToken.getPayload() : null;
-    }
-
-    private String generateUniqueUsername(String base) {
-        String clean = base.replaceAll("[^a-zA-Z0-9_]", "_").toLowerCase();
-        if (clean.length() > 20) clean = clean.substring(0, 20);
-        String candidate = clean;
-        int counter = 1;
-        while (accountDAO.findByUsername(candidate).isPresent()) {
-            candidate = clean + counter++;
-        }
-        return candidate;
     }
 
     private Map<String, Object> authPayload(AuthResponseDTO auth) {

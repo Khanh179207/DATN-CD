@@ -8,6 +8,7 @@ import poly.edu.entity.Account;
 import poly.edu.service.AccountService;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -62,7 +63,7 @@ public class AccountServiceImpl implements AccountService {
             if (dto.getRole() != null) {
                 acc.setIsAdmin("ADMIN".equalsIgnoreCase(dto.getRole()) ? 1 : 0);
             }
-            acc.setUpdatedAt(LocalDate.now());
+            acc.setUpdatedAt(LocalDateTime.now());
         } else {
             // CREATE: build from scratch
             acc = Account.builder()
@@ -75,7 +76,7 @@ public class AccountServiceImpl implements AccountService {
                     .isAdmin(dto.getIsAdmin()    != null ? dto.getIsAdmin()   : 0)
                     .point(0)
                     .token("NONE")
-                    .createdAt(LocalDate.now())
+                    .createdAt(LocalDateTime.now())
                     .build();
         }
         return toDTO(accountDAO.save(acc));
@@ -85,7 +86,7 @@ public class AccountServiceImpl implements AccountService {
     public void ban(Integer id) {
         Account acc = accountDAO.findById(id).orElseThrow();
         acc.setIsActive(0);
-        acc.setUpdatedAt(LocalDate.now());
+        acc.setUpdatedAt(LocalDateTime.now());
         accountDAO.save(acc);
     }
 
@@ -93,7 +94,7 @@ public class AccountServiceImpl implements AccountService {
     public void unban(Integer id) {
         Account acc = accountDAO.findById(id).orElseThrow();
         acc.setIsActive(1);
-        acc.setUpdatedAt(LocalDate.now());
+        acc.setUpdatedAt(LocalDateTime.now());
         accountDAO.save(acc);
     }
 
@@ -101,7 +102,7 @@ public class AccountServiceImpl implements AccountService {
     public void delete(Integer id) {
         Account acc = accountDAO.findById(id).orElseThrow();
         acc.setIsActive(0);
-        acc.setDeletedAt(LocalDate.now());
+        acc.setDeletedAt(LocalDateTime.now());
         accountDAO.save(acc);
     }
 

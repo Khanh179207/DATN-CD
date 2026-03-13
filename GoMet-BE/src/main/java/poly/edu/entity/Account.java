@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -74,10 +75,10 @@ public class Account {
     private Integer isActive;
 
     @Column(nullable = false)
-    private LocalDate createdAt;
+    private LocalDateTime createdAt;
 
-    private LocalDate updatedAt;
-    private LocalDate deletedAt;
+    private LocalDateTime updatedAt;
+    private LocalDateTime deletedAt;
 
     // ─── Security fields (Phase 0) ────────────────────────────────────────────
 

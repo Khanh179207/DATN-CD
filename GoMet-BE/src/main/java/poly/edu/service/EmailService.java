@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import jakarta.mail.internet.MimeMessage;
@@ -36,6 +37,7 @@ public class EmailService {
     /**
      * Send a beautifully styled HTML email containing the 6-digit OTP code.
      */
+    @Async
     public void sendOtpEmail(String toEmail, String toName, String otp) {
         try {
             MimeMessage msg = mailSender.createMimeMessage();
@@ -149,6 +151,7 @@ public class EmailService {
      * Send a password-reset link email to the user.
      * The rawToken is embedded in the link — it is NEVER stored in the database.
      */
+    @Async
     public void sendResetPasswordEmail(String toEmail, String toName, String rawToken) {
         try {
             MimeMessage msg = mailSender.createMimeMessage();
