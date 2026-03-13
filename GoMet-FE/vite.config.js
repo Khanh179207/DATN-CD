@@ -27,8 +27,9 @@ export default defineConfig({
     port: 5173,
 
     // FIX lỗi Google OAuth popup
+// FIX lỗi Google OAuth popup
     headers: {
-      'Cross-Origin-Opener-Policy': 'unsafe-none',
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups', // <--- Sửa dòng này
       'Cross-Origin-Embedder-Policy': 'unsafe-none',
     },
 
