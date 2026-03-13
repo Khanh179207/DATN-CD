@@ -4,7 +4,8 @@
       <div class="loading-spinner"></div>
     </div>
     <template v-else>
-      <RecipeGuide :post="post" />
+      <RecipeHero :post="post" />
+      <RecipeInformation :post="post" />
       <RecipeInteraction :post="post" />
       <RelatedSuggestions :items="relatedPosts" @click-post="goToDetail" />
     </template>
@@ -14,7 +15,11 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import RecipeGuide from '@/components/post-detail/RecipeGuide.vue'
+
+// 1. Nhớ import 2 file mới tách
+import RecipeHero from '@/components/post-detail/RecipeHero.vue'
+import RecipeInformation from '@/components/post-detail/RecipeInformation.vue'
+
 import RecipeInteraction from '@/components/post-detail/RecipeInteraction.vue'
 import RelatedSuggestions from '@/components/post-detail/RelatedSuggestions.vue'
 import { getPostById, getRelatedPosts, normalizePost } from '@/services/postService'
@@ -82,8 +87,46 @@ const goToDetail = (id) => {
 </script>
 
 <style scoped>
-.post-page-container { background-color: #F8FAFC; min-height: 100vh; font-family: 'Mulish', sans-serif; }
-.sticky-toolbar { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); padding: 10px 0; border-bottom: 1px solid #eee; }
-.toolbar-inner { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
-.btn-back-vip { border: none; background: none; font-weight: 700; cursor: pointer; font-size: 1rem; color: #333; }
+/* Thêm reset box-sizing cho chắc chắn */
+.post-page-container *,
+.post-page-container *::before,
+.post-page-container *::after {
+  box-sizing: border-box;
+}
+
+.post-page-container { 
+  background-color: #F8FAFC; 
+  min-height: 100vh; 
+  font-family: 'Mulish', sans-serif; 
+  
+  /* 2 Dòng quan trọng nhất để trị dứt điểm thanh cuộn ngang toàn trang */
+  width: 100%;
+  max-width: 100vw; 
+  overflow-x: hidden; 
+}
+
+.sticky-toolbar { 
+  position: sticky; 
+  top: 0; 
+  z-index: 100; 
+  background: rgba(255,255,255,0.9); 
+  backdrop-filter: blur(10px); 
+  padding: 10px 0; 
+  border-bottom: 1px solid #eee; 
+}
+
+.toolbar-inner { 
+  max-width: 1200px; 
+  margin: 0 auto; 
+  padding: 0 20px; 
+}
+
+.btn-back-vip { 
+  border: none; 
+  background: none; 
+  font-weight: 700; 
+  cursor: pointer; 
+  font-size: 1rem; 
+  color: #333; 
+}
 </style>

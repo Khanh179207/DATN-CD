@@ -222,6 +222,42 @@ const handleSaveToPlan = () => {
   // Gửi sự kiện 'save-to-plan' kèm thông tin bài viết này lên cho trang Home hoặc trang Profile xử lý
   emit('save-to-plan', props.post);
 };
+
+// --- ACTIONS LƯU BÀI VIẾT ---
+const toggleSave = async () => {
+  // 1. Kiểm tra đăng nhập
+  if (!authStore.isAuthenticated) {
+    return toast.warn("Vui lòng đăng nhập để lưu bài viết Sếp nhé!");
+  }
+
+  // 2. Chặn spam click
+  if (isSaving.value) return;
+
+  const uid = authStore.user?.accountID || authStore.user?.id;
+  const pid = props.post.id;
+
+  isSaving.value = true;
+  try {
+    if (isSaved.value) {
+      // Nếu đã lưu thì gọi xóa
+      await removeFavorite(uid, pid);
+      isSaved.value = false;
+      toast.success("Đã bỏ lưu công thức!");
+      emit('unsaved', pid); // Báo cho cha nếu cần (ví dụ trang Profile cần xóa card này)
+    } else {
+      // Nếu chưa lưu thì gọi thêm
+      await addFavorite(uid, pid);
+      isSaved.value = true;
+      toast.success("Đã lưu công thức thành công!");
+    }
+  } catch (error) {
+    console.error("Save error:", error);
+    toast.error("Thao tác thất bại, Sếp kiểm tra lại kết nối nhé!");
+  } finally {
+    isSaving.value = false;
+  }
+};
+
 </script>
 
 <style scoped lang="scss">
