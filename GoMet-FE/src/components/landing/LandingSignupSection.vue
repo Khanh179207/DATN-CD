@@ -1,7 +1,7 @@
 <template>
   <section class="signup-section" id="sectionsigninlanding" ref="signupSection">
     
-<div class="background-layer">
+    <div class="background-layer">
       <div class="bg-overlay"></div>
       
       <div class="bg-column col-slow">
@@ -56,6 +56,7 @@
         </div>
       </div>
     </div>
+    
     <div class="bg-visuals">
       <div class="orb orb-1 gsap-orb"></div>
       <div class="orb orb-2 gsap-orb"></div>
@@ -99,38 +100,48 @@
       <div class="form-side gsap-signup-right">
         <div class="auth-card glass-panel">
           
-          <div class="auth-tabs">
+          <div class="auth-tabs" v-if="activeTab !== 'forgot-password'">
             <button class="tab-btn" :class="{ active: activeTab === 'login' }" @click="activeTab = 'login'">Đăng Nhập</button>
             <button class="tab-btn" :class="{ active: activeTab === 'register' }" @click="activeTab = 'register'">Đăng Ký</button>
           </div>
 
           <div class="form-content">
-            <h3 class="form-title">
+            <h3 class="form-title" v-if="activeTab !== 'forgot-password'">
               {{ activeTab === 'login' ? 'Chào mừng trở lại!' : 'Tạo tài khoản mới' }}
             </h3>
 
             <form @submit.prevent="handleSubmit">
               
-              <div v-if="activeTab === 'register'" class="fade-in-anim">
-                <div class="input-group">
-                  <label>Tên đăng nhập</label>
-                  <input v-model="registerForm.username" type="text" placeholder="VD: masterchef_vn" class="input-field" required />
-                </div>
-                <div class="input-group">
-                  <label>Email</label>
-                  <input v-model="registerForm.email" type="email" placeholder="name@example.com" class="input-field" required />
-                </div>
-                <div class="input-group">
-                  <label>Mật khẩu</label>
-                  <input v-model="registerForm.password" type="password" placeholder="Tối thiểu 6 ký tự" class="input-field" required />
-                </div>
-                <div class="input-group">
-                  <label>Xác nhận mật khẩu</label>
-                  <input v-model="registerForm.confirmPassword" type="password" placeholder="Nhập lại mật khẩu" class="input-field" required />
-                </div>
-              </div>
+<div v-if="activeTab === 'register'" class="fade-in-anim">
+  <div class="input-group">
+    <label>Tên đăng nhập</label>
+    <input v-model="registerForm.username" type="text" placeholder="VD: masterchef_vn" class="input-field" required />
+  </div>
+  <div class="input-group">
+    <label>Email</label>
+    <input v-model="registerForm.email" type="email" placeholder="name@example.com" class="input-field" required />
+  </div>
+  <div class="input-group">
+    <label>Mật khẩu</label>
+    <input v-model="registerForm.password" type="password" placeholder="Tối thiểu 6 ký tự" class="input-field" required />
+  </div>
+  <div class="input-group">
+    <label>Xác nhận mật khẩu</label>
+    <input v-model="registerForm.confirmPassword" type="password" placeholder="Nhập lại mật khẩu" class="input-field" required />
+  </div>
 
-              <div v-else class="fade-in-anim">
+<div class="input-group-checkbox">
+  <label class="checkbox-container">
+    <input type="checkbox" v-model="registerForm.agreeTerms" required>
+    <span class="checkmark"></span>
+    <span class="label-text">
+      Tôi đồng ý với <router-link to="/terms">Điều khoản</router-link> và <router-link to="/policy">Chính sách bảo mật</router-link>
+    </span>
+  </label>
+</div>
+</div>
+
+              <div v-else-if="activeTab === 'login'" class="fade-in-anim">
                 <div class="input-group">
                   <label>Email</label>
                   <input v-model="loginForm.email" type="email" placeholder="name@example.com" class="input-field" required />
@@ -141,24 +152,68 @@
                 </div>
                 <div class="form-actions">
                   <label class="remember"><input type="checkbox"> Ghi nhớ tôi</label>
-                  <a href="#" class="forgot-pass" @click.prevent="toast.info('Tính năng đang phát triển!')">Quên mật khẩu?</a>
+                  <a href="#" class="forgot-pass" @click.prevent="activeTab = 'forgot-password'; forgotState = 'idle'; forgotError = ''; forgotIdentifier = '';">Quên mật khẩu?</a>
                 </div>
               </div>
 
-              <button type="submit" class="btn-submit" :disabled="isLoading">
-                <span v-if="isLoading" class="spinner-border" role="status" aria-hidden="true"></span>
-                <span v-else>{{ activeTab === 'login' ? 'Đăng Nhập Ngay' : 'Đăng Ký Miễn Phí' }}</span>
-              </button>
+              <div v-else-if="activeTab === 'forgot-password'" class="fade-in-anim">
+                
+                <div v-if="forgotState === 'sent'" class="forgot-success">
+                  <div class="forgot-icon-ring">
+                    <svg viewBox="0 0 52 52" class="check-anim" xmlns="http://www.w3.org/2000/svg">
+                      <circle class="check-circle" cx="26" cy="26" r="25" fill="none"/>
+                      <path class="check-path" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                    </svg>
+                  </div>
+                  <h3 class="form-title" style="margin-top: 15px">Đã gửi Email</h3>
+                  <p class="description" style="text-align: center; margin-bottom: 20px; font-size: 0.9rem; color: #1C1917">Vui lòng kiểm tra email của bạn để lấy link đặt lại mật khẩu.</p>
+                  <button type="button" class="btn-submit" @click="activeTab = 'login'">Quay lại Đăng nhập</button>
+                </div>
 
-              <div class="divider"><span>Hoặc tiếp tục với</span></div>
-              
-              <div class="social-buttons">
-                <GoogleLogin :callback="handleGoogleCallback" prompt :auto-login="false" :use-fedcm="false" class="google-wrapper">
-                  <button type="button" class="social-btn google">
-                    <img src="https://cdn-icons-png.flaticon.com/512/2991/2991148.png" width="20" alt="Google">
-                    {{ activeTab === 'login' ? 'Google' : 'Google' }}
+                <div v-else>
+                  <h3 class="form-title">Khôi phục mật khẩu</h3>
+                  <p class="description" style="text-align: center; margin-bottom: 20px; font-size: 0.9rem; color: #78716C">Nhập email của bạn, chúng tôi sẽ gửi link khôi phục.</p>
+
+                  <div class="input-group">
+                    <label>Email của bạn</label>
+                    <input v-model="forgotIdentifier" type="email" placeholder="name@example.com" class="input-field" required :disabled="forgotState === 'loading'" />
+                  </div>
+
+                  <div v-if="forgotError" class="auth-error-msg">{{ forgotError }}</div>
+
+                  <button type="submit" class="btn-submit" :disabled="!forgotIdentifier.trim() || forgotState === 'loading'">
+                    <span v-if="forgotState === 'loading'" class="spinner-border" role="status" aria-hidden="true"></span>
+                    <span v-else>Gửi yêu cầu</span>
                   </button>
-                </GoogleLogin>
+
+                  <button type="button" class="btn-back" @click="activeTab = 'login'">
+                    ← Quay lại
+                  </button>
+                </div>
+              </div>
+
+<button 
+  type="submit" 
+  class="btn-submit" 
+  :disabled="isLoading || (activeTab === 'register' && !registerForm.agreeTerms)"
+>
+  <span v-if="isLoading" class="spinner-border" role="status" aria-hidden="true"></span>
+  <span v-else>{{ activeTab === 'login' ? 'Đăng Nhập Ngay' : 'Đăng Ký Miễn Phí' }}</span>
+</button>
+              <div class="divider" v-if="activeTab !== 'forgot-password'"><span>Hoặc tiếp tục với</span></div>
+              
+              <div class="social-buttons custom-google-wrapper" v-if="activeTab !== 'forgot-password'">
+                <button type="button" class="social-btn google custom-ui-btn">
+                  <img src="https://cdn-icons-png.flaticon.com/512/2991/2991148.png" width="20" alt="Google">
+                  {{ activeTab === 'login' ? 'Đăng nhập với Google' : 'Đăng ký với Google' }}
+                </button>
+
+                <div class="invisible-google-btn">
+                  <GoogleLogin 
+                    :callback="handleGoogleCallback" 
+                    prompt
+                  />
+                </div>
               </div>
 
             </form>
@@ -202,9 +257,19 @@ const isLoading = ref(false)
 const signupSection = ref(null)
 
 const loginForm = reactive({ email: '', password: '' })
-const registerForm = reactive({ username: '', email: '', password: '', confirmPassword: '' })
+const registerForm = reactive({ 
+  username: '', 
+  email: '', 
+  password: '', 
+  confirmPassword: '',
+  agreeTerms: false // 👈 Thêm dòng này sếp nhé
+})
 
-// Event Listener cho header
+// State cho Quên mật khẩu
+const forgotIdentifier = ref('')
+const forgotState      = ref('idle') // 'idle', 'loading', 'sent'
+const forgotError      = ref('')
+
 const switchTabListener = (event) => {
   if (event.detail === 'login' || event.detail === 'register') {
     activeTab.value = event.detail
@@ -214,7 +279,6 @@ const switchTabListener = (event) => {
 onMounted(() => {
   window.addEventListener('switch-auth-tab', switchTabListener)
   
-  // GSAP Animation đồng bộ
   let ctx = gsap.context(() => {
     gsap.from(".gsap-signup-left", {
       scrollTrigger: { trigger: signupSection.value, start: "top 80%" },
@@ -224,7 +288,6 @@ onMounted(() => {
       scrollTrigger: { trigger: signupSection.value, start: "top 80%" },
       x: 50, opacity: 0, duration: 1, ease: "power3.out", delay: 0.2
     });
-    // Orbs ẩn hiện chậm
     gsap.to(".orb-1", { opacity: 0.2, x: "10vw", duration: 8, repeat: -1, yoyo: true, ease: "sine.inOut" });
     gsap.to(".orb-2", { opacity: 0.1, x: "-10vw", duration: 10, repeat: -1, yoyo: true, ease: "sine.inOut" });
   }, signupSection.value);
@@ -234,9 +297,25 @@ onUnmounted(() => {
   window.removeEventListener('switch-auth-tab', switchTabListener)
 })
 
-
-// --- CÁC HÀM XỬ LÝ AUTH GIỮ NGUYÊN BẢN CŨ CỦA SẾP ---
 const handleSubmit = async () => {
+  // Xử lý Gửi Quên Mật Khẩu
+  if (activeTab.value === 'forgot-password') {
+    forgotError.value = ''
+    if (!forgotIdentifier.value.trim()) return
+    forgotState.value = 'loading'
+    try {
+      await authService.forgotPassword(forgotIdentifier.value.trim())
+      forgotState.value = 'sent'
+      toast.success('Đã gửi Email khôi phục!')
+    } catch (err) {
+      forgotState.value = 'idle'
+      forgotError.value = err.response?.data?.message || 'Có lỗi xảy ra khi gửi yêu cầu.'
+      toast.error(forgotError.value)
+    }
+    return
+  }
+
+  // Xử lý Đăng Nhập
   if (activeTab.value === 'login') {
     isLoading.value = true
     try {
@@ -254,7 +333,12 @@ const handleSubmit = async () => {
       isLoading.value = false
     }
 
-  } else {
+  // Xử lý Đăng Ký
+  } else if (activeTab.value === 'register') {
+    if (!registerForm.agreeTerms) {
+    toast.warn('Vui lòng đồng ý với điều khoản dịch vụ!')
+    return
+  }
     if (registerForm.password !== registerForm.confirmPassword) {
       toast.warn('Mật khẩu xác nhận không khớp!')
       return
@@ -306,11 +390,11 @@ const handleVerifyOtp = async () => {
 const handleGoogleCallback = async (response) => {
   try {
     if (!response || !response.credential) {
-      throw new Error("Không nhận được token từ Google")
+      throw new Error("Không nhận được token từ Google");
     }
 
-    const idToken = response.credential
-    const data = await authService.googleLogin(idToken)
+    const idToken = response.credential;
+    const data = await authService.googleLogin(idToken);
 
     authStore.user = {
       id:        data.accountID,

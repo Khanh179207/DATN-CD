@@ -1,0 +1,107 @@
+$primary: #EA580C;
+$text-dark: #1C1917;
+$text-light: #FFFFFF;
+$font-serif: 'Playfair Display', serif;
+
+.landing-header {
+  position: fixed;
+  top: 0; left: 0; width: 100%; z-index: 1000;
+  padding: 16px 0; // Giảm padding ban đầu
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  background: transparent;
+
+  // 1. Trạng thái cuộn nhẹ (Kính sáng)
+  &.is-scrolled {
+    padding: 10px 0; // Nhỏ hơn nữa khi cuộn
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+  }
+
+  // 2. Trạng thái ở vùng Login (Kính Đen)
+  &.is-dark-theme {
+    background: rgba(12, 10, 9, 0.85) !important; // Màu đen tuyền của GoMet
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    
+    .brand-name { color: $text-light; }
+    .nav-link-item { color: rgba(255, 255, 255, 0.8); }
+    .btn-premium-cta { background: $primary; color: white; }
+    .nav-link-item:hover { color: $primary; }
+  }
+}
+
+.scroll-progress {
+  position: absolute; top: 0; left: 0; height: 2px; // Mỏng lại cho tinh tế
+  background: $primary; z-index: 1001; transition: width 0.1s linear;
+}
+
+.header-flex { display: flex; justify-content: space-between; align-items: center; }
+
+// --- LOGO ---
+.logo-area {
+  display: flex; align-items: center; gap: 10px; text-decoration: none;
+  
+  .logo-circle-wrapper {
+    width: 38px; height: 38px; // Thu nhỏ logo
+    .header-logo {
+      width: 100%; height: 100%; border-radius: 50%; object-fit: cover;
+      border: 1.5px solid $primary; transition: 0.4s;
+    }
+  }
+
+  &:hover .header-logo { transform: rotate(15deg) scale(1.15); }
+}
+
+.logo-brand {
+  display: flex; align-items: baseline; gap: 3px;
+  .brand-name {
+    font-family: $font-serif; font-size: 22px; // Nhỏ lại 1 tí
+    font-weight: 900; color: $text-dark; letter-spacing: 1px; transition: 0.3s;
+  }
+  .brand-dot { width: 5px; height: 5px; background: $primary; border-radius: 50%; }
+}
+
+// --- NAV ---
+.header-right { display: flex; align-items: center; gap: 20px; }
+.nav-links { display: flex; align-items: center; gap: 20px; }
+
+.nav-link-item {
+  text-decoration: none; color: $text-dark; font-weight: 700; font-size: 14px;
+  position: relative; transition: 0.3s;
+  &:hover { color: $primary; }
+}
+
+// --- BUTTON PREMIUM ---
+.btn-premium-cta {
+  background: $text-dark;
+  color: white;
+  text-decoration: none;
+  padding: 8px 18px; // Thu gọn button
+  border-radius: 50px;
+  font-weight: 800; font-size: 13px;
+  display: flex; align-items: center; gap: 8px;
+  transition: 0.4s;
+  
+  svg { transition: transform 0.3s; }
+  
+  &:hover {
+    background: $primary;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba($primary, 0.3);
+    svg { transform: translateX(3px); }
+  }
+}
+
+// LangSwitcher (Nhỏ lại cho đồng bộ)
+.premium-lang {
+  transform: scale(0.9);
+  transform-origin: right center;
+}
+
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .logo-brand .brand-name { font-size: 18px; }
+}
