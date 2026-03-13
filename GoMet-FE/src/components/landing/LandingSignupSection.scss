@@ -1,153 +1,197 @@
+// ================= VARIABLES =================
+$primary: #EA580C;
+$primary-light: #FDBA74;
+$text-dark: #1C1917; // 🌟 Biến này đã được khai báo
+$text-light: #FFFFFF; 
+$text-muted: #78716C;
+$text-muted-light: #D6D3D1; 
+$bg-white: #ffffff;
+$bg-cream: #FAF9F6;
+$radius-xl: 32px; 
+$font-serif: 'Playfair Display', serif;
+
 /* --- LAYOUT CHÍNH --- */
 .signup-section {
   min-height: 100vh;
-  display: flex; align-items: center; justify-content: center;
-  position: relative; overflow: hidden;
-  padding: 60px 20px;
-  font-family: 'Quicksand', sans-serif;
-  background-color: #1C1917; /* Màu nền dự phòng khi ảnh chưa load */
-  transition: all 0.4s ease-in-out; /* Phục vụ hiệu ứng highlight */
+  display: flex;
+  align-items: center;
+  position: relative;
+  z-index: 20;
+  border-radius: 40px 40px 0 0;
+  background-color: #11100F; 
+  overflow: hidden; 
 }
 
-/* Thêm class nháy sáng */
-.signup-section.highlight-section {
-  box-shadow: inset 0 0 50px rgba(249, 115, 22, 0.4);
-}
-.signup-section.highlight-section .auth-card {
-  box-shadow: 0 0 30px rgba(249, 115, 22, 0.8);
-  transform: scale(1.02);
-  transition: all 0.3s;
-}
-
-/* --- BACKGROUND LAYER (ẢNH CHẠY) --- */
+/* ================= 🌟 CSS CHO NỀN ẢNH CHẠY 🌟 ================= */
 .background-layer {
-  position: absolute; /* Thay fixed bằng absolute để chỉ nằm trong section này */
-  top: 0; left: 0; width: 100%; height: 100%;
-  z-index: 0;
-  display: flex; gap: 20px; padding: 0 20px;
-  /* Mask làm mờ 2 đầu */
-  -webkit-mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
-  mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+  position: absolute;
+  inset: 0; 
+  width: 100%;
+  height: 100%;
+  z-index: 1; 
+  display: flex;
+  gap: 20px;
+  padding: 0 20px;
+  opacity: 0.6; 
 }
 
 .bg-overlay {
-  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0, 0, 0, 0.85); /* Tăng độ tối lên 0.85 để nền chìm hẳn xuống */
-  backdrop-filter: blur(4px);
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75); 
+  backdrop-filter: blur(4px); 
+  z-index: 2; 
+}
+
+.bg-column {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  height: 100%;
   z-index: 1;
 }
 
-.bg-column { flex: 1; position: relative; overflow: hidden; }
-.offset-down { margin-top: -100px; }
+.offset-down {
+  margin-top: 100px;
+}
 
-.scroll-track { display: flex; flex-direction: column; gap: 20px; animation: scrollUp 40s linear infinite; }
-.scroll-track.reverse { animation: scrollDown 45s linear infinite; }
+.scroll-track {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: scrollUp linear infinite;
+  
+  &.reverse {
+    animation-name: scrollDown;
+  }
+}
 
 .col-slow .scroll-track { animation-duration: 60s; }
 .col-medium .scroll-track { animation-duration: 50s; }
 .col-fast .scroll-track { animation-duration: 40s; }
 
 .scroll-track img {
-  width: 100%; border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3); opacity: 0.6; display: block;
+  width: 100%;
+  aspect-ratio: 1/1; 
+  object-fit: cover; 
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
 }
 
-@keyframes scrollUp { 0% { transform: translateY(0); } 100% { transform: translateY(-50%); } }
-@keyframes scrollDown { 0% { transform: translateY(-50%); } 100% { transform: translateY(0); } }
-
-/* --- CONTENT CHÍNH --- */
-.container { 
-  width: 100%; max-width: 1100px; margin: 0 auto; 
-  position: relative; z-index: 2; /* Nổi lên trên background */
+@keyframes scrollUp {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-50%); } 
 }
-.main-layout { display: flex; align-items: center; justify-content: space-between; gap: 80px; }
 
-/* --- INFO SIDE (LEFT) --- */
-.info-side { flex: 1; color: white; }
+@keyframes scrollDown {
+  0% { transform: translateY(-50%); }
+  100% { transform: translateY(0); }
+}
+
+/* Đồng bộ Orbs */
+.bg-visuals {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  .orb {
+    position: absolute; border-radius: 50%; filter: blur(140px); opacity: 0;
+    &-1 { width: 500px; height: 500px; background: $primary; top: 10%; left: -10%; }
+    &-2 { width: 600px; height: 600px; background: $primary-light; bottom: -10%; right: -10%; }
+  }
+}
+
+.container { max-width: 1300px; margin: 0 auto; padding: 60px 40px; width: 100%; position: relative; z-index: 10; }
+.main-layout { display: flex; align-items: center; justify-content: space-between; gap: 60px; }
+
+/* --- INFO SIDE (CỘT TRÁI) --- */
+.info-side { flex: 1; }
 .brand-header { display: flex; align-items: baseline; gap: 5px; margin-bottom: 20px; }
-.logo-text { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700; letter-spacing: 2px; }
-.logo-dot { width: 8px; height: 8px; background: #F97316; border-radius: 50%; }
+.logo-text { font-family: $font-serif; font-size: 1.8rem; font-weight: 800; letter-spacing: 2px; color: $text-light;}
+.logo-dot { width: 8px; height: 8px; background: $primary; border-radius: 50%; }
 
-.main-title {
-  font-family: 'Playfair Display', serif; font-size: 3.5rem; line-height: 1.4; margin-bottom: 20px;
+.main-title { font-family: $font-serif; font-size: 4rem; font-weight: 900; line-height: 1.15; color: $text-light; margin-bottom: 20px; }
+.description { font-size: 1.15rem; color: $text-muted-light; line-height: 1.7; margin-bottom: 40px; max-width: 500px; }
+
+.stats-grid { display: flex; align-items: center; gap: 40px; }
+.stat-item strong { display: block; font-size: 2.2rem; color: $text-light; font-weight: 900; letter-spacing: -1px; }
+.stat-item span { color: rgba(255,255,255,0.6); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+.stat-sep { width: 1px; height: 45px; background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.1), transparent); }
+
+.text-gradient {
+  background: linear-gradient(110deg, $primary 20%, $primary-light 40%, white 50%, $primary-light 60%, $primary 80%);
+  background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
-.highlight-text { color: #F97316; font-style: italic; }
+.shine-effect { animation: shineText 4s linear infinite; }
+@keyframes shineText { to { background-position: 200% center; } }
 
-.description { font-size: 1.1rem; color: #D6D3D1; line-height: 1.6; margin-bottom: 40px; max-width: 450px; }
-.stats-grid { display: flex; gap: 40px; border-top: 1px solid #57534E; padding-top: 30px; }
-.stat-item strong { display: block; font-size: 2rem; color: #F97316; font-family: 'Playfair Display', serif; }
-.stat-item span { color: #A8A29E; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }
 
-/* --- FORM SIDE (RIGHT) --- */
+/* --- FORM SIDE (CỘT PHẢI - Glassmorphism) --- */
 .form-side { flex: 0 0 450px; width: 450px; }
-.push-down { margin-top: 50px; }
 
-.auth-card { 
-  background: white; border-radius: 24px; padding: 24px 20px; 
-  box-shadow: 0 20px 60px rgba(0,0,0,0.5); 
-  transition: all 0.3s;
+.glass-panel { 
+  background: rgba(255, 255, 255, 0.8); 
+  backdrop-filter: blur(25px);
+  border-radius: $radius-xl; 
+  padding: 35px; 
+  box-shadow: 0 25px 60px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.6) inset; 
 }
 
-.auth-tabs { display: flex; background: #F5F5F4; border-radius: 12px; padding: 4px; margin-bottom: 18px; }
-.tab-btn { flex: 1; border: none; background: transparent; padding: 8px; font-weight: 600; color: #78716C; cursor: pointer; border-radius: 10px; transition: 0.2s; font-family: 'Quicksand', sans-serif; font-size: 0.9rem; }
-.tab-btn.active { background: white; color: #1C1917; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-.form-title { font-size: 1.25rem; color: #1C1917; margin-bottom: 18px; font-weight: 700; text-align: center; }
+.auth-tabs { display: flex; background: rgba(0,0,0,0.04); border-radius: 12px; padding: 5px; margin-bottom: 25px; }
+.tab-btn { flex: 1; border: none; background: transparent; padding: 10px; font-weight: 700; color: $text-muted; cursor: pointer; border-radius: 10px; transition: 0.3s; font-size: 0.95rem; }
+.tab-btn.active { background: white; color: $text-dark; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
 
-/* Inputs & Buttons giữ nguyên như cũ */
-.input-group { margin-bottom: 12px; }
-.input-group label { display: block; font-size: 0.8rem; color: #44403C; margin-bottom: 5px; font-weight: 600; }
-.input-field { width: 100%; padding: 10px 12px; border: 1px solid #E7E5E4; border-radius: 10px; outline: none; font-size: 0.9rem; color: #1C1917; transition: 0.2s; background: #FAFAF9; }
-.input-field:focus { border-color: #F97316; background: white; box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1); }
+.form-title { font-family: $font-serif; font-size: 1.8rem; color: $text-dark; margin-bottom: 25px; font-weight: 800; text-align: center; }
 
-.form-actions { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; margin-bottom: 18px; }
-.forgot-pass { color: #F97316; text-decoration: none; font-weight: 600; }
-.remember { color: #57534E; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+/* Inputs */
+.input-group { margin-bottom: 15px; }
+.input-group label { display: block; font-size: 0.85rem; color: $text-dark; margin-bottom: 6px; font-weight: 700; }
+.input-field { 
+  width: 100%; padding: 12px 15px; border: 1px solid #E7E5E4; border-radius: 12px; 
+  outline: none; font-size: 0.95rem; color: $text-dark; transition: 0.3s; background: rgba(255,255,255,0.5); 
+}
+.input-field:focus { border-color: $primary; background: white; box-shadow: 0 0 0 3px rgba($primary, 0.15); }
 
-.btn-submit { width: 100%; padding: 12px; border: none; border-radius: 12px; background: #1C1917; color: white; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: 0.3s; }
-.btn-submit:hover { background: #F97316; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(249, 115, 22, 0.3); }
+.form-actions { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; margin-bottom: 25px; }
+.forgot-pass { color: $primary; text-decoration: none; font-weight: 700; transition: 0.2s; }
+.forgot-pass:hover { color: #C2410C; }
+.remember { color: $text-muted; cursor: pointer; display: flex; align-items: center; gap: 6px; font-weight: 500; }
 
-.divider { display: flex; align-items: center; text-align: center; color: #A8A29E; font-size: 0.75rem; margin: 18px 0; }
+/* Buttons */
+.btn-submit { 
+  width: 100%; padding: 14px; border: none; border-radius: 12px; 
+  background: $text-dark; color: white; font-weight: 800; font-size: 1rem; 
+  cursor: pointer; transition: 0.3s; box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+.btn-submit:hover { background: $primary; transform: translateY(-2px); box-shadow: 0 15px 25px rgba($primary, 0.3); }
+.btn-submit:disabled { background: #A8A29E; cursor: not-allowed; transform: none; box-shadow: none;}
+
+.divider { display: flex; align-items: center; text-align: center; color: #A8A29E; font-size: 0.8rem; font-weight: 600; margin: 20px 0; }
 .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid #E7E5E4; }
-.divider span { padding: 0 8px; }
+.divider span { padding: 0 12px; }
 
-.social-buttons { display: flex; gap: 15px; }
-
-/* Bỏ các style cũ của .social-btn vì giờ mình dùng bọc bằng GoogleLogin, chỉnh lại xíu */
 .google-wrapper { width: 100%; }
-
 .social-btn { 
-  width: 100%; padding: 10px; background: white; border: 1px solid #E7E5E4; 
+  width: 100%; padding: 12px; background: white; border: 1px solid #E7E5E4; 
   border-radius: 12px; cursor: pointer; display: flex; align-items: center; 
-  justify-content: center; gap: 8px; transition: 0.2s; color: #1C1917; 
-  font-weight: 600; font-size: 0.9rem; font-family: 'Quicksand', sans-serif; 
+  justify-content: center; gap: 10px; transition: 0.3s; color: $text-dark; 
+  font-weight: 700; font-size: 0.95rem; 
 }
-.social-icon { width: 18px; height: 18px; color: #1C1917; transition: 0.2s; }
-.social-btn:hover { background: #F9FAF8; border-color: #D6D3D1; }
+.social-btn:hover { background: #F9FAF8; border-color: #D6D3D1; transform: translateY(-1px);}
 
-.form-footer { text-align: center; margin-top: 15px; font-size: 0.75rem; color: #E7E5E4; opacity: 0.8; }
+.form-footer { text-align: center; margin-top: 20px; font-size: 0.8rem; color: rgba(255,255,255,0.6); font-weight: 500;}
+
+/* Utils */
+.fade-in-anim { animation: fadeIn 0.4s ease-in-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+.spinner-border { display: inline-block; width: 1.2rem; height: 1.2rem; vertical-align: text-bottom; border: 0.25em solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spinner-border .75s linear infinite; }
+@keyframes spinner-border { to { transform: rotate(360deg); } }
 
 /* Responsive */
-@media (max-width: 900px) {
-  .main-layout { flex-direction: column; gap: 50px; }
-  .info-side { text-align: center; }
+@media (max-width: 1100px) {
+  .main-layout { flex-direction: column; gap: 50px; text-align: center; }
   .stats-grid { justify-content: center; }
-  .description { margin: 0 auto 40px; }
+  .description { margin: 30px auto; }
   .form-side { width: 100%; max-width: 450px; }
-  .push-down { margin-top: 0; }
+  .offset-down { margin-top: 0; }
   .mobile-hidden { display: none; }
-}
-
-/* Thêm css cho loading xoay xoay */
-.spinner-border {
-  display: inline-block;
-  width: 1rem;
-  height: 1rem;
-  vertical-align: -0.125em;
-  border: 0.2em solid currentColor;
-  border-right-color: transparent;
-  border-radius: 50%;
-  animation: 0.75s linear infinite spinner-border;
-}
-@keyframes spinner-border {
-  to { transform: rotate(360deg); }
+  .background-layer { gap: 10px; padding: 0 10px; opacity: 0.4; }
 }

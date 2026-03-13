@@ -1,7 +1,7 @@
 <template>
-  <section class="signup-section" id="sectionsigninlanding">
+  <section class="signup-section" id="sectionsigninlanding" ref="signupSection">
     
-    <div class="background-layer">
+<div class="background-layer">
       <div class="bg-overlay"></div>
       
       <div class="bg-column col-slow">
@@ -43,7 +43,7 @@
         </div>
       </div>
 
-      <div class="bg-column col-fast offset-down mobile-hidden">
+      <div class="bg-column col-fast mobile-hidden">
         <div class="scroll-track reverse">
           <img src="@/assets/images/intro/bun.jpg" alt="Food">
           <img src="@/assets/images/intro/goi.jpg" alt="Food">
@@ -56,10 +56,14 @@
         </div>
       </div>
     </div>
+    <div class="bg-visuals">
+      <div class="orb orb-1 gsap-orb"></div>
+      <div class="orb orb-2 gsap-orb"></div>
+    </div>
 
     <div class="container main-layout">
       
-      <div class="info-side fade-in-left">
+      <div class="info-side gsap-signup-left">
         <div class="brand-header">
           <div class="logo-text">GOMET</div>
           <div class="logo-dot"></div>
@@ -67,47 +71,37 @@
         
         <h1 class="main-title">
           Gia nhập cộng đồng <br> 
-          <span class="highlight-text">Ẩm thực lớn nhất</span>
+          <span class="text-gradient shine-effect">Ẩm Thực Tinh Hoa</span>
         </h1>
         
         <p class="description">
-          Hơn <strong>50.000+ thành viên</strong> đang chia sẻ công thức, mẹo vặt và niềm đam mê nấu nướng mỗi ngày. Đừng bỏ lỡ cơ hội tỏa sáng!
+          Hơn <strong>100.000+ thành viên</strong> đang chia sẻ đặc quyền, công thức và niềm đam mê nấu nướng mỗi ngày. Đừng bỏ lỡ cơ hội tỏa sáng!
         </p>
         
         <div class="stats-grid">
           <div class="stat-item">
-            <strong>10K+</strong>
+            <strong>15K+</strong>
             <span>Công thức</span>
           </div>
+          <div class="stat-sep"></div>
           <div class="stat-item">
             <strong>1M+</strong>
             <span>Lượt yêu thích</span>
           </div>
+          <div class="stat-sep"></div>
           <div class="stat-item">
             <strong>24/7</strong>
-            <span>Hỗ trợ</span>
+            <span>Hỗ trợ VIP</span>
           </div>
         </div>
       </div>
 
-      <div class="form-side fade-in-right">
-        <div class="auth-card push-down">
+      <div class="form-side gsap-signup-right">
+        <div class="auth-card glass-panel">
           
           <div class="auth-tabs">
-            <button 
-              class="tab-btn" 
-              :class="{ active: activeTab === 'login' }" 
-              @click="activeTab = 'login'"
-            >
-              Đăng Nhập
-            </button>
-            <button 
-              class="tab-btn" 
-              :class="{ active: activeTab === 'register' }" 
-              @click="activeTab = 'register'"
-            >
-              Đăng Ký
-            </button>
+            <button class="tab-btn" :class="{ active: activeTab === 'login' }" @click="activeTab = 'login'">Đăng Nhập</button>
+            <button class="tab-btn" :class="{ active: activeTab === 'register' }" @click="activeTab = 'register'">Đăng Ký</button>
           </div>
 
           <div class="form-content">
@@ -120,7 +114,7 @@
               <div v-if="activeTab === 'register'" class="fade-in-anim">
                 <div class="input-group">
                   <label>Tên đăng nhập</label>
-                  <input v-model="registerForm.username" type="text" placeholder="VD: khanhnguyen_dev" class="input-field" required />
+                  <input v-model="registerForm.username" type="text" placeholder="VD: masterchef_vn" class="input-field" required />
                 </div>
                 <div class="input-group">
                   <label>Email</label>
@@ -146,15 +140,13 @@
                   <input v-model="loginForm.password" type="password" placeholder="Nhập mật khẩu..." class="input-field" required />
                 </div>
                 <div class="form-actions">
-                  <label class="remember">
-                    <input type="checkbox"> Ghi nhớ tôi
-                  </label>
+                  <label class="remember"><input type="checkbox"> Ghi nhớ tôi</label>
                   <a href="#" class="forgot-pass" @click.prevent="toast.info('Tính năng đang phát triển!')">Quên mật khẩu?</a>
                 </div>
               </div>
 
               <button type="submit" class="btn-submit" :disabled="isLoading">
-                <span v-if="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                <span v-if="isLoading" class="spinner-border" role="status" aria-hidden="true"></span>
                 <span v-else>{{ activeTab === 'login' ? 'Đăng Nhập Ngay' : 'Đăng Ký Miễn Phí' }}</span>
               </button>
 
@@ -164,7 +156,7 @@
                 <GoogleLogin :callback="handleGoogleCallback" prompt :auto-login="false" :use-fedcm="false" class="google-wrapper">
                   <button type="button" class="social-btn google">
                     <img src="https://cdn-icons-png.flaticon.com/512/2991/2991148.png" width="20" alt="Google">
-                    {{ activeTab === 'login' ? 'Đăng nhập với Google' : 'Đăng ký với Google' }}
+                    {{ activeTab === 'login' ? 'Google' : 'Google' }}
                   </button>
                 </GoogleLogin>
               </div>
@@ -174,20 +166,14 @@
         </div>
         
         <div class="form-footer">
-          <p>© 2026 Gomet. Bảo mật tuyệt đối.</p>
+          <p>© 2026 GoMet Elite. Privacy & Security First.</p>
         </div>
       </div>
 
     </div>
 
     <Teleport to="body">
-      <OtpModal 
-        v-if="showOtpModal"
-        :email="registerForm.email"
-        v-model="otpCode"
-        @close="showOtpModal = false"
-        @verify="handleVerifyOtp"
-      />
+      <OtpModal v-if="showOtpModal" :email="registerForm.email" v-model="otpCode" @close="showOtpModal = false" @verify="handleVerifyOtp" />
     </Teleport>
 
   </section>
@@ -200,7 +186,11 @@ import { useAuthStore } from '@/stores/auth'
 import { toast } from '@/composables/useToast'
 import * as authService from '@/services/authService'
 import { GoogleLogin } from 'vue3-google-login'
-import OtpModal from '@/components/modals/OtpModal.vue' 
+import OtpModal from '@/components/modals/OtpModal.vue'
+import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
+gsap.registerPlugin(ScrollTrigger)
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -209,20 +199,12 @@ const activeTab = ref('login')
 const showOtpModal = ref(false)
 const otpCode = ref('')
 const isLoading = ref(false)
+const signupSection = ref(null)
 
-const loginForm = reactive({
-  email: '',
-  password: ''
-})
+const loginForm = reactive({ email: '', password: '' })
+const registerForm = reactive({ username: '', email: '', password: '', confirmPassword: '' })
 
-const registerForm = reactive({
-  username: '',
-  email: '',
-  password: '',
-  confirmPassword: ''
-})
-
-// --- LẮNG NGHE EVENT TỪ HEADER LANDING ---
+// Event Listener cho header
 const switchTabListener = (event) => {
   if (event.detail === 'login' || event.detail === 'register') {
     activeTab.value = event.detail
@@ -231,16 +213,31 @@ const switchTabListener = (event) => {
 
 onMounted(() => {
   window.addEventListener('switch-auth-tab', switchTabListener)
+  
+  // GSAP Animation đồng bộ
+  let ctx = gsap.context(() => {
+    gsap.from(".gsap-signup-left", {
+      scrollTrigger: { trigger: signupSection.value, start: "top 80%" },
+      x: -50, opacity: 0, duration: 1, ease: "power3.out"
+    });
+    gsap.from(".gsap-signup-right", {
+      scrollTrigger: { trigger: signupSection.value, start: "top 80%" },
+      x: 50, opacity: 0, duration: 1, ease: "power3.out", delay: 0.2
+    });
+    // Orbs ẩn hiện chậm
+    gsap.to(".orb-1", { opacity: 0.2, x: "10vw", duration: 8, repeat: -1, yoyo: true, ease: "sine.inOut" });
+    gsap.to(".orb-2", { opacity: 0.1, x: "-10vw", duration: 10, repeat: -1, yoyo: true, ease: "sine.inOut" });
+  }, signupSection.value);
 })
 
 onUnmounted(() => {
   window.removeEventListener('switch-auth-tab', switchTabListener)
 })
 
-// --- XỬ LÝ SUBMIT FORM (ĐĂNG NHẬP HOẶC ĐĂNG KÝ) ---
+
+// --- CÁC HÀM XỬ LÝ AUTH GIỮ NGUYÊN BẢN CŨ CỦA SẾP ---
 const handleSubmit = async () => {
   if (activeTab.value === 'login') {
-    // Logic Đăng Nhập
     isLoading.value = true
     try {
       const role = await authStore.login(loginForm.email, loginForm.password)
@@ -258,7 +255,6 @@ const handleSubmit = async () => {
     }
 
   } else {
-    // Logic Đăng Ký
     if (registerForm.password !== registerForm.confirmPassword) {
       toast.warn('Mật khẩu xác nhận không khớp!')
       return
@@ -277,7 +273,6 @@ const handleSubmit = async () => {
   }
 }
 
-// --- XỬ LÝ XÁC THỰC OTP KHI ĐĂNG KÝ ---
 const handleVerifyOtp = async () => {
   if (otpCode.value.length < 6) {
     toast.warn('Vui lòng nhập đủ 6 số OTP!')
@@ -286,7 +281,6 @@ const handleVerifyOtp = async () => {
   try {
     const data = await authService.verifyOtp(registerForm.email, otpCode.value)
     
-    // Lưu thông tin user vào store
     authStore.user = {
       id:        data.accountID,
       accountID: data.accountID,
@@ -309,7 +303,6 @@ const handleVerifyOtp = async () => {
   }
 }
 
-// --- XỬ LÝ ĐĂNG NHẬP GOOGLE ---
 const handleGoogleCallback = async (response) => {
   try {
     if (!response || !response.credential) {
