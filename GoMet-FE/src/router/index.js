@@ -209,7 +209,7 @@ router.beforeEach((to, from, next) => {
       return next({ path: '/home', query: { login: '1' } })
     }
 
-    if (!isPremium) {
+    if (!isPremium && !isAdmin) { // Cho phép admin truy cập tất cả, kể cả premium features
       toast.warn('Tính năng này chỉ dành cho Premium users')
       return next({ path: '/home' })
     }
