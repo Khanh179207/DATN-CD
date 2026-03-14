@@ -461,6 +461,3 @@ SELECT * FROM Subscription;
 SELECT * FROM PaymentTransaction;
 
 SELECT * FROM Ticket;
-DROP TABLE IF EXISTS Error;
-DROP TABLE IF EXISTS Report;
-DROP TABLE IF EXISTS Ticket;
