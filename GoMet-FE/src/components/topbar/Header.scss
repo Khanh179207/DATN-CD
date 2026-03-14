@@ -235,3 +235,80 @@
     width: calc(100vw - 24px) !important;
   }
 }
+/* ==========================================================
+   GUEST ACTIONS (NÚT ĐĂNG NHẬP / ĐĂNG KÝ)
+========================================================== */
+.guest-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: 10px;
+
+  /* --- Nút Đăng Nhập --- */
+  .btn-login {
+    background: transparent;
+    border: none;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-color, #1e293b);
+    padding: 10px 20px; /* Tăng padding ngang để cân đối với độ bo */
+    border-radius: 50px; /* 🔥 Đổi thành bo tròn hoàn toàn */
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+
+    &:hover {
+      background: rgba(234, 88, 12, 0.1);
+      color: #ea580c;
+    }
+  }
+
+  /* --- Nút Đăng Ký --- */
+  .btn-signup {
+    background: #ea580c;
+    border: none;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #ffffff;
+    padding: 10px 28px; /* Tăng padding ngang cho ra dáng nút Call-to-action */
+    border-radius: 50px; /* 🔥 Đổi thành bo tròn hoàn toàn */
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(234, 88, 12, 0.25);
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+
+    &:hover {
+      background: #c2410c;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(234, 88, 12, 0.3);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+}
+
+/* --------------------------------------------------------
+   HIỆU ỨNG ĐỔI MÀU KHI SCROLL HOẶC TRONG THEME DARK
+-------------------------------------------------------- */
+.content-header {
+  &.theme-dark:not(.is-scrolled) {
+    .guest-actions .btn-login {
+      color: #ffffff; 
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.15);
+      }
+    }
+  }
+
+  &.is-scrolled {
+    .guest-actions .btn-login {
+      color: #1e293b; 
+      
+      &:hover {
+        background: rgba(234, 88, 12, 0.1);
+        color: #ea580c;
+      }
+    }
+  }
+}

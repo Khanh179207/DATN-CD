@@ -20,18 +20,27 @@ public class Ticket {
 
     @ManyToOne
     @JoinColumn(name = "AccountID")
-    @JsonIgnore
+    // @JsonIgnore  <-- Sếp tạm thời comment hoặc xóa dòng này đi
     private Account account;
 
-    // 🔥 NEW: BUG, REPORT, FEEDBACK
     @Column(nullable = false, length = 50)
     private String ticketType;
 
-    // 🔥 NEW: Liên kết tới bài viết nếu type là REPORT
     @ManyToOne
     @JoinColumn(name = "TargetPostID")
-    @JsonIgnore
+    // @JsonIgnore <-- Sếp tạm thời comment hoặc xóa dòng này đi
     private Post targetPost;
+
+    // 🔥 HELPER: Tạo "cổng phụ" để FE gọi .username và .targetPostID dễ dàng
+    @Transient // Không lưu xuống DB, chỉ dùng để trả dữ liệu về cho FE
+    public String getUsername() {
+        return account != null ? account.getUsername() : "Người dùng ẩn";
+    }
+
+    @Transient
+    public Integer getTargetPostId() {
+        return targetPost != null ? targetPost.getPostID() : null;
+    }
 
     @Column(nullable = false)
     private String title;
@@ -42,13 +51,16 @@ public class Ticket {
     @Column(length = 500)
     private String attachment;
 
-    // 🔥 CHANGED: 0 = Pending, 1 = Processing, 2 = Resolved, 3 = Rejected
     @Column(nullable = false)
-    private Integer status;
+    private Integer status; // 0: Pending, 1: Processing, 2: Resolved, 3: Rejected
 
+    // Ngày người dùng gửi
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
-    // 🔥 NEW: Thời gian Admin xử lý xong
+    // 🔥 Ngày Admin bấm nút "Tiếp nhận" (MỚI)
+    private LocalDateTime processedAt;
+
+    // Ngày Admin bấm nút "Giải quyết xong"
     private LocalDateTime resolvedAt;
 }

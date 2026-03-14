@@ -316,6 +316,7 @@ const handleSubmit = async () => {
   }
 
   // Xử lý Đăng Nhập
+  // Xử lý Đăng Nhập
   if (activeTab.value === 'login') {
     isLoading.value = true
     try {
@@ -323,11 +324,13 @@ const handleSubmit = async () => {
       toast.success('Đăng nhập thành công!')
       router.push(role === 'admin' ? '/admin' : '/home')
     } catch (err) {
-      const raw = err.message || ''
-      if (raw === 'ACCOUNT_BANNED') {
-        toast.error('Tài khoản của bạn đã bị khóa bởi quản trị viên.')
+      // 🔥 Ưu tiên lấy lỗi trực tiếp từ Backend gửi lên
+      const backendMsg = err.response?.data?.message || err.message || ''
+      
+      if (backendMsg.includes('ACCOUNT_BANNED')) {
+        toast.error('🚨 TÀI KHOẢN BỊ KHÓA: Bạn đã bị cấm vĩnh viễn do vi phạm tiêu chuẩn cộng đồng GOMET!', { timeout: 8000 })
       } else {
-        toast.error(raw || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.')
+        toast.error(backendMsg || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.')
       }
     } finally {
       isLoading.value = false
@@ -416,7 +419,15 @@ const handleGoogleCallback = async (response) => {
 
   } catch (err) {
     console.error("Google Login Error:", err)
-    toast.error(err.response?.data?.message || err.message || 'Lỗi đăng nhập bằng Google. Vui lòng thử lại.')
+    
+    // 🔥 CHẶN ĐỨNG LỖI ACCOUNT_BANNED TỪ GOOGLE
+    const backendMsg = err.response?.data?.message || err.message || ''
+    
+    if (backendMsg.includes('ACCOUNT_BANNED')) {
+      toast.error('🚨 TÀI KHOẢN BỊ KHÓA: Bạn không thể đăng nhập bằng Google vì tài khoản này đã bị Ban!', { timeout: 8000 })
+    } else {
+      toast.error(backendMsg || 'Lỗi đăng nhập bằng Google. Vui lòng thử lại.')
+    }
   }
 }
 </script>

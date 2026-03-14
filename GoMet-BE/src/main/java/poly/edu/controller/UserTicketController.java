@@ -4,13 +4,17 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import poly.edu.dao.AccountDAO;
-// Nhớ đảm bảo sếp có class PostDAO nhé
-import poly.edu.dao.PostDAO;
-import poly.edu.entity.Account;
-import poly.edu.entity.Post;
 import poly.edu.entity.Ticket;
 import poly.edu.service.TicketService;
+import poly.edu.entity.Account;
+import poly.edu.entity.Post;
+
+// 🔥 IMPORT THƯ VIỆN CLOUDINARY
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
+
+import java.time.LocalDateTime;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/tickets")
@@ -19,42 +23,58 @@ import poly.edu.service.TicketService;
 public class UserTicketController {
 
     private final TicketService ticketService;
-    private final AccountDAO accountDAO;
-    private final PostDAO postDAO;
 
-    @PostMapping
-    public ResponseEntity<Ticket> createTicket(
-            @RequestParam Integer accountId,
-            @RequestParam String ticketType, // 'BUG', 'REPORT', 'FEEDBACK'
-            @RequestParam(required = false) Integer targetPostId,
-            @RequestParam String title,
-            @RequestParam String description,
-            @RequestParam(required = false) MultipartFile attachment) {
+    // 🔥 TIÊM CLOUDINARY
+    private final Cloudinary cloudinary;
 
-        Account account = accountDAO.findById(accountId).orElse(null);
-        if (account == null) {
-            return ResponseEntity.badRequest().build();
+    @PostMapping("/create")
+    public ResponseEntity<?> createTicket(
+            @RequestParam("accountId") Integer accountId,
+            @RequestParam("ticketType") String ticketType,
+            @RequestParam("title") String title,
+            @RequestParam("description") String description,
+            @RequestParam(value = "targetPostId", required = false) Integer targetPostId,
+            @RequestParam(value = "attachment", required = false) MultipartFile file) {
+
+        try {
+            Ticket ticket = new Ticket();
+            ticket.setTicketType(ticketType);
+            ticket.setTitle(title);
+            ticket.setDescription(description);
+            ticket.setStatus(0); // Chờ duyệt
+            ticket.setCreatedAt(LocalDateTime.now());
+
+            // Gán Account
+            Account account = new Account();
+            account.setAccountID(accountId);
+            ticket.setAccount(account);
+
+            // Gán Post (Nếu có)
+            if (targetPostId != null) {
+                Post post = new Post();
+                post.setPostID(targetPostId);
+                ticket.setTargetPost(post);
+            }
+
+            // 🔥 TÍCH HỢP CLOUDINARY (Đã tối ưu)
+            if (file != null && !file.isEmpty()) {
+                // Đẩy file lên Cloudinary, lưu vào thư mục "gomet_tickets" cho gọn
+                Map uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
+                        "folder", "gomet_tickets",
+                        "resource_type", "auto"
+                ));
+
+                // Lấy đường dẫn an toàn từ Cloudinary
+                String imageUrl = uploadResult.get("secure_url").toString();
+
+                // Lưu link xịn này vào Database
+                ticket.setAttachment(imageUrl);
+            }
+
+            return ResponseEntity.ok(ticketService.createTicket(ticket));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body("Lỗi upload hoặc hệ thống: " + e.getMessage());
         }
-
-        Ticket ticket = Ticket.builder()
-                .account(account)
-                .ticketType(ticketType.toUpperCase())
-                .title(title)
-                .description(description)
-                .build();
-
-        // Nếu là REPORT thì gắn TargetPost vào
-        if ("REPORT".equalsIgnoreCase(ticketType) && targetPostId != null) {
-            Post targetPost = postDAO.findById(targetPostId).orElse(null);
-            ticket.setTargetPost(targetPost);
-        }
-
-        // Xử lý upload file (Lưu ý: Chỗ này sếp viết hàm upload Firebase/Cloudinary nhé)
-        if (attachment != null && !attachment.isEmpty()) {
-            ticket.setAttachment("uploaded_file_path.png");
-        }
-
-        Ticket savedTicket = ticketService.createTicket(ticket);
-        return ResponseEntity.ok(savedTicket);
     }
 }

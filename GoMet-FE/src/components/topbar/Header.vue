@@ -141,13 +141,11 @@
       <div class="divider-vertical"></div>
       <LangSwitcher />
 
-      <UserMenu 
-        v-if="authStore.isAuthenticated"
-        @open-premium="emit('open-premium')"
-        @open-bug="showBugReport = true"
-        @open-feedback="showFeedbackModal = true"
-      />
-
+<UserMenu 
+  v-if="authStore.isAuthenticated"
+  @open-premium="emit('open-premium')"
+  @open-support="showFeedbackModal = true" 
+/>
       <div v-else class="guest-actions">
         <button class="btn-login" @click="emit('open-login')">{{ $t('auth.login') }}</button>
         <button class="btn-signup" @click="emit('open-register')">{{ $t('auth.register') }}</button>

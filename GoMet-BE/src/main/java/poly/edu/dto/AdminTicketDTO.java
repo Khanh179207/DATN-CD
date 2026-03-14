@@ -21,4 +21,6 @@ public class AdminTicketDTO {
 
     private LocalDateTime createdAt;
     private LocalDateTime resolvedAt;
+    // Trong file AdminTicketDTO.java
+    private LocalDateTime processedAt;
 }
