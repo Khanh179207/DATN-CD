@@ -34,6 +34,7 @@ import ReportManagement from '@/pages/admin/ReportManagement.vue'
 import NotificationManagement from '@/pages/admin/NotificationManagement.vue'
 import AchievementManagement from '@/pages/admin/AchievementManagement.vue'
 import Statistics from '@/pages/admin/Statistics.vue'
+import TicketManagement from '@/pages/admin/TicketManagement.vue'
 
 
 const routes = [
@@ -132,7 +133,8 @@ const routes = [
       { path: 'comments', name: 'AdminComments', component: CommentManagement },
       { path: 'reports', name: 'AdminReports', component: ReportManagement },
       { path: 'achievements', name: 'AdminAchievements', component: AchievementManagement },
-      { path: 'notifications', name: 'AdminNotifications', component: NotificationManagement }
+      { path: 'notifications', name: 'AdminNotifications', component: NotificationManagement },
+      { path: 'tickets', name: 'AdminTickets', component: TicketManagement }
     ]
   },
 

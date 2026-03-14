@@ -79,6 +79,10 @@
           <span>Quản lý Khiếu Nại</span>
           <span class="count-badge">5</span>
         </router-link>
+        <router-link to="/admin/tickets" class="nav-link-lux" active-class="active">
+          <div class="icon-orb"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></div>
+          <span>Quản lý Góp ý</span>
+        </router-link>
       </div>
 
     </nav>
