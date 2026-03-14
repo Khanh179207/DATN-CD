@@ -127,6 +127,25 @@
   }
 }
 
+.btn-view-profile {
+  background: transparent;
+  color: $primary-600;
+  border: 1.5px solid $primary-600;
+  padding: $space-3 $space-6;
+  border-radius: $radius-full;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
+
+  &:hover {
+    background: $primary-50;
+    box-shadow: 0 5px 15px rgba(234, 88, 12, 0.15);
+    transform: translateY(-1px);
+  }
+
+  &:active { transform: scale(0.97); }
+}
+
 .btn-group-header {
   display: flex;
   align-items: center;

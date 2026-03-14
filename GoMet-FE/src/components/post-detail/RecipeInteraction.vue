@@ -7,7 +7,7 @@
       <section class="author-section fade-in">
         <div class="author-vip-card">
           <div class="auth-left">
-            <div class="avatar-ring">
+            <div class="avatar-ring" style="cursor: pointer;" @click="goToChefProfile" :title="$t('profile.view_profile')">
               <img :src="post.authorAvatar" class="auth-img" alt="Author Avatar">
             </div>
           </div>
@@ -27,6 +27,9 @@
 
                 <button class="btn-connect" :class="{ 'is-following': isFollowing }" @click="toggleFollow">
                   {{ isFollowing ? $t('profile.following') : $t('recipe.connect') }}
+                </button>
+                <button class="btn-view-profile" @click="goToChefProfile" :title="$t('profile.view_profile')">
+                  Xem hồ sơ
                 </button>
               </div>
             </div>
@@ -161,6 +164,7 @@
 
 <script setup>
 import { ref, watch, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useChatStore } from '@/stores/chat' // Import Store Chat
@@ -172,6 +176,7 @@ import axios from 'axios'
 
 const props = defineProps({ post: Object })
 const { t } = useI18n()
+const router = useRouter()
 
 const authStore = useAuthStore()
 const chatStore = useChatStore() // Khởi tạo Store Chat
@@ -355,6 +360,14 @@ const handleContactChef = async () => {
   } catch (err) {
     console.error("Lỗi chat:", err);
     toast.error('Không thể kết nối lúc này, Sếp vui lòng thử lại sau nhé!');
+  }
+}
+
+// Chuyển hướng tới trang cá nhân đầu bếp
+const goToChefProfile = () => {
+  const authorID = props.post?.authorID
+  if (authorID) {
+    router.push(`/profile/${authorID}`)
   }
 }
 
