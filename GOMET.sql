@@ -320,6 +320,19 @@ CREATE TABLE Subscription (
 );
 GO
 
+CREATE TABLE Ticket (
+    TicketID INT IDENTITY(1,1) PRIMARY KEY,
+    AccountID INT NULL,
+    Title NVARCHAR(255),
+    Description NVARCHAR(MAX) NOT NULL,
+    Attachment NVARCHAR(500) NULL,
+    IsRead BIT DEFAULT 0,
+    CreatedAt DATETIME DEFAULT GETDATE(),
+
+    CONSTRAINT FK_Ticker_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID)
+);
+GO
+
 CREATE TABLE Error (
     ErrorID INT IDENTITY(1,1) PRIMARY KEY,
     AccountID INT NULL,
