@@ -16,13 +16,13 @@ public class UploadController {
 
     private final CloudinaryService cloudinaryService;
 
-    @PostMapping("/image")
+    @PostMapping
     public ResponseEntity<?> uploadImage(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "folder", defaultValue = "general") String folder) {
         try {
             // Gọi Service để ném ảnh lên mây
-            String imageUrl = cloudinaryService.uploadImage(file, folder);
+            String imageUrl = cloudinaryService.uploadMedia(file, folder);
 
             // Trả về JSON chứa link ảnh
             return ResponseEntity.ok(Map.of(

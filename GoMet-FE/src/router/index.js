@@ -30,7 +30,6 @@ import CategoryManagement from '@/pages/admin/CategoryManagement.vue'
 import UserManagement from '@/pages/admin/UserManagement.vue'
 import EventManagement from '@/pages/admin/EventManagement.vue'
 import CommentManagement from '@/pages/admin/CommentManagement.vue'
-import ReportManagement from '@/pages/admin/ReportManagement.vue'
 import NotificationManagement from '@/pages/admin/NotificationManagement.vue'
 import AchievementManagement from '@/pages/admin/AchievementManagement.vue'
 import Statistics from '@/pages/admin/Statistics.vue'
@@ -148,7 +147,6 @@ const routes = [
       { path: 'users', name: 'AdminUsers', component: UserManagement },
       { path: 'events', name: 'AdminEvents', component: EventManagement },
       { path: 'comments', name: 'AdminComments', component: CommentManagement },
-      { path: 'reports', name: 'AdminReports', component: ReportManagement },
       { path: 'achievements', name: 'AdminAchievements', component: AchievementManagement },
       { path: 'notifications', name: 'AdminNotifications', component: NotificationManagement },
       { path: 'tickets', name: 'AdminTickets', component: TicketManagement }

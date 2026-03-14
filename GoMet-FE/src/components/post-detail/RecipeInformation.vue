@@ -1,19 +1,31 @@
 <template>
   <div class="recipe-guide-container">
     
-    <div v-if="embedVideoUrl" class="top-video-container" style="margin-top: 20px;">
+    <div v-if="parsedVideo" class="top-video-container" style="margin-top: 20px;">
       <div class="premium-card video-card slide-in-up">
         <div class="video-header">
           <h2>🎬 {{ $t('Video hướng dẫn') || 'Video Hướng Dẫn' }}</h2>
         </div>
         <div class="video-wrapper">
+          
           <iframe 
-            :src="embedVideoUrl" 
+            v-if="parsedVideo.type === 'youtube'"
+            :src="parsedVideo.url" 
             title="Recipe Video" 
             frameborder="0" 
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
             allowfullscreen>
           </iframe>
+
+          <video 
+            v-else-if="parsedVideo.type === 'html5'"
+            :src="parsedVideo.url"
+            controls
+            playsinline
+            preload="metadata"
+            class="html5-video-player">
+          </video>
+
         </div>
       </div>
     </div>
@@ -144,31 +156,32 @@ const userNote = ref('')
 const isSavingNote = ref(false)
 const ingredientsList = ref([])
 
-// --- LOGIC XỬ LÝ LINK VIDEO YOUTUBE ---
-const embedVideoUrl = computed(() => {
-  // Ưu tiên lấy từ post.video, nếu không có thì gán link mặc định của bạn
-  const url = props.post?.video || 'https://www.youtube.com/watch?v=8sVtL0o-v7U'
+// ==============================================================
+// LOGIC MỚI: NHẬN DIỆN VÀ PHÂN LOẠI LINK VIDEO
+// ==============================================================
+const parsedVideo = computed(() => {
+  const url = props.post?.video;
   
-  if (!url) return null
-  
-  // Nếu link đã là dạng embed thì trả về luôn
-  if (url.includes('youtube.com/embed/')) return url
-  
-  // Xử lý link dạng: https://www.youtube.com/watch?v=xxxxx
-  if (url.includes('youtube.com/watch?v=')) {
-    const videoId = url.split('v=')[1]?.split('&')[0]
-    if (videoId) return `https://www.youtube.com/embed/${videoId}`
-  }
-  
-  // Xử lý link dạng: https://youtu.be/xxxxx
-  if (url.includes('youtu.be/')) {
-    const videoId = url.split('youtu.be/')[1]?.split('?')[0]
-    if (videoId) return `https://www.youtube.com/embed/${videoId}`
+  // Nếu bài viết không có video -> Trả về null để ẩn khung Video
+  if (!url) return null;
+
+  // Kiểm tra nếu là link YouTube
+  if (url.includes('youtube.com') || url.includes('youtu.be')) {
+    let embedUrl = url;
+    if (url.includes('youtube.com/watch?v=')) {
+      const videoId = url.split('v=')[1]?.split('&')[0];
+      if (videoId) embedUrl = `https://www.youtube.com/embed/${videoId}`;
+    } else if (url.includes('youtu.be/')) {
+      const videoId = url.split('youtu.be/')[1]?.split('?')[0];
+      if (videoId) embedUrl = `https://www.youtube.com/embed/${videoId}`;
+    }
+    return { type: 'youtube', url: embedUrl };
   }
 
-  // Trả về url gốc nếu không format được
-  return url 
+  // Nếu không phải YouTube (VD: Cloudinary .mp4), trả về kiểu html5
+  return { type: 'html5', url: url };
 })
+// ==============================================================
 
 
 // --- LOGIC 1: GHI CHÚ CÁ NHÂN ---
@@ -272,13 +285,26 @@ onMounted(() => {
   overflow-x: hidden; 
 }
 
-/* ================= VIDEO & BODY CONTAINER ================= */
+/* ================= VIDEO STYLE ================= */
 .top-video-container { max-width: 1200px; margin: 0 auto 50px auto; padding: 0 24px; }
 .video-card { padding: 30px; }
 .video-header h2 { font-family: 'Playfair Display', serif; font-size: 1.8rem; margin: 0 0 20px 0; color: #111827; }
-.video-wrapper { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 16px; background: #111827; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
+.video-wrapper { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 16px; background: #000; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
 .video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
 
+/* 🔥 STYLE THÊM CHO VIDEO MP4 TỪ CLOUDINARY */
+.html5-video-player {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* Giữ nguyên tỷ lệ video, ko bị cắt lẹm */
+  background-color: #000;
+  border-radius: 16px;
+}
+
+/* ================= BODY CONTAINER ================= */
 .body-section-premium { width: 100%; background-color: #F8FAFC; padding: 60px 0; }
 .body-container-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; display: grid; grid-template-columns: 380px minmax(0, 1fr); gap: 60px; }
 .sticky-wrapper { position: sticky; top: 90px; display: flex; flex-direction: column; gap: 30px; }

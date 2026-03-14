@@ -19,7 +19,7 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     public Ticket createTicket(Ticket ticket) {
-        ticket.setStatus(0); // 0 = Chờ xử lý (Pending)
+        ticket.setStatus(0); // 0 = Chờ xử lý
         ticket.setCreatedAt(LocalDateTime.now());
         return ticketDAO.save(ticket);
     }
@@ -27,6 +27,14 @@ public class TicketServiceImpl implements TicketService {
     @Override
     public List<AdminTicketDTO> getTicketsByStatus(Integer status) {
         return ticketDAO.findByStatus(status).stream()
+                .map(this::convertToAdminDTO) // Dùng hàm helper chuẩn
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<AdminTicketDTO> getAllTickets() {
+        // 🔥 FIX Ở ĐÂY: Lấy hết và dùng convertToAdminDTO để map cho an toàn
+        return ticketDAO.findAll().stream()
                 .map(this::convertToAdminDTO)
                 .collect(Collectors.toList());
     }
@@ -38,7 +46,6 @@ public class TicketServiceImpl implements TicketService {
 
         ticket.setStatus(newStatus);
 
-        // Nếu admin đổi trạng thái thành Đã giải quyết (2) hoặc Từ chối (3)
         if (newStatus == 2 || newStatus == 3) {
             ticket.setResolvedAt(LocalDateTime.now());
         }
@@ -46,6 +53,7 @@ public class TicketServiceImpl implements TicketService {
         return ticketDAO.save(ticket);
     }
 
+    // Hàm helper "vàng" - Giữ nguyên nhưng sếp check kỹ tên field trong DTO nhé
     private AdminTicketDTO convertToAdminDTO(Ticket ticket) {
         AdminTicketDTO dto = new AdminTicketDTO();
         dto.setTicketID(ticket.getTicketID());
@@ -64,6 +72,7 @@ public class TicketServiceImpl implements TicketService {
         }
 
         if (ticket.getTargetPost() != null) {
+            // Check xem DTO của sếp là setTargetPostId hay setTargetPostID nhé
             dto.setTargetPostId(ticket.getTargetPost().getPostID());
         }
 

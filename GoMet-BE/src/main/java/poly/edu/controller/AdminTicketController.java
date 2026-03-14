@@ -12,10 +12,19 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/admin/tickets")
 @RequiredArgsConstructor
-@CrossOrigin
+@CrossOrigin // Giữ nguyên để tránh lỗi CORS
 public class AdminTicketController {
 
     private final TicketService ticketService;
+
+    // 🔥 THÊM MỚI: Trả về TOÀN BỘ ticket (Để FE load danh sách ban đầu)
+    @GetMapping
+    public ResponseEntity<List<AdminTicketDTO>> getAllTickets() {
+        // Sếp nên bổ sung hàm getAllTickets trong TicketService
+        // Hoặc tạm thời gọi lấy status 0 (Pending) làm mặc định
+        List<AdminTicketDTO> tickets = ticketService.getAllTickets();
+        return ResponseEntity.ok(tickets);
+    }
 
     // Lấy danh sách Ticket ĐANG CHỜ (Status = 0)
     @GetMapping("/pending")
@@ -31,7 +40,7 @@ public class AdminTicketController {
         return ResponseEntity.ok(tickets);
     }
 
-    // Admin cập nhật trạng thái (Ví dụ truyền ?status=1 hoặc ?status=2)
+    // Admin cập nhật trạng thái (PUT /api/admin/tickets/101/status?status=2)
     @PutMapping("/{id}/status")
     public ResponseEntity<Ticket> updateTicketStatus(
             @PathVariable Integer id,
