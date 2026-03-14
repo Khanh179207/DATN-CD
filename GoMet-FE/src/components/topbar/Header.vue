@@ -1,6 +1,6 @@
 <template>
   <header class="content-header" :class="[{ 'is-scrolled': isScrolled }, { 'theme-dark': route.meta?.isDark }]">
-    
+
     <SearchBox />
 
     <div class="header-right">
@@ -81,15 +81,23 @@
         </div>
 
         <div class="action-wrapper">
-          <button class="btn-icon" :class="{ active: chatStore.isMessengerOpen }" title="Messages" @click.stop="toggleChat">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          <button class="btn-icon" :class="{ active: chatStore.isMessengerOpen }" title="Messages"
+            @click.stop="toggleChat">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
             <span v-if="chatStore.totalUnreadCount > 0" class="badge-count">{{ chatStore.totalUnreadCount }}</span>
           </button>
         </div>
 
         <div class="action-wrapper" @click.stop>
           <button class="btn-icon" :class="{ active: showNoti }" title="Notifications" @click="toggleNoti">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
             <span v-if="unreadNotiCount > 0" class="badge-count">{{ unreadNotiCount }}</span>
           </button>
           <transition name="dropdown-anim">
@@ -99,12 +107,20 @@
                 <span class="action-link" @click="handleMarkAllRead">{{ $t('header.mark_all_read') }}</span>
               </div>
               <div class="dropdown-body scroll-body">
-                <div v-for="n in notifications" :key="n.id" class="list-item noti-item" :class="{ unread: !n.isRead }" @click="handleNotiClick(n)">
+                <div v-for="n in notifications" :key="n.id" class="list-item noti-item" :class="{ unread: !n.isRead }"
+                  @click="handleNotiClick(n)">
                   <div class="avatar-wrap">
                     <img :src="n.avatar">
                     <div class="noti-type-icon" :class="n.type">
-                      <svg v-if="n.type === 'like'" width="10" height="10" viewBox="0 0 24 24" fill="white" stroke="white"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-                      <svg v-else width="10" height="10" viewBox="0 0 24 24" fill="white" stroke="white"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                      <svg v-if="n.type === 'like'" width="10" height="10" viewBox="0 0 24 24" fill="white"
+                        stroke="white">
+                        <path
+                          d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
+                        </path>
+                      </svg>
+                      <svg v-else width="10" height="10" viewBox="0 0 24 24" fill="white" stroke="white">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                      </svg>
                     </div>
                   </div>
                   <div class="item-info">
