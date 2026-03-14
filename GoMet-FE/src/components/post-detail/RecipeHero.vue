@@ -11,7 +11,12 @@
             <span class="sep">/</span>
             <span class="category-label">{{ post.category }}</span>
           </div>
-          <button class="btn-report-minimal" :title="$t('common.report')">
+
+          <button 
+            class="btn-report-minimal" 
+            :title="$t('common.report')"
+            @click="openReportModal"
+          >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
           </button>
         </div>
@@ -52,6 +57,12 @@
         </div>
       </div>
     </div>
+
+    <FeedbackModal 
+      v-if="showReportModal" 
+      :form="reportForm" 
+      @close="showReportModal = false" 
+    />
   </section>
 </template>
 
@@ -61,18 +72,44 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { toast } from '@/composables/useToast'
 import { addFavorite, removeFavorite, checkFavorite } from '@/services/socialService'
+// 1. Import FeedbackModal
+import FeedbackModal from '@/components/modals/FeedbackModal.vue'
 
 const props = defineProps({ post: { type: Object, required: true } })
 const router = useRouter()
 const authStore = useAuthStore()
 
-// Lấy ra logic Favorite
+// 2. Logic điều khiển Report Modal
+const showReportModal = ref(false)
+const reportForm = ref({
+  ticketType: 'REPORT',
+  title: '',
+  description: '',
+  attachment: null,
+  targetPostID: props.post.PostID // Gán ID bài viết hiện tại vào đây
+})
+
+const openReportModal = () => {
+  if (!authStore.isAuthenticated) {
+    toast.warn('Đăng nhập để báo cáo bài viết vi phạm sếp nhé!')
+    return
+  }
+
+  // 🔥 CẬP NHẬT ID NGAY TẠI ĐÂY (Thử mọi trường hợp tên biến)
+  reportForm.value.targetPostID = props.post.postID || props.post.id || props.post.PostID;
+  
+  console.log("ID bài viết gửi đi:", reportForm.value.targetPostID); // Sếp check log ở F12 xem có ID chưa nhé
+
+  showReportModal.value = true
+}
+
+// --- GIỮ NGUYÊN CODE CŨ CỦA SẾP ---
 const isFavorite = ref(false)
 
 const checkFavoriteStatus = async () => {
   if (!authStore.isAuthenticated) return
   try {
-    const res = await checkFavorite(authStore.currentUser.accountID, props.post.id)
+    const res = await checkFavorite(authStore.user.accountID, props.post.id)
     isFavorite.value = res
   } catch (e) { console.log("Check favorite error", e) }
 }
@@ -84,11 +121,11 @@ const toggleFavorite = async () => {
   }
   try {
     if (isFavorite.value) {
-      await removeFavorite(authStore.currentUser.accountID, props.post.id)
+      await removeFavorite(authStore.user.accountID, props.post.id)
       isFavorite.value = false
       toast.success('Đã bỏ lưu công thức')
     } else {
-      await addFavorite(authStore.currentUser.accountID, props.post.id)
+      await addFavorite(authStore.user.accountID, props.post.id)
       isFavorite.value = true
       toast.success('Đã lưu công thức')
     }

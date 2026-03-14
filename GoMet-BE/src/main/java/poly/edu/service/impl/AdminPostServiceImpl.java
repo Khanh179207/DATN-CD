@@ -1,9 +1,12 @@
 package poly.edu.service.impl;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import poly.edu.dao.AccountDAO;
 import poly.edu.dao.PostDAO;
 import poly.edu.dto.AdminPostDTO;
+import poly.edu.entity.Account;
 import poly.edu.entity.Post;
 import poly.edu.service.AdminPostService;
 import java.util.List;
@@ -14,6 +17,7 @@ import java.util.stream.Collectors;
 public class AdminPostServiceImpl implements AdminPostService {
 
     private final PostDAO postDAO;
+    private final AccountDAO accountDAO;
 
     private AdminPostDTO toDTO(Post post) {
         AdminPostDTO dto = new AdminPostDTO();
@@ -67,8 +71,40 @@ public class AdminPostServiceImpl implements AdminPostService {
         postDAO.save(post);
     }
 
+    // Sửa hàm này, TUYỆT ĐỐI KHÔNG dùng postDAO.deleteById(id) nữa sếp nhé!
     @Override
     public void deletePost(Integer id) {
-        postDAO.deleteById(id);
+        Post post = postDAO.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy bài viết số " + id));
+
+        // 🔥 Trảm mềm: Chuyển trạng thái hoạt động về 0 (Bị ẩn)
+        post.setIsActive(0);
+
+        // (Tùy chọn) Sếp có thể tước luôn tích xanh phê duyệt của nó
+        post.setIsApproved(-1);
+
+        postDAO.save(post);
+    }
+    // Tiêm thêm DAO này vào
+
+    @Override
+    @Transactional // Nhớ thêm Transactional để đảm bảo nếu lỗi thì không ban cũng không ẩn bài
+    public void banAuthorByPostId(Integer postId) {
+        Post post = postDAO.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy bài viết!"));
+        Account author = post.getAccount();
+
+        if (author == null) throw new RuntimeException("Tác giả không tồn tại!");
+
+        // 1. Trảm tài khoản: Đổi trạng thái thành 0 (BANNED)
+        author.setIsActive(0);
+
+        // 🔥 2. ĐÁ VĂNG KHỎI APP: Xóa trắng cái Token hiện tại của họ
+        author.setToken(null);
+        accountDAO.save(author);
+
+        // 🚀 3. QUÉT SẠCH DẤU VẾT: Ẩn toàn bộ bài viết của thằng này
+        // Giả sử sếp dùng cột 'is_active' hoặc 'status' trong bảng Post để ẩn bài
+        postDAO.deactivateAllPostsByAccountId(author.getAccountID());
     }
 }

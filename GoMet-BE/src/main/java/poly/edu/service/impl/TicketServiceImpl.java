@@ -46,6 +46,13 @@ public class TicketServiceImpl implements TicketService {
 
         ticket.setStatus(newStatus);
 
+        // 🔥 1. NẾU LÀ TIẾP NHẬN (Status = 1) -> Lưu giờ bắt đầu xử lý
+        // Dùng điều kiện == null để lỡ sếp có bấm lại nút này nó cũng không bị ghi đè giờ cũ
+        if (newStatus == 1 && ticket.getProcessedAt() == null) {
+            ticket.setProcessedAt(LocalDateTime.now());
+        }
+
+        // 🔥 2. NẾU LÀ GIẢI QUYẾT XONG (2) HOẶC TỪ CHỐI (3) -> Lưu giờ đóng Ticket
         if (newStatus == 2 || newStatus == 3) {
             ticket.setResolvedAt(LocalDateTime.now());
         }
@@ -64,6 +71,7 @@ public class TicketServiceImpl implements TicketService {
         dto.setStatus(ticket.getStatus());
         dto.setCreatedAt(ticket.getCreatedAt());
         dto.setResolvedAt(ticket.getResolvedAt());
+        dto.setProcessedAt(ticket.getProcessedAt());
 
         if (ticket.getAccount() != null) {
             dto.setAccountID(ticket.getAccount().getAccountID());

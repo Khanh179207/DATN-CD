@@ -9,4 +9,5 @@ public interface AdminPostService {
     void approvePost(Integer id);
     void deactivePost(Integer id);
     void deletePost(Integer id);
+    void banAuthorByPostId(Integer postId);
 }
