@@ -201,6 +201,7 @@ public class PostController {
         dto.setTitle(p.getTitle());
         dto.setDescription(p.getDescription());
         dto.setMedia(p.getMedia());
+        dto.setVideo(p.getVideo());
         dto.setLevel(p.getLevel());
         dto.setCookingTime(p.getCookingTime());
         dto.setViews(p.getViews());
@@ -249,6 +250,7 @@ public class PostController {
         dto.setDescription(p.getDescription());
         dto.setIngredients(p.getIngredients());
         dto.setMedia(p.getMedia());
+        dto.setVideo(p.getVideo());
         dto.setLevel(p.getLevel());
         dto.setCookingTime(p.getCookingTime());
         dto.setViews(p.getViews());
@@ -347,6 +349,7 @@ public class PostController {
                     .description(dto.getDescription() != null ? dto.getDescription() : "")
                     .ingredients(dto.getIngredients() != null ? dto.getIngredients() : "")
                     .media(dto.getMedia() != null ? dto.getMedia() : "") // Link Cloudinary
+                    .video(dto.getVideo())
                     .level(dto.getLevel() != null ? dto.getLevel() : 2)
                     .cookingTime(dto.getCookingTime() != null ? dto.getCookingTime() : 30)
                     .views(0)
@@ -365,6 +368,8 @@ public class PostController {
                     step.setStepNumber(stepNum++);
                     step.setContent(s.getDesc() != null ? s.getDesc() : ""); // Nhận từ desc của Vue
                     step.setImage(s.getImage()); // Link Cloudinary
+                    // Nếu bước làm cũng có video (tùy sếp chọn), thêm vào đây:
+                    // step.setVideo(s.getVideo());
                     cookingStepsDAO.save(step);
                 }
             }

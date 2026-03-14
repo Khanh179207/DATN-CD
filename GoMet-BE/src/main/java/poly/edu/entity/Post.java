@@ -40,6 +40,8 @@ public class Post {
 
     private String media;
 
+    private String video;
+
     @Column(nullable = false)
     private Integer level;
 

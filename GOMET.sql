@@ -91,6 +91,7 @@ CREATE TABLE Post (
     Description NVARCHAR(MAX) NOT NULL,
     Ingredients NVARCHAR(MAX) NOT NULL,
     Media NVARCHAR(255),
+	Video NVARCHAR(255),
     Level INT DEFAULT 1,
     CookingTime INT DEFAULT 30,
     Views INT DEFAULT 0,

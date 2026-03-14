@@ -19,6 +19,7 @@ public class PostDTO {
     private String description;
     private String ingredients; // Vue đang gửi lên dạng String (đã join bằng dấu phẩy)
     private String media;       // Gửi Link Cloudinary
+    private String video;
     private Integer level;
     private Integer cookingTime;
 

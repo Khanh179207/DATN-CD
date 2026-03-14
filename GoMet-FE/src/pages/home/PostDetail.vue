@@ -42,6 +42,7 @@ async function loadPost(id) {
       postID:        dto.postID,
       title:         dto.title,
       image:         dto.media || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=1200&q=95',
+      video:         dto.video || null,
       author:        dto.authorName || 'GoMet Chef',
       authorID:      dto.authorID,
       authorAvatar:  dto.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(dto.authorName||'G')}&background=EA580C&color=fff`,
