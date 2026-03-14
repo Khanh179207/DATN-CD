@@ -191,12 +191,28 @@ const router = createRouter({
 })
 
 // ─── NAVIGATION GUARDS ────────────────────────────────────────────────────────
+// router/index.js
+
 router.beforeEach((to, from, next) => {
   const userStr = localStorage.getItem('user')
   const user = userStr ? JSON.parse(userStr) : null
   const isLoggedIn = !!user?.token
-  const isPremium = isLoggedIn && (user?.isPremium === true || user?.isPremium === 1 || user?.role === 'premium')
-  const isAdmin = isLoggedIn && (user?.isAdmin === true || user?.isAdmin === 1 || user?.role === 'admin')
+
+  // Sửa lại dòng này để kiểm tra "thoáng" hơn
+  // Ép kiểu về String để so sánh cho chắc ăn (tránh lỗi 1 vs "1")
+  const isPremium = isLoggedIn && (
+    String(user?.isPremium) === "true" || 
+    String(user?.isPremium) === "1" || 
+    user?.role === 'premium'
+  )
+  
+  const isAdmin = isLoggedIn && (
+    String(user?.isAdmin) === "true" || 
+    String(user?.isAdmin) === "1" || 
+    user?.role === 'admin'
+  )
+
+  // ... các phần sau giữ nguyên ...
 
   // 1. Admin-only routes: must be logged in AND be an admin
   if (to.matched.some(r => r.meta?.requiresAdmin)) {

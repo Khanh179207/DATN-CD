@@ -312,47 +312,11 @@ CREATE TABLE Subscription (
     SubID INT IDENTITY(1,1) PRIMARY KEY,
     AccountID INT NOT NULL,
     PlanType INT NOT NULL,
-    StartAt DATE NOT NULL,
-    EndAt DATE NOT NULL,
+    StartAt DATETIME2 NOT NULL,
+    EndAt DATETIME2 NOT NULL,
     isActive INT DEFAULT 1,
 
     CONSTRAINT FK_Sub_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID)
-);
-GO
-
-CREATE TABLE Ticket (
-    TicketID INT IDENTITY(1,1) PRIMARY KEY,
-    AccountID INT NULL,
-    Title NVARCHAR(255),
-    Description NVARCHAR(MAX) NOT NULL,
-    Attachment NVARCHAR(500) NULL,
-    IsRead BIT DEFAULT 0,
-    CreatedAt DATETIME DEFAULT GETDATE(),
-
-    CONSTRAINT FK_Ticker_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID)
-);
-GO
-
-CREATE TABLE Error (
-    ErrorID INT IDENTITY(1,1) PRIMARY KEY,
-    AccountID INT NULL,
-    ErrorName NVARCHAR(255) NOT NULL,
-    Description NVARCHAR(MAX) NOT NULL,
-    CreatedAt DATETIME DEFAULT GETDATE(),
-
-    CONSTRAINT FK_Error_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID)
-);
-GO
-
-CREATE TABLE Report (
-    ReportID INT IDENTITY(1,1) PRIMARY KEY,
-    AccountID INT NOT NULL,
-    PostID INT NOT NULL,
-    Reason NVARCHAR(MAX) NOT NULL,
-    CreatedAt DATETIME DEFAULT GETDATE(),
-
-    CONSTRAINT FK_Report_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
-    CONSTRAINT FK_Report_Post FOREIGN KEY (PostID) REFERENCES Post(PostID)
 );
 GO
 
@@ -381,6 +345,52 @@ CREATE TABLE Message (
 );
 GO
 
+USE DATN_CD;
+GO
+
+-- Bảng lưu lịch sử giao dịch thanh toán
+CREATE TABLE PaymentTransaction (
+    TransactionID INT IDENTITY(1,1) PRIMARY KEY,
+    AccountID INT NOT NULL,
+    OrderCode NVARCHAR(50) NOT NULL UNIQUE, -- Mã giao dịch (VD: GOMET9999)
+    Amount INT NOT NULL,                    -- Số tiền phải trả
+    PlanType INT NOT NULL,                  -- 1: Tháng, 2: Năm, 3: Trọn đời (Khớp với bảng Subscription)
+    Status NVARCHAR(20) DEFAULT 'PENDING',  -- Trạng thái: PENDING, PAID, CANCELLED
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    PaidAt DATETIME NULL,                   -- Thời gian nhận được tiền
+
+    CONSTRAINT FK_Transaction_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID)
+);
+GO
+CREATE TABLE Ticket (
+    TicketID INT IDENTITY(1,1) PRIMARY KEY,
+    AccountID INT NOT NULL,            -- Người gửi ticket
+    
+    -- Phân loại Ticket (Dùng code để quy định)
+    -- VD: 'BUG' (Báo lỗi), 'REPORT' (Báo cáo vi phạm), 'FEEDBACK' (Góp ý)
+    TicketType NVARCHAR(50) NOT NULL,  
+    
+    -- Dành riêng cho loại 'REPORT' (Nếu họ báo cáo một bài viết)
+    TargetPostID INT NULL,             
+    
+    -- Nội dung chính
+    Title NVARCHAR(255) NOT NULL,
+    Description NVARCHAR(MAX) NOT NULL,
+    Attachment NVARCHAR(500) NULL,     -- Ảnh đính kèm (Lỗi, hoặc bằng chứng vi phạm)
+    
+    -- Trạng thái xử lý (Quy trình Admin)
+    -- VD: 0 = 'Chưa xem', 1 = 'Đang xử lý', 2 = 'Đã giải quyết', 3 = 'Từ chối'
+    Status INT DEFAULT 0,              
+    
+    -- Tracking thời gian
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    ResolvedAt DATETIME NULL,          -- Thời gian Admin xử lý xong
+    
+    -- Khóa ngoại
+    CONSTRAINT FK_Ticket_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
+    CONSTRAINT FK_Ticket_Post FOREIGN KEY (TargetPostID) REFERENCES Post(PostID)
+);
+GO
 -- ==========================================
 -- 6. TRIGGERS TỰ ĐỘNG CẬP NHẬT
 -- ==========================================
@@ -437,11 +447,17 @@ INSERT INTO Post (AccountID, CategoryID, Title, Description, Ingredients, isAppr
 INSERT INTO EventPosts (EventID, PostID) VALUES (1, 1), (1, 2);
 GO
 
-SELECT * FROM account;
 
 SELECT * FROM event;
 
 SELECT * FROM Votes;
 
 SELECT * FROM Likes;
+
 SELECT * FROM account;
+
+SELECT * FROM Subscription;
+
+SELECT * FROM PaymentTransaction;
+
+SELECT * FROM Ticket;

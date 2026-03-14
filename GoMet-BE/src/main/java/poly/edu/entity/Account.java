@@ -98,10 +98,6 @@ public class Account {
 
     @JsonIgnore
     @OneToMany(mappedBy = "account")
-    private List<Error> errors;
-
-    @JsonIgnore
-    @OneToMany(mappedBy = "account")
-    private List<Report> reports;
+    private List<Ticket> tickets;
 
 }

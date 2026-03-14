@@ -63,9 +63,10 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { toast } from '@/composables/useToast'
+import apiClient from '@/services/api' // Đảm bảo sếp dùng đúng cấu hình axios/fetch
 
 const props = defineProps({
   form: {
@@ -121,16 +122,25 @@ const submitFeedback = async () => {
 
   try {
     const formDataToSend = new FormData()
+    
+    // Gửi các tham số theo đúng yêu cầu của BE
+    formDataToSend.append('accountId', authStore.user.accountID)
+    formDataToSend.append('ticketType', 'FEEDBACK') // Ép cứng loại là FEEDBACK
     formDataToSend.append('title', formData.value.title)
     formDataToSend.append('description', formData.value.description)
-    formDataToSend.append('accountId', authStore.user.accountID)
 
     if (formData.value.attachment) {
       formDataToSend.append('attachment', formData.value.attachment)
     }
 
+    // Tùy theo project sếp cấu hình API thế nào (fetch hoặc axios)
     const response = await fetch('/api/tickets', {
       method: 'POST',
+      headers: {
+        // ĐỪNG set Content-Type là 'multipart/form-data' khi dùng fetch + FormData
+        // Trình duyệt sẽ tự động thêm boundary cho multipart
+        'Authorization': `Bearer ${authStore.token || localStorage.getItem('token')}` // Nhớ truyền token nếu sếp yêu cầu đăng nhập
+      },
       body: formDataToSend
     })
 
@@ -138,18 +148,20 @@ const submitFeedback = async () => {
       toast.success('Cảm ơn bạn đã gửi góp ý! Chúng tôi sẽ xem xét sớm nhất.')
       closeModal()
     } else {
-      throw new Error('Failed to submit feedback')
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.message || 'Failed to submit feedback')
     }
   } catch (error) {
     console.error('Error submitting feedback:', error)
-    toast.error('Có lỗi xảy ra khi gửi góp ý. Vui lòng thử lại!')
+    toast.error('Có lỗi xảy ra khi gửi góp ý. Vui lòng thử lại sau!')
   } finally {
     isSubmitting.value = false
   }
 }
 
-// Make modal visible when mounted
-isVisible.value = true
+onMounted(() => {
+  isVisible.value = true
+})
 </script>
 
 <style scoped>

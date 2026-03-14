@@ -19,38 +19,52 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     public Ticket createTicket(Ticket ticket) {
-        ticket.setIsRead(false);
+        ticket.setStatus(0); // 0 = Chờ xử lý (Pending)
         ticket.setCreatedAt(LocalDateTime.now());
         return ticketDAO.save(ticket);
     }
 
     @Override
-    public List<AdminTicketDTO> getAllUnreadTickets() {
-        return ticketDAO.findByIsReadFalse().stream()
+    public List<AdminTicketDTO> getTicketsByStatus(Integer status) {
+        return ticketDAO.findByStatus(status).stream()
                 .map(this::convertToAdminDTO)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public Ticket markTicketAsRead(Integer ticketId) {
-        Ticket ticket = ticketDAO.findById(ticketId).orElseThrow(() -> new RuntimeException("Ticket not found"));
-        ticket.setIsRead(true);
+    public Ticket updateTicketStatus(Integer ticketId, Integer newStatus) {
+        Ticket ticket = ticketDAO.findById(ticketId)
+                .orElseThrow(() -> new RuntimeException("Ticket not found"));
+
+        ticket.setStatus(newStatus);
+
+        // Nếu admin đổi trạng thái thành Đã giải quyết (2) hoặc Từ chối (3)
+        if (newStatus == 2 || newStatus == 3) {
+            ticket.setResolvedAt(LocalDateTime.now());
+        }
+
         return ticketDAO.save(ticket);
     }
 
     private AdminTicketDTO convertToAdminDTO(Ticket ticket) {
         AdminTicketDTO dto = new AdminTicketDTO();
         dto.setTicketID(ticket.getTicketID());
+        dto.setTicketType(ticket.getTicketType());
         dto.setTitle(ticket.getTitle());
         dto.setDescription(ticket.getDescription());
         dto.setAttachment(ticket.getAttachment());
-        dto.setIsRead(ticket.getIsRead());
+        dto.setStatus(ticket.getStatus());
         dto.setCreatedAt(ticket.getCreatedAt());
+        dto.setResolvedAt(ticket.getResolvedAt());
 
         if (ticket.getAccount() != null) {
             dto.setAccountID(ticket.getAccount().getAccountID());
             dto.setUsername(ticket.getAccount().getUsername());
             dto.setEmail(ticket.getAccount().getEmail());
+        }
+
+        if (ticket.getTargetPost() != null) {
+            dto.setTargetPostId(ticket.getTargetPost().getPostID());
         }
 
         return dto;
