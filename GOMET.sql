@@ -1,4 +1,4 @@
-﻿-- Bước 1: Trở về database master (Bắt buộc)
+-- Bước 1: Trở về database master (Bắt buộc)
 USE master;
 GO
 
@@ -149,12 +149,14 @@ GO
 CREATE TABLE Comment (
     CommentID INT IDENTITY(1,1) PRIMARY KEY,
     AccountID INT NOT NULL,
-    PostID INT NOT NULL,
+    PostID INT NULL,
+    cmtid INT NULL,
     Content NVARCHAR(MAX) NOT NULL,
     CreatedAt DATETIME DEFAULT GETDATE(),
 
     CONSTRAINT FK_Comment_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
-    CONSTRAINT FK_Comment_Post FOREIGN KEY (PostID) REFERENCES Post(PostID)
+    CONSTRAINT FK_Comment_Post FOREIGN KEY (PostID) REFERENCES Post(PostID),
+    CONSTRAINT FK_Comment_ParentComment FOREIGN KEY (cmtid) REFERENCES Comment(CommentID)
 );
 GO
 

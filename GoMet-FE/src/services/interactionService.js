@@ -3,8 +3,8 @@ import api from './api'
 export const getComments = (postID) =>
   api.get(`/api/comments/post/${postID}`).then(r => r.data)
 
-export const addComment = (postID, accountID, content) =>
-  api.post('/api/comments', { postID, accountID, content }).then(r => r.data)
+export const addComment = (postID, accountID, content, cmtid = null) =>
+  api.post('/api/comments', { postID, accountID, content, cmtid }).then(r => r.data)
 
 export const deleteComment = (commentID) =>
   api.delete(`/api/comments/${commentID}`)

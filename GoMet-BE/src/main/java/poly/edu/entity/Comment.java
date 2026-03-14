@@ -20,9 +20,16 @@ public class Comment {
     private Account account;
 
     @ManyToOne
-    @JoinColumn(name = "PostID", nullable = false)
+    @JoinColumn(name = "PostID", nullable = true)
     private Post post;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cmtid")
+    private Comment parentComment;
 
     @Column(nullable = false, columnDefinition = "NVARCHAR(MAX)")
     private String content;
+
+    @Column(name = "CreatedAt", insertable = false, updatable = false)
+    private java.time.LocalDateTime createdAt;
 }
