@@ -2,8 +2,6 @@ package poly.edu.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -16,22 +14,27 @@ public class Subscription {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "SubID")
     private Integer subID;
 
     @ManyToOne
     @JoinColumn(name = "AccountID", nullable = false)
     private Account account;
 
-    @Column(nullable = false)
+    @Column(name = "PlanType", nullable = false)
     private Integer planType;
 
-    // Sửa trong file Subscription.java
-    @Column(name = "StartAt")
-    private LocalDateTime startAt; // Đổi từ Date hoặc LocalDate sang LocalDateTime
+    @Column(name = "StartAt", nullable = false)
+    private LocalDateTime startAt;
 
-    @Column(name = "EndAt")
-    private LocalDateTime endAt; // Đổi từ Date hoặc LocalDate sang LocalDateTime
+    @Column(name = "EndAt", nullable = false)
+    private LocalDateTime endAt;
 
-    @Column(nullable = false)
+    @Column(name = "IsActive", nullable = false)
     private Integer isActive;
+
+    // 🔥 MỚI: Móc nối với bảng Hóa đơn thanh toán (TransactionID)
+    @OneToOne
+    @JoinColumn(name = "TransactionID")
+    private PaymentTransaction paymentTransaction;
 }

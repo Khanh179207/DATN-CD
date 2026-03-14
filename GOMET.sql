@@ -308,6 +308,21 @@ CREATE TABLE UserAchievement (
 );
 GO
 
+-- Bảng lưu lịch sử giao dịch thanh toán
+CREATE TABLE PaymentTransaction (
+    TransactionID INT IDENTITY(1,1) PRIMARY KEY,
+    AccountID INT NOT NULL,
+    OrderCode NVARCHAR(50) NOT NULL UNIQUE, -- Mã giao dịch (VD: GOMET9999)
+    Amount INT NOT NULL,                    -- Số tiền phải trả
+    PlanType INT NOT NULL,                  -- 1: Tháng, 2: Năm, 3: Trọn đời (Khớp với bảng Subscription)
+    Status NVARCHAR(20) DEFAULT 'PENDING',  -- Trạng thái: PENDING, PAID, CANCELLED
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    PaidAt DATETIME NULL,                   -- Thời gian nhận được tiền
+
+    CONSTRAINT FK_Transaction_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID)
+);
+GO
+
 CREATE TABLE Subscription (
     SubID INT IDENTITY(1,1) PRIMARY KEY,
     AccountID INT NOT NULL,
@@ -315,8 +330,10 @@ CREATE TABLE Subscription (
     StartAt DATETIME2 NOT NULL,
     EndAt DATETIME2 NOT NULL,
     isActive INT DEFAULT 1,
+    TransactionID INT NULL, -- Sửa dấu ; thành dấu ,
 
-    CONSTRAINT FK_Sub_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID)
+    CONSTRAINT FK_Sub_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID), -- Thêm dấu , ở cuối
+    CONSTRAINT FK_Sub_Transaction FOREIGN KEY (TransactionID) REFERENCES PaymentTransaction(TransactionID)
 );
 GO
 
@@ -348,20 +365,6 @@ GO
 USE DATN_CD;
 GO
 
--- Bảng lưu lịch sử giao dịch thanh toán
-CREATE TABLE PaymentTransaction (
-    TransactionID INT IDENTITY(1,1) PRIMARY KEY,
-    AccountID INT NOT NULL,
-    OrderCode NVARCHAR(50) NOT NULL UNIQUE, -- Mã giao dịch (VD: GOMET9999)
-    Amount INT NOT NULL,                    -- Số tiền phải trả
-    PlanType INT NOT NULL,                  -- 1: Tháng, 2: Năm, 3: Trọn đời (Khớp với bảng Subscription)
-    Status NVARCHAR(20) DEFAULT 'PENDING',  -- Trạng thái: PENDING, PAID, CANCELLED
-    CreatedAt DATETIME DEFAULT GETDATE(),
-    PaidAt DATETIME NULL,                   -- Thời gian nhận được tiền
-
-    CONSTRAINT FK_Transaction_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID)
-);
-GO
 CREATE TABLE Ticket (
     TicketID INT IDENTITY(1,1) PRIMARY KEY,
     AccountID INT NOT NULL,            -- Người gửi ticket
@@ -461,3 +464,4 @@ SELECT * FROM Subscription;
 SELECT * FROM PaymentTransaction;
 
 SELECT * FROM Ticket;
+ 

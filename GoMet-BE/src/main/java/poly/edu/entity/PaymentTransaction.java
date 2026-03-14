@@ -1,12 +1,15 @@
 package poly.edu.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import java.util.Date;
+import lombok.*;
+import java.time.LocalDateTime;
 
-@Data
 @Entity
 @Table(name = "PaymentTransaction")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class PaymentTransaction {
 
     @Id
@@ -14,8 +17,10 @@ public class PaymentTransaction {
     @Column(name = "TransactionID")
     private Integer transactionID;
 
-    @Column(name = "AccountID", nullable = false)
-    private Integer accountID;
+    // 🔥 SỬA: Dùng Object Account thay vì Integer accountID để JPA tự động join bảng
+    @ManyToOne
+    @JoinColumn(name = "AccountID", nullable = false)
+    private Account account;
 
     @Column(name = "OrderCode", nullable = false, unique = true)
     private String orderCode;
@@ -29,11 +34,10 @@ public class PaymentTransaction {
     @Column(name = "Status")
     private String status = "PENDING";
 
+    // 🔥 SỬA: Đồng bộ dùng LocalDateTime giống bảng Subscription
     @Column(name = "CreatedAt", insertable = false, updatable = false)
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date createdAt;
+    private LocalDateTime createdAt;
 
     @Column(name = "PaidAt")
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date paidAt;
+    private LocalDateTime paidAt;
 }
