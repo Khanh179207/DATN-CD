@@ -51,9 +51,18 @@
          :initial-view="modalTab"
          @close="showAuthModal = false" 
        />
+       
        <PremiumModal 
          :is-open="showPremium" 
-         @close="showPremium = false" 
+         @close="handleClosePremium" 
+         @upgraded="handleUpgraded"
+         @start-test-timer="handleStartTestTimer"
+       />
+
+       <ExpiredModal 
+         :is-open="showExpired" 
+         @renew="handleRenew" 
+         @cancel="handleCancel"
        />
     </Teleport>
   </div>
@@ -63,17 +72,17 @@
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useChatStore } from '@/stores/chat' 
+import { toast } from '@/composables/useToast' 
 
 import Sidebar from '@/components/sidebar/Sidebar.vue'
 import Header from '@/components/topbar/Header.vue' 
 import AuthModal from '@/components/modals/AuthModal.vue'
 import PremiumModal from '@/components/modals/PremiumModal.vue'
+import ExpiredModal from '@/components/modals/ExpiredModal.vue'
 import MiniChatBox from '@/components/chat/MiniChatBox.vue'
 import ChatSidebar from '@/components/chat/ChatSidebar.vue'
 import TheFooter from '@/components/footer/TheFooter.vue'
 import CompareFloatingBar from '@/components/common/CompareFloatingBar.vue'
-
-// 🔥 Import Component GometAiChat mới tạo
 import GometAiChat from '@/components/chat/GometAiChat.vue'
 
 const router = useRouter()
@@ -82,16 +91,57 @@ const chatStore = useChatStore()
 
 const showAuthModal = ref(false)
 const showPremium = ref(false)
+const showExpired = ref(false) 
+const isEnforcingRenewal = ref(false) // Biến đánh dấu đang trong luồng ép lựa chọn
 const modalTab = ref('login')
-
-// Tạo biến ref để điều khiển component GometAiChat
 const aiChatRef = ref(null)
 
-// Hàm gọi mở AI Chat khi bấm vào nút cam
-const openAiChat = () => {
-  if (aiChatRef.value) {
-    aiChatRef.value.openChat()
+// --- LOGIC XỬ LÝ PREMIUM (ÉP GIA HẠN HOẶC VỀ FREE) ---
+
+// 1. Khi sếp mua gói 10s thành công, bắt đầu đếm ngược
+const handleStartTestTimer = () => {
+  console.log("Hệ thống bắt đầu rình rập đếm ngược...");
+  setTimeout(() => {
+    showExpired.value = true;
+    isEnforcingRenewal.value = true; // Kích hoạt trạng thái "Ép lựa chọn"
+  }, 12000); 
+}
+
+// 2. Khi người dùng bấm "Gia hạn ngay" trên Popup đòi tiền
+const handleRenew = () => {
+  showExpired.value = false;
+  showPremium.value = true; 
+}
+
+// 3. Khi người dùng bấm "X" hoặc click ra ngoài để tắt bảng chọn gói Premium
+const handleClosePremium = () => {
+  showPremium.value = false;
+  
+  // NẾU đang bị ép lựa chọn mà dám tắt bảng đi...
+  if (isEnforcingRenewal.value) {
+    // ...thì hiện lại popup ngay lập tức!
+    showExpired.value = true;
+    toast.error("Bạn cần gia hạn Premium để tiếp tục sử dụng các tính năng cao cấp!");
   }
+}
+
+// 4. Khi người dùng thực sự thanh toán thành công (Bấm nút Dev ok)
+const handleUpgraded = () => {
+  isEnforcingRenewal.value = false; // Giải lời nguyền
+  showPremium.value = false;
+  showExpired.value = false;
+}
+
+// 5. Khi người dùng hoàn tất ở màn hình "Cảm ơn" và chọn tiếp tục dùng Free
+const handleCancel = () => {
+  showExpired.value = false;
+  isEnforcingRenewal.value = false; // Tắt trạng thái ép buộc để user dùng web bình thường
+}
+
+// --- LOGIC CŨ CỦA SẾP ---
+
+const openAiChat = () => {
+  if (aiChatRef.value) aiChatRef.value.openChat()
 }
 
 const openAuth = (tab) => { 
@@ -107,7 +157,7 @@ const handleLogout = async () => {
 </script>
 
 <style scoped>
-/* Giữ nguyên toàn bộ CSS của sếp */
+/* Giữ nguyên 100% CSS của sếp */
 .app-container {
   display: flex;
   height: 100vh;
@@ -157,7 +207,6 @@ const handleLogout = async () => {
 .page-fade-enter-from { opacity: 0; transform: translateY(10px); }
 .page-fade-leave-to   { opacity: 0; transform: translateY(-10px); }
 
-/* Nút GoMet Assistant giữ nguyên */
 .float-ai-btn {
   position: fixed;
   bottom: var(--space-8);

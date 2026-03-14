@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "Subscription")
@@ -24,11 +25,12 @@ public class Subscription {
     @Column(nullable = false)
     private Integer planType;
 
-    @Column(nullable = false)
-    private LocalDate startAt;
+    // Sửa trong file Subscription.java
+    @Column(name = "StartAt")
+    private LocalDateTime startAt; // Đổi từ Date hoặc LocalDate sang LocalDateTime
 
-    @Column(nullable = false)
-    private LocalDate endAt;
+    @Column(name = "EndAt")
+    private LocalDateTime endAt; // Đổi từ Date hoặc LocalDate sang LocalDateTime
 
     @Column(nullable = false)
     private Integer isActive;

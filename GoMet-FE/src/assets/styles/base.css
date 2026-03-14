@@ -23,11 +23,12 @@ input, textarea, [contenteditable] {
   -webkit-user-select: text;
 }
 
-html {
-  overflow-y: scroll;
-  scroll-behavior: smooth;
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-primary-600) var(--color-neutral-0);
+/* 👇 ĐÃ SỬA: KHÓA THANH CUỘN TỔNG CỦA TRÌNH DUYỆT 👇 */
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden !important; 
+  height: 100%;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -39,9 +40,10 @@ body {
   color: var(--color-neutral-900);
   background-color: var(--color-neutral-50);
   text-rendering: optimizeLegibility;
+  overscroll-behavior: none; /* Prevent rubber-band */
 }
 
-/* 👇 THÊM ĐOẠN NÀY ĐỂ ÉP TIÊU ĐỀ DÙNG PLAYFAIR DISPLAY 👇 */
+/* Ép tiêu đề dùng Playfair Display */
 h1, h2, h3, h4, h5, h6, .text-serif, .hero-title, .event-title {
   font-family: var(--font-heading);
   margin: 0;
@@ -52,7 +54,7 @@ button, .btn {
   font-family: var(--font-accent);
 }
 
-/* ─── SCROLLBAR (Webkit) ─── */
+/* ─── SCROLLBAR (Webkit) LÀM ĐẸP CHO CÁC VÙNG CUỘN NỘI BỘ ─── */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -189,13 +191,6 @@ input, select, textarea {
 ::-moz-selection {
   background: rgba(234, 88, 12, 0.16);
   color: var(--color-primary-800);
-}
-
-/* ─── MOBILE SMOOTHNESS ─── */
-
-/* Prevent rubber-band on body level — let each scroll container own it */
-body {
-  overscroll-behavior: none;
 }
 
 /* Safe area for notched iOS devices */

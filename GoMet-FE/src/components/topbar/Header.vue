@@ -102,16 +102,30 @@
       <LangSwitcher />
 
       <div v-if="authStore.isAuthenticated" class="user-menu-container">
-        <div class="avatar-trigger" @click.stop="toggleDropdown">
+        <div class="avatar-trigger" 
+             :class="{ 'is-premium-wrap': isPremiumUser, 'is-admin-wrap': isAdminUser }" 
+             @click.stop="toggleDropdown">
+          
+          <div v-if="isAdminUser" class="role-badge-admin" title="Administrator">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"></path></svg>
+          </div>
+
           <img :src="displayAvatar" @error="handleAvatarError" class="user-avt" alt="User">
         </div>
         
         <transition name="dropdown-anim">
           <div v-if="isDropdownOpen" class="user-dropdown" @click.stop>
             <div class="user-header">
-              <img :src="displayAvatar" @error="handleAvatarError" class="header-avt" alt="User">
+              <div class="header-avt-container" :class="{ 'premium-border': isPremiumUser }">
+                <img :src="displayAvatar" @error="handleAvatarError" class="header-avt" alt="User">
+                <div v-if="isAdminUser" class="admin-tag-mini">ADMIN</div>
+              </div>
               <div class="header-info">
-                <div class="name">{{ authStore.user.name || authStore.user.username }}</div>
+                <div class="name">
+                  {{ authStore.user.name || authStore.user.username }}
+                  <svg v-if="isPremiumUser" width="14" height="14" viewBox="0 0 24 24" fill="#F59E0B" style="margin-left: 4px;"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14l-5-4.87 6.91-1.01L12 2z"></path></svg>
+                  <svg v-if="isAdminUser" width="14" height="14" viewBox="0 0 24 24" fill="#6366F1" style="margin-left: 2px;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"></path></svg>
+                </div>
                 <div class="handle">@cook_{{ authStore.user.id || authStore.user.accountID }}</div>
               </div>
             </div>
@@ -155,7 +169,7 @@
     <Teleport to="body">
       <transition name="fade">
         <div v-if="showBugReport" class="modal-backdrop" @click.self="showBugReport = false">
-           </div>
+            </div>
       </transition>
       <MapModal v-if="showMapModal" @close="showMapModal = false" />
     </Teleport>
@@ -196,24 +210,39 @@ const bugForm = ref({ type: 'ui', desc: '' })
 const notifications = ref([])
 const unreadNotiCount = computed(() => notifications.value.filter(n => !n.isRead).length)
 
-// 🔥 COMPUTED: Tính toán Avatar (Ưu tiên link xịn, nếu không có tự tạo avatar chữ)
+// 🔥 KIỂM TRA QUYỀN VIP
+const isPremiumUser = computed(() => {
+  const user = authStore.user;
+  return !!user && (
+    String(user.isPremium) === "1" || 
+    String(user.isPremium) === "true" || 
+    user.role === 'premium'
+  );
+});
+
+// 🔥 KIỂM TRA QUYỀN ADMIN
+const isAdminUser = computed(() => {
+  const user = authStore.user;
+  return !!user && (
+    user.isAdmin === 1 || 
+    user.role === 'admin'
+  );
+});
+
+// 🔥 COMPUTED: Tính toán Avatar
 const displayAvatar = computed(() => {
   const avt = authStore.user?.avatar;
-  // Nếu có avatar và là link thật (http) thì dùng luôn
   if (avt && avt.startsWith('http')) return avt;
-  
-  // Nếu trống hoặc link lỗi cục bộ -> Tự render avatar theo tên
   const name = encodeURIComponent(authStore.user?.name || authStore.user?.username || 'G');
   return `https://ui-avatars.com/api/?name=${name}&background=EA580C&color=fff&bold=true`;
 });
 
-// 🔥 FUNCTION: Xử lý khi ảnh bị lỗi 404 (Do link cũ đã bị xóa)
 const handleAvatarError = (e) => {
   const name = encodeURIComponent(authStore.user?.name || authStore.user?.username || 'G');
   e.target.src = `https://ui-avatars.com/api/?name=${name}&background=EA580C&color=fff&bold=true`;
 };
 
-// Actions
+// Actions (Giữ nguyên logic cũ)
 const closeAllDropdowns = () => { 
   isDropdownOpen.value = false; 
   showNoti.value = false; 
@@ -245,9 +274,8 @@ const toggleDropdown = () => {
   isDropdownOpen.value = s 
 }
 
-// Logic thông báo & Auth giữ nguyên
 const loadNotifications = async () => {
-  const user = authStore.currentUser
+  const user = authStore.user
   if (!user?.accountID) return
   try {
     const data = await getNotifications(user.accountID)
@@ -284,7 +312,6 @@ const handleLogout = async () => {
 
 const handleScroll = () => { isScrolled.value = window.scrollY > 10 }
 const openBugModal = () => { closeAllDropdowns(); showBugReport.value = true }
-const submitBug = () => { toast.success(t('toast.bug_sent')); showBugReport.value = false; bugForm.value.desc = '' }
 const openGoogleMaps = () => { showMapModal.value = true; closeAllDropdowns() }
 const goToAdmin = () => { closeAllDropdowns(); router.push('/admin/dashboard') }
 const handleCreatePost = () => authStore.isAuthenticated ? router.push('/create-post') : emit('open-login')
@@ -302,135 +329,3 @@ onUnmounted(() => window.removeEventListener('scroll', handleScroll))
 </script>
 
 <style scoped lang="scss" src="./Header.scss"></style>
-<style scoped>
-/* 🔥 CSS ÉP CHO AVATAR LUÔN TRÒN TRỊA, KHÔNG MÉO XỆCH */
-.user-avt, .header-avt {
-  object-fit: cover !important; /* Cực kỳ quan trọng để ảnh full box */
-  background-color: #FFF7ED; /* Màu nền nhẹ nếu ảnh đang load */
-  border-radius: 50% !important;
-}
-
-/* Đảm bảo khung chứa avatar ngoài Header vuông vức */
-.avatar-trigger {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 2px solid transparent;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.avatar-trigger img {
-  width: 100%;
-  height: 100%;
-}
-
-.avatar-trigger:hover {
-  border-color: #EA580C;
-  transform: scale(1.05);
-}
-
-/* Đảm bảo avatar trong dropdown to và nét */
-.header-avt {
-  width: 50px;
-  height: 50px;
-  border: 2px solid #FED7AA;
-}
-
-.btn-map-action {
-  width: 100%; padding: 12px; background: #EA580C; color: white; border: none; 
-  border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; 
-  align-items: center; justify-content: center; gap: 8px; transition: 0.2s;
-}
-.btn-map-action:hover { background: #C2410C; }
-
-/* ==================================================== */
-/* 🔥 GIAO DIỆN MÀU ĐEN (THEME DARK) CHO HEADER         */
-/* ==================================================== */
-
-/* Trạng thái mặc định: TRONG SUỐT VÀ KHÔNG VIỀN để ảnh tràn lên */
-.content-header.theme-dark {
-  background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%) !important;
-  backdrop-filter: none;
-  border-bottom: none !important;
-  box-shadow: none;
-}
-
-/* Chỉ hiện màu đen mờ khi người dùng cuộn chuột xuống */
-.content-header.theme-dark.is-scrolled {
-  background: rgba(3, 7, 18, 0.85) !important;
-  backdrop-filter: blur(15px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
-  box-shadow: 0 4px 30px rgba(0,0,0,0.5);
-}
-
-/* Đổi màu chữ của các nút thành màu sáng */
-.content-header.theme-dark .btn-create-post {
-  background: rgba(255, 255, 255, 0.1);
-  color: #FFF;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: none;
-}
-.content-header.theme-dark .btn-create-post:hover {
-  background: #EA580C;
-  border-color: #EA580C;
-}
-
-/* Đổi màu các icon (chuông, giỏ hàng, chat) */
-.content-header.theme-dark .btn-icon { background: transparent; color: #9CA3AF; }
-.content-header.theme-dark .btn-icon:hover { background: rgba(255, 255, 255, 0.1); color: #FFF; }
-.content-header.theme-dark .divider-vertical { background-color: rgba(255, 255, 255, 0.1); }
-
-/* 🔥 ÉP KIỂU KÍNH MỜ CHO COMPONENT TÌM KIẾM VÀ NGÔN NGỮ BÊN TRONG */
-:deep(.search-box-container),
-:deep(.search-input),
-:deep(.lang-switcher-btn),
-:deep(.lang-pill) {
-  background: rgba(255, 255, 255, 0.1) !important;
-  color: #FFFFFF !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  backdrop-filter: blur(10px);
-}
-
-/* Sửa placeholder của thanh tìm kiếm cho dễ nhìn */
-:deep(.search-input::placeholder) { color: rgba(255, 255, 255, 0.5) !important; }
-
-/* Đổi nền dropdown khi ở chế độ Dark */
-.content-header.theme-dark .common-dropdown {
-  background: #111827 !important;
-  border: 1px solid rgba(255,255,255,0.1) !important;
-  color: #F3F4F6 !important;
-}
-.content-header.theme-dark .dropdown-header h3 {
-  color: #FFF !important;
-}
-.content-header.theme-dark .dropdown-header {
-  border-bottom-color: rgba(255,255,255,0.1) !important;
-}
-.content-header.theme-dark .shop-item:hover,
-.content-header.theme-dark .list-item:hover {
-  background: rgba(255,255,255,0.05) !important;
-}
-.content-header.theme-dark .name { color: #FFF !important; }
-.content-header.theme-dark .list-item { border-bottom-color: rgba(255,255,255,0.05) !important; }
-.content-header.theme-dark .empty-state { color: #9CA3AF !important; }
-
-/* User dropdown dark mode */
-.content-header.theme-dark .user-dropdown {
-  background: #111827 !important;
-  border-color: rgba(255,255,255,0.1) !important;
-}
-.content-header.theme-dark .user-header {
-  background: rgba(255,255,255,0.05) !important;
-  border-bottom-color: rgba(255,255,255,0.1) !important;
-}
-.content-header.theme-dark .header-info .name { color: #FFF !important; }
-.content-header.theme-dark .menu-list li { color: #D1D5DB !important; }
-.content-header.theme-dark .menu-list li:hover { background: rgba(255,255,255,0.1) !important; color: #FFF !important; }
-.content-header.theme-dark .divider { background: rgba(255,255,255,0.1) !important; }
-.content-header.theme-dark .admin-link { color: #FFF !important; }
-
-</style>

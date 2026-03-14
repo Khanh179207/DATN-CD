@@ -312,8 +312,8 @@ CREATE TABLE Subscription (
     SubID INT IDENTITY(1,1) PRIMARY KEY,
     AccountID INT NOT NULL,
     PlanType INT NOT NULL,
-    StartAt DATE NOT NULL,
-    EndAt DATE NOT NULL,
+    StartAt DATETIME2 NOT NULL,
+    EndAt DATETIME2 NOT NULL,
     isActive INT DEFAULT 1,
 
     CONSTRAINT FK_Sub_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID)
@@ -365,6 +365,24 @@ CREATE TABLE Message (
 
     CONSTRAINT FK_Msg_Conv FOREIGN KEY (ConversationID) REFERENCES Conversation(ConversationID),
     CONSTRAINT FK_Msg_Sender FOREIGN KEY (SenderID) REFERENCES Account(AccountID)
+);
+GO
+
+USE DATN_CD;
+GO
+
+-- Bảng lưu lịch sử giao dịch thanh toán
+CREATE TABLE PaymentTransaction (
+    TransactionID INT IDENTITY(1,1) PRIMARY KEY,
+    AccountID INT NOT NULL,
+    OrderCode NVARCHAR(50) NOT NULL UNIQUE, -- Mã giao dịch (VD: GOMET9999)
+    Amount INT NOT NULL,                    -- Số tiền phải trả
+    PlanType INT NOT NULL,                  -- 1: Tháng, 2: Năm, 3: Trọn đời (Khớp với bảng Subscription)
+    Status NVARCHAR(20) DEFAULT 'PENDING',  -- Trạng thái: PENDING, PAID, CANCELLED
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    PaidAt DATETIME NULL,                   -- Thời gian nhận được tiền
+
+    CONSTRAINT FK_Transaction_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID)
 );
 GO
 
@@ -424,6 +442,7 @@ INSERT INTO Post (AccountID, CategoryID, Title, Description, Ingredients, isAppr
 INSERT INTO EventPosts (EventID, PostID) VALUES (1, 1), (1, 2);
 GO
 
+
 SELECT * FROM account;
 
 SELECT * FROM event;
@@ -432,3 +451,5 @@ SELECT * FROM Votes;
 
 SELECT * FROM Likes;
 SELECT * FROM account;
+SELECT * FROM Subscription;
+SELECT * FROM PaymentTransaction;

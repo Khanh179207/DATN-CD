@@ -1,5 +1,7 @@
 <template>
   <div class="landing-layout" ref="layoutWrapper">
+    <div class="custom-cursor" ref="cursor"></div>
+
     <div class="scroll-progress-container">
       <div class="scroll-progress-bar" :style="{ width: scrollProgress + '%' }"></div>
     </div>
@@ -8,7 +10,7 @@
 
     <main class="landing-content">
       <router-view v-slot="{ Component }">
-        <transition name="fade-slide" mode="out-in">
+        <transition name="page-fade" mode="out-in">
           <component :is="Component" />
         </transition>
       </router-view>
@@ -16,13 +18,25 @@
 
     <LandingFooter />
 
-    <button 
-      class="back-to-top" 
-      :class="{ 'is-visible': showBackToTop }" 
+    <div 
+      class="progress-wrap" 
+      :class="{ 'active-progress': showBackToTop }"
       @click="scrollToTop"
     >
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 15l-6-6-6 6"/></svg>
-    </button>
+      <svg class="progress-circle svg-content" width="100%" height="100%" viewBox="-1 -1 102 102">
+        <path 
+          d="M50,1 a49,49 0 0,1 0,98 a49,49 0 0,1 0,-98" 
+          stroke="#EA580C"
+          stroke-width="4"
+          fill="none"
+          style="transition: stroke-dashoffset 10ms linear 0s; stroke-dasharray: 307.919, 307.919;"
+          :style="{ strokeDashoffset: 307.919 - (scrollProgress * 307.919) / 100 }"
+        ></path>
+      </svg>
+      <div class="progress-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 15l-6-6-6 6"/></svg>
+      </div>
+    </div>
 
     <Teleport to="body">
       <AuthModal v-if="showModal" :initialView="currentAuthView" @close="showModal = false" />
@@ -32,153 +46,107 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { useRoute } from 'vue-router'
 import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Lenis from 'lenis'
-
 import LandingHeader from '@/components/landing/LandingHeader.vue'
 import LandingFooter from '@/components/landing/LandingFooter.vue'
 import AuthModal from '@/components/modals/AuthModal.vue'
 
-gsap.registerPlugin(ScrollTrigger)
-
-const route = useRoute()
 const showModal = ref(false)
 const currentAuthView = ref('login')
 const scrollProgress = ref(0)
 const showBackToTop = ref(false)
+const cursor = ref(null)
+let lenis = null
 
-let lenis = null // Biến lưu trữ Lenis toàn cục cho Layout
-
-// --- XỬ LÝ MODAL AUTH ---
-const handleOpenAuth = (viewName) => {
-  currentAuthView.value = viewName
-  showModal.value = true
+// --- XỬ LÝ CURSOR ---
+const initCursor = () => {
+  const moveCursor = (e) => {
+    gsap.to(cursor.value, { x: e.clientX, y: e.clientY, duration: 0.3, ease: 'power2.out' })
+  }
+  window.addEventListener('mousemove', moveCursor)
+  
+  document.addEventListener('mouseover', (e) => {
+    if (e.target.closest('a, button, .nav-item')) cursor.value?.classList.add('cursor-hover')
+    else cursor.value?.classList.remove('cursor-hover')
+  })
 }
 
-// --- XỬ LÝ LOGIC CUỘN (SCROLL) ---
-const handleScrollState = () => {
-  const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-  const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-  
-  if (scrollHeight > 0) {
-    scrollProgress.value = (scrollTop / scrollHeight) * 100;
-  }
-  showBackToTop.value = scrollTop > 500;
+// --- XỬ LÝ SCROLL (Sử dụng e.progress của Lenis cho chuẩn) ---
+const handleScroll = (e) => {
+  scrollProgress.value = (e.progress || 0) * 100;
+  showBackToTop.value = e.animatedScroll > 300;
 }
 
 const scrollToTop = () => {
-  if (lenis) {
-    lenis.scrollTo(0, { duration: 1.5, easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)) })
-  } else {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
+  lenis?.scrollTo(0, { duration: 1.5 })
 }
 
-const scrollToHash = (hash) => {
-  if (!hash) return
-  setTimeout(() => {
-    const target = document.getElementById(hash.replace('#', ''))
-    if (target && lenis) {
-      lenis.scrollTo(target, { offset: 0, duration: 1.5 })
-    } else if (target) {
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }
-  }, 300) // Đợi DOM render xong
-}
+const handleOpenAuth = (v) => { currentAuthView.value = v; showModal.value = true; }
 
-// --- KHỞI TẠO ---
 onMounted(() => {
-  // 1. Cài đặt Lenis Smooth Scroll cho TOÀN BỘ LAYOUT
-  lenis = new Lenis({
-    duration: 1.2, 
-    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), 
-    direction: 'vertical',
-    gestureDirection: 'vertical',
-    smooth: true,
-    smoothTouch: false, // Mobile mặc định đã mượt
-  })
+  // 🔥 MỞ KHÓA CSS TOÀN CỤC CHO RIÊNG LANDING PAGE 🔥
+  // Ép HTML và Body dùng lại thanh cuộn mặc định, tắt giới hạn chiều cao
+  document.documentElement.style.setProperty('overflow', 'auto', 'important');
+  document.documentElement.style.setProperty('height', 'auto', 'important');
+  document.documentElement.style.setProperty('scroll-behavior', 'auto', 'important'); // Tắt mâu thuẫn với Lenis
 
-  // 2. Đồng bộ Lenis với GSAP và Vue State
-  lenis.on('scroll', ScrollTrigger.update)
-  lenis.on('scroll', handleScrollState) // Thay thế native event listener
+  document.body.style.setProperty('overflow', 'auto', 'important');
+  document.body.style.setProperty('height', 'auto', 'important');
 
-  gsap.ticker.add((time) => {
-    lenis.raf(time * 1000)
-  })
-  gsap.ticker.lagSmoothing(0) 
-
-  // 3. Cuộn đến phần tử nếu có Hash URL ban đầu
-  if (route.hash) {
-    scrollToHash(route.hash)
-  }
+  // Khởi tạo Lenis bám vào window gốc
+  lenis = new Lenis({ duration: 1.2, smooth: true })
+  lenis.on('scroll', handleScroll)
+  gsap.ticker.add((time) => lenis.raf(time * 1000))
+  
+  initCursor()
 })
 
 onUnmounted(() => {
-  if (lenis) {
-    lenis.destroy()
-    gsap.ticker.remove((time) => lenis.raf(time * 1000))
-  }
+  // 🔥 DỌN DẸP TRẢ LẠI GIAO DIỆN APP KHI THOÁT LANDING 🔥
+  document.documentElement.style.removeProperty('overflow');
+  document.documentElement.style.removeProperty('height');
+  document.documentElement.style.removeProperty('scroll-behavior');
+
+  document.body.style.removeProperty('overflow');
+  document.body.style.removeProperty('height');
+
+  lenis?.destroy() 
 })
 </script>
 
 <style scoped>
-/* --- TỐI ƯU CSS TOÀN CỤC CHO LANDING --- */
-:global(html) {
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  height: auto !important;
+/* --- 1. PROGRESS CIRCLE (SỐ 3) --- */
+.progress-wrap {
+  position: fixed; right: 30px; bottom: 30px; height: 46px; width: 46px;
+  cursor: pointer; display: block; border-radius: 50%; z-index: 1000;
+  opacity: 0; visibility: hidden; transform: translateY(15px);
+  transition: all 400ms cubic-bezier(0.22, 1, 0.36, 1);
+  background: white;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+.progress-wrap.active-progress { opacity: 1; visibility: visible; transform: translateY(0); }
+.progress-circle { transform: rotate(-90deg); }
+.progress-icon {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center; color: #EA580C;
 }
 
-:global(body) {
-  min-height: 100vh !important;
-  height: auto !important;
-  overflow-y: visible !important;
-  background-color: #FFFFFF;
-  margin: 0;
-  
-  /* 🌟 TÙY CHỈNH THANH CUỘN (Gộp từ IntroPage sang đây để đồng nhất) */
-  scrollbar-width: thin;
-  scrollbar-color: #EA580C #FFF7ED;
+/* --- 2. CUSTOM CURSOR --- */
+.custom-cursor {
+  position: fixed; width: 30px; height: 30px; border: 2px solid #EA580C;
+  border-radius: 50%; pointer-events: none; z-index: 9999; transform: translate(-50%, -50%);
+  transition: width 0.3s, height 0.3s, background 0.3s;
 }
+.custom-cursor.cursor-hover { width: 60px; height: 60px; background: rgba(234, 88, 12, 0.1); }
 
-/* Thanh cuộn cho Chrome/Safari/Edge */
-:global(*::-webkit-scrollbar) { width: 8px; }
-:global(*::-webkit-scrollbar-track) { background: #FFF7ED; }
-:global(*::-webkit-scrollbar-thumb) { background: #EA580C; border-radius: 10px; }
-:global(*::-webkit-scrollbar-thumb:hover) { background: #C2410C; }
-
-
-.landing-layout { 
-  display: flex; 
-  flex-direction: column;
-  width: 100%;
-  position: relative;
-  min-height: 100vh;
-}
-
-.landing-content {
-  flex: 1; /* Đẩy footer xuống đáy nếu nội dung ngắn */
-}
-
-/* UI Tiến trình & Nút BackToTop */
+/* --- 3. SCROLL PROGRESS BAR --- */
 .scroll-progress-container { position: fixed; top: 0; left: 0; width: 100%; height: 3px; z-index: 2000; }
-.scroll-progress-bar { height: 100%; background: linear-gradient(to right, #F97316, #EA580C); width: 0%; transition: width 0.1s ease; }
+.scroll-progress-bar { height: 100%; background: #EA580C; box-shadow: 0 0 10px rgba(234, 88, 12, 0.5); }
 
-.back-to-top { 
-  position: fixed; bottom: 30px; right: 30px; width: 46px; height: 46px; 
-  background: #1C1917; color: white; border-radius: 50%; border: none; 
-  z-index: 999; opacity: 0; transform: translateY(20px); 
-  transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1); 
-  display: flex; align-items: center; justify-content: center; 
-  cursor: pointer; box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
-}
-.back-to-top.is-visible { opacity: 1; transform: translateY(0); }
-.back-to-top:hover { background: #EA580C; transform: translateY(-5px); }
+/* --- 4. PAGE TRANSITION --- */
+.page-fade-enter-active { transition: all 0.6s ease-out; }
+.page-fade-enter-from { opacity: 0; transform: translateY(10px); }
 
-/* Transition Router */
-.fade-slide-enter-active, .fade-slide-leave-active { transition: all 0.4s ease; }
-.fade-slide-enter-from { opacity: 0; transform: translateY(15px); }
-.fade-slide-leave-to { opacity: 0; transform: translateY(-15px); }
+@media (max-width: 768px) { .custom-cursor { display: none; } }
 </style>
