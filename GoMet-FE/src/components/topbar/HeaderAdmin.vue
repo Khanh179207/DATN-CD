@@ -1,96 +1,80 @@
 <template>
-  <header class="header-admin-sovereign" :class="{ 'is-scrolled': isScrolled }">
+  <header class="header-admin-global" :class="{ 'is-scrolled': isScrolled }">
     
     <div class="h-left">
-      <div class="breadcrumb-lux">
-        <span class="crumb-icon">
+      <div class="breadcrumb-executive">
+        <div class="root-node">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-        </span>
-        <span class="divider">/</span>
-        <span class="current-route">{{ route.name || 'Dashboard' }}</span>
+        </div>
+        <svg class="path-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M9 18l6-6-6-6"></path></svg>
+        <span class="current-path">{{ route.name || 'Control Center' }}</span>
       </div>
     </div>
 
     <div class="h-right">
       
-      <div class="action-item" v-click-outside="closeNoti">
-        <button class="icon-btn-lux" :class="{ active: showNoti }" @click="toggleNoti">
+      <div class="action-wrapper" v-click-outside="closeNoti">
+        <button class="btn-command" :class="{ active: showNoti }" @click="toggleNoti">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-          <span class="badge-pulse">3</span>
+          <div class="indicator-pulse">3</div>
         </button>
 
-        <transition name="zoom-fade">
-          <div v-if="showNoti" class="dropdown-panel noti-panel">
-            <div class="panel-header">
-              <span class="title">Thông báo hệ thống</span>
-              <button class="mark-read">Đã đọc hết</button>
+        <transition name="spring-panel">
+          <div v-if="showNoti" class="dropdown-lux noti-panel">
+            <div class="lux-h">
+              <span class="lux-t">System Alerts</span>
+              <button class="lux-link">Clear all</button>
             </div>
-            <div class="panel-body custom-scroll">
-              <div class="noti-card unread" @click="handleNotiClick(1)">
-                <div class="status-icon warning">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                </div>
-                <div class="content">
-                  <p class="msg">Có báo cáo vi phạm từ User #882</p>
-                  <span class="time">5 phút trước</span>
+            <div class="lux-b custom-scroll">
+              <div class="lux-card unread">
+                <div class="c-avatar alert">!</div>
+                <div class="c-content">
+                  <p>Security Alert: New login from unknown IP</p>
+                  <span class="c-time">Just now</span>
                 </div>
               </div>
-              <div class="noti-card" @click="handleNotiClick(2)">
-                <div class="status-icon success">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                </div>
-                <div class="content">
-                  <p class="msg">Bài viết "Mỳ Ý" đã được duyệt</p>
-                  <span class="time">1 giờ trước</span>
+              <div class="lux-card">
+                <div class="c-avatar success">✓</div>
+                <div class="c-content">
+                  <p>System Update: Version 2.5 is now live</p>
+                  <span class="c-time">2 hours ago</span>
                 </div>
               </div>
             </div>
-            <div class="panel-footer">
-              <button @click="$router.push('/admin/notifications')">Xem tất cả hoạt động</button>
+            <div class="lux-f">
+              <button @click="$router.push('/admin/notifications')">View Audit Log</button>
             </div>
           </div>
         </transition>
       </div>
 
-      <div class="action-item" v-click-outside="closeUser">
-        <div class="user-trigger-lux" @click="toggleUser" :class="{ active: showUser }">
-          <div class="text-info">
-            <span class="name">{{ adminName }}</span>
-            <span class="role">Sovereign Admin</span>
-          </div>
-          <div class="avatar-ring">
+      <div class="action-wrapper" v-click-outside="closeUser">
+        <div class="user-capsule" @click="toggleUser" :class="{ active: showUser }">
+          <div class="u-avatar-wrap">
              <img :src="adminAvatar" :alt="adminName">
+             <div class="u-status"></div>
           </div>
+          <div class="u-details">
+            <span class="u-mail">{{ adminEmail }}</span>
+            <span class="u-tag">Super Admin</span>
+          </div>
+          <svg class="u-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 9l6 6 6-6"></path></svg>
         </div>
 
-        <transition name="zoom-fade">
-          <div v-if="showUser" class="dropdown-panel user-panel">
-            <div class="user-cover-header">
-               <div class="avatar-display">
+        <transition name="spring-panel">
+          <div v-if="showUser" class="dropdown-lux user-panel">
+            <div class="user-hero">
+               <div class="hero-avatar">
                  <img :src="adminAvatar" :alt="adminName">
                </div>
-               <div class="u-detail">
-                 <strong>{{ adminName }}</strong>
-                 <span>{{ adminEmail }}</span>
-               </div>
+               <strong>{{ adminName }}</strong>
+               <span>{{ adminEmail }}</span>
             </div>
-            <div class="menu-list">
-              <button class="menu-link" @click="goToProfile">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                Hồ sơ cá nhân
-              </button>
-              
-              <button class="menu-link" @click="goToSettings">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                Cài đặt hệ thống
-              </button>
-
-              <div class="divider-hor"></div>
-
-              <button class="menu-link danger" @click="handleLogout">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                Đăng xuất an toàn
-              </button>
+            <div class="user-nav">
+              <button @click="goToProfile"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> Profile Account</button>
+              <button @click="goToSettings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg> Preferences</button>
+              <div class="nav-sep"></div>
+              <button @click="handleLogout" class="danger"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg> Sign Out System</button>
             </div>
           </div>
         </transition>
@@ -113,19 +97,25 @@ const showNoti = ref(false)
 const showUser = ref(false)
 const isScrolled = ref(false)
 
-// Bắt sự kiện cuộn chuột để làm gọn Header
 const handleScroll = () => { isScrolled.value = window.scrollY > 20 }
-
 onMounted(() => window.addEventListener('scroll', handleScroll))
 onUnmounted(() => window.removeEventListener('scroll', handleScroll))
 
-// Real user data from auth store
-const adminName   = computed(() => auth.currentUser?.username || 'Admin')
-const adminEmail  = computed(() => auth.currentUser?.email    || '')
+const adminName  = computed(() => auth.currentUser?.username || 'Gomet Master')
+const adminEmail = computed(() => auth.currentUser?.email    || 'admin@gomet.system')
 const adminAvatar = computed(() =>
   auth.currentUser?.avatar ||
-  `https://ui-avatars.com/api/?name=${encodeURIComponent(adminName.value)}&background=1a110d&color=fb923c&size=128`
+  `https://ui-avatars.com/api/?name=${encodeURIComponent(adminName.value)}&background=0f172a&color=fb923c&size=128`
 )
+
+const toggleNoti = () => { showNoti.value = !showNoti.value; showUser.value = false }
+const closeNoti  = () => { showNoti.value = false }
+const toggleUser = () => { showUser.value = !showUser.value; showNoti.value = false }
+const closeUser  = () => { showUser.value = false }
+
+const handleLogout = () => { auth.logout() }
+const goToProfile = () => { router.push('/profile'); closeUser() }
+const goToSettings = () => { closeUser() }
 
 const vClickOutside = {
   mounted(el, binding) {
@@ -136,194 +126,147 @@ const vClickOutside = {
   },
   unmounted(el) { document.body.removeEventListener('click', el.clickOutsideEvent) }
 }
-
-const toggleNoti = () => { showNoti.value = !showNoti.value; showUser.value = false }
-const closeNoti  = () => { showNoti.value = false }
-const toggleUser = () => { showUser.value = !showUser.value; showNoti.value = false }
-const closeUser  = () => { showUser.value = false }
-
-const goToProfile = () => { router.push('/profile'); closeUser() }
-const goToSettings = () => { closeUser() }
-
-const handleLogout = () => {
-  closeUser()
-  auth.logout()
-}
-
-const handleNotiClick = (id) => { router.push('/admin/notifications'); closeNoti() }
 </script>
 
 <style scoped>
-/* Đồng bộ Font Inter xịn */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-/* --- 🏛️ HEADER: SẠCH & ĐẲNG CẤP --- */
-.header-admin-sovereign {
+/* --- ✨ 1. HEADER: FROSTED GLASS MASTER --- */
+.header-admin-global {
   height: 90px;
-  padding: 0 40px;
-  background: rgba(255, 255, 255, 0.85); 
-  backdrop-filter: blur(16px);
+  padding: 0 48px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(25px) saturate(180%);
   border-bottom: 1px solid rgba(0, 0, 0, 0.04);
   display: flex; align-items: center; justify-content: space-between;
-  position: sticky; top: 0; z-index: 50;
-  font-family: 'Inter', sans-serif; /* Đổi sang Inter */
-  transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+  position: sticky; top: 0; z-index: 900;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.header-admin-sovereign.is-scrolled {
-  height: 70px;
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-  border-bottom-color: transparent;
+.header-admin-global.is-scrolled {
+  height: 68px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.04);
+  padding: 0 40px;
 }
 
-/* --- LEFT: BREADCRUMB --- */
-.breadcrumb-lux { display: flex; align-items: center; gap: 12px; font-size: 1rem; color: #64748B; }
-.crumb-icon { color: #ea580c; display: flex; }
-.divider { color: #CBD5E1; font-weight: 300; }
-.current-route { color: #1a110d; font-weight: 800; letter-spacing: 0.2px; }
-
-/* --- RIGHT: ACTIONS --- */
-.h-right { display: flex; align-items: center; gap: 20px; }
-.action-item { position: relative; }
-
-/* NOTIFICATION BUTTON (NÂNG CẤP HỔ PHÁCH) */
-.icon-btn-lux {
-  width: 44px; height: 44px;
-  border: 1px solid transparent; background: transparent;
-  border-radius: 12px;
+/* --- 🧭 2. BREADCRUMB: EXECUTIVE PATH --- */
+.breadcrumb-executive { display: flex; align-items: center; gap: 16px; }
+.root-node {
+  width: 40px; height: 40px; border-radius: 12px;
+  background: rgba(234, 88, 12, 0.08); color: #ea580c;
   display: flex; align-items: center; justify-content: center;
-  color: #64748B; cursor: pointer; position: relative;
-  transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+  box-shadow: inset 0 0 0 1px rgba(234, 88, 12, 0.1);
 }
-.icon-btn-lux:hover, .icon-btn-lux.active { 
-  background: rgba(251, 146, 60, 0.08); color: #ea580c; 
-}
+.path-arrow { color: #cbd5e1; }
+.current-path { color: #0f172a; font-weight: 800; font-size: 1.1rem; letter-spacing: -0.02em; }
 
-/* Badge Pulse Animation Sovereign */
-.badge-pulse {
-  position: absolute; top: 4px; right: 4px;
-  background: linear-gradient(135deg, #fb923c, #ea580c); color: white;
-  font-size: 0.6rem; font-weight: 800;
+/* --- ⚡ 3. ACTIONS HUB --- */
+.h-right { display: flex; align-items: center; gap: 28px; }
+.action-wrapper { position: relative; }
+
+.btn-command {
+  width: 46px; height: 46px; border: none; background: transparent;
+  border-radius: 14px; color: #64748b;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  position: relative; transition: all 0.3s ease;
+}
+.btn-command:hover { background: #f1f5f9; color: #0f172a; transform: translateY(-1px); }
+.btn-command.active { background: #0f172a; color: #fff; }
+
+.indicator-pulse {
+  position: absolute; top: 8px; right: 8px;
+  background: #ea580c; color: white;
+  font-size: 10px; font-weight: 900;
   width: 18px; height: 18px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 0 0 2px white;
-  animation: pulseAmber 2s infinite;
-}
-@keyframes pulseAmber { 
-  0% { box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.5), 0 0 0 2px white; } 
-  70% { box-shadow: 0 0 0 6px rgba(234, 88, 12, 0), 0 0 0 2px white; } 
-  100% { box-shadow: 0 0 0 0 rgba(234, 88, 12, 0), 0 0 0 2px white; } 
+  border: 3px solid #fff;
+  box-shadow: 0 0 15px rgba(234, 88, 12, 0.4);
 }
 
-/* USER TRIGGER (NÂNG CẤP VỚI VIỀN HỔ PHÁCH) */
-.user-trigger-lux {
-  display: flex; align-items: center; gap: 12px; cursor: pointer;
-  padding: 4px 6px 4px 16px; border-radius: 40px; transition: 0.3s;
-  background: transparent;
+/* --- 💊 4. USER CAPSULE --- */
+.user-capsule {
+  display: flex; align-items: center; gap: 14px; cursor: pointer;
+  padding: 6px 18px 6px 8px; border-radius: 100px;
+  background: #ffffff; border: 1px solid #e2e8f0;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
 }
-.user-trigger-lux:hover, .user-trigger-lux.active { 
-  background: #f8fafc; 
-}
-
-.text-info { text-align: right; display: flex; flex-direction: column; }
-.name { font-weight: 700; color: #1a110d; font-size: 0.9rem; }
-.role { font-size: 0.7rem; color: #ea580c; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-
-.avatar-ring img {
-  width: 40px; height: 40px; border-radius: 50%;
-  border: 2px solid white; box-shadow: 0 0 0 1px #e2e8f0;
-  object-fit: cover; transition: 0.3s;
-}
-.user-trigger-lux:hover .avatar-ring img, .user-trigger-lux.active .avatar-ring img { 
-  box-shadow: 0 0 0 2px #fb923c; 
+.user-capsule:hover, .user-capsule.active {
+  border-color: #ea580c; background: #fff;
+  box-shadow: 0 10px 25px -5px rgba(234, 88, 12, 0.12);
+  transform: translateY(-1px);
 }
 
-/* --- DROPDOWN PANELS (NÂNG CẤP BÓNG ĐỔ VÀ BO GÓC) --- */
-.dropdown-panel {
+.u-avatar-wrap { position: relative; width: 36px; height: 36px; }
+.u-avatar-wrap img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 0 0 1px #e2e8f0; }
+.u-status { position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; background: #10b981; border: 2px solid #fff; border-radius: 50%; }
+
+.u-details { display: flex; flex-direction: column; }
+.u-mail { font-size: 13px; font-weight: 700; color: #1e293b; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.u-tag { font-size: 9px; color: #ea580c; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; margin-top: -1px; }
+.u-icon { color: #94a3b8; transition: 0.3s; }
+.active .u-icon { transform: rotate(180deg); color: #ea580c; }
+
+/* --- 🏛️ 5. DROPDOWN LUX DESIGN --- */
+.dropdown-lux {
   position: absolute; top: calc(100% + 15px); right: 0;
-  background: white; width: 340px;
-  border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.08);
-  border: 1px solid rgba(0,0,0,0.05); overflow: hidden; z-index: 100;
+  background: white; width: 320px;
+  border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15);
+  border: 1px solid rgba(0,0,0,0.04); overflow: hidden; z-index: 1000;
   transform-origin: top right;
 }
-.user-panel { width: 260px; }
 
-/* Header Panel Noti */
-.panel-header {
-  padding: 18px 20px; border-bottom: 1px solid #f1f5f9;
-  display: flex; justify-content: space-between; align-items: center;
-  background: #fff;
-}
-.panel-header .title { font-weight: 700; color: #1a110d; font-size: 0.95rem; }
-.mark-read { font-size: 0.75rem; color: #ea580c; background: none; border: none; cursor: pointer; font-weight: 600; transition: 0.2s; }
-.mark-read:hover { color: #b43f0a; }
+.lux-h { padding: 20px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
+.lux-t { font-weight: 800; color: #0f172a; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; }
+.lux-link { font-size: 11px; color: #ea580c; background: none; border: none; cursor: pointer; font-weight: 700; }
 
-/* NOTI CARD */
-.panel-body { max-height: 350px; overflow-y: auto; }
-.noti-card {
-  display: flex; gap: 14px; padding: 16px 20px; cursor: pointer;
-  border-bottom: 1px solid #f8fafc; transition: 0.2s;
-}
-.noti-card:hover { background: #fafafa; }
-.noti-card.unread { background: rgba(251, 146, 60, 0.04); }
+.lux-card { display: flex; gap: 14px; padding: 16px 20px; border-bottom: 1px solid #f8fafc; transition: 0.2s; cursor: pointer; }
+.lux-card:hover { background: #f8fafc; }
+.lux-card.unread { background: rgba(234, 88, 12, 0.03); }
+.c-avatar { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 900; }
+.c-avatar.alert { background: #fee2e2; color: #ef4444; }
+.c-avatar.success { background: #dcfce7; color: #22c55e; }
 
-.status-icon { 
-  background: #fff; width: 34px; height: 34px; border-radius: 10px; 
-  display: flex; align-items: center; justify-content: center; 
-  box-shadow: 0 4px 10px rgba(0,0,0,0.04); 
-}
-.status-icon.warning { color: #ea580c; }
-.status-icon.success { color: #10b981; }
+.c-content p { margin: 0; font-size: 13px; color: #334155; line-height: 1.5; font-weight: 500; }
+.c-time { font-size: 11px; color: #94a3b8; margin-top: 4px; display: block; }
 
-.msg { margin: 0; font-size: 0.85rem; font-weight: 600; color: #334155; line-height: 1.4; }
-.noti-card.unread .msg { color: #1a110d; font-weight: 700; }
-.time { font-size: 0.75rem; color: #94a3b8; font-weight: 500; margin-top: 4px; display: block; }
+.lux-f button { width: 100%; padding: 16px; border: none; background: #f8fafc; color: #64748b; font-weight: 700; font-size: 12px; cursor: pointer; transition: 0.3s; }
+.lux-f button:hover { background: #f1f5f9; color: #0f172a; }
 
-.panel-footer button {
-  width: 100%; padding: 14px; border: none; background: #f8fafc;
-  font-weight: 600; color: #64748B; cursor: pointer; font-size: 0.8rem;
-  transition: 0.2s;
-}
-.panel-footer button:hover { color: #ea580c; background: #fff7ed; }
+/* USER HERO */
+.user-hero { padding: 32px 20px; background: linear-gradient(180deg, #f8fafc 0%, #fff 100%); text-align: center; border-bottom: 1px solid #f1f5f9; }
+.hero-avatar { width: 72px; height: 72px; border-radius: 24px; margin: 0 auto 16px; padding: 4px; background: linear-gradient(135deg, #fb923c, #ea580c); }
+.hero-avatar img { width: 100%; height: 100%; border-radius: 20px; border: 4px solid #fff; object-fit: cover; }
+.user-hero strong { display: block; font-size: 17px; color: #0f172a; letter-spacing: -0.01em; }
+.user-hero span { font-size: 13px; color: #64748b; font-weight: 500; }
 
-/* USER MENU - SOVEREIGN THEME */
-.user-cover-header {
-  padding: 24px 20px; 
-  display: flex; flex-direction: column; align-items: center; text-align: center;
-  background: #1a110d; /* Chuyển nền thành Than chì */
-  color: white;
-}
-.avatar-display {
-  width: 64px; height: 64px; border-radius: 50%;
-  padding: 3px; background: linear-gradient(135deg, #fb923c, #ea580c);
-  margin-bottom: 12px;
-}
-.avatar-display img { width: 100%; height: 100%; border-radius: 50%; border: 2px solid #1a110d; object-fit: cover; }
-
-.u-detail strong { display: block; font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
-.u-detail span { font-size: 0.8rem; color: rgba(255,255,255,0.6); }
-
-.menu-list { padding: 12px; background: white; }
-.menu-link {
+.user-nav { padding: 12px; }
+.user-nav button {
   width: 100%; display: flex; align-items: center; gap: 12px;
-  padding: 10px 14px; border: none; background: transparent;
-  color: #475569; font-weight: 600; font-size: 0.85rem; border-radius: 10px;
-  cursor: pointer; transition: 0.2s; text-align: left;
+  padding: 12px 16px; border: none; background: transparent;
+  color: #475569; font-weight: 600; font-size: 14px; border-radius: 12px;
+  cursor: pointer; transition: 0.2s;
 }
-.menu-link:hover { background: #f8fafc; color: #1a110d; transform: translateX(4px); }
-.menu-link.danger { color: #ef4444; }
-.menu-link.danger:hover { background: #fef2f2; transform: translateX(4px); }
+.user-nav button:hover { background: #f1f5f9; color: #0f172a; transform: translateX(4px); }
+.user-nav button.danger { color: #ef4444; }
+.user-nav button.danger:hover { background: #fef2f2; }
+.nav-sep { height: 1px; background: #f1f5f9; margin: 8px 12px; }
 
-.divider-hor { height: 1px; background: #f1f5f9; margin: 6px 0; }
+/* 🌪️ SPRING PHYSICS ANIMATION */
+.spring-panel-enter-active {
+  animation: spring-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.spring-panel-leave-active {
+  animation: spring-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) reverse;
+}
+@keyframes spring-in {
+  0% { opacity: 0; transform: translateY(20px) scale(0.92); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
 
-/* ANIMATION ZOOM (MƯỢT HƠN) */
-.zoom-fade-enter-active, .zoom-fade-leave-active { transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1); }
-.zoom-fade-enter-from, .zoom-fade-leave-to { opacity: 0; transform: translateY(15px) scale(0.95); }
-
-/* --- SCROLLBAR CUSTOM --- */
+/* CUSTOM SCROLL */
 .custom-scroll::-webkit-scrollbar { width: 4px; }
-.custom-scroll::-webkit-scrollbar-track { background: transparent; }
-.custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-.custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+.custom-scroll::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
 </style>

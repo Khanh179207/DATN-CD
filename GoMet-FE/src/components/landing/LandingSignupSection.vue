@@ -262,12 +262,12 @@ const registerForm = reactive({
   email: '', 
   password: '', 
   confirmPassword: '',
-  agreeTerms: false // 👈 Thêm dòng này sếp nhé
+  agreeTerms: false 
 })
 
 // State cho Quên mật khẩu
 const forgotIdentifier = ref('')
-const forgotState      = ref('idle') // 'idle', 'loading', 'sent'
+const forgotState      = ref('idle') 
 const forgotError      = ref('')
 
 const switchTabListener = (event) => {
@@ -316,17 +316,18 @@ const handleSubmit = async () => {
   }
 
   // Xử lý Đăng Nhập
-  // Xử lý Đăng Nhập
   if (activeTab.value === 'login') {
     isLoading.value = true
     try {
       const role = await authStore.login(loginForm.email, loginForm.password)
       toast.success('Đăng nhập thành công!')
+      
+      // 🔥 BẮT BUỘC THÊM DÒNG NÀY: Báo cho MainLayout biết là tao vừa login xong, hiện Loading đi!
+      sessionStorage.setItem('just_logged_in', 'true')
+      
       router.push(role === 'admin' ? '/admin' : '/home')
     } catch (err) {
-      // 🔥 Ưu tiên lấy lỗi trực tiếp từ Backend gửi lên
       const backendMsg = err.response?.data?.message || err.message || ''
-      
       if (backendMsg.includes('ACCOUNT_BANNED')) {
         toast.error('🚨 TÀI KHOẢN BỊ KHÓA: Bạn đã bị cấm vĩnh viễn do vi phạm tiêu chuẩn cộng đồng GOMET!', { timeout: 8000 })
       } else {
@@ -384,6 +385,10 @@ const handleVerifyOtp = async () => {
     
     toast.success('Đăng ký thành công! Chào mừng bạn đến với GoMet.')
     showOtpModal.value = false
+    
+    // 🔥 THÊM Ở ĐÂY LUÔN CHO CHẮC: Đăng ký thành công cũng coi như vừa login
+    sessionStorage.setItem('just_logged_in', 'true')
+    
     router.push('/home')
   } catch (err) {
     toast.error(err.response?.data?.message || 'Mã xác nhận không đúng hoặc đã hết hạn.')
@@ -415,12 +420,14 @@ const handleGoogleCallback = async (response) => {
     localStorage.setItem('user', JSON.stringify(authStore.user))
 
     toast.success('Đăng nhập Google thành công!')
+    
+    // 🔥 VÀ THÊM Ở ĐÂY NỮA (Google Login)
+    sessionStorage.setItem('just_logged_in', 'true')
+    
     router.push(authStore.user.role === 'admin' ? '/admin' : '/home')
 
   } catch (err) {
     console.error("Google Login Error:", err)
-    
-    // 🔥 CHẶN ĐỨNG LỖI ACCOUNT_BANNED TỪ GOOGLE
     const backendMsg = err.response?.data?.message || err.message || ''
     
     if (backendMsg.includes('ACCOUNT_BANNED')) {

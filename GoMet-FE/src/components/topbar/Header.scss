@@ -287,28 +287,67 @@
   }
 }
 
-/* --------------------------------------------------------
-   HIỆU ỨNG ĐỔI MÀU KHI SCROLL HOẶC TRONG THEME DARK
--------------------------------------------------------- */
-.content-header {
-  &.theme-dark:not(.is-scrolled) {
-    .guest-actions .btn-login {
-      color: #ffffff; 
-      
-      &:hover {
-        background: rgba(255, 255, 255, 0.15);
-      }
+/* ============================================================
+   🔥 SOVEREIGN DARK MODE SYNC (CHỈ RIÊNG PHẦN ĐỔI MÀU)
+   ============================================================ */
+
+.content-header.is-dark-theme {
+  // Nền đen Midnight mờ ảo (Glassmorphism)
+  background: rgba(3, 7, 18, 0.8) !important; 
+  backdrop-filter: blur(15px) saturate(160%); 
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+
+  // Đồng bộ các Icon Actions
+  .btn-icon {
+    color: rgba(255, 255, 255, 0.6);
+    &:hover { 
+      background: rgba(255, 255, 255, 0.08); 
+      color: #FFFFFF; 
+    }
+    &.active { 
+      background: rgba(234, 88, 12, 0.15); 
+      color: #EA580C; 
     }
   }
 
-  &.is-scrolled {
-    .guest-actions .btn-login {
-      color: #1e293b; 
-      
-      &:hover {
-        background: rgba(234, 88, 12, 0.1);
-        color: #ea580c;
-      }
+  // Vạch chia dọc mờ
+  .divider-vertical {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  // Nút đăng nhập dành cho khách ở trang Premium
+  .guest-actions .btn-login {
+    color: rgba(255, 255, 255, 0.85) !important;
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #FFFFFF !important;
+    }
+  }
+
+  // 🔥 Đồng bộ các Dropdown (Shopping, Noti) khi Header đang ở Dark Mode
+  .common-dropdown, .modern-shopping-dropdown {
+    background: rgba(15, 23, 42, 0.9); // Đen xanh mờ
+    backdrop-filter: blur(20px);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+
+    .dropdown-header {
+      border-bottom-color: rgba(255, 255, 255, 0.05);
+      h3 { color: #FFFFFF; }
+    }
+
+    .dropdown-footer, .dropdown-footer-v3 {
+      background: rgba(15, 23, 42, 0.5);
+      border-top-color: rgba(255, 255, 255, 0.05);
+    }
+
+    // Các Card bên trong dropdown (Shopping items, v.v.)
+    .shopping-card-v3, .list-item, .noti-item {
+      background: transparent;
+      border-bottom-color: rgba(255, 255, 255, 0.03);
+      &:hover { background: rgba(255, 255, 255, 0.03); }
+      .item-name-text, .noti-text b { color: #F1F5F9; }
+      .item-qty-text, .time { color: #94A3B8; }
     }
   }
 }

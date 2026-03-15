@@ -1,6 +1,6 @@
 <template>
   <Transition name="pop-fade">
-    <div class="ad-overlay" v-if="isVisible" @click.self="closePopup">
+    <div class="ad-overlay" v-if="shouldShowAd" @click.self="closePopup">
       <div class="ad-content">
         <button class="close-btn" @click="closePopup" aria-label="Đóng quảng cáo">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -13,7 +13,9 @@
 </template>
 
 <script setup>
-// Nhận props từ cha (đường dẫn ảnh và trạng thái hiển thị)
+import { computed } from 'vue'
+import { useAuthStore } from '@/stores/auth' // 🔥 Import store chứa thông tin user của sếp
+
 const props = defineProps({
   isVisible: {
     type: Boolean,
@@ -25,11 +27,33 @@ const props = defineProps({
   }
 })
 
-// Định nghĩa sự kiện để báo cho cha biết cần đóng popup
 const emit = defineEmits(['close'])
+const authStore = useAuthStore()
+
+// 🔥 LOGIC KIỂM TRA ĐẶC QUYỀN
+const shouldShowAd = computed(() => {
+  // 1. Nếu cha không muốn hiện (isVisible = false) -> Ẩn luôn
+  if (!props.isVisible) return false;
+
+  // 2. Lấy thông tin user hiện tại
+  const user = authStore.user;
+
+  // 3. Nếu chưa đăng nhập (Khách) -> Bắt xem quảng cáo
+  if (!user) return true;
+
+  // 4. Nếu là Admin hoặc Premium (check cả trường hợp số 1 hoặc boolean true) -> Không hiện
+  const isAdmin = user.isAdmin === 1 || user.isAdmin === true;
+  const isPremium = user.isPremium === 1 || user.isPremium === true;
+
+  if (isAdmin || isPremium) {
+    return false; // Phá kén, thoát kiếp xem ads!
+  }
+
+  // 5. User bình thường -> Phải xem
+  return true;
+})
 
 const closePopup = () => {
-  // Phát sự kiện 'close' ra ngoài
   emit('close')
 }
 </script>

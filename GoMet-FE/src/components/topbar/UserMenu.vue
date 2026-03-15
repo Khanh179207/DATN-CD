@@ -102,6 +102,7 @@
 import { ref, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { toast } from '@/composables/useToast' // 👈 Thêm import toast
 import gsap from 'gsap'
 
 const authStore = useAuthStore()
@@ -111,7 +112,7 @@ const isOpen = ref(false)
 const dropdownPanel = ref(null)
 const avatarCircle = ref(null)
 
-// --- EMITS: Gom nhóm feedback/bug thành support ---
+// --- EMITS ---
 const emit = defineEmits(['open-premium', 'open-support', 'switch-account'])
 
 // --- GSAP ANIMATIONS ---
@@ -152,13 +153,24 @@ const handleAvatarError = (e) => { e.target.src = `https://ui-avatars.com/api/?n
 const navigate = (path) => { isOpen.value = false; router.push(path); }
 const emitAction = (event) => { isOpen.value = false; emit(event); }
 
+// --- 🔥 XỬ LÝ ĐĂNG XUẤT ELITE ---
 const handleLogout = async () => {
   isOpen.value = false;
+  
+  // 1. Xóa dữ liệu cũ
   localStorage.removeItem('user');
   localStorage.removeItem('token');
-  await router.push({ path: '/', hash: '#sectionsigninlanding' });
+  sessionStorage.removeItem('just_logged_in'); 
+  
+  // 2. Reset store
   authStore.user = null;
   authStore.isAuthenticated = false;
+
+  // 3. Hiện thông báo "Chia tay" ngọt ngào
+  toast.success('Đăng xuất thành công. Hẹn gặp lại bạn nhé! 👋');
+
+  // 4. Đẩy ra Landing (Không nhắm vào Login, Land ở đầu trang)
+  await router.push('/');
 }
 </script>
 
