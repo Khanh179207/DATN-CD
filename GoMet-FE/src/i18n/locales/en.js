@@ -93,6 +93,7 @@ export default {
     submit_review:   'Submit Review',
     rating_prompt:   'How many stars for this dish?',
     community_reviews: 'Community Reviews',
+    no_comments_yet:  'No comments yet. Be the first to comment!',
     saved:           'Saved',
     unsaved:         'Save Recipe',
     views:           'views',
@@ -264,6 +265,14 @@ export default {
     just_posted:                'Just now',
     select_ingredients_first:   'Please select ingredients first!',
     views_suffix:               'views',
+  },
+  comment: {
+    like:               'Like',
+    liked:              'Liked',
+    reply:              'Reply',
+    share:              'Share',
+    show_more_replies:  'View {count} more replies',
+    hide_replies:       'Hide replies',
   },
   search: {
     trending_label: 'Trending:',

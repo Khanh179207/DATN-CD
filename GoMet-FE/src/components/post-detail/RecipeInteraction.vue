@@ -78,81 +78,11 @@
         </div>
 
         <div class="comments-feed">
-          <div class="comment-card" v-for="cmt in commentsList" :key="cmt.id">
-            <img :src="cmt.avatar" class="cmt-avatar" :alt="cmt.name">
-            <div class="cmt-content-wrapper">
-              <div class="cmt-bubble">
-                <span class="cmt-author">{{ cmt.name || $t('recipe.anonymous_user') }}</span>
-                <span class="verified-badge" v-if="cmt.verified">✓ Bếp trưởng</span>
-                <div class="stars-inline" v-if="cmt.rating">
-                  <span class="stars" v-for="n in 5" :key="n" :class="{ filled: n <= cmt.rating }">★</span>
-                </div>
-                <p class="cmt-text">{{ cmt.content }}</p>
-                <div class="cmt-images" v-if="cmt.images && cmt.images.length">
-                  <img v-for="(img, idx) in cmt.images" :key="idx" :src="img">
-                </div>
-              </div>
-              
-              <div class="cmt-actions">
-                <button class="action-link" :class="{ 'liked': cmt.isLiked }" @click="toggleLike(cmt)">
-                  {{ $t('recipe.helpful') }} ({{ cmt.likes }})
-                </button>
-                <button class="action-link" @click="setReply(cmt)">{{ $t('recipe.reply') }}</button>
-                <span class="cmt-date">{{ formatTime(cmt.time) }}</span>
-              </div>
-
-              <!-- Inline Reply Box cho Root Comment -->
-              <div v-if="activeReplyId === cmt.id" class="inline-reply-box">
-                <img :src="authStore.user?.avatar || 'https://ui-avatars.com/api/?name=U&background=EA580C&color=fff'" class="reply-user-avt">
-                <div class="reply-input-area">
-                  <textarea v-model="replyBoxContent" :placeholder="'Viết bình luận công khai cho ' + cmt.name + '...'"></textarea>
-                  <div class="reply-controls">
-                    <button @click="cancelReply" class="btn-cancel">Hủy</button>
-                    <button @click="submitInlineReply(cmt)" class="btn-post" :disabled="!replyBoxContent.trim()">Đăng</button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Nested Replies (Cây trả lời) -->
-              <div class="nested-replies-fb" v-if="cmt.replies && cmt.replies.length > 0">
-                <div class="comment-card nested-card" v-for="reply in cmt.replies" :key="reply.id">
-                  <img :src="reply.avatar" class="cmt-avatar nested-avt" :alt="reply.name">
-                  <div class="cmt-content-wrapper">
-                    <div class="cmt-bubble">
-                      <span class="cmt-author">
-                         {{ reply.name || $t('recipe.anonymous_user') }}
-                         <span v-if="reply.replyToName" class="reply-indicator"> ▶ {{ reply.replyToName }}</span>
-                      </span>
-                      <p class="cmt-text">
-                        {{ reply.content }}
-                      </p>
-                    </div>
-
-                    <div class="cmt-actions">
-                      <button class="action-link" :class="{ 'liked': reply.isLiked }" @click="toggleLike(reply)">
-                        {{ $t('recipe.helpful') }} ({{ reply.likes || 0 }})
-                      </button>
-                      <button class="action-link" @click="setReply(reply)">{{ $t('recipe.reply') }}</button>
-                      <span class="cmt-date">{{ formatTime(reply.time) }}</span>
-                    </div>
-
-                    <!-- Inline Reply Box cho Bình luận con -->
-                    <div v-if="activeReplyId === reply.id" class="inline-reply-box">
-                      <img :src="authStore.user?.avatar || 'https://ui-avatars.com/api/?name=U&background=EA580C&color=fff'" class="reply-user-avt">
-                      <div class="reply-input-area">
-                        <textarea v-model="replyBoxContent" :placeholder="'Viết câu trả lời cho ' + reply.name + '...'"></textarea>
-                        <div class="reply-controls">
-                          <button @click="cancelReply" class="btn-cancel">Hủy</button>
-                          <button @click="submitInlineReply(reply)" class="btn-post" :disabled="!replyBoxContent.trim()">Đăng</button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-          </div>
+          <CommentThread
+            :postId="post.postID"
+            :currentUserId="authStore.user?.accountID"
+            :refreshKey="commentVersion"
+          />
         </div>
       </section>
     </div>
@@ -164,6 +94,7 @@ import { ref, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useChatStore } from '@/stores/chat' // Import Store Chat
+import CommentThread from './CommentThread.vue'
 import { getComments, addComment, ratePost } from '@/services/interactionService'
 import { checkFollow, follow, unfollow, checkFavorite, addFavorite, removeFavorite } from '@/services/socialService'
 import { getUserStats } from '@/services/userService'
@@ -178,6 +109,7 @@ const chatStore = useChatStore() // Khởi tạo Store Chat
 
 const userRating = ref(0)
 const newComment = ref('')
+const commentVersion = ref(0) // increment to refresh thread view
 const commentsList = ref([])
 const avgRating = ref(0)
 const totalRatings = ref(0)
@@ -185,18 +117,6 @@ const isFollowing = ref(false)
 const isFavorite = ref(false)
 const authorStats = ref({ posts: 0, followers: 0 })
 
-const activeReplyId = ref(null)
-const replyBoxContent = ref('')
-
-const setReply = (cmt) => {
-  activeReplyId.value = cmt.id
-  replyBoxContent.value = ''
-}
-
-const cancelReply = () => {
-  activeReplyId.value = null
-  replyBoxContent.value = ''
-}
 
 // Logic tính toán phân phối rating
 const ratingDistribution = computed(() => {
@@ -209,18 +129,14 @@ const ratingDistribution = computed(() => {
 })
 
 const normalizeComment = (c) => ({
-  id: c.commentID,
-  name: c.authorName || '',
-  avatar: c.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(c.authorName || 'U')}&background=EA580C&color=fff`,
-  time: c.createdAt || null,
-  rating: c.rating || 0,
-  verified: false,
+  commentID: c.commentID,
+  accountID: c.accountID,
+  authorName: c.authorName || '',
+  authorAvatar: c.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(c.authorName || 'U')}&background=EA580C&color=fff`,
+  createdAt: c.createdAt || null,
   content: c.content,
-  likes: 0,
-  isLiked: false,
-  cmtid: c.cmtid || null,
-  replies: [],
-  replyToName: null 
+  rating: c.rating || 0,
+  children: (c.children || []).map(normalizeComment),
 })
 
 // Format thời gian sang chuỗi hiển thị tương đối
@@ -255,38 +171,24 @@ const toggleLike = (cmt) => {
   }
 }
 
+const flattenComments = (comments) => {
+  return comments.reduce((acc, comment) => {
+    acc.push(comment)
+    if (comment.children && comment.children.length) {
+      acc.push(...flattenComments(comment.children))
+    }
+    return acc
+  }, [])
+}
+
 const loadComments = async (postID) => {
   if (!postID) return
   try {
     const data = await getComments(postID)
     const normalizedData = (data || []).map(normalizeComment)
+    commentsList.value = normalizedData
 
-    const commentMap = {}
-    const rootComments = []
-
-    normalizedData.forEach(c => {
-      commentMap[c.id] = c
-    })
-
-    normalizedData.forEach(c => {
-      if (c.cmtid && commentMap[c.cmtid]) {
-        // LUÔN LUÔN tag tên người mà comment này trực tiếp Repy lại (dù là Root hay Child)
-        c.replyToName = commentMap[c.cmtid].name;
-        
-        // Tìm lên thằng ông tổ Root đệ quy dồn chung tất cả con cháu vào 1 mảng replies để làm phẳng layout Facebook
-        let currentRoot = commentMap[c.cmtid]
-        while (currentRoot.cmtid && commentMap[currentRoot.cmtid]) {
-          currentRoot = commentMap[currentRoot.cmtid]
-        }
-        currentRoot.replies.push(c)
-      } else {
-        rootComments.push(c)
-      }
-    })
-
-    commentsList.value = rootComments
-
-    const rated = normalizedData.filter(c => c.rating > 0)
+    const rated = flattenComments(normalizedData).filter(c => c.rating > 0)
     if (rated.length) {
       avgRating.value = (rated.reduce((s, c) => s + c.rating, 0) / rated.length).toFixed(1)
       totalRatings.value = rated.length
@@ -422,25 +324,24 @@ const submitComment = async () => {
     newComment.value = ''
     userRating.value = 0
     await loadComments(postID)
+    commentVersion.value++
     toast.success(t('toast.comment_ok'))
   } catch (err) {
     toast.error(t('toast.error_generic'))
   }
 }
 
-const submitInlineReply = async (target) => {
-  const content = replyBoxContent.value.trim()
-  if (!content) return
+const handleSubmitReply = async ({ parentId, content }) => {
+  if (!content || !content.trim()) return
   if (!authStore.isAuthenticated) { toast.warn(t('toast.need_login')); return }
   const accountID = authStore.user.accountID
   const postID = props.post?.postID
   if (!postID) return
+
   try {
-    const cmtid = target.id
-    await addComment(postID, accountID, content, cmtid)
-    replyBoxContent.value = ''
-    activeReplyId.value = null
+    await addComment(postID, accountID, content.trim(), parentId)
     await loadComments(postID)
+    commentVersion.value++
     toast.success(t('toast.comment_ok'))
   } catch (err) {
     toast.error(t('toast.error_generic'))

@@ -94,6 +94,7 @@
     submit_review:   'Gửi Đánh Giá',
     rating_prompt:   'Bạn chấm món này mấy sao?',
     community_reviews: 'Đánh giá từ cộng đồng',
+    no_comments_yet:  'Chưa có bình luận nào. Hãy là người đầu tiên!',
     saved:           'Đã lưu',
     unsaved:         'Lưu công thức',
     views:           'lượt xem',
@@ -267,6 +268,14 @@
     just_posted:                'Vừa đăng',
     select_ingredients_first:   'Vui lòng chọn nguyên liệu!',
     views_suffix:               'xem',
+  },
+  comment: {
+    like:               'Thích',
+    liked:              'Đã thích',
+    reply:              'Trả lời',
+    share:              'Chia sẻ',
+    show_more_replies:  'Xem thêm {count} phản hồi',
+    hide_replies:       'Ẩn phản hồi',
   },
   search: {
     trending_label: 'Xu hướng:',

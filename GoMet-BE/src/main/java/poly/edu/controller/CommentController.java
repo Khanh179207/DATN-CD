@@ -11,10 +11,10 @@ import poly.edu.dto.CommentDTO;
 import poly.edu.entity.Account;
 import poly.edu.entity.Comment;
 import poly.edu.entity.Post;
+import poly.edu.service.CommentService;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/comments")
@@ -24,12 +24,11 @@ public class CommentController {
     private final CommentDAO commentDAO;
     private final PostDAO postDAO;
     private final AccountDAO accountDAO;
+    private final CommentService commentService;
 
     @GetMapping("/post/{postID}")
     public ResponseEntity<List<CommentDTO>> getByPost(@PathVariable Integer postID) {
-        List<CommentDTO> result = commentDAO.findByPost_PostID(postID).stream()
-                .map(this::toDTO).collect(Collectors.toList());
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(commentService.getCommentsByPost(postID));
     }
 
     @PostMapping
@@ -37,7 +36,7 @@ public class CommentController {
         if (req.getAccountID() == null || req.getContent() == null || req.getContent().isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("message", "Thiếu thông tin bình luận"));
         }
-        
+
         Account account = accountDAO.findById(req.getAccountID()).orElse(null);
         if (account == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Không tìm thấy tài khoản"));
@@ -47,7 +46,8 @@ public class CommentController {
         if (req.getCmtid() != null) {
             parentComment = commentDAO.findById(req.getCmtid()).orElse(null);
             if (parentComment == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Không tìm thấy bình luận gốc"));
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("message", "Không tìm thấy bình luận gốc"));
             }
         }
 
