@@ -7,25 +7,8 @@
           <h2>🎬 {{ $t('Video hướng dẫn') || 'Video Hướng Dẫn' }}</h2>
         </div>
         <div class="video-wrapper">
-          
-          <iframe 
-            v-if="parsedVideo.type === 'youtube'"
-            :src="parsedVideo.url" 
-            title="Recipe Video" 
-            frameborder="0" 
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-            allowfullscreen>
-          </iframe>
-
-          <video 
-            v-else-if="parsedVideo.type === 'html5'"
-            :src="parsedVideo.url"
-            controls
-            playsinline
-            preload="metadata"
-            class="html5-video-player">
-          </video>
-
+          <iframe v-if="parsedVideo.type === 'youtube'" :src="parsedVideo.url" title="Recipe Video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+          <video v-else-if="parsedVideo.type === 'html5'" :src="parsedVideo.url" controls playsinline preload="metadata" class="html5-video-player"></video>
         </div>
       </div>
     </div>
@@ -35,7 +18,6 @@
         
         <aside class="sidebar-left-sticky">
           <div class="sticky-wrapper">
-            
             <div class="premium-card ingredients-card slide-in-left">
               <div class="card-header-gradient">
                 <div class="header-content">
@@ -46,7 +28,6 @@
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
                 </button>
               </div>
-              
               <div class="ingredients-scroll">
                 <ul class="ingredients-list-premium">
                   <li v-for="(item, index) in ingredientsList" :key="index">
@@ -61,7 +42,6 @@
                   </li>
                 </ul>
               </div>
-
               <button class="btn-shopping-cart-lg" @click="handleGoShopping">
                 <span class="icon">🛍️</span> {{ $t('recipe.add_to_cart') || 'Thêm vào giỏ đi chợ' }}
               </button>
@@ -78,41 +58,40 @@
                 </div>
                 <div class="note-status" style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
                   <span class="status-badge"><span class="dot"></span> {{ $t('recipe.private') || 'Riêng tư' }}</span>
-                  
                   <button class="btn-save-note" @click="handleSaveNote" :disabled="isSavingNote">
                     <span v-if="isSavingNote" class="loader-small"></span>
-                    <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5z"></path>
-                      <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                    </svg>
+                    <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline></svg>
                     {{ isSavingNote ? 'Đang lưu...' : 'Lưu ghi chú' }}
                   </button>
                 </div>
               </div>
             </div>
-
           </div>
         </aside>
 
         <main class="main-right-content">
           <div class="premium-card steps-card slide-in-up">
+            
             <div class="steps-header-modern">
-              <h2>{{ $t('recipe.process') || 'Quy trình thực hiện' }}</h2>
-              <div class="step-counter-badge">{{ post.steps?.length || 0 }} {{ $t('post.step') || 'Bước' }}</div>
+              <div class="header-left-group">
+                <h2>{{ $t('recipe.process') || 'Quy trình thực hiện' }}</h2>
+              </div>
+              
+              <button class="btn-focus-mode" @click="cookingCardRef?.openModal(0)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                {{ $t('Xem chi tiết') || 'Chế độ xem chi tiết' }}
+              </button>
             </div>
 
             <div class="timeline-editorial">
               <div class="timeline-step" v-for="(step, index) in post.steps" :key="index">
-                
                 <div class="step-marker-col">
                   <div class="step-number-art">{{ index + 1 }}</div>
                   <div class="step-connector" v-if="index !== post.steps.length - 1"></div>
                 </div>
-
                 <div class="step-content-col">
                   <h4 class="step-heading">{{ $t('recipe.step_prefix') || 'Bước' }} {{ index + 1 }}</h4>
                   <p class="step-desc-text">{{ step.desc }}</p>
-                  
                   <div class="step-gallery-floating" v-if="step.images && step.images.length && step.images[0]">
                     <div class="gallery-item" v-for="(img, i) in step.images" :key="i">
                       <div class="img-inner">
@@ -122,7 +101,6 @@
                     </div>
                   </div>
                 </div>
-
               </div>
             </div>
           </div>
@@ -130,6 +108,9 @@
 
       </div>
     </section>
+
+    <CookingCard ref="cookingCardRef" :steps="post.steps || []" />
+    
   </div>
 </template>
 
@@ -140,6 +121,9 @@ import axios from 'axios'
 import { useShoppingStore } from '@/stores/shopping' 
 import { useAuthStore } from '@/stores/auth'
 import { toast } from '@/composables/useToast'
+
+// CHÚ Ý IMPORT COMPONENT MỚI Ở ĐÂY (Sửa lại đường dẫn nếu cần)
+import CookingCard from '@/components/common/CookingCard.vue'
 
 const { t } = useI18n()
 const props = defineProps({
@@ -156,16 +140,13 @@ const userNote = ref('')
 const isSavingNote = ref(false)
 const ingredientsList = ref([])
 
-// ==============================================================
-// LOGIC MỚI: NHẬN DIỆN VÀ PHÂN LOẠI LINK VIDEO
-// ==============================================================
+// Khai báo ref để điều khiển component CookingCard
+const cookingCardRef = ref(null)
+
+// --- LOGIC VIDEO ---
 const parsedVideo = computed(() => {
   const url = props.post?.video;
-  
-  // Nếu bài viết không có video -> Trả về null để ẩn khung Video
   if (!url) return null;
-
-  // Kiểm tra nếu là link YouTube
   if (url.includes('youtube.com') || url.includes('youtu.be')) {
     let embedUrl = url;
     if (url.includes('youtube.com/watch?v=')) {
@@ -177,22 +158,15 @@ const parsedVideo = computed(() => {
     }
     return { type: 'youtube', url: embedUrl };
   }
-
-  // Nếu không phải YouTube (VD: Cloudinary .mp4), trả về kiểu html5
   return { type: 'html5', url: url };
 })
-// ==============================================================
 
-
-// --- LOGIC 1: GHI CHÚ CÁ NHÂN ---
+// --- LOGIC NOTE ---
 const fetchNote = async () => {
   if (!authStore.isAuthenticated) return
   try {
     const res = await axios.get('http://localhost:8080/api/notes', {
-      params: { 
-        accountId: authStore.currentUser.accountID, 
-        postId: props.post.id 
-      }
+      params: { accountId: authStore.currentUser.accountID, postId: props.post.id }
     })
     if (res.data) userNote.value = res.data
   } catch (e) {
@@ -220,7 +194,7 @@ const handleSaveNote = async () => {
   }
 }
 
-// --- LOGIC 2: NGUYÊN LIỆU & GIỎ HÀNG ---
+// --- LOGIC INGREDIENTS ---
 const selectAllIngredients = () => {
   ingredientsList.value.forEach(item => {
     item.selectedForShopping = true
@@ -250,7 +224,6 @@ watch(() => shoppingStore.items?.length, (newLength) => {
 
 const handleGoShopping = () => {
   const selected = ingredientsList.value.filter(i => i.selectedForShopping)
-  
   if (selected.length === 0) {
     toast.warn(t('recipe.select_ingredients_first') || 'Vui lòng chọn ít nhất 1 nguyên liệu nhé!')
   } else {
@@ -270,50 +243,28 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Reset cơ bản để tránh lỗi Blowout */
-.recipe-guide-container *,
-.recipe-guide-container *::before,
-.recipe-guide-container *::after {
-  box-sizing: border-box;
-}
+/* Reset */
+.recipe-guide-container *, .recipe-guide-container *::before, .recipe-guide-container *::after { box-sizing: border-box; }
+.recipe-guide-container { width: 100%; max-width: 100vw; font-family: 'Mulish', sans-serif; color: #1C1917; overflow-x: hidden; }
 
-.recipe-guide-container { 
-  width: 100%; 
-  max-width: 100vw; 
-  font-family: 'Mulish', sans-serif; 
-  color: #1C1917; 
-  overflow-x: hidden; 
-}
-
-/* ================= VIDEO STYLE ================= */
+/* Video */
 .top-video-container { max-width: 1200px; margin: 0 auto 50px auto; padding: 0 24px; }
 .video-card { padding: 30px; }
 .video-header h2 { font-family: 'Playfair Display', serif; font-size: 1.8rem; margin: 0 0 20px 0; color: #111827; }
 .video-wrapper { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 16px; background: #000; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
 .video-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+.html5-video-player { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; background-color: #000; border-radius: 16px; }
 
-/* 🔥 STYLE THÊM CHO VIDEO MP4 TỪ CLOUDINARY */
-.html5-video-player {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain; /* Giữ nguyên tỷ lệ video, ko bị cắt lẹm */
-  background-color: #000;
-  border-radius: 16px;
-}
-
-/* ================= BODY CONTAINER ================= */
+/* Body Layout */
 .body-section-premium { width: 100%; background-color: #F8FAFC; padding: 60px 0; }
 .body-container-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; display: grid; grid-template-columns: 380px minmax(0, 1fr); gap: 60px; }
 .sticky-wrapper { position: sticky; top: 90px; display: flex; flex-direction: column; gap: 30px; }
 
-/* SHARED CARD STYLE */
+/* Card Style */
 .premium-card { background: white; border-radius: 24px; border: 1px solid #E2E8F0; box-shadow: 0 10px 30px -5px rgba(0,0,0,0.03); overflow: hidden; transition: 0.3s; }
 .premium-card:hover { box-shadow: 0 20px 40px -5px rgba(0,0,0,0.06); }
 
-/* --- INGREDIENTS CARD --- */
+/* Ingredients */
 .ingredients-card .card-header-gradient { background: linear-gradient(135deg, #FFF7ED 0%, #FFFFFF 100%); padding: 25px 30px; border-bottom: 1px solid #FED7AA; display: flex; justify-content: space-between; align-items: center; }
 .header-content h3 { font-family: 'Playfair Display', serif; font-size: 1.6rem; margin: 0; color: #111827; }
 .header-content .sub-text { font-size: 0.85rem; color: #9A3412; }
@@ -335,7 +286,7 @@ onMounted(() => {
 .btn-shopping-cart-lg { width: calc(100% - 60px); margin: 10px 30px 30px; padding: 14px; background: #111827; color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.3s; }
 .btn-shopping-cart-lg:hover { background: #EA580C; box-shadow: 0 8px 20px rgba(234, 88, 12, 0.3); }
 
-/* --- NOTE CARD --- */
+/* Note */
 .note-card { background: #FEFCE8; border-color: #FEF08A; padding: 0; }
 .note-decoration { height: 8px; background: repeating-linear-gradient(45deg, #FDE047, #FDE047 10px, #FEF08A 10px, #FEF08A 20px); }
 .note-inner { padding: 25px 30px; }
@@ -348,26 +299,38 @@ onMounted(() => {
 .loader-small { width: 14px; height: 14px; border: 2px solid #FFF; border-bottom-color: transparent; border-radius: 50%; display: inline-block; animation: rotation 1s linear infinite; }
 @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-/* --- STEPS CARD --- */
+/* Steps */
 .main-right-content { min-width: 0; }
 .steps-card { padding: 40px; }
-.steps-header-modern { display: flex; justify-content: space-between; align-items: center; margin-bottom: 50px; border-bottom: 2px solid #F1F5F9; padding-bottom: 20px; }
-.steps-header-modern h2 { font-family: 'Playfair Display', serif; font-size: 2.2rem; margin: 0; color: #111827; }
-.step-counter-badge { background: #111827; color: white; padding: 6px 16px; border-radius: 20px; font-weight: 700; font-size: 0.9rem; letter-spacing: 0.5px; }
-.timeline-editorial { display: flex; flex-direction: column; gap: 60px; }
-.timeline-step { display: grid; grid-template-columns: 80px minmax(0, 1fr); gap: 30px; }
+
+/* Header của Bước nấu ăn */
+.steps-header-modern { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 1px solid #E2E8F0; padding-bottom: 20px; flex-wrap: wrap; gap: 15px; }
+.header-left-group { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.steps-header-modern h2 { font-family: 'Playfair Display', serif; font-size: 2rem; margin: 0; color: #111827; line-height: 1; }
+.step-counter-badge { background: #111827; color: white; padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 0.85rem; letter-spacing: 0.5px; display: flex; align-items: center; justify-content: center; height: 28px; transform: translateY(-1px); }
+
+/* Nút Xem chi tiết */
+.btn-focus-mode { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 18px; background: linear-gradient(135deg, #F97316 0%, #EA580C 100%); color: white; border: none; border-radius: 10px; font-weight: 700; font-family: 'Mulish', sans-serif; font-size: 0.95rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(234, 88, 12, 0.25); margin: 0; white-space: nowrap; }
+.btn-focus-mode svg { stroke: white; } 
+.btn-focus-mode:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(234, 88, 12, 0.4); }
+
+/* Timeline */
+.timeline-editorial { display: flex; flex-direction: column; gap: 40px; }
+.timeline-step { display: grid; grid-template-columns: 60px minmax(0, 1fr); gap: 24px; }
 .step-marker-col { display: flex; flex-direction: column; align-items: center; }
-.step-number-art { width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 900; color: #EA580C; background: #FFF7ED; border-radius: 20px; border: 2px solid #FFEDD5; box-shadow: 4px 4px 0 #FED7AA; z-index: 2; }
-.step-connector { width: 2px; flex: 1; border-left: 2px dashed #E2E8F0; margin-top: 20px; }
-.step-heading { font-size: 0.9rem; text-transform: uppercase; color: #94A3B8; font-weight: 800; margin: 0 0 12px 0; letter-spacing: 2px; }
-.step-desc-text { font-size: 1.2rem; line-height: 1.8; color: #334155; margin-bottom: 25px; word-wrap: break-word; overflow-wrap: break-word; }
+.step-number-art { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 900; color: #EA580C; background: #FFF7ED; border-radius: 16px; border: 2px solid #FFEDD5; box-shadow: 3px 3px 0 #FED7AA; z-index: 2; }
+.step-connector { width: 2px; flex: 1; border-left: 2px dashed #E2E8F0; margin-top: 10px; }
+.step-heading { font-size: 0.85rem; text-transform: uppercase; color: #94A3B8; font-weight: 800; margin: 0 0 8px 0; letter-spacing: 1.5px; }
+.step-desc-text { font-size: 1.1rem; line-height: 1.7; color: #334155; margin-bottom: 20px; word-wrap: break-word; overflow-wrap: break-word; }
+
+/* Image Gallery */
 .step-gallery-floating { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
 .gallery-item { position: relative; border-radius: 20px; overflow: hidden; height: 200px; cursor: zoom-in; }
 .img-inner { width: 100%; height: 100%; position: relative; transition: 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
 .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
 .gallery-item:hover .img-inner { transform: scale(1.05) rotate(1deg); box-shadow: 0 15px 30px rgba(0,0,0,0.15); }
 
-/* ANIMATION */
+/* Animation */
 .slide-in-left { animation: slideInLeft 0.7s ease-out backwards; }
 .slide-in-up { animation: slideInUp 0.7s ease-out backwards; }
 @keyframes slideInLeft { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
