@@ -66,16 +66,6 @@
                 </select>
               </div>
             </div>
-            <div class="meta-divider"></div>
-            <div class="meta-box">
-              <span class="icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 22a9 9 0 1 1 18 0"/><path d="M1 22h22"/><path d="M12 13a5 5 0 0 0 5-5A5 5 0 0 0 9.8 4.2"/><path d="M12 13a5 5 0 0 1-3.5-1.5"/></svg>
-              </span>
-              <div class="meta-detail">
-                <span class="label">SERVINGS</span>
-                <input v-model="post.servings" placeholder="2 servings" class="meta-inp">
-              </div>
-            </div>
           </div>
 
           <div class="author-action-row">
@@ -243,13 +233,13 @@ const authStore = useAuthStore()
 const eventId = route.query.eventId
 
 const fileInput = ref(null)
-const videoInput = ref(null) // THÊM MỚI
+const videoInput = ref(null)
 const stepInputRefs = ref([])
 const categories = ref([])
 const publishing = ref(false)
 
 const coverImageFile = ref(null) 
-const videoFile = ref(null) // THÊM MỚI
+const videoFile = ref(null) 
 const stepImageFiles = ref({}) 
 
 const currentUser = computed(() => authStore.user || {})
@@ -259,10 +249,9 @@ const post = ref({
   description: '',
   categoryID: '',
   image: null,
-  video: null, // THÊM MỚI
+  video: null,
   cookingTime: '',
   level: 'Medium',
-  servings: '',
   ingredients: [{ name: '' }, { name: '' }, { name: '' }],
   steps: [{ id: 1, desc: '', image: null }],
 })
@@ -315,7 +304,7 @@ const handleImageUpload = (e) => {
   post.value.image = createSafeUrl(file) 
 }
 
-// Handler Upload Video (THÊM MỚI)
+// Handler Upload Video
 const triggerVideoUpload = () => videoInput.value.click()
 const handleVideoUpload = (e) => {
   const file = e.target.files[0]
@@ -327,7 +316,6 @@ const handleVideoUpload = (e) => {
 const removeVideo = () => { 
   videoFile.value = null; 
   post.value.video = null;
-  // 🔥 THÊM DÒNG NÀY ĐỂ FIX LỖI: Reset lại giá trị của thẻ input
   if (videoInput.value) videoInput.value.value = ''; 
 }
 
@@ -373,7 +361,7 @@ const handlePublish = async () => {
       coverMediaUrl = await uploadMedia(coverImageFile.value, 'posts') 
     }
 
-    // Upload Video (THÊM MỚI)
+    // Upload Video 
     let videoMediaUrl = ''
     if (videoFile.value) {
       videoMediaUrl = await uploadMedia(videoFile.value, 'videos')
@@ -392,7 +380,7 @@ const handlePublish = async () => {
       description: post.value.description,
       ingredients: ingredientsStr,
       media: coverMediaUrl,
-      video: videoMediaUrl, // THÊM MỚI
+      video: videoMediaUrl, 
       level: levelToInt(post.value.level),
       cookingTime: cookingTimeInt,
       steps: post.value.steps.map((s, i) => ({
