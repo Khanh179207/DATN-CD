@@ -9,7 +9,7 @@ import poly.edu.dao.NotificationDAO;
 import poly.edu.dto.AdminNotificationDTO;
 import poly.edu.entity.Notification;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -58,7 +58,7 @@ public class NotificationController {
     public ResponseEntity<?> markRead(@PathVariable Integer id) {
         return notificationDAO.findById(id).map(n -> {
             n.setIsRead(1);
-            n.setReadAt(LocalDate.now());
+            n.setReadAt(LocalDateTime.now());
             notificationDAO.save(n);
             return ResponseEntity.ok(Map.of("message", "Marked as read"));
         }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -77,7 +77,7 @@ public class NotificationController {
 
         unread.forEach(n -> {
             n.setIsRead(1);
-            n.setReadAt(LocalDate.now());
+            n.setReadAt(LocalDateTime.now());
         });
         notificationDAO.saveAll(unread);
 
