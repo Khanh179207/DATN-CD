@@ -3,7 +3,7 @@ package poly.edu.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "Notification")
@@ -37,8 +37,8 @@ public class Notification {
     @Column(nullable = false)
     private Integer isRead;
 
-    private LocalDate readAt;
+    private LocalDateTime readAt;
 
     @Column(nullable = false)
-    private LocalDate createdAt;
+    private LocalDateTime createdAt;
 }

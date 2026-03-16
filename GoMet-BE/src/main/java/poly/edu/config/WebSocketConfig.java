@@ -10,12 +10,21 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker("/topic"); // Nơi client đăng ký nhận tin
-        config.setApplicationDestinationPrefixes("/app"); // Tiền tố gửi tin từ client
+        config.enableSimpleBroker("/topic", "/user"); // Enable both topic and user destinations
+        config.setApplicationDestinationPrefixes("/app"); // Prefix for messages from client to server
+        config.setUserDestinationPrefix("/user"); // Prefix for user-specific messages
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws-chat").setAllowedOriginPatterns("*").withSockJS();
+        // Endpoint for general WebSocket connections (chat, notifications, etc.)
+        registry.addEndpoint("/ws")
+                .setAllowedOriginPatterns("*")
+                .withSockJS();
+
+        // Keep existing chat endpoint for backward compatibility
+        registry.addEndpoint("/ws-chat")
+                .setAllowedOriginPatterns("*")
+                .withSockJS();
     }
 }

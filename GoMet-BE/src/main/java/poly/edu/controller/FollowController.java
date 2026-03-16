@@ -8,6 +8,7 @@ import poly.edu.dao.AccountDAO;
 import poly.edu.dao.FollowDAO;
 import poly.edu.entity.Account;
 import poly.edu.entity.Follow;
+import poly.edu.service.NotificationService;
 
 import java.time.LocalDate;
 import java.util.Map;
@@ -20,6 +21,7 @@ public class FollowController {
 
     private final FollowDAO followDAO;
     private final AccountDAO accountDAO;
+    private final NotificationService notificationService;
 
     @PostMapping
     public ResponseEntity<?> follow(
@@ -44,6 +46,10 @@ public class FollowController {
                 .followedAt(LocalDate.now())
                 .build();
         followDAO.save(follow);
+
+        // Create notification for the followee
+        notificationService.notifyFollow(follower.getUsername(), followeeID);
+
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message", "Đã follow"));
     }
 

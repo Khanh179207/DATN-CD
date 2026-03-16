@@ -11,6 +11,7 @@ import poly.edu.dto.RatingRequestDTO;
 import poly.edu.entity.Account;
 import poly.edu.entity.Post;
 import poly.edu.entity.Rating;
+import poly.edu.service.NotificationService;
 
 import java.util.Map;
 import java.util.Optional;
@@ -23,6 +24,7 @@ public class RatingController {
     private final RatingDAO ratingDAO;
     private final PostDAO postDAO;
     private final AccountDAO accountDAO;
+    private final NotificationService notificationService;
 
     @PostMapping
     public ResponseEntity<?> rate(@RequestBody RatingRequestDTO req) {
@@ -41,6 +43,7 @@ public class RatingController {
 
         Optional<Rating> existing = ratingDAO.findByAccount_AccountIDAndPost_PostID(req.getAccountID(), req.getPostID());
         Rating rating;
+        boolean isNewRating = false;
         if (existing.isPresent()) {
             rating = existing.get();
             rating.setRate(req.getRate());
@@ -50,9 +53,19 @@ public class RatingController {
                     .post(post)
                     .rate(req.getRate())
                     .build();
+            isNewRating = true;
         }
 
         ratingDAO.save(rating);
+
+        // Create notification for the post owner if this is a new rating and rater is not the owner
+        if (isNewRating) {
+            Integer postOwnerId = post.getAccount().getAccountID();
+            if (!req.getAccountID().equals(postOwnerId)) {
+                notificationService.notifyRating(account.getUsername(), postOwnerId, req.getPostID());
+            }
+        }
+
         return ResponseEntity.ok(Map.of("message", "Đánh giá thành công", "rate", rating.getRate()));
     }
 

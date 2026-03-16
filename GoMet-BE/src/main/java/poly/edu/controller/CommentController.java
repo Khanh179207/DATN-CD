@@ -11,6 +11,7 @@ import poly.edu.dto.CommentDTO;
 import poly.edu.entity.Account;
 import poly.edu.entity.Comment;
 import poly.edu.entity.Post;
+import poly.edu.service.NotificationService;
 
 import java.util.List;
 import java.util.Map;
@@ -24,6 +25,7 @@ public class CommentController {
     private final CommentDAO commentDAO;
     private final PostDAO postDAO;
     private final AccountDAO accountDAO;
+    private final NotificationService notificationService;
 
     @GetMapping("/post/{postID}")
     public ResponseEntity<List<CommentDTO>> getByPost(@PathVariable Integer postID) {
@@ -50,6 +52,13 @@ public class CommentController {
                 .build();
 
         Comment saved = commentDAO.save(comment);
+
+        // Create notification for the post owner if commenter is not the owner
+        Integer postOwnerId = post.getAccount().getAccountID();
+        if (!req.getAccountID().equals(postOwnerId)) {
+            notificationService.notifyComment(account.getUsername(), postOwnerId, req.getPostID());
+        }
+
         return ResponseEntity.status(HttpStatus.CREATED).body(toDTO(saved));
     }
 

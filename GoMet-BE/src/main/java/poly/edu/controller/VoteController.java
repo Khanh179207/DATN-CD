@@ -5,6 +5,7 @@ import poly.edu.entity.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import poly.edu.service.NotificationService;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -18,6 +19,7 @@ public class VoteController {
     private final VoteDAO voteDAO;
     private final EventPostsDAO eventPostsDAO;
     private final AccountDAO accountDAO;
+    private final NotificationService notificationService;
 
     @PostMapping("/toggle")
     public ResponseEntity<?> toggleVote(@RequestBody Map<String, Object> payload) {
@@ -79,6 +81,12 @@ public class VoteController {
             v.setEventPost(ep);
             voteDAO.save(v);
             isVotedNow = true;
+
+            // Create notification for the post owner if voter is not the owner
+            Integer postOwnerId = ep.getPost().getAccount().getAccountID();
+            if (!accId.equals(postOwnerId)) {
+                notificationService.notifyEventVote(account.getUsername(), postOwnerId, ep.getPost().getPostID());
+            }
         }
 
         // 🔥 TÍNH TOÁN LẠI TỔNG SỐ VOTE SAU KHI CLICK (Để trả về cho Vue update ngay lập tức)
