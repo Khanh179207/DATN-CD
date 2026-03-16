@@ -14,7 +14,10 @@ public class CommentDTO {
     private String authorName;
     private String authorAvatar;
     private String content;
+    private List<String> imageUrls = new ArrayList<>();
     private Integer rating;
+    private Integer likeCount = 0;
+    private Boolean isLiked = false;
     private java.time.LocalDateTime createdAt;
 
     /** Nested replies (threaded comments) */

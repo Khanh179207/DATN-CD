@@ -30,49 +30,49 @@
                 </button>
               </div>
             </div>
-            <p class="auth-quote">"{{ post.authorQuote || 'Nấu ăn là cách tôi trao gửi yêu thương.' }}"</p>
+            <p class="auth-quote">"{{ post.authorBio || 'Nấu ăn là cách tôi trao gửi yêu thương.' }}"</p>
             <div class="auth-stats">
               <div class="stat"><b>{{ authorStats.posts }}</b> <span>{{ $t('leaderboard.recipes') }}</span></div>
               <div class="stat"><b>{{ authorStats.followers }}</b> <span>Follower</span></div>
-              <div class="stat"><b>{{ avgRating || '-' }}</b> <span>{{ $t('recipe.good_rating') }}</span></div>
+              <div class="stat"><b>{{ post.avgRating || '-' }}</b> <span>{{ $t('recipe.good_rating') }}</span></div>
             </div>
           </div>
         </div>
       </section>
 
       <section class="reviews-section fade-in">
-        <div class="reviews-header">
-          <h3 class="section-title">{{ $t('post.community_reviews') }}</h3>
-          <div class="review-summary-card">
-            <div class="score-box">
-              <span class="big-score">{{ avgRating || '-' }}</span>
-              <div class="stars-display">★★★★★</div>
-              <span class="total-reviews">{{ totalRatings }} {{ $t('post.ratings') }}</span>
-            </div>
-            <div class="rating-bars">
-              <div class="bar-row" v-for="i in 5" :key="i">
-                <span class="star-label">{{ 6-i }} <span class="s">★</span></span>
-                <div class="progress-bg"><div class="progress-fill" :style="{ width: ratingDistribution[i-1] + '%' }"></div></div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <h3 class="section-title">{{ $t('post.qa_discussion') || 'Hỏi đáp & Thảo luận' }}</h3>
 
         <div class="review-input-wrapper">
           <div class="input-header">
             <img :src="authStore.user?.avatar || 'https://ui-avatars.com/api/?name=U&background=EA580C&color=fff'" class="current-user-avt">
             <div class="rating-selector">
-              <span>{{ $t('post.rating_prompt') }}</span>
-              <div class="star-rating-input">
-                <span v-for="star in 5" :key="star" @click="userRating = star" :class="{ active: star <= userRating }">★</span>
-              </div>
+              <span>{{ $t('post.add_comment') }}</span>
             </div>
           </div>
           <div class="textarea-box">
             <textarea v-model="newComment" :placeholder="$t('post.add_comment')"></textarea>
+            
+            <!-- Preview images -->
+            <div class="comment-image-previews" v-if="selectedPhotos.length">
+              <div v-for="(file, idx) in selectedPhotos" :key="idx" class="preview-item">
+                <img :src="file.preview" />
+                <button @click="removePhoto(idx)" class="remove-btn">&times;</button>
+              </div>
+            </div>
+
             <div class="input-footer">
-              <button class="btn-attach">{{ $t('recipe.add_photo') }}</button>
-              <button class="btn-submit-review" @click="submitComment">{{ $t('post.submit_review') }}</button>
+              <label class="comment-upload-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                  <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+                <input type="file" hidden accept="image/*" multiple @change="onPhotosSelected" />
+              </label>
+              <button class="btn-submit-review" @click="submitComment" :disabled="!newComment.trim() && selectedPhotos.length === 0">
+                {{ $t('post.submit_comment') || 'Gửi bình luận' }}
+              </button>
             </div>
           </div>
         </div>
@@ -90,14 +90,15 @@
 </template>
 
 <script setup>
-import { ref, watch, computed } from 'vue'
+import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useChatStore } from '@/stores/chat' // Import Store Chat
 import CommentThread from './CommentThread.vue'
-import { getComments, addComment, ratePost } from '@/services/interactionService'
+import { getComments, addComment } from '@/services/interactionService'
 import { checkFollow, follow, unfollow, checkFavorite, addFavorite, removeFavorite } from '@/services/socialService'
 import { getUserStats } from '@/services/userService'
+import { uploadMedia } from '@/services/uploadService'
 import { toast } from '@/composables/useToast'
 import axios from 'axios'
 
@@ -107,26 +108,27 @@ const { t } = useI18n()
 const authStore = useAuthStore()
 const chatStore = useChatStore() // Khởi tạo Store Chat
 
-const userRating = ref(0)
 const newComment = ref('')
 const commentVersion = ref(0) // increment to refresh thread view
 const commentsList = ref([])
-const avgRating = ref(0)
-const totalRatings = ref(0)
 const isFollowing = ref(false)
 const isFavorite = ref(false)
 const authorStats = ref({ posts: 0, followers: 0 })
+const selectedPhotos = ref([])
+const isUploading = ref(false)
 
-
-// Logic tính toán phân phối rating
-const ratingDistribution = computed(() => {
-  const counts = [0, 0, 0, 0, 0]
-  commentsList.value.forEach(c => {
-    if (c.rating >= 1 && c.rating <= 5) counts[c.rating - 1]++
+const onPhotosSelected = (e) => {
+  const files = Array.from(e.target.files || [])
+  files.forEach(file => {
+    selectedPhotos.value.push({ file, preview: URL.createObjectURL(file) })
   })
-  const total = counts.reduce((s, n) => s + n, 0)
-  return counts.map(n => total > 0 ? Math.round(n / total * 100) : 0).reverse()
-})
+}
+
+const removePhoto = (idx) => {
+  const removed = selectedPhotos.value.splice(idx, 1)
+  if (removed.length) URL.revokeObjectURL(removed[0].preview)
+}
+
 
 const normalizeComment = (c) => ({
   commentID: c.commentID,
@@ -135,7 +137,7 @@ const normalizeComment = (c) => ({
   authorAvatar: c.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(c.authorName || 'U')}&background=EA580C&color=fff`,
   createdAt: c.createdAt || null,
   content: c.content,
-  rating: c.rating || 0,
+  imageUrls: c.imageUrls || [],
   children: (c.children || []).map(normalizeComment),
 })
 
@@ -171,28 +173,12 @@ const toggleLike = (cmt) => {
   }
 }
 
-const flattenComments = (comments) => {
-  return comments.reduce((acc, comment) => {
-    acc.push(comment)
-    if (comment.children && comment.children.length) {
-      acc.push(...flattenComments(comment.children))
-    }
-    return acc
-  }, [])
-}
-
 const loadComments = async (postID) => {
   if (!postID) return
   try {
     const data = await getComments(postID)
     const normalizedData = (data || []).map(normalizeComment)
     commentsList.value = normalizedData
-
-    const rated = flattenComments(normalizedData).filter(c => c.rating > 0)
-    if (rated.length) {
-      avgRating.value = (rated.reduce((s, c) => s + c.rating, 0) / rated.length).toFixed(1)
-      totalRatings.value = rated.length
-    }
   } catch (err) {
     console.warn('RecipeInteraction: load comments error', err)
   }
@@ -311,23 +297,34 @@ watch(() => props.post, (post) => {
 
 const submitComment = async () => {
   const content = newComment.value.trim()
-  if (!content) return
+  if (!content && selectedPhotos.value.length === 0) return
   if (!authStore.isAuthenticated) { toast.warn(t('toast.need_login')); return }
+  
   const accountID = authStore.user.accountID
   const postID = props.post?.postID
   if (!postID) return
+
+  isUploading.value = true
   try {
-    await addComment(postID, accountID, content, null)
-    if (userRating.value > 0) {
-      await ratePost(accountID, postID, userRating.value)
+    const imageUrls = []
+    for (const item of selectedPhotos.value) {
+      const url = await uploadMedia(item.file, 'comments')
+      imageUrls.push(url)
     }
+
+    await addComment(postID, accountID, content, null, imageUrls)
+    
     newComment.value = ''
-    userRating.value = 0
+    selectedPhotos.value.forEach(f => URL.revokeObjectURL(f.preview))
+    selectedPhotos.value = []
+    
     await loadComments(postID)
     commentVersion.value++
     toast.success(t('toast.comment_ok'))
   } catch (err) {
     toast.error(t('toast.error_generic'))
+  } finally {
+    isUploading.value = false
   }
 }
 
@@ -339,7 +336,7 @@ const handleSubmitReply = async ({ parentId, content }) => {
   if (!postID) return
 
   try {
-    await addComment(postID, accountID, content.trim(), parentId)
+    await addComment(postID, accountID, content.trim(), parentId, [])
     await loadComments(postID)
     commentVersion.value++
     toast.success(t('toast.comment_ok'))

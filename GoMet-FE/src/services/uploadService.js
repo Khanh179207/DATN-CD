@@ -10,8 +10,6 @@ export const uploadMedia = async (file, folder = 'general') => {
   formData.append('file', file)
   formData.append('folder', folder)
 
-  const res = await api.post('/api/upload/image', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  })
+  const res = await api.post('/api/upload/image', formData)
   return res.data.url // Trả về link https://res.cloudinary.com/...
 }

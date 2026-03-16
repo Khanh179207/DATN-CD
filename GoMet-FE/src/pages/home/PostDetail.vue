@@ -5,6 +5,7 @@
     </div>
     <template v-else>
       <RecipeGuide :post="post" />
+      <PostReviews :postId="post.postID" />
       <RecipeInteraction :post="post" />
       <RelatedSuggestions :items="relatedPosts" @click-post="goToDetail" />
     </template>
@@ -15,6 +16,7 @@
 import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import RecipeGuide from '@/components/post-detail/RecipeGuide.vue'
+import PostReviews from '@/components/post-detail/PostReviews.vue'
 import RecipeInteraction from '@/components/post-detail/RecipeInteraction.vue'
 import RelatedSuggestions from '@/components/post-detail/RelatedSuggestions.vue'
 import { getPostById, getRelatedPosts, normalizePost } from '@/services/postService'
@@ -40,6 +42,7 @@ async function loadPost(id) {
       author:        dto.authorName || 'GoMet Chef',
       authorID:      dto.authorID,
       authorAvatar:  dto.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(dto.authorName||'G')}&background=EA580C&color=fff`,
+      authorBio:     dto.authorBio,
       description:   dto.description || '',
       time:          dto.cookingTime ? `${dto.cookingTime} min` : '—',
       difficulty:    diffMap[dto.level] || 'Medium',

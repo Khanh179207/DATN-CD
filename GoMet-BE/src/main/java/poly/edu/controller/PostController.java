@@ -266,6 +266,7 @@ public class PostController {
 
             long followerCount = followDAO.countByFollowee_AccountIDAndStatus(author.getAccountID(), 1);
             dto.setAuthorFollowerCount(followerCount);
+            dto.setAuthorBio(author.getBio());
         }
         if (p.getCategory() != null) {
             dto.setCategoryID(p.getCategory().getCategoryID());

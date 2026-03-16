@@ -1,66 +1,73 @@
 <template>
-  <div class="comment-item" :class="{ 'has-children': hasChildren }">
-    <!-- Avatar + connector lines -->
-    <div class="avatar" :class="{ 'ring-2 ring-blue-400': isAuthor }">
-      <img :src="comment.authorAvatar || defaultAvatar" :alt="comment.authorName || 'Avatar'" />
+  <div class="comment-item-yt">
+    <div class="yt-avatar">
+      <img :src="comment.authorAvatar || defaultAvatar" alt="Avatar" />
     </div>
 
-    <div class="comment-body">
-      <div class="comment-meta">
-        <div class="metadata">
-          <span class="author">{{ comment.authorName || $t('recipe.anonymous_user') }}</span>
-          <span class="timestamp">{{ formattedTime }}</span>
-        </div>
-        <div class="reactions">
-          <span class="reaction"><span>👍</span> {{ likeCount }}</span>
-          <span class="reaction"><span>❤️</span> {{ loveCount }}</span>
-        </div>
+    <div class="yt-content-wrapper">
+      <div class="yt-header">
+        <span class="yt-author">{{ comment.authorName || $t('recipe.anonymous_user') }}</span>
+        <span class="yt-time">{{ formattedTime }}</span>
       </div>
 
-      <div class="comment-content">{{ comment.content }}</div>
+      <div class="yt-content">{{ comment.content }}</div>
 
-      <div class="comment-actions">
-        <button class="action-link" @click="toggleLike" :class="{ 'text-blue-400': liked }">
-          <span class="mr-1">👍</span>
-          {{ liked ? $t('comment.liked') : $t('comment.like') }}
+      <!-- Comment images -->
+      <div v-if="comment.imageUrls && comment.imageUrls.length" class="yt-comment-images">
+        <img v-for="(img, idx) in comment.imageUrls" :key="idx" :src="img" class="yt-img" @click="openImage(img)" />
+      </div>
+
+      <div class="yt-actions">
+        <button class="yt-action-btn" @click="toggleLike" :class="{ active: liked }">
+          <svg width="16" height="16" viewBox="0 0 24 24" :fill="liked ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2">
+            <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+          </svg>
+          <span v-if="internalLikeCount > 0">{{ internalLikeCount }}</span>
         </button>
-        <button class="action-link" @click="toggleReply">{{ replying ? $t('common.cancel') : $t('comment.reply') }}</button>
-        <button class="action-link" @click="shareComment">{{ $t('comment.share') }}</button>
+        <button class="yt-reply-btn" @click="toggleReply">{{ $t('comment.reply') }}</button>
       </div>
 
-      <transition name="fade">
-        <div v-if="replying" class="reply-box">
-          <textarea
-            v-model="replyText"
-            class="reply-input"
-            :placeholder="$t('post.add_comment')"
-          ></textarea>
-          <div class="reply-buttons">
-            <button class="btn-secondary" @click="toggleReply">{{ $t('common.cancel') }}</button>
-            <button class="btn-primary" @click="submitReply" :disabled="!replyText.trim()">{{ $t('post.submit_review') }}</button>
-          </div>
+      <div v-if="replying" class="yt-reply-input-wrapper">
+        <textarea v-model="replyText" :placeholder="$t('post.add_comment')"></textarea>
+        <div class="yt-reply-actions">
+          <button class="yt-cancel" @click="toggleReply">{{ $t('common.cancel') }}</button>
+          <button class="yt-submit" @click="submitReply" :disabled="!replyText.trim()">{{ $t('comment.reply') }}</button>
         </div>
-      </transition>
+      </div>
+
+      <!-- Nested replies toggle -->
+      <div class="yt-replies-container" v-if="hasChildren">
+        <button v-if="!showAll" class="yt-show-replies" @click="toggleShowMore">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+          {{ $t('comment.show_more_replies', { count: comment.children.length }) }}
+        </button>
+
+        <div v-if="showAll" class="yt-children">
+          <CommentItem
+            v-for="child in comment.children"
+            :key="child.commentID"
+            :comment="child"
+            :depth="depth + 1"
+            :current-user-id="currentUserId"
+            @submit-reply="forwardReply"
+          />
+          <button class="yt-hide-replies" @click="toggleShowMore">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="18 15 12 9 6 15"></polyline>
+            </svg>
+            {{ $t('comment.hide_replies') }}
+          </button>
+        </div>
+      </div>
     </div>
 
-    <div class="children" v-if="hasChildren">
-      <CommentItem
-        v-for="child in visibleChildren"
-        :key="child.commentID"
-        :comment="child"
-        :depth="depth + 1"
-        :maxDepth="maxDepth"
-        :current-user-id="currentUserId"
-        @submit-reply="forwardReply"
-      />
-
-      <button
-        v-if="hasHiddenChildren"
-        class="show-more"
-        @click="toggleShowMore"
-      >
-        {{ showAll ? $t('comment.hide_replies') : $t('comment.show_more_replies', { count: hiddenCount }) }}
-      </button>
+    <!-- Image Modal -->
+    <div v-if="modalImage" class="yt-modal-backdrop" @click="modalImage = null">
+      <div class="yt-modal-content" @click.stop>
+        <img :src="modalImage" />
+      </div>
     </div>
   </div>
 </template>
@@ -85,16 +92,28 @@ const { t } = useI18n()
 
 const replyText = ref('')
 const replying = ref(false)
-const liked = ref(false)
+const liked = ref(props.comment.isLiked || false)
+const internalLikeCount = ref(props.comment.likeCount || 0)
 const showAll = ref(false)
+const modalImage = ref(null)
 
 const toggleReply = () => {
   replying.value = !replying.value
   if (!replying.value) replyText.value = ''
 }
 
-const toggleLike = () => {
-  liked.value = !liked.value
+const toggleLike = async () => {
+  try {
+    const res = await import('@/services/interactionService').then(m => m.toggleCommentLike(props.comment.commentID))
+    internalLikeCount.value = res.likeCount
+    liked.value = !liked.value
+  } catch (err) {
+    console.error('Failed to toggle comment like:', err)
+  }
+}
+
+const openImage = (url) => {
+  modalImage.value = url
 }
 
 const submitReply = () => {
@@ -109,14 +128,6 @@ const forwardReply = (payload) => {
   emit('submit-reply', payload)
 }
 
-const shareComment = () => {
-  try {
-    navigator.clipboard.writeText(window.location.href + `#comment-${props.comment.commentID}`)
-  } catch {
-    // ignore
-  }
-}
-
 const formattedTime = computed(() => {
   if (!props.comment.createdAt) return t('recipe.just_posted')
   const date = new Date(props.comment.createdAt)
@@ -125,38 +136,14 @@ const formattedTime = computed(() => {
   const now = new Date()
   const diff = Math.floor((now - date) / 1000)
   if (diff < 60) return t('recipe.just_posted')
-  if (diff < 3600) return `${Math.floor(diff / 60)} ${t('common.minutes')} ago`
-  if (diff < 86400) return `${Math.floor(diff / 3600)} ${t('common.hours')} ago`
-  if (diff < 2592000) return `${Math.floor(diff / 86400)} days ago`
+  if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`
+  if (diff < 86400) return `${Math.floor(diff / 3600)} giờ trước`
+  if (diff < 2592000) return `${Math.floor(diff / 86400)} ngày trước`
   return date.toLocaleDateString()
 })
 
 const hasChildren = computed(() => Array.isArray(props.comment.children) && props.comment.children.length > 0)
-
-const isAuthor = computed(() => props.currentUserId && props.comment.accountID && String(props.currentUserId) === String(props.comment.accountID))
-
 const likeCount = computed(() => props.comment.likes ?? 0)
-const loveCount = computed(() => props.comment.loves ?? 0)
-
-const canRenderChildren = computed(() => props.depth < props.maxDepth || showAll.value)
-
-const visibleChildren = computed(() => {
-  if (!hasChildren.value || !canRenderChildren.value) return []
-  if (showAll.value || props.depth >= props.maxDepth) return props.comment.children
-  return props.comment.children.slice(0, 3)
-})
-
-const hiddenCount = computed(() => {
-  if (!hasChildren.value) return 0
-  return Math.max(0, props.comment.children.length - 3)
-})
-
-const hasHiddenChildren = computed(() => {
-  if (!hasChildren.value) return false
-  if (showAll.value) return false
-  if (props.depth >= props.maxDepth) return true
-  return hiddenCount.value > 0
-})
 
 const toggleShowMore = () => {
   showAll.value = !showAll.value
@@ -166,251 +153,190 @@ const defaultAvatar = 'https://ui-avatars.com/api/?name=User&background=EA580C&c
 </script>
 
 <style scoped>
-.comment-item {
-  position: relative;
-  padding-left: 3.5rem;
-  margin-bottom: 1.25rem;
-}
-
-.comment-item.has-children::before {
-  content: '';
-  position: absolute;
-  left: 1.35rem;
-  top: 2.25rem;
-  bottom: 0;
-  width: 1px;
-  background: rgba(148, 163, 184, 0.7);
-  border-radius: 1px;
-}
-
-.comment-body {
-  position: relative;
+.comment-item-yt {
   display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem 0.75rem 3.5rem;
-  border-radius: 18px;
-  background: #f0f2f5;
-  transition: background 0.2s ease;
-  color: rgba(17, 24, 39, 0.95);
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
-.dark .comment-body {
-  background: #3a3b3c;
-  color: rgba(226, 232, 240, 0.95);
-}
-
-.comment-body:hover {
-  background: #e2e5e8;
-}
-
-.dark .comment-body:hover {
-  background: #2f2f31;
-}
-
-.comment-body::before {
-  content: '';
-  position: absolute;
-  left: -1.2rem;
-  top: 1.4rem;
-  width: 1.2rem;
-  height: 1px;
-  background: rgba(148, 163, 184, 0.7);
-}
-
-.avatar {
-  position: absolute;
-  left: 0;
-  top: 0.75rem;
+.yt-avatar {
+  flex-shrink: 0;
   width: 40px;
   height: 40px;
-  border-radius: 9999px;
-  overflow: hidden;
-  border: 2px solid rgba(255, 255, 255, 0.7);
-  background: rgba(243, 244, 246, 1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
-.avatar img {
+.yt-avatar img {
   width: 100%;
   height: 100%;
+  border-radius: 50%;
   object-fit: cover;
 }
 
-.children {
-  position: relative;
-  margin-top: 0.5rem;
-  margin-left: 3rem;
-  padding-left: 1.25rem;
+.yt-content-wrapper {
+  flex: 1;
 }
 
-.children::before {
-  content: '';
-  position: absolute;
-  left: 0.75rem;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background: rgba(203, 213, 225, 0.7);
-}
-
-.comment-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.85rem;
-  color: inherit;
-}
-
-.metadata {
+.yt-header {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 8px;
+  margin-bottom: 2px;
 }
 
-.author {
+.yt-author {
+  font-size: 13px;
   font-weight: 700;
+  color: #0f0f0f;
 }
 
-.timestamp {
-  font-size: 0.75rem;
-  color: rgba(107, 114, 128, 0.9);
+.yt-time {
+  font-size: 12px;
+  color: #606060;
 }
 
-.reactions {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-size: 0.85rem;
-  color: rgba(107, 114, 128, 0.95);
-}
-
-.reaction {
-  display: inline-flex;
-  gap: 0.25rem;
-  align-items: center;
-}
-
-.comment-content {
+.yt-content {
+  font-size: 14px;
   line-height: 1.5;
+  color: #0f0f0f;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
-.comment-actions {
+.yt-comment-images {
   display: flex;
-  gap: 1rem;
-  font-size: 0.85rem;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
 }
 
-.action-link {
+.yt-img {
+  width: 120px;
+  height: 120px;
+  border-radius: 8px;
+  object-fit: cover;
   cursor: pointer;
-  color: rgba(55, 130, 246, 0.9);
-  background: transparent;
-  border: none;
-  padding: 0;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
+  border: 1px solid #e5e5e5;
 }
 
-.reply-box {
-  margin-top: 0.75rem;
+.yt-actions {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 16px;
+  margin-top: 4px;
 }
 
-.reply-input {
+.yt-action-btn, .yt-reply-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  color: #0f0f0f;
+  border-radius: 18px;
+  transition: background 0.2s;
+}
+
+.yt-action-btn:hover, .yt-reply-btn:hover {
+  background: rgba(0,0,0,0.05);
+}
+
+.active {
+  color: #065fd4 !important;
+}
+
+.yt-reply-input-wrapper {
+  margin-top: 8px;
+}
+
+.yt-reply-input-wrapper textarea {
   width: 100%;
-  min-height: 72px;
-  padding: 0.75rem;
-  border: 1px solid rgba(209, 213, 219, 0.9);
-  border-radius: 12px;
-  resize: vertical;
-  font-family: inherit;
-  font-size: 0.95rem;
-  background: #ffffff;
-  color: rgba(17, 24, 39, 0.95);
+  border: none;
+  border-bottom: 1px solid #e5e5e5;
+  padding: 4px 0;
+  font-size: 14px;
+  outline: none;
+  resize: none;
+  background: transparent;
 }
 
-.dark .reply-input {
-  background: #2c2d2e;
-  border-color: rgba(71, 85, 105, 0.8);
-  color: rgba(226, 232, 240, 0.95);
+.yt-reply-input-wrapper textarea:focus {
+  border-bottom: 2px solid #0f0f0f;
 }
 
-.reply-buttons {
+.yt-reply-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.5rem;
+  gap: 8px;
+  margin-top: 8px;
 }
 
-.btn-primary {
-  background: rgba(37, 99, 235, 0.1);
-  border: 1px solid rgba(37, 99, 235, 0.75);
-  color: rgba(37, 99, 235, 0.95);
-  padding: 0.4rem 0.75rem;
-  border-radius: 9999px;
+.yt-cancel, .yt-submit {
+  padding: 6px 12px;
+  border-radius: 18px;
+  font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
-  font-weight: 600;
+  border: none;
 }
 
-.btn-primary:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
+.yt-cancel {
+  background: none;
+  color: #0f0f0f;
 }
 
-.btn-secondary {
-  background: transparent;
-  border: 1px solid rgba(148, 163, 184, 0.6);
-  padding: 0.4rem 0.75rem;
-  border-radius: 9999px;
+.yt-cancel:hover {
+  background: rgba(0,0,0,0.05);
+}
+
+.yt-submit {
+  background: #065fd4;
+  color: #fff;
+}
+
+.yt-submit:disabled {
+  background: #f2f2f2;
+  color: #909090;
+}
+
+.yt-replies-container {
+  margin-top: 4px;
+}
+
+.yt-show-replies, .yt-hide-replies {
+  background: none;
+  border: none;
+  color: #065fd4;
+  font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
-  font-weight: 600;
-}
-
-.show-more {
-  margin-left: 3.25rem;
-  font-size: 0.85rem;
-  color: rgba(107, 114, 128, 0.9);
-  cursor: pointer;
-  padding: 0.2rem 0;
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 8px;
+  padding: 8px;
 }
 
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s ease;
+.yt-children {
+  margin-left: 20px;
+  border-left: 1px solid transparent;
+  padding-left: 12px;
 }
 
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-
-.show-more {
-  margin-left: 3.25rem;
-  font-size: 0.85rem;
-  color: rgba(107, 114, 128, 0.9);
-  cursor: pointer;
-  padding: 0.2rem 0;
-  display: inline-flex;
+.yt-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  display: flex;
   align-items: center;
-  gap: 0.25rem;
+  justify-content: center;
+  z-index: 1000;
 }
 
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
+.yt-modal-content img {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
 }
 </style>

@@ -15,4 +15,10 @@ public interface CommentService {
      * their parents.
      */
     List<CommentDTO> getCommentsByPost(Integer postID);
+
+    /**
+     * Toggle like status for a comment by a specific account.
+     * Returns the new like count.
+     */
+    int toggleLike(Integer accountID, Integer commentID);
 }

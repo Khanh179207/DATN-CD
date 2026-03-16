@@ -20,6 +20,8 @@ import java.util.stream.Collectors;
 public class CommentServiceImpl implements CommentService {
 
     private final CommentDAO commentDAO;
+    private final poly.edu.dao.CommentLikeDAO commentLikeDAO;
+    private final poly.edu.dao.AccountDAO accountDAO;
 
     private AdminCommentDTO toDTO(Comment c) {
         AdminCommentDTO dto = new AdminCommentDTO();
@@ -43,8 +45,36 @@ public class CommentServiceImpl implements CommentService {
             dto.setAuthorName(c.getAccount().getUsername());
             dto.setAuthorAvatar(c.getAccount().getAvatar());
         }
+        dto.setImageUrls(c.getAttachments());
+        dto.setLikeCount(commentLikeDAO.countByComment(c));
+        
+        // Cần biết user hiện tại là ai để set isLiked. 
+        // Tuy nhiên hàm toCommentDTO hiện tại không có context này. 
+        // Tạm thời để false, lát nữa sẽ xử lý ở tầng Service gọi DTO.
+        dto.setIsLiked(false);
+        
         dto.setCreatedAt(c.getCreatedAt());
         return dto;
+    }
+
+    @Override
+    public int toggleLike(Integer accountID, Integer commentID) {
+        Comment comment = commentDAO.findById(commentID)
+                .orElseThrow(() -> new RuntimeException("Comment not found"));
+        poly.edu.entity.Account account = accountDAO.findById(accountID)
+                .orElseThrow(() -> new RuntimeException("Account not found"));
+
+        java.util.Optional<poly.edu.entity.CommentLike> existing = commentLikeDAO.findByAccountAndComment(account, comment);
+        if (existing.isPresent()) {
+            commentLikeDAO.delete(existing.get());
+        } else {
+            poly.edu.entity.CommentLike like = poly.edu.entity.CommentLike.builder()
+                    .account(account)
+                    .comment(comment)
+                    .build();
+            commentLikeDAO.save(like);
+        }
+        return commentLikeDAO.countByComment(comment);
     }
 
     @Override
@@ -62,7 +92,11 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public List<CommentDTO> getCommentsByPost(Integer postID) {
-        List<CommentDTO> flat = commentDAO.findByPost_PostID(postID).stream()
+        // Lấy danh sách flat
+        List<Comment> entities = commentDAO.findByPost_PostID(postID);
+        
+        // Chuyển sang DTO
+        List<CommentDTO> flat = entities.stream()
                 .map(this::toCommentDTO)
                 .collect(Collectors.toList());
 

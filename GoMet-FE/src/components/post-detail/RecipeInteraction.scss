@@ -250,83 +250,82 @@
   overflow: hidden;
 }
 
-.progress-fill {
-  height: 100%;
-  background: $warning;
-  border-radius: 4px;
-  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-// 2. Review Input
+// 2. Review Input (YouTube Style "Clean")
 .review-input-wrapper {
-  background: $neutral-0;
-  border: 1px solid #E5E7EB;
-  border-radius: $radius-xl;
-  padding: 25px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-  margin-bottom: $space-12;
-  transition: box-shadow 0.3s;
-
-  &:focus-within {
-    box-shadow: 0 8px 32px rgba(234, 88, 12, 0.08);
-  }
+  margin-bottom: $space-10;
+  padding: $space-4 0;
 }
 
 .input-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: $space-4;
-  margin-bottom: $space-5;
+  margin-bottom: $space-2;
 }
 
 .current-user-avt {
-  width: 48px;
-  height: 48px;
-  border-radius: $radius-full;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
-.rating-selector {
-  display: flex;
-  flex-direction: column;
+.textarea-box {
+  flex: 1;
+  
+  textarea {
+    width: 100%;
+    border: none;
+    border-bottom: 1px solid #e5e5e5;
+    padding: 2px 0;
+    font-size: 14px;
+    outline: none;
+    resize: none;
+    background: transparent;
+    transition: border-color 0.2s;
+    min-height: 28px;
 
-  span { font-size: $text-sm; font-weight: 700; color: #374151; }
-}
-
-.star-rating-input {
-  font-size: 1.5rem;
-  color: #D1D5DB;
-  cursor: pointer;
-  display: flex;
-  gap: 5px;
-
-  span {
-    transition: color 0.2s, transform 0.2s;
-
-    &.active, &:hover {
-      color: $warning;
-      transform: scale(1.1);
+    &:focus {
+      border-bottom: 2px solid #0f0f0f;
     }
   }
 }
 
-.textarea-box {
-  textarea {
-    width: 100%;
-    min-height: 100px;
-    padding: $space-4;
-    border: 1px solid $neutral-200;
-    border-radius: $radius-md;
-    font-family: inherit;
-    font-size: $text-base;
-    resize: vertical;
-    margin-bottom: $space-4;
-    outline: none;
-    transition: border-color 0.2s, background 0.2s;
+.comment-image-previews {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
 
-    &:focus {
-      border-color: $primary-600;
-      background: $primary-50;
-    }
+.preview-item {
+  position: relative;
+  width: 80px;
+  height: 80px;
+
+  img {
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1px solid #e5e5e5;
+  }
+
+  .remove-btn {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 20px;
+    height: 20px;
+    background: #000;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 
@@ -334,299 +333,37 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-top: 8px;
 }
 
-.btn-attach {
-  background: none;
-  border: none;
-  color: #6B7280;
-  font-weight: 600;
+.comment-upload-btn {
+  color: #606060;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: color 0.2s;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.2s;
 
-  &:hover { color: $primary-600; }
+  &:hover {
+    background: rgba(0,0,0,0.05);
+    color: #0f0f0f;
+  }
 }
 
 .btn-submit-review {
-  background: $primary-600;
-  color: $neutral-0;
+  background: #065fd4;
+  color: #fff;
   border: none;
-  padding: $space-3 $space-6;
-  border-radius: $radius-sm;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.2s, transform 0.15s;
-
-  &:hover { background: $primary-700; transform: translateY(-1px); }
-  &:active { transform: scale(0.97); }
-}
-
-// 3. Comment List (Trình bày kiểu Facebook)
-.comments-feed {
-  display: flex;
-  flex-direction: column;
-  gap: $space-5;
-}
-
-.comment-card {
-  display: flex;
-  gap: 8px; /* Giảm gap để avatar sát bong bóng hơn */
-  margin-bottom: $space-3;
-  position: relative;
-}
-
-.cmt-avatar {
-  width: 40px; /* Avatar FB nhỏ gọn */
-  height: 40px;
-  border-radius: $radius-full;
-  object-fit: cover;
-  flex-shrink: 0;
-  z-index: 2; /* Để đè lên đường viền cây */
-}
-
-.cmt-content-wrapper {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-width: 0; /* Tránh tràn layout */
-}
-
-.cmt-bubble {
-  background: #f0f2f5;
+  padding: 8px 16px;
   border-radius: 18px;
-  padding: 8px 12px;
-  width: fit-content;
-  max-width: 100%;
-}
-
-.cmt-author { 
-  font-weight: 600; 
-  font-size: 13px; 
-  color: #050505; 
-  margin-bottom: 2px;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.reply-indicator {
-  color: #65676B;
-  font-weight: 500;
-  font-size: 13px;
-  margin-left: 4px;
-}
-
-.verified-badge {
-  font-size: 11px;
-  color: $success;
   font-weight: 700;
-  margin-left: 4px;
-}
-
-.stars-inline {
-  display: inline-block;
-  margin-left: 4px;
-  .stars {
-    color: #D1D5DB;
-    font-size: 10px;
-    &.filled { color: $warning; }
-  }
-}
-
-.cmt-text {
-  font-size: 15px;
-  line-height: 1.4;
-  color: #050505;
-  margin: 0;
-  word-wrap: break-word;
-}
-
-.cmt-images {
-  display: flex;
-  gap: $space-3;
-  margin-top: 6px;
-
-  img {
-    height: 120px;
-    border-radius: $radius-md;
-    cursor: pointer;
-    transition: filter 0.2s;
-    border: 1px solid $neutral-200;
-
-    &:hover { filter: brightness(0.95); }
-  }
-}
-
-.cmt-actions {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 2px 0 0 12px;
-  margin-bottom: 4px;
-}
-
-.action-link {
-  background: none;
-  border: none;
-  color: #65676B;
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 14px;
   cursor: pointer;
-  padding: 0;
-  transition: all 0.2s;
-
-  &:hover { text-decoration: underline; }
-  &.liked { color: #ea580c; } /* Màu cam khi đã nhấn Thích */
-}
-
-.cmt-date { 
-  font-size: 12px; 
-  color: #65676B; 
-  font-weight: 400;
-}
-
-/* ── Inline Reply Box ── */
-.inline-reply-box {
-  display: flex;
-  gap: 8px;
-  margin-top: 4px;
-  margin-bottom: 12px;
-}
-
-.reply-user-avt {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
-  flex-shrink: 0;
-}
-
-.reply-input-area {
-  flex: 1;
-  background: #f0f2f5;
-  border-radius: 18px;
-  padding: 8px 12px;
-  display: flex;
-  flex-direction: column;
-  position: relative;
   
-  textarea {
-    width: 100%;
-    min-height: 36px;
-    background: transparent;
-    border: none;
-    outline: none;
-    font-size: 15px;
-    font-family: inherit;
-    resize: none;
-    color: #050505;
-    padding: 0;
-    margin-bottom: 8px;
+  &:disabled {
+    background: #f2f2f2;
+    color: #909090;
+    cursor: default;
   }
-}
-
-.reply-controls {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-.btn-cancel {
-  background: none;
-  border: none;
-  font-weight: 600;
-  color: #65676B;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 13px;
-  &:hover { background: #e4e6eb; }
-}
-
-.btn-post {
-  background: none;
-  border: none;
-  font-weight: 600;
-  color: #ea580c; /* Màu cam chủ đạo */
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 13px;
-  &:hover { background: #fee2e2; }
-  &:disabled { color: #9CA3AF; cursor: not-allowed; background: none; }
-}
-
-/* ── Facebook Style Threaded Comments (Nested Replies) ── */
-.nested-replies-fb {
-  position: relative;
-  margin-top: 4px;
-  margin-left: 45px; /* Provides space for connector lines */
-}
-
-/* Backbone line for the entire reply branch */
-.nested-replies-fb::before {
-  content: '';
-  position: absolute;
-  top: -24px; /* Start from above the first reply, connecting to parent comment */
-  bottom: 0;
-  left: 18px;
-  width: 2px;
-  background: rgba(229, 231, 235, 0.8);
-  z-index: 0;
-}
-
-.comment-card.nested-card {
-  position: relative;
-  margin-bottom: 8px;
-  padding-left: 50px; /* Keep reply content indented past the connector area */
-}
-
-.comment-line {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 45px;
-  height: 100%;
-  pointer-events: none;
-}
-
-/* L-shaped connector: vertical segment + horizontal segment */
-.comment-line::before {
-  content: '';
-  position: absolute;
-  left: 18px; /* Align with backbone */
-  top: 0;
-  width: 2px;
-  height: 16px; /* Reach down to the center of the avatar */
-  background: #E5E7EB;
-  border-radius: 1px;
-}
-
-.comment-line::after {
-  content: '';
-  position: absolute;
-  left: 18px;
-  top: 16px;
-  width: 30px; /* Extend toward the avatar edge */
-  height: 2px;
-  background: #E5E7EB;
-  border-bottom-left-radius: 8px;
-}
-
-/* First reply connects upwards to the parent comment spine */
-.comment-card.nested-card:first-child .comment-line::before {
-  top: -24px;
-  height: 40px; /* Extend upward to visually connect to parent */
-}
-
-.nested-avt {
-  width: 32px;
-  height: 32px;
-  z-index: 1; /* Sit above connector lines */
-  position: relative;
 }
 
 // ── Animations ──────────────────────────────────────────────

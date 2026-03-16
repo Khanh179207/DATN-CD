@@ -30,6 +30,13 @@ public class Comment {
     @Column(nullable = false, columnDefinition = "NVARCHAR(MAX)")
     private String content;
 
+    @Column(name = "Attachments", columnDefinition = "NVARCHAR(MAX)")
+    @Convert(converter = poly.edu.util.StringListConverter.class)
+    private java.util.List<String> attachments = new java.util.ArrayList<>();
+
     @Column(name = "CreatedAt", insertable = false, updatable = false)
     private java.time.LocalDateTime createdAt;
+
+    @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<CommentLike> likes = new java.util.ArrayList<>();
 }

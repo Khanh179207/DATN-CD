@@ -152,6 +152,7 @@ CREATE TABLE Comment (
     PostID INT NULL,
     cmtid INT NULL,
     Content NVARCHAR(MAX) NOT NULL,
+    Attachments NVARCHAR(MAX) NULL, -- Thêm cột hình ảnh cho bình luận
     CreatedAt DATETIME DEFAULT GETDATE(),
 
     CONSTRAINT FK_Comment_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
@@ -160,11 +161,25 @@ CREATE TABLE Comment (
 );
 GO
 
+CREATE TABLE CommentLike (
+    LikeID INT IDENTITY(1,1) PRIMARY KEY,
+    AccountID INT NOT NULL,
+    CommentID INT NOT NULL,
+    CreatedAt DATETIME DEFAULT GETDATE(),
+
+    CONSTRAINT FK_CommentLike_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
+    CONSTRAINT FK_CommentLike_Comment FOREIGN KEY (CommentID) REFERENCES Comment(CommentID),
+    CONSTRAINT UQ_Account_Comment UNIQUE (AccountID, CommentID)
+);
+GO
+
 CREATE TABLE Rating (
     RatingID INT IDENTITY(1,1) PRIMARY KEY,
     AccountID INT NOT NULL,
     PostID INT NOT NULL,
     Rate INT NOT NULL,
+    Comment NVARCHAR(MAX) NULL,
+    Attachments NVARCHAR(500) NULL,
     CreatedAt DATETIME DEFAULT GETDATE(),
 
     CONSTRAINT FK_Rating_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
