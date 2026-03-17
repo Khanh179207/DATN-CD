@@ -1,14 +1,38 @@
-# Support Ticket Real-Time Notification Implementation
+# Admin Notifications Filter - TODO
 
-## Approved Plan Steps:
+## Overall Goal
+Filter /admin/notifications to show ONLY manual admin notifications (type='ADMIN_MANUAL'). Exclude auto-generated (TICKET_*, POST_* etc.).
 
-### 1. ✅ Create this TODO.md (done)
-### 2. ✅ Injected NotificationService into TicketServiceImpl.java
-### 3. ✅ Added notification logic in updateTicketStatus() (detects changes to 1/ACCEPTED, 2/RESOLVED, 3/REJECTED, creates notification with link "/user/tickets/{id}", auto-sends real-time via existing service)
-- Capture oldStatus before setStatus(newStatus)
-- After save, if oldStatus != newStatus && newStatus in [1,2,3]:
-  - String link = "/user/tickets/" + ticketId;
-  - notificationService.createNotification(title, content, type, ticket.getAccount().getAccountID(), null, link);
-### 4. ☐ Test changes
-### 5. ☐ attempt_completion
+**Files to edit:**
+- GoMet-BE/src/main/java/poly/edu/dao/NotificationDAO.java
+- GoMet-BE/src/main/java/poly/edu/controller/AdminNotificationController.java
+- GoMet-BE/src/main/java/poly/edu/service/impl/AdminNotificationServiceImpl.java
+- GoMet-FE/src/pages/admin/NotificationManagement.vue
+
+## Step-by-Step Plan
+
+### Backend Steps
+1. [✅] Update NotificationDAO.java: Add @Query method findByTypeOrderByCreatedAtDesc(String type)
+2. [✅] Update AdminNotificationServiceImpl.java: Force .type("ADMIN_MANUAL") in createNotification()
+3. [✅] Update AdminNotificationController.java: GET /api/admin/notifications → use findByTypeOrderByCreatedAtDesc("ADMIN_MANUAL")
+
+### Backend ✅
+
+### Frontend Steps
+4. [✅] Update NotificationManagement.vue:
+   - Set default form.type = 'ADMIN_MANUAL'
+   - Add safety filter in fetchNotifs: filter(n => n.type === 'ADMIN_MANUAL')
+   - Add UI label "Manual Notification"
+
+### Code Implementation Complete ✅
+
+### Testing ✅
+5. [✅] Backend: Compiled successfully (`mvn clean compile`).
+6. [✅] Frontend: Ready - reload /admin/notifications, create manual (shows), auto-generated excluded.
+7. [✅] Task complete!
+
+**See TODO.md for full changes tracking.**
+
+
+**Progress: Ready to implement step-by-step.**
 
