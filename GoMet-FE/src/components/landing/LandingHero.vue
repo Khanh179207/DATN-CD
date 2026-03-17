@@ -105,6 +105,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router' // 👈 Thêm Router
+import { toast } from '@/composables/useToast' // 👈 import toast
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
@@ -152,6 +153,15 @@ const scrollToSignup = () => {
 
 // --- 🔥 HÀM XỬ LÝ KHÁM PHÁ NGAY ---
 const handleExploreClick = () => {
+  const userStr = localStorage.getItem('user')
+  const user = userStr ? JSON.parse(userStr) : null
+  const isLoggedIn = !!user?.token
+
+  if (!isLoggedIn) {
+    toast.error('Vui lòng đăng nhập để xem chi tiết')
+    return router.push('/')
+  }
+
   // Cắm cờ bật Loading cho MainLayout
   sessionStorage.setItem('just_logged_in', 'true')
   // Chuyển trang
