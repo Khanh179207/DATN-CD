@@ -66,6 +66,10 @@
 		MaxVotes INT DEFAULT 3,
 		-- NGƯỜI THẮNG
 		Winner INT NULL, 
+
+		IsActive INT DEFAULT 1, -- 1: Tồn tại, 0: Đã xóa (Xóa mềm)
+        IsForceEnded INT DEFAULT 0, -- 1: Bị ép kết thúc sớm, 0: Bình thường
+
 		CONSTRAINT FK_Event_Account FOREIGN KEY (Winner) REFERENCES Account(AccountID)
 	);
 	GO
@@ -475,3 +479,4 @@ CREATE TABLE Comment (
 
 	SELECT * FROM Comment;
 
+	-- ==========================================================

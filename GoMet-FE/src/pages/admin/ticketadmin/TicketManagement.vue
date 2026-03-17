@@ -44,21 +44,21 @@
         <table v-if="!loading" class="lux-table">
           <thead>
             <tr>
-              <th>Mã ID</th>
-              <th>Người Gửi</th>
-              <th>Phân Loại</th>
-              <th>Liên Quan</th>
+              <th width="80">Mã ID</th>
+              <th width="150">Người Gửi</th>
+              <th width="120">Phân Loại</th>
+              <th width="120">Liên Quan</th>
               <th>Tiêu đề</th>
-              <th>Thời gian</th>
-              <th>Trạng thái</th>
-              <th class="text-right">Thao tác</th>
+              <th width="180">Thời gian</th>
+              <th width="140">Trạng thái</th>
+              <th width="100" class="text-right">Thao tác</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="ticket in filteredTickets" :key="ticket.ticketID || ticket.id" class="lux-row" @click="viewDetail(ticket)">
               <td class="id-col">#{{ ticket.ticketID || ticket.id }}</td>
               <td class="user-name">
-                {{ ticket.account?.username || ticket.username || ticket.account?.fullname || 'Người dùng ẩn' }}
+                {{ ticket.account?.username || ticket.username || 'Người dùng ẩn' }}
               </td>
               <td>
                 <span class="badge-type" :class="(ticket.ticketType || '').toLowerCase()">
@@ -71,7 +71,7 @@
                 </span>
                 <span v-else class="text-muted">—</span>
               </td>
-              <td>{{ truncateText(ticket.title, 30) }}</td>
+              <td class="title-cell">{{ truncateText(ticket.title, 50) || '—' }}</td>
               <td>{{ formatDate(ticket.createdAt) }}</td>
               <td>
                 <span class="badge-status" :class="'status-' + ticket.status">
@@ -79,7 +79,7 @@
                 </span>
               </td>
               <td class="text-right">
-                <button class="btn-refresh-lux" style="padding: 6px 12px;">Xử lý</button>
+                <button class="btn-refresh-lux" style="padding: 6px 12px;" @click.stop="handleRowAction(ticket)">Xử lý</button>
               </td>
             </tr>
           </tbody>
@@ -92,102 +92,117 @@
         <div class="modal-lux-content" @click.stop>
           <div class="modal-header-lux">
             <h3>Chi tiết Ticket #{{ selectedTicket.ticketID || selectedTicket.id }}</h3>
-            <button class="btn-refresh-lux" @click="closeModal" style="padding: 5px 10px;">×</button>
+            <button class="btn-x" @click="closeModal">×</button>
           </div>
 
-          <div class="modal-body custom-scroll">
+          <div class="modal-body lux-split-layout custom-scroll">
             
-            <div v-if="selectedTicket.ticketType === 'REPORT'" class="violation-card">
-              <div class="v-header">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
-                <span>Nội dung bị báo cáo vi phạm</span>
+            <div class="split-left">
+              <div class="desc-box-lux highlight">
+                <label>Tiêu đề người dùng nhập</label>
+                <strong>{{ selectedTicket.title || 'Phản hồi từ cộng đồng' }}</strong>
               </div>
-              <div class="v-body">
-                <div class="v-info-group">
-                  <span class="v-label">Mã bài viết</span>
+
+              <div class="desc-box-lux">
+                <label>Nội dung chi tiết</label>
+                <div class="detail-text">{{ selectedTicket.description || 'Không có mô tả chi tiết' }}</div>
+              </div>
+
+              <div class="evidence-section">
+                <label class="section-label">Bằng chứng hình ảnh</label>
+                <div class="evidence-wrapper" v-if="selectedTicket.attachment">
+                   <img :src="selectedTicket.attachment" alt="Bằng chứng" class="img-evidence" @error="(e) => e.target.src = 'https://placehold.co/600x400?text=Khong+tai+duoc+anh'"/>
+                </div>
+                <div class="no-evidence" v-else>
+                  <i class="fas fa-image-slash"></i> Không có ảnh bằng chứng đính kèm
+                </div>
+              </div>
+
+              <div class="timeline-logs">
+                <div class="timeline-title">Nhật ký hệ thống</div>
+                <div class="log-item">
+                  <div class="log-dot gray"></div>
+                  <div class="log-content">
+                    <span class="log-time">{{ formatDate(selectedTicket.createdAt) }}</span>
+                    <span class="log-action">Người dùng <span class="log-actor">{{ selectedTicket.account?.username || selectedTicket.username }}</span> đã gửi yêu cầu.</span>
+                  </div>
+                </div>
+                <div class="log-item" v-if="selectedTicket.processedAt || selectedTicket.ProcessedAt">
+                  <div class="log-dot blue"></div>
+                  <div class="log-content">
+                    <span class="log-time">{{ formatDate(selectedTicket.processedAt || selectedTicket.ProcessedAt) }}</span>
+                    <span class="log-action">Admin đã <span class="log-actor">Tiếp nhận xử lý</span>.</span>
+                  </div>
+                </div>
+                <div class="log-item" v-if="selectedTicket.status >= 2 && selectedTicket.resolvedAt">
+                  <div class="log-dot green"></div>
+                  <div class="log-content">
+                    <span class="log-time">{{ formatDate(selectedTicket.resolvedAt) }}</span>
+                    <span class="log-action">Ticket đã được đóng bởi <span class="log-actor">Quản trị viên</span>.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="split-right">
+              <div class="meta-card-lux">
+                <div class="meta-item">
+                  <label>Người gửi phản hồi</label>
+                  <p><i class="fas fa-user-circle"></i> {{ selectedTicket.account?.username || selectedTicket.username || 'Không rõ' }}</p>
+                </div>
+                <div class="meta-item">
+                  <label>Thời gian tạo</label>
+                  <p><i class="far fa-clock"></i> {{ formatDate(selectedTicket.createdAt) }}</p>
+                </div>
+              </div>
+
+              <div v-if="selectedTicket.ticketType === 'REPORT'" class="violation-card-lux red-theme">
+                <div class="v-header">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  <span>Nội dung bị báo cáo</span>
+                </div>
+                <div class="v-body">
+                  <span class="lbl">Mã bài viết:</span>
                   <span class="v-id">#{{ selectedTicket.targetPostId || selectedTicket.targetPostID }}</span>
-                </div>
-                <button class="btn-go-post" @click="goToPost(selectedTicket.targetPostId || selectedTicket.targetPostID)">
-                  Xem bài viết ngay
-                </button>
-              </div>
-              
-              <div class="quick-mod-bar">
-                <button class="btn-mod btn-kill-post" @click="openConfirmModal('DELETE_POST', selectedTicket.targetPostId || selectedTicket.targetPostID)" :disabled="isProcessingAction">
-                  🗑️ Xóa bài viết ngay
-                </button>
-                <button class="btn-mod btn-ban-user" @click="openConfirmModal('BAN_USER', selectedTicket.targetPostId || selectedTicket.targetPostID)" :disabled="isProcessingAction">
-                  🚫 Khóa tài khoản Tác giả
-                </button>
-              </div>
-            </div>
+                  
+                  <button class="btn-go-post-lux" @click="goToPost(selectedTicket.targetPostId || selectedTicket.targetPostID)">
+                     Xem bài viết ngay <i class="fas fa-external-link-alt"></i>
+                  </button>
 
-            <div class="info-grid">
-              <div class="info-item">
-                <label>Người gửi phản hồi</label>
-                <p>{{ selectedTicket.account?.username || selectedTicket.username || 'Không rõ' }}</p>
-              </div>
-              <div class="info-item">
-                <label>Thời gian tạo</label>
-                <p>{{ formatDate(selectedTicket.createdAt) }}</p>
-              </div>
-            </div>
-
-            <div class="desc-box-lux">
-              <label>Tiêu đề người dùng nhập</label>
-              <div style="margin-bottom: 10px;"><strong>{{ selectedTicket.title }}</strong></div>
-              
-              <label>Nội dung chi tiết</label>
-              <div style="white-space: pre-wrap;">{{ selectedTicket.description }}</div>
-            </div>
-
-            <div v-if="selectedTicket.attachment" style="margin-top: 30px;">
-              <label style="font-size: 0.75rem; font-weight: 800; color: #94a3b8;">ẢNH BẰNG CHỨNG</label>
-              <img 
-                :src="selectedTicket.attachment" 
-                style="width:100%; border-radius: 20px; margin-top: 15px; border: 1px solid #eee; display: block;"
-                @error="(e) => e.target.src = 'https://placehold.co/600x400?text=Khong+tai+duoc+anh'"
-              />
-            </div>
-
-            <div class="timeline-logs">
-              <div class="timeline-title">Nhật ký hệ thống</div>
-              <div class="log-item">
-                <div class="log-dot" style="background: #94a3b8; box-shadow: 0 0 0 1px #94a3b8;"></div>
-                <div class="log-content">
-                  <span class="log-time">{{ formatDate(selectedTicket.createdAt) }}</span>
-                  <span class="log-action">Người dùng <span class="log-actor">{{ selectedTicket.account?.username || selectedTicket.username || 'Ẩn danh' }}</span> đã gửi yêu cầu.</span>
+                  <div class="quick-mod-bar-vertical">
+                    <button class="btn-mod btn-kill-post" @click="openConfirmModal('DELETE_POST', selectedTicket.targetPostId || selectedTicket.targetPostID)" :disabled="isProcessingAction">
+                      🗑️ Xóa bài viết ngay
+                    </button>
+                    <button class="btn-mod btn-ban-user" @click="openConfirmModal('BAN_USER', selectedTicket.targetPostId || selectedTicket.targetPostID)" :disabled="isProcessingAction">
+                      🚫 Khóa tài khoản Tác giả
+                    </button>
+                  </div>
                 </div>
               </div>
-              <div class="log-item" v-if="selectedTicket.processedAt || selectedTicket.ProcessedAt">
-                <div class="log-dot" style="background: #3b82f6; box-shadow: 0 0 0 1px #3b82f6;"></div>
-                <div class="log-content">
-                  <span class="log-time">{{ formatDate(selectedTicket.processedAt || selectedTicket.ProcessedAt) }}</span>
-                  <span class="log-action">Admin đã <span class="log-actor">Tiếp nhận xử lý</span>.</span>
-                </div>
-              </div>
-              <div class="log-item" v-if="selectedTicket.status >= 2 && selectedTicket.resolvedAt">
-                <div class="log-dot" style="background: #16a34a; box-shadow: 0 0 0 1px #16a34a;"></div>
-                <div class="log-content">
-                  <span class="log-time">{{ formatDate(selectedTicket.resolvedAt) }}</span>
-                  <span class="log-action">Ticket đã được đóng bởi <span class="log-actor">Quản trị viên</span>.</span>
+
+              <div v-else class="type-info-card">
+                <label>Phân loại yêu cầu</label>
+                <div class="type-display" :class="selectedTicket.ticketType.toLowerCase()">
+                  {{ formatType(selectedTicket.ticketType) }}
                 </div>
               </div>
             </div>
-
           </div>
 
           <div class="modal-footer-lux">
-            <button v-if="selectedTicket.status === 0" class="btn-lux btn-process" @click="updateStatus(1)">Tiếp nhận</button>
-            <button v-if="selectedTicket.status < 2" class="btn-lux btn-reject" @click="updateStatus(3)">Từ chối</button>
-            <button v-if="selectedTicket.status === 1" class="btn-lux btn-resolve" @click="updateStatus(2)" style="background: #1a110d; color: white;">Giải quyết xong</button>
+            <button @click="closeModal" class="btn-lux btn-close-modal">Đóng</button>
+            <div class="main-actions">
+              <button v-if="selectedTicket.status === 0" class="btn-lux btn-process" @click="updateStatus(1)">Tiếp nhận</button>
+              <button v-if="selectedTicket.status < 2" class="btn-lux btn-reject" @click="updateStatus(3)">Từ chối</button>
+              <button v-if="selectedTicket.status === 1" class="btn-lux btn-resolve" @click="updateStatus(2)" style="background: #1a110d; color: white;">Giải quyết xong</button>
+            </div>
           </div>
         </div>
       </div>
     </transition>
 
     <transition name="fade-glass">
-      <div v-if="confirmModal.show" class="modal-glass-backdrop" style="z-index: 10000;" @click="closeConfirmModal">
+      <div v-if="confirmModal.show" class="modal-glass-backdrop" style="z-index: 10001;" @click="closeConfirmModal">
         <div class="confirm-dialog-card" @click.stop>
           <div class="icon-danger-circle">
             <svg v-if="confirmModal.type === 'DELETE_POST'" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
@@ -364,6 +379,7 @@ const filteredTickets = computed(() => {
   }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
 })
 
+const handleRowAction = (ticket) => { selectedTicket.value = ticket; showModal.value = true; }
 const viewDetail = (ticket) => { selectedTicket.value = ticket; showModal.value = true; }
 const closeModal = () => { showModal.value = false }
 const truncateText = (t, l) => t?.length > l ? t.substring(0, l) + '...' : t
@@ -374,42 +390,3 @@ const formatStatus = (s) => ({ 0: 'Chờ duyệt', 1: 'Đang xử lý', 2: 'Đã
 onMounted(fetchTickets)
 </script>
 
-<style scoped lang="scss">
-/* THÊM CSS CHO POPUP XÁC NHẬN VÀO CUỐI FILE SCSS CỦA SẾP */
-.confirm-dialog-card {
-  background: white; width: 100%; max-width: 400px;
-  border-radius: 24px; padding: 30px; text-align: center;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  transform: scale(0.95); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-}
-
-@keyframes popIn {
-  to { transform: scale(1); }
-}
-
-.icon-danger-circle {
-  width: 64px; height: 64px; background: #fef2f2;
-  border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  margin: 0 auto 20px; box-shadow: 0 0 0 8px #fef2f2;
-}
-
-.confirm-title { font-size: 1.25rem; font-weight: 800; color: #1e293b; margin: 0 0 10px 0; }
-.confirm-desc { font-size: 0.9rem; color: #64748b; margin: 0 0 25px 0; line-height: 1.5; }
-
-.confirm-actions {
-  display: flex; gap: 12px;
-}
-
-.btn-cancel-action {
-  flex: 1; padding: 12px 0; border: none; background: #f1f5f9;
-  color: #475569; font-weight: 700; border-radius: 12px; cursor: pointer; transition: 0.2s;
-  &:hover { background: #e2e8f0; }
-}
-
-.btn-danger-action {
-  flex: 1; padding: 12px 0; border: none; background: #ef4444;
-  color: white; font-weight: 700; border-radius: 12px; cursor: pointer; transition: 0.2s;
-  &:hover { background: #dc2626; transform: translateY(-2px); }
-  &:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-}
-</style>
