@@ -146,7 +146,7 @@ const fetchAlerts = async () => {
       title: ticket.title,
       message: `New support ticket: "${ticket.title}" from ${ticket.username}`,
       createdAt: ticket.createdAt,
-      link: '/admin/support'
+      link: '/admin/tickets'
     }))
 
     const postAlerts = posts.map(post => ({

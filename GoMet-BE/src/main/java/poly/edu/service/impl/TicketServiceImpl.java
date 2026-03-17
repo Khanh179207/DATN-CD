@@ -6,8 +6,8 @@ import org.springframework.stereotype.Service;
 import poly.edu.dao.TicketDAO;
 import poly.edu.dto.AdminTicketDTO;
 import poly.edu.entity.Ticket;
+import poly.edu.service.NotificationService;
 import poly.edu.service.TicketService;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,6 +18,7 @@ public class TicketServiceImpl implements TicketService {
 
     private final TicketDAO ticketDAO;
     private final SimpMessagingTemplate messagingTemplate;
+    private final NotificationService notificationService;
 
     @Override
     public Ticket createTicket(Ticket ticket) {
@@ -51,6 +52,8 @@ public class TicketServiceImpl implements TicketService {
         Ticket ticket = ticketDAO.findById(ticketId)
                 .orElseThrow(() -> new RuntimeException("Ticket not found"));
 
+        Integer oldStatus = ticket.getStatus();
+
         ticket.setStatus(newStatus);
 
         // 🔥 1. NẾU LÀ TIẾP NHẬN (Status = 1) -> Lưu giờ bắt đầu xử lý
@@ -65,7 +68,37 @@ public class TicketServiceImpl implements TicketService {
             ticket.setResolvedAt(LocalDateTime.now());
         }
 
-        return ticketDAO.save(ticket);
+        Ticket savedTicket = ticketDAO.save(ticket);
+
+        // Send real-time notification to ticket owner if status changed to
+        // ACCEPTED/RESOLVED/REJECTED
+        if (oldStatus != null && !oldStatus.equals(newStatus) && (newStatus == 1 || newStatus == 2 || newStatus == 3)) {
+            try {
+                String link = null;
+                String title, content, type;
+
+                if (newStatus == 1) {
+                    title = "Ticket accepted";
+                    content = "Your support ticket is now being processed.";
+                    type = "TICKET_ACCEPTED";
+                } else if (newStatus == 2) {
+                    title = "Ticket resolved";
+                    content = "Your support ticket has been resolved.";
+                    type = "TICKET_RESOLVED";
+                } else { // 3
+                    title = "Ticket rejected";
+                    content = "Your support ticket has been rejected by admin.";
+                    type = "TICKET_REJECTED";
+                }
+
+                notificationService.createNotification(title, content, type, ticket.getAccount().getAccountID(), null,
+                        link);
+            } catch (Exception e) {
+                System.err.println("Failed to send ticket status notification: " + e.getMessage());
+            }
+        }
+
+        return savedTicket;
     }
 
     // Hàm helper "vàng" - Giữ nguyên nhưng sếp check kỹ tên field trong DTO nhé

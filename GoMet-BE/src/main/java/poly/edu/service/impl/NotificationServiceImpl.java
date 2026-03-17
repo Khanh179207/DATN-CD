@@ -123,7 +123,7 @@ public class NotificationServiceImpl implements NotificationService {
             String title = "New Support Ticket";
             String content = userUsername + " submitted a support ticket.";
             String type = "TICKET";
-            String link = "/admin/support"; // Link to admin support page
+            String link = "/admin/tickets"; // Link to admin tickets page
             Notification notification = createNotification(title, content, type, admin.getAccountID(), null, link);
             sendAdminAlert(notification);
         }
