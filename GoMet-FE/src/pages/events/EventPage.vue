@@ -144,7 +144,6 @@ const formatDate = (dateObj) => {
   return `${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth() + 1).padStart(2, '0')}/${dateObj.getFullYear()}`
 }
 
-// 🔥 BÍ KÍP HIỂN THỊ ẢNH: Xử lý link giống y hệt bên Admin
 const getImageUrl = (path, index) => {
   if (!path) return fallbackImages[index % fallbackImages.length];
   if (path.startsWith('/uploads')) {
@@ -160,31 +159,32 @@ const normalizeEvent = (e, index) => {
   
   const now = new Date()
 
-  // 🔥 SỬA LẠI LOGIC THỜI GIAN:
   // Thời gian kết thúc cuối cùng của sự kiện là lúc ĐÓNG VOTE
   const finalEndDate = voteEnd && voteEnd > end ? voteEnd : end;
 
+  // Lấy cờ force end (phòng trường hợp backend trả về tên khác)
+  const isForceEnded = e.isForceEnded ?? e.forceEnded ?? e.IsForceEnded ?? 0;
+
+  // Xử lý trạng thái hiển thị
   let currentStatus = 'upcoming'
-  if (start && finalEndDate) {
+  if (Number(isForceEnded) === 1) {
+      currentStatus = 'ended'
+  } else if (start && finalEndDate) {
     if (now > finalEndDate) {
         currentStatus = 'ended'
     } else if (now >= start && now <= finalEndDate) {
-        // Miễn là nằm giữa ngày bắt đầu nộp bài và ngày đóng cổng vote thì là ĐANG DIỄN RA
         currentStatus = 'active'
     }
   }
 
   return {
-    id: e.eventID,
-    title: e.eventName,
-    // Áp dụng getImageUrl vào đây để ảnh Slider và ảnh Card đều nhận diện được
+    id: e.eventID ?? e.eventId ?? e.id,
+    title: e.eventName ?? e.title,
     image: getImageUrl(e.bannerImage, index), 
     month: start ? MONTH_VN[start.getMonth()] : '??',
     day: start ? String(start.getDate()).padStart(2, '0') : '??',
     time: start && finalEndDate ? `${formatDate(start)} → ${formatDate(finalEndDate)}` : 'TBA',
-    
-    rawEndAt: finalEndDate, // Truyền ngày kết thúc cuối cùng để Card đếm ngược
-    
+    rawEndAt: finalEndDate, 
     location: 'Trực tuyến',
     type: 'online',
     typeLabel: 'Online',
@@ -196,10 +196,10 @@ const normalizeEvent = (e, index) => {
   }
 }
 
-// Logic Slider thông minh (Reset khi người dùng bấm tay)
+// Logic Slider thông minh
 const resetSliderInterval = () => {
   if (slideInterval) clearInterval(slideInterval)
-  slideInterval = setInterval(nextSlide, 6000) // 6 giây đổi 1 lần
+  slideInterval = setInterval(nextSlide, 6000) 
 }
 
 const nextSlide = () => {
@@ -217,8 +217,30 @@ const goToSlide = (index) => {
 
 onMounted(async () => {
   try {
-    const data = await getEvents()
-    events.value = (data || []).map((e, index) => normalizeEvent(e, index))
+    const response = await getEvents()
+    
+    let rawData = [];
+    if (Array.isArray(response)) rawData = response;
+    else if (response && Array.isArray(response.content)) rawData = response.content;
+    else if (response && Array.isArray(response.data)) rawData = response.data;
+    
+    // 🔥 LƯỚI LỌC CÚ CHỐT: Bắt ép kiểu Number và soi bằng F12
+    const validData = rawData.filter(e => {
+      let activeVal = e.isActive !== undefined ? e.isActive : (e.active !== undefined ? e.active : e.IsActive);
+      
+      // MÁY QUÉT: Báo cáo ra Console cho sếp xem
+      console.log(`[DEBUG EVENT] Tên: ${e.eventName || e.title} | Giá trị isActive nhận được từ API:`, activeVal);
+
+      if (activeVal !== undefined && activeVal !== null) {
+        // Ép sang số: Nếu bằng 0 thì ẩn đi (return false)
+        return Number(activeVal) !== 0;
+      }
+      
+      // Nếu nhảy xuống đây nghĩa là API trả thiếu biến isActive
+      return true; 
+    })
+    
+    events.value = validData.map((e, index) => normalizeEvent(e, index))
     
     if (topThreeEvents.value.length > 1) {
       slideInterval = setInterval(nextSlide, 6000)
@@ -251,9 +273,7 @@ const filteredEvents = computed(() => {
   return list
 })
 </script>
-
 <style scoped>
-/* Toàn bộ Style giữ nguyên 100% như cũ */
 .events-page-premium {
   font-family: 'Mulish', sans-serif;
   background-color: #FAFAFA;

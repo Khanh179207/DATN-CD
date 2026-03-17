@@ -20,17 +20,16 @@ git pull origin develop (lấy code từ nhánh dev về máy tính của mình)
 
 ⚠️ TH2: Đang code dở (Đã sửa file)
 
-git stash (Cất gọn code đang viết dở vào kho tạm, trả lại máy sạch)
-git pull origin develop (cập nhật code mới từ develop)
-git stash pop (Lấy code cất trong kho ra ráp lại vào file)
-                  
+git commit -m "save point"  ( Commit tạm)
+git pull origin develop      ( Kéo code mới về cho nó tự merge)
+              
 # -> Nếu báo Conflict (đỏ): Mở file sửa lỗi -> Lưu -> git add . -> git commit
 
 3️⃣ Khi code xong (PUSH & PR)
-
+git status (check lại  nhánh và các file đã thay đổi của mình)
 git add .  (thêm các file đã code vào git trên máy)
 git commit -m "Hoan thien chuc nang ABC"  (cam kết các file này là gì ) 
-git git pull origin develop (check lại xem đã là mới nhất chưa, nếu ra chữ already thì được phép push)
+git pull origin develop (check lại xem đã là mới nhất chưa, nếu ra chữ already thì được phép push, ra màn hình xanh đen thì :wq rồi push, conflict thì báo Sếp)
 git push origin feature/ten-chuc-nang ( đẩy code của mình lên server github)
 
 👉 Sau đó: Lên GitHub -> Tạo Pull Request vào develop. 
