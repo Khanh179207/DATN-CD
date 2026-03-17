@@ -328,4 +328,4 @@ const vClickOutside = {
 
 .custom-scroll::-webkit-scrollbar { width: 4px; }
 .custom-scroll::-webkit-scrollbar-thumb { background: var(--z-panel-border); border-radius: 10px; }
-</style> ok vậy thì tôi bỏ ý tưởng darkmode trên mấy file .scss và file màu  _admin-tokens.scss luôn
+</style> 

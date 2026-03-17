@@ -1,6 +1,7 @@
 package poly.edu.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import poly.edu.dao.AccountDAO;
 import poly.edu.dao.PostDAO;
@@ -21,8 +22,10 @@ import java.util.stream.Collectors;
 public class TicketServiceImpl implements TicketService {
 
     private final TicketDAO ticketDAO;
+    // 🔥 Giữ lại cả AccountDAO, PostDAO (của sếp) và SimpMessagingTemplate (của develop)
     private final AccountDAO accountDAO;
     private final PostDAO postDAO;
+    private final SimpMessagingTemplate messagingTemplate;
 
     /**
      * 🔥 HÀM ĐỒNG BỘ: Lưu Ticket từ DTO (FE up ảnh lấy link trước)
@@ -37,19 +40,25 @@ public class TicketServiceImpl implements TicketService {
         ticket.setStatus(0); // Chờ xử lý
         ticket.setCreatedAt(LocalDateTime.now());
 
-        // Tìm và gán Account (Sử dụng accountId từ DTO)
+        // 🔥 Logic của sếp: Tìm và gán Account (Sử dụng accountId từ DTO)
         if (dto.getAccountId() != null) {
             accountDAO.findById(dto.getAccountId())
                     .ifPresent(ticket::setAccount);
         }
 
-        // Tìm và gán bài viết bị báo cáo (Sử dụng targetPostId từ DTO)
+        // 🔥 Logic của sếp: Tìm và gán bài viết bị báo cáo (Sử dụng targetPostId từ DTO)
         if (dto.getTargetPostId() != null) {
             postDAO.findById(dto.getTargetPostId())
                     .ifPresent(ticket::setTargetPost);
         }
 
-        return ticketDAO.save(ticket);
+        // 🔥 Lưu ticket trước
+        Ticket savedTicket = ticketDAO.save(ticket);
+
+        // 🔥 Logic của develop: Send admin alert for new ticket
+        sendAdminAlert(savedTicket);
+
+        return savedTicket;
     }
 
     @Override
@@ -73,7 +82,8 @@ public class TicketServiceImpl implements TicketService {
 
         ticket.setStatus(newStatus);
 
-        // 1. NẾU LÀ TIẾP NHẬN (Status = 1) -> Lưu giờ bắt đầu xử lý
+        // 🔥 1. NẾU LÀ TIẾP NHẬN (Status = 1) -> Lưu giờ bắt đầu xử lý
+        // Dùng điều kiện == null để lỡ sếp có bấm lại nút này nó cũng không bị ghi đè giờ cũ (Giữ comment của develop)
         if (newStatus == 1 && ticket.getProcessedAt() == null) {
             ticket.setProcessedAt(LocalDateTime.now());
         }
@@ -112,5 +122,17 @@ public class TicketServiceImpl implements TicketService {
         }
 
         return dto;
+    }
+
+    /**
+     * Send admin alert for new ticket
+     */
+    private void sendAdminAlert(Ticket ticket) {
+        try {
+            AdminTicketDTO dto = convertToAdminDTO(ticket);
+            messagingTemplate.convertAndSend("/topic/admin-alerts", dto);
+        } catch (Exception e) {
+            System.err.println("Failed to send admin alert: " + e.getMessage());
+        }
     }
 }

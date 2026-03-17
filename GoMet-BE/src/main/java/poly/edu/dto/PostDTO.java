@@ -36,4 +36,4 @@ public class PostDTO {
     // 🔥 Bây giờ nó sẽ tự động hiểu và dùng cái file StepRequestDTO.java riêng biệt ở trên
     // Trong file PostDTO.java
     private List<StepRequestDTO> steps; // Dùng cái này là chuẩn nhất vì FE đang gửi lên mảng này
-}   
+}

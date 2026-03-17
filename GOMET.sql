@@ -286,6 +286,7 @@ CREATE TABLE Comment (
 		Content NVARCHAR(MAX) NOT NULL,
 		Type NVARCHAR(100) NOT NULL,
 		AccountID INT NOT NULL,
+		Link NVARCHAR(500) NULL,
 		PostID INT NULL, 
 		isRead INT DEFAULT 0,
 		ReadAt DATETIME,
@@ -460,6 +461,8 @@ CREATE TABLE Comment (
 	GO
 
 	SELECT * FROM Post;
+
+	SELECT * FROM Cookingsteps;
 
 	SELECT * FROM event;
 

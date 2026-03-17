@@ -17,10 +17,10 @@ import java.util.stream.Collectors;
 /**
  * User-facing notification endpoints.
  * Endpoints:
- *   GET  /api/notifications/{accountID}          - list notifications for a user
- *   PUT  /api/notifications/{id}/read            - mark single notification as read
- *   PUT  /api/notifications/{accountID}/read-all - mark all as read for a user
- *   DELETE /api/notifications/{id}               - delete a notification
+ * GET /api/notifications/{accountID} - list notifications for a user
+ * PUT /api/notifications/{id}/read - mark single notification as read
+ * PUT /api/notifications/{accountID}/read-all - mark all as read for a user
+ * DELETE /api/notifications/{id} - delete a notification
  */
 @RestController
 @RequestMapping("/api/notifications")
@@ -40,13 +40,13 @@ public class NotificationController {
                 .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
                 .map(n -> Map.<String, Object>of(
                         "notificationID", n.getNotificationID(),
-                        "title",          n.getTitle(),
-                        "content",        n.getContent(),
-                        "type",           n.getType(),
-                        "isRead",         n.getIsRead(),
-                        "createdAt",      n.getCreatedAt().toString(),
-                        "postID",         n.getPost() != null ? n.getPost().getPostID() : 0
-                ))
+                        "title", n.getTitle(),
+                        "content", n.getContent(),
+                        "type", n.getType(),
+                        "isRead", n.getIsRead(),
+                        "createdAt", n.getCreatedAt().toString(),
+                        "postID", n.getPost() != null ? n.getPost().getPostID() : 0,
+                        "link", n.getLink()))
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(result);
@@ -83,8 +83,7 @@ public class NotificationController {
 
         return ResponseEntity.ok(Map.of(
                 "message", "All notifications marked as read",
-                "updatedCount", unread.size()
-        ));
+                "updatedCount", unread.size()));
     }
 
     // ── Delete a notification ────────────────────────────────────────────

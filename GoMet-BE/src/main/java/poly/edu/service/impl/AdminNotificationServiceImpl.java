@@ -31,6 +31,7 @@ public class AdminNotificationServiceImpl implements AdminNotificationService {
                 .post(post)
                 .isRead(0)
                 .createdAt(LocalDateTime.now())
+                .link(dto.getLink())
                 .build();
     }
 

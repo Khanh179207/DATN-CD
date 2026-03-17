@@ -17,7 +17,6 @@ public class AdminPostController {
 
     private final AdminPostService adminpostService;
 
-
     // Tab Tất cả
     @GetMapping
     public ResponseEntity<List<AdminPostDTO>> getAll() {
@@ -35,6 +34,14 @@ public class AdminPostController {
     public ResponseEntity<?> approve(@PathVariable Integer id) {
         adminpostService.approvePost(id);
         return ResponseEntity.ok(Map.of("message", "Post approved"));
+    }
+
+    // Từ chối bài
+    @PutMapping("/{id}/reject")
+    public ResponseEntity<?> reject(@PathVariable Integer id, @RequestBody Map<String, String> body) {
+        String reason = body.get("reason");
+        adminpostService.rejectPost(id, reason);
+        return ResponseEntity.ok(Map.of("message", "Post rejected"));
     }
 
     // Deactive bài
@@ -55,6 +62,7 @@ public class AdminPostController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
+
     @PutMapping("/{postId}/ban-author")
     public ResponseEntity<?> banAuthor(@PathVariable Integer postId) {
         try {

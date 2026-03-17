@@ -36,13 +36,15 @@ public class CommentController {
 
     @PostMapping
     public ResponseEntity<?> addComment(@RequestBody CommentDTO req) {
-        if (req.getPostID() == null || req.getAccountID() == null || req.getContent() == null || req.getContent().isBlank()) {
+        if (req.getPostID() == null || req.getAccountID() == null || req.getContent() == null
+                || req.getContent().isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("message", "Thiếu thông tin bình luận"));
         }
         Post post = postDAO.findById(req.getPostID()).orElse(null);
         Account account = accountDAO.findById(req.getAccountID()).orElse(null);
         if (post == null || account == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Không tìm thấy bài viết hoặc tài khoản"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "Không tìm thấy bài viết hoặc tài khoản"));
         }
 
         Comment comment = Comment.builder()
@@ -56,7 +58,8 @@ public class CommentController {
         // Create notification for the post owner if commenter is not the owner
         Integer postOwnerId = post.getAccount().getAccountID();
         if (!req.getAccountID().equals(postOwnerId)) {
-            notificationService.notifyComment(account.getUsername(), postOwnerId, req.getPostID());
+            notificationService.notifyComment(account.getUsername(), postOwnerId, req.getPostID(),
+                    saved.getCommentID());
         }
 
         return ResponseEntity.status(HttpStatus.CREATED).body(toDTO(saved));

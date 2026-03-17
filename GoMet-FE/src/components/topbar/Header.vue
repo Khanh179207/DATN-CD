@@ -155,6 +155,7 @@
     <Teleport to="body">
       <MapModal v-if="showMapModal" @close="showMapModal = false" />
       <FeedbackModal v-if="showFeedbackModal" @close="showFeedbackModal = false" :form="feedbackForm" />
+      <audio id="notificationSound" src="/sounds/notification.mp3" preload="auto"></audio>
     </Teleport>
   </header>
 </template>
@@ -188,6 +189,8 @@ const showMapModal = ref(false);
 const showFeedbackModal = ref(false);
 const notifications = ref([]);
 const feedbackForm = ref({ title: '', description: '', attachment: null });
+const originalTitle = ref(document.title);
+const notificationChannel = ref(null);
 
 // 🔥 LOGIC QUYẾT ĐỊNH MÀU HEADER: ĐEN HAY TRẮNG
 const isDark = computed(() => {
@@ -204,10 +207,52 @@ const isDark = computed(() => {
 
 const unreadNotiCount = computed(() => notifications.value.filter(n => !n.isRead).length)
 
+const increaseBadge = () => {
+  // Force update the computed property by triggering reactivity
+  notifications.value = [...notifications.value];
+};
+
+const addNotificationToDropdown = (notification) => {
+  const newNotification = {
+    id: notification.notificationId,
+    user: notification.title,
+    action: notification.content,
+    time: notification.createdAt ? new Date(notification.createdAt).toLocaleDateString() : new Date().toLocaleDateString(),
+    isRead: notification.isRead === 1,
+    type: notification.type || 'like',
+    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(notification.title)}&background=EA580C&color=fff`,
+    link: notification.link
+  };
+  notifications.value.unshift(newNotification);
+};
+
+const playNotificationSound = () => {
+  const sound = document.getElementById("notificationSound");
+  if (sound) {
+    sound.currentTime = 0;
+    sound.play().catch(err => console.log('Sound play failed:', err));
+  }
+};
+
+const updateTabTitle = () => {
+  const count = unreadNotiCount.value;
+  if (count > 0) {
+    document.title = "(" + count + ") " + originalTitle.value;
+  } else {
+    document.title = originalTitle.value;
+  }
+};
+
+const resetBadge = () => {
+  notifications.value.forEach(n => n.isRead = true);
+  document.title = originalTitle.value;
+};
+
 const handleMarkAllRead = async () => {
   if (!authStore.user?.accountID) return
   try {
-    await apiMarkAllRead(authStore.user.accountID); notifications.value.forEach(n => n.isRead = true)
+    await apiMarkAllRead(authStore.user.accountID);
+    resetBadge();
   } catch (err) { }
 }
 
@@ -224,12 +269,22 @@ const loadNotifications = async () => {
       id: n.notificationID, user: n.title, action: n.content,
       time: n.createdAt ? new Date(n.createdAt).toLocaleDateString() : '',
       isRead: n.isRead === 1, type: n.type || 'like',
-      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(n.title)}&background=EA580C&color=fff`
+      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(n.title)}&background=EA580C&color=fff`,
+      link: n.link
     }))
   } catch (err) { }
 }
 
-const handleNotiClick = async (n) => { if (!n.isRead) { n.isRead = true; await markNotificationRead(n.id).catch(() => { }); } showNoti.value = false; }
+const handleNotiClick = async (n) => {
+  if (!n.isRead) {
+    n.isRead = true;
+    await markNotificationRead(n.id).catch(() => { });
+  }
+  showNoti.value = false;
+  if (n.link) {
+    router.push(n.link);
+  }
+}
 const handleScroll = () => { isScrolled.value = window.scrollY > 10 }
 const handleCreatePost = () => { authStore.isAuthenticated ? router.push('/create-post') : emit('open-login') }
 const openGoogleMaps = () => { showMapModal.value = true; closeAllDropdowns(); }
@@ -238,25 +293,21 @@ const openGoogleMaps = () => { showMapModal.value = true; closeAllDropdowns(); }
 const handleRealtimeNotification = (event) => {
   const notificationDTO = event.detail;
 
-  // Convert DTO to the format expected by the UI
-  const newNotification = {
-    id: notificationDTO.notificationId,
-    user: notificationDTO.title,
-    action: notificationDTO.content,
-    time: notificationDTO.createdAt ? new Date(notificationDTO.createdAt).toLocaleDateString() : new Date().toLocaleDateString(),
-    isRead: false, // Real-time notifications are always unread initially
-    type: notificationDTO.type || 'like',
-    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(notificationDTO.title)}&background=EA580C&color=fff`
-  };
+  addNotificationToDropdown(notificationDTO);
+  playNotificationSound();
+  increaseBadge();
+  updateTabTitle();
 
-  // Add to the beginning of the notifications array
-  notifications.value.unshift(newNotification);
+  // Send to other tabs
+  if (notificationChannel.value) {
+    notificationChannel.value.postMessage(notificationDTO);
+  }
 
   // Optionally show a toast or browser notification
   if ('Notification' in window && Notification.permission === 'granted') {
     new Notification(notificationDTO.title, {
       body: notificationDTO.content,
-      icon: newNotification.avatar
+      icon: `https://ui-avatars.com/api/?name=${encodeURIComponent(notificationDTO.title)}&background=EA580C&color=fff`
     });
   }
 };
@@ -267,12 +318,21 @@ onMounted(() => {
 
   if (authStore.isAuthenticated) {
     shoppingStore.fetchCart();
+    loadNotifications(); // Load notifications on mount
     // Connect to WebSocket for real-time notifications
     webSocketService.connect();
     // Listen for real-time notifications
     window.addEventListener('realtime-notification', handleRealtimeNotification);
     // Request notification permission
     requestNotificationPermission();
+    // Setup BroadcastChannel for multi-tab sync
+    notificationChannel.value = new BroadcastChannel("notifications");
+    notificationChannel.value.onmessage = (event) => {
+      const notification = event.data;
+      addNotificationToDropdown(notification);
+      playNotificationSound();
+      updateTabTitle();
+    };
   }
 })
 
@@ -281,6 +341,10 @@ onUnmounted(() => {
   // Disconnect WebSocket and remove event listener
   webSocketService.disconnect();
   window.removeEventListener('realtime-notification', handleRealtimeNotification);
+  // Close BroadcastChannel
+  if (notificationChannel.value) {
+    notificationChannel.value.close();
+  }
 })
 
 // Watch for authentication changes
@@ -289,9 +353,21 @@ watch(() => authStore.isAuthenticated, (isAuthenticated) => {
     webSocketService.connect();
     window.addEventListener('realtime-notification', handleRealtimeNotification);
     requestNotificationPermission();
+    // Setup BroadcastChannel
+    notificationChannel.value = new BroadcastChannel("notifications");
+    notificationChannel.value.onmessage = (event) => {
+      const notification = event.data;
+      addNotificationToDropdown(notification);
+      playNotificationSound();
+      updateTabTitle();
+    };
   } else {
     webSocketService.disconnect();
     window.removeEventListener('realtime-notification', handleRealtimeNotification);
+    // Close BroadcastChannel
+    if (notificationChannel.value) {
+      notificationChannel.value.close();
+    }
   }
 });
 
