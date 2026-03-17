@@ -22,6 +22,7 @@ import Leaderboard from '@/pages/Leaderboard.vue'
 // Note: If the two files below haven't been created yet, create empty placeholder files in the pages folder to avoid import errors
 import Suggestions from '@/pages/suggestions/SuggestionsPage.vue'
 import MealPlan from '@/pages/mealplan/MealPlanPage.vue'
+import TermsAndPolicy from '@/pages/terms/TermsAndPolicy.vue'
 
 // --- ADMIN PAGES ---
 import AdminDashboard from '@/pages/admin/Dashboard.vue'
@@ -46,6 +47,11 @@ const routes = [
         path: '',
         name: 'IntroPage',
         component: () => import('@/pages/intro/IntroPage.vue')
+      },
+      {
+        path: 'terms-and-policy',
+        name: 'TermsAndPolicyLanding',
+        component: () => import('@/pages/terms/TermsAndPolicy.vue')
       }
     ]
   },
@@ -195,6 +201,13 @@ router.beforeEach((to, from, next) => {
   const userStr = localStorage.getItem('user')
   const user = userStr ? JSON.parse(userStr) : null
   const isLoggedIn = !!user?.token
+
+  // NEW: Strict guard — guests may only access the landing root ('/')
+  if (!isLoggedIn && to.path !== '/') {
+    // show toast and redirect to landing
+    toast.error('Vui lòng đăng nhập để xem chi tiết')
+    return next({ path: '/' })
+  }
 
   const isPremium = isLoggedIn && (
     String(user?.isPremium) === "true" || 
