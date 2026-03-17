@@ -104,9 +104,14 @@ const getImageUrl = (path) => {
   return path.startsWith('/uploads') ? `http://localhost:8080${encodeURI(path)}` : path;
 }
 
+// Tìm hàm getStatus trong AdminEventCard.vue và thay bằng cụm này:
 const getStatus = (ev) => {
-  if (ev.isActive === 0) return 'deleted'; 
-  if (ev.isForceEnded === 1) return 'ended'; 
+  // Ép kiểu về Number để tránh lỗi so sánh String "0" vs Number 0
+  const activeStatus = Number(ev.isActive);
+  const forceStatus = Number(ev.isForceEnded);
+
+  if (activeStatus === 0) return 'deleted'; 
+  if (forceStatus === 1) return 'ended'; 
 
   if (!ev.startAt || !ev.voteEndAt) return 'upcoming';
 

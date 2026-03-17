@@ -306,7 +306,6 @@ public class PostController {
                         sdto.setStepNumber(s.getStepNumber());
                         sdto.setContent(s.getContent());
                         sdto.setImage(s.getImage());
-                        sdto.setVideo(s.getVideo());
                         return sdto;
                     }).collect(Collectors.toList());
             dto.setSteps(steps);

@@ -12,7 +12,7 @@
     </div>
 
     <div class="stats-bar">
-      <div class="stat-item"><span class="s-label">Tổng sự kiện</span><span class="s-val">{{ events.length }}</span></div>
+      <div class="stat-item"><span class="s-label">Tổng sự kiện</span><span class="s-val">{{ events?.length || 0 }}</span></div>
       <div class="divider"></div>
       <div class="stat-item"><span class="s-label">Đang diễn ra</span><span class="s-val text-green">{{ ongoingCount }}</span></div>
       <div class="divider"></div>
@@ -47,7 +47,7 @@
     <div v-else class="event-list-container">
       <AdminEventCard 
         v-for="ev in filteredEvents" 
-        :key="ev.eventID + '-' + ev.isActive + '-' + ev.isForceEnded" 
+        :key="ev.eventID + '-' + (ev.isActive || 0) + '-' + (ev.isForceEnded || 0)" 
         :ev="ev"
         @viewWinner="viewWinner"
         @openEditModal="openEditModal"
@@ -56,7 +56,7 @@
         @goToPostManagement="goToPostManagement"
       />
 
-      <div v-if="filteredEvents.length === 0" class="empty-state">Không tìm thấy sự kiện nào.</div>
+      <div v-if="!filteredEvents || filteredEvents.length === 0" class="empty-state">Không tìm thấy sự kiện nào.</div>
     </div>
 
     <Transition name="zoom-in">
@@ -265,6 +265,7 @@ const getImageUrl = (path) => {
 }
 
 const getStatusHelper = (ev) => {
+  if (!ev) return 'upcoming';
   if (Number(ev.isActive) === 0) return 'deleted'; 
   if (Number(ev.isForceEnded) === 1) return 'ended'; 
   if (!ev.startAt || !ev.voteEndAt) return 'upcoming';
@@ -278,6 +279,7 @@ const getStatusHelper = (ev) => {
 const formatForInput = (dateStr) => {
   if (!dateStr) return '';
   const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return ''; // 🔥 Bổ sung kiểm tra Date hợp lệ
   const z = (n) => (n < 10 ? '0' : '') + n;
   return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}T${z(d.getHours())}:${z(d.getMinutes())}`;
 }
@@ -291,6 +293,7 @@ const removeImage = () => { form.bannerFile = null; form.bannerImage = ''; image
 
 // --- Tương tác API ---
 const fetchWinnerForEvent = async (event) => {
+  if (!event || !event.eventID) return;
   try {
     const res = await api.get(`/api/admin/events/${event.eventID}/posts`);
     if (res.data?.length > 0) {
@@ -303,28 +306,39 @@ const fetchWinnerForEvent = async (event) => {
 }
 
 const loadEvents = async () => {
-  loading.value = true; error.value = null
+  loading.value = true; 
+  error.value = null;
   try {
-    const res = await api.get('/api/admin/events')
-    events.value = res.data;
+    const res = await api.get('/api/admin/events');
+    
+    // 🔥 ĐỔ BÊ TÔNG BẢO VỆ DỮ LIỆU CHỐNG CRASH TRANG
+    const rawData = res.data?.data || res.data;
+    events.value = Array.isArray(rawData) ? rawData : []; 
     
     events.value.forEach(ev => {
       if (getStatusHelper(ev) === 'ended' && !ev.winnerData) {
         fetchWinnerForEvent(ev);
       }
     });
-  } catch (e) { error.value = 'Tải dữ liệu thất bại' } finally { loading.value = false }
+  } catch (e) { 
+    error.value = 'Tải dữ liệu thất bại. Vui lòng kiểm tra kết nối mạng!';
+    events.value = []; // Gán mảng rỗng để không bị văng code
+  } finally { 
+    loading.value = false;
+  }
 }
 
 onMounted(loadEvents)
 
-const ongoingCount = computed(() => events.value.filter(e => getStatusHelper(e) === 'active').length)
-const upcomingCount = computed(() => events.value.filter(e => getStatusHelper(e) === 'upcoming').length)
-const totalPostCount = computed(() => events.value.filter(e => getStatusHelper(e) !== 'deleted').reduce((sum, ev) => sum + (ev.postCount || 0), 0))
+// 🔥 Bảo vệ mảng an toàn trong các Computed
+const ongoingCount = computed(() => (Array.isArray(events.value) ? events.value : []).filter(e => getStatusHelper(e) === 'active').length)
+const upcomingCount = computed(() => (Array.isArray(events.value) ? events.value : []).filter(e => getStatusHelper(e) === 'upcoming').length)
+const totalPostCount = computed(() => (Array.isArray(events.value) ? events.value : []).filter(e => getStatusHelper(e) !== 'deleted').reduce((sum, ev) => sum + (Number(ev.postCount) || 0), 0))
 
 const filteredEvents = computed(() => {
+  if (!Array.isArray(events.value)) return [];
   return events.value.filter(ev => {
-    const matchSearch = !searchQuery.value || ev.eventName?.toLowerCase().includes(searchQuery.value.toLowerCase())
+    const matchSearch = !searchQuery.value || (ev.eventName || '').toLowerCase().includes(searchQuery.value.toLowerCase())
     const matchStatus = !statusFilter.value || getStatusHelper(ev) === statusFilter.value
     return matchSearch && matchStatus
   })
@@ -426,8 +440,8 @@ const saveEvent = async () => {
   } catch (e) { toast.error('Lỗi máy chủ!'); } finally { saving.value = false; }
 }
 
-// MỞ POPUP TRƯỚC KHI THỰC THI (Thay cho window.confirm)
 const confirmDeleteRestore = (id, isSoftDelete) => {
+  if (!Array.isArray(events.value)) return;
   const ev = events.value.find(e => e.eventID === id);
   if (!ev) return;
   
@@ -437,7 +451,6 @@ const confirmDeleteRestore = (id, isSoftDelete) => {
   showDeleteRestoreModal.value = true;
 }
 
-// THỰC THI SAU KHI BẤM NÚT TRÊN POPUP
 const executeDeleteRestore = async () => {
   const id = eventTargetId.value;
   const isSoftDelete = isActionSoftDelete.value;
@@ -454,9 +467,9 @@ const executeDeleteRestore = async () => {
     }
     
     toast.success(isSoftDelete ? 'Đã ẩn sự kiện thành công!' : 'Đã khôi phục sự kiện!');
-    showDeleteRestoreModal.value = false; // Đóng popup
+    showDeleteRestoreModal.value = false; 
     
-    loadEvents(); // Đồng bộ background
+    loadEvents(); 
   } catch (e) {
     toast.error('Lỗi thao tác trên hệ thống!');
     console.error(e);

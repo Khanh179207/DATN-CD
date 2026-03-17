@@ -34,5 +34,6 @@ public class PostDTO {
     private Integer isApproved;
 
     // 🔥 Bây giờ nó sẽ tự động hiểu và dùng cái file StepRequestDTO.java riêng biệt ở trên
-    private List<StepRequestDTO> steps;
-}
+    // Trong file PostDTO.java
+    private List<StepRequestDTO> steps; // Dùng cái này là chuẩn nhất vì FE đang gửi lên mảng này
+}   

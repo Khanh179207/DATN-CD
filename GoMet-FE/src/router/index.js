@@ -26,7 +26,7 @@ import MealPlan from '@/pages/mealplan/MealPlanPage.vue'
 // --- ADMIN PAGES ---
 import AdminDashboard from '@/pages/admin/Dashboard.vue'
 import PostManagement from '@/pages/admin/PostManagement.vue'
-import CategoryManagement from '@/pages/admin/CategoryManagement.vue'
+import CategoryManagement from '@/pages/admin/categoryadmin/CategoryManagement.vue'
 import UserManagement from '@/pages/admin/UserManagement.vue'
 import CommentManagement from '@/pages/admin/CommentManagement.vue'
 import NotificationManagement from '@/pages/admin/NotificationManagement.vue'
