@@ -17,5 +17,7 @@ public class NotificationDTO {
     private String content;
     private String type;
     private Integer postId;
+    private String link;
     private LocalDateTime createdAt;
+    private Integer isRead;
 }

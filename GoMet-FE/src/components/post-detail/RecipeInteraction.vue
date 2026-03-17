@@ -3,11 +3,12 @@
     <div class="divider-section"></div>
 
     <div class="grid-interaction">
-      
+
       <section class="author-section fade-in">
         <div class="author-vip-card">
           <div class="auth-left">
-            <div class="avatar-ring" style="cursor: pointer;" @click="goToChefProfile" :title="$t('profile.view_profile')">
+            <div class="avatar-ring" style="cursor: pointer;" @click="goToChefProfile"
+              :title="$t('profile.view_profile')">
               <img :src="post.authorAvatar" class="auth-img" alt="Author Avatar">
             </div>
           </div>
@@ -15,7 +16,8 @@
             <div class="auth-header">
               <h3 class="auth-name">{{ post.author }} <span class="check-icon">✓</span></h3>
               <div class="btn-group-header">
-                <button class="btn-favorite" :class="{ 'is-saved': isFavorite }" @click="toggleFavorite" :title="isFavorite ? $t('post.saved') : $t('post.unsaved')">
+                <button class="btn-favorite" :class="{ 'is-saved': isFavorite }" @click="toggleFavorite"
+                  :title="isFavorite ? $t('post.saved') : $t('post.unsaved')">
                   {{ isFavorite ? '♥' : '♡' }}
                 </button>
 
@@ -54,8 +56,10 @@
             </div>
             <div class="rating-bars">
               <div class="bar-row" v-for="i in 5" :key="i">
-                <span class="star-label">{{ 6-i }} <span class="s">★</span></span>
-                <div class="progress-bg"><div class="progress-fill" :style="{ width: ratingDistribution[i-1] + '%' }"></div></div>
+                <span class="star-label">{{ 6 - i }} <span class="s">★</span></span>
+                <div class="progress-bg">
+                  <div class="progress-fill" :style="{ width: ratingDistribution[i - 1] + '%' }"></div>
+                </div>
               </div>
             </div>
           </div>
@@ -63,11 +67,13 @@
 
         <div class="review-input-wrapper">
           <div class="input-header">
-            <img :src="authStore.user?.avatar || 'https://ui-avatars.com/api/?name=U&background=EA580C&color=fff'" class="current-user-avt">
+            <img :src="authStore.user?.avatar || 'https://ui-avatars.com/api/?name=U&background=EA580C&color=fff'"
+              class="current-user-avt">
             <div class="rating-selector">
               <span>{{ $t('post.rating_prompt') }}</span>
               <div class="star-rating-input">
-                <span v-for="star in 5" :key="star" @click="userRating = star" :class="{ active: star <= userRating }">★</span>
+                <span v-for="star in 5" :key="star" @click="userRating = star"
+                  :class="{ active: star <= userRating }">★</span>
               </div>
             </div>
           </div>
@@ -81,7 +87,7 @@
         </div>
 
         <div class="comments-feed">
-          <div class="comment-card" v-for="cmt in commentsList" :key="cmt.id">
+          <div class="comment-card" v-for="cmt in commentsList" :key="cmt.id" :id="'comment-' + cmt.id">
             <img :src="cmt.avatar" class="cmt-avatar" :alt="cmt.name">
             <div class="cmt-content-wrapper">
               <div class="cmt-bubble">
@@ -95,7 +101,7 @@
                   <img v-for="(img, idx) in cmt.images" :key="idx" :src="img">
                 </div>
               </div>
-              
+
               <div class="cmt-actions">
                 <button class="action-link" :class="{ 'liked': cmt.isLiked }" @click="toggleLike(cmt)">
                   {{ $t('recipe.helpful') }} ({{ cmt.likes }})
@@ -106,12 +112,15 @@
 
               <!-- Inline Reply Box cho Root Comment -->
               <div v-if="activeReplyId === cmt.id" class="inline-reply-box">
-                <img :src="authStore.user?.avatar || 'https://ui-avatars.com/api/?name=U&background=EA580C&color=fff'" class="reply-user-avt">
+                <img :src="authStore.user?.avatar || 'https://ui-avatars.com/api/?name=U&background=EA580C&color=fff'"
+                  class="reply-user-avt">
                 <div class="reply-input-area">
-                  <textarea v-model="replyBoxContent" :placeholder="'Viết bình luận công khai cho ' + cmt.name + '...'"></textarea>
+                  <textarea v-model="replyBoxContent"
+                    :placeholder="'Viết bình luận công khai cho ' + cmt.name + '...'"></textarea>
                   <div class="reply-controls">
                     <button @click="cancelReply" class="btn-cancel">Hủy</button>
-                    <button @click="submitInlineReply(cmt)" class="btn-post" :disabled="!replyBoxContent.trim()">Đăng</button>
+                    <button @click="submitInlineReply(cmt)" class="btn-post"
+                      :disabled="!replyBoxContent.trim()">Đăng</button>
                   </div>
                 </div>
               </div>
@@ -123,8 +132,8 @@
                   <div class="cmt-content-wrapper">
                     <div class="cmt-bubble">
                       <span class="cmt-author">
-                         {{ reply.name || $t('recipe.anonymous_user') }}
-                         <span v-if="reply.replyToName" class="reply-indicator"> ▶ {{ reply.replyToName }}</span>
+                        {{ reply.name || $t('recipe.anonymous_user') }}
+                        <span v-if="reply.replyToName" class="reply-indicator"> ▶ {{ reply.replyToName }}</span>
                       </span>
                       <p class="cmt-text">
                         {{ reply.content }}
@@ -141,12 +150,16 @@
 
                     <!-- Inline Reply Box cho Bình luận con -->
                     <div v-if="activeReplyId === reply.id" class="inline-reply-box">
-                      <img :src="authStore.user?.avatar || 'https://ui-avatars.com/api/?name=U&background=EA580C&color=fff'" class="reply-user-avt">
+                      <img
+                        :src="authStore.user?.avatar || 'https://ui-avatars.com/api/?name=U&background=EA580C&color=fff'"
+                        class="reply-user-avt">
                       <div class="reply-input-area">
-                        <textarea v-model="replyBoxContent" :placeholder="'Viết câu trả lời cho ' + reply.name + '...'"></textarea>
+                        <textarea v-model="replyBoxContent"
+                          :placeholder="'Viết câu trả lời cho ' + reply.name + '...'"></textarea>
                         <div class="reply-controls">
                           <button @click="cancelReply" class="btn-cancel">Hủy</button>
-                          <button @click="submitInlineReply(reply)" class="btn-post" :disabled="!replyBoxContent.trim()">Đăng</button>
+                          <button @click="submitInlineReply(reply)" class="btn-post"
+                            :disabled="!replyBoxContent.trim()">Đăng</button>
                         </div>
                       </div>
                     </div>
@@ -225,7 +238,7 @@ const normalizeComment = (c) => ({
   isLiked: false,
   cmtid: c.cmtid || null,
   replies: [],
-  replyToName: null 
+  replyToName: null
 })
 
 // Format thời gian sang chuỗi hiển thị tương đối
@@ -233,10 +246,10 @@ const formatTime = (isoString) => {
   if (!isoString) return t('recipe.just_posted')
   const date = new Date(isoString)
   if (isNaN(date.getTime())) return t('recipe.just_posted')
-  
+
   const now = new Date()
   const diffInSeconds = Math.floor((now - date) / 1000)
-  
+
   if (diffInSeconds < 60) return t('recipe.just_posted')
   if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} phút trước`
   if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} giờ trước`
@@ -250,7 +263,7 @@ const toggleLike = (cmt) => {
     toast.error(t('auth.login_required'))
     return
   }
-  
+
   if (cmt.isLiked) {
     cmt.likes--
     cmt.isLiked = false
@@ -277,7 +290,7 @@ const loadComments = async (postID) => {
       if (c.cmtid && commentMap[c.cmtid]) {
         // LUÔN LUÔN tag tên người mà comment này trực tiếp Repy lại (dù là Root hay Child)
         c.replyToName = commentMap[c.cmtid].name;
-        
+
         // Tìm lên thằng ông tổ Root đệ quy dồn chung tất cả con cháu vào 1 mảng replies để làm phẳng layout Facebook
         let currentRoot = commentMap[c.cmtid]
         while (currentRoot.cmtid && commentMap[currentRoot.cmtid]) {
@@ -349,13 +362,13 @@ const handleContactChef = async () => {
       id: res.data.conversationID,
       name: props.post.author,
       avatar: props.post.authorAvatar,
-      online: true 
+      online: true
     };
 
     // Mở khung chat mini và đẩy Sidebar danh sách chat ra
     chatStore.openChat(conversationData);
-    chatStore.isMessengerOpen = true; 
-    
+    chatStore.isMessengerOpen = true;
+
     toast.success(`Đang kết nối với đầu bếp ${props.post.author}...`);
   } catch (err) {
     console.error("Lỗi chat:", err);

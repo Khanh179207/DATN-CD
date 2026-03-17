@@ -41,4 +41,7 @@ public class Notification {
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
+
+    @Column(length = 500)
+    private String link;
 }

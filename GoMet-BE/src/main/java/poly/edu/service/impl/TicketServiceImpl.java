@@ -1,6 +1,7 @@
 package poly.edu.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import poly.edu.dao.TicketDAO;
 import poly.edu.dto.AdminTicketDTO;
@@ -16,12 +17,18 @@ import java.util.stream.Collectors;
 public class TicketServiceImpl implements TicketService {
 
     private final TicketDAO ticketDAO;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Override
     public Ticket createTicket(Ticket ticket) {
         ticket.setStatus(0); // 0 = Chờ xử lý
         ticket.setCreatedAt(LocalDateTime.now());
-        return ticketDAO.save(ticket);
+        Ticket savedTicket = ticketDAO.save(ticket);
+
+        // Send admin alert for new ticket
+        sendAdminAlert(savedTicket);
+
+        return savedTicket;
     }
 
     @Override
@@ -47,7 +54,8 @@ public class TicketServiceImpl implements TicketService {
         ticket.setStatus(newStatus);
 
         // 🔥 1. NẾU LÀ TIẾP NHẬN (Status = 1) -> Lưu giờ bắt đầu xử lý
-        // Dùng điều kiện == null để lỡ sếp có bấm lại nút này nó cũng không bị ghi đè giờ cũ
+        // Dùng điều kiện == null để lỡ sếp có bấm lại nút này nó cũng không bị ghi đè
+        // giờ cũ
         if (newStatus == 1 && ticket.getProcessedAt() == null) {
             ticket.setProcessedAt(LocalDateTime.now());
         }
@@ -85,5 +93,17 @@ public class TicketServiceImpl implements TicketService {
         }
 
         return dto;
+    }
+
+    /**
+     * Send admin alert for new ticket
+     */
+    private void sendAdminAlert(Ticket ticket) {
+        try {
+            AdminTicketDTO dto = convertToAdminDTO(ticket);
+            messagingTemplate.convertAndSend("/topic/admin-alerts", dto);
+        } catch (Exception e) {
+            System.err.println("Failed to send admin alert: " + e.getMessage());
+        }
     }
 }

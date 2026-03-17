@@ -9,6 +9,7 @@ import poly.edu.dto.AdminPostDTO;
 import poly.edu.entity.Account;
 import poly.edu.entity.Post;
 import poly.edu.service.AdminPostService;
+import poly.edu.service.NotificationService;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,6 +19,7 @@ public class AdminPostServiceImpl implements AdminPostService {
 
     private final PostDAO postDAO;
     private final AccountDAO accountDAO;
+    private final NotificationService notificationService;
 
     private AdminPostDTO toDTO(Post post) {
         AdminPostDTO dto = new AdminPostDTO();
@@ -62,6 +64,19 @@ public class AdminPostServiceImpl implements AdminPostService {
         Post post = postDAO.findById(id).orElseThrow();
         post.setIsApproved(1);
         postDAO.save(post);
+
+        // Send notification to post owner
+        notificationService.notifyPostApproved(id);
+    }
+
+    @Override
+    public void rejectPost(Integer id, String reason) {
+        Post post = postDAO.findById(id).orElseThrow();
+        post.setIsApproved(-1); // Assuming -1 means rejected
+        postDAO.save(post);
+
+        // Send notification to post owner
+        notificationService.notifyPostRejected(id, reason);
     }
 
     @Override
@@ -69,6 +84,9 @@ public class AdminPostServiceImpl implements AdminPostService {
         Post post = postDAO.findById(id).orElseThrow();
         post.setIsActive(0);
         postDAO.save(post);
+
+        // Send notification to post owner
+        notificationService.notifyPostDisabled(id);
     }
 
     // Sửa hàm này, TUYỆT ĐỐI KHÔNG dùng postDAO.deleteById(id) nữa sếp nhé!
@@ -94,7 +112,8 @@ public class AdminPostServiceImpl implements AdminPostService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy bài viết!"));
         Account author = post.getAccount();
 
-        if (author == null) throw new RuntimeException("Tác giả không tồn tại!");
+        if (author == null)
+            throw new RuntimeException("Tác giả không tồn tại!");
 
         // 1. Trảm tài khoản: Đổi trạng thái thành 0 (BANNED)
         author.setIsActive(0);
