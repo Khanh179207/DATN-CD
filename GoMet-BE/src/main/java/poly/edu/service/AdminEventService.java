@@ -14,4 +14,5 @@ public interface AdminEventService {
     // Chi tiết event
     List<AdminEventPostDTO> getPostsOfEvent(Integer eventID);
     void removePostFromEvent(Integer eventPostID);
+    void restoreEvent(Integer eventID);
 }

@@ -1,6 +1,13 @@
 <template>
   <div class="create-post-container">
-    
+    <div v-if="publishing" class="loading-overlay">
+      <div class="loader-content">
+        <div class="spinner"></div>
+        <p>Đang tải lên media và lưu bài viết...</p>
+        <small>Vui lòng không đóng trình duyệt</small>
+      </div>
+    </div>
+
     <section class="hero-section-full-bleed fade-in-up">
       <div class="hero-container-inner">
         
@@ -59,16 +66,6 @@
                 </select>
               </div>
             </div>
-            <div class="meta-divider"></div>
-            <div class="meta-box">
-              <span class="icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 22a9 9 0 1 1 18 0"/><path d="M1 22h22"/><path d="M12 13a5 5 0 0 0 5-5A5 5 0 0 0 9.8 4.2"/><path d="M12 13a5 5 0 0 1-3.5-1.5"/></svg>
-              </span>
-              <div class="meta-detail">
-                <span class="label">SERVINGS</span>
-                <input v-model="post.servings" placeholder="2 servings" class="meta-inp">
-              </div>
-            </div>
           </div>
 
           <div class="author-action-row">
@@ -93,11 +90,37 @@
             <input type="file" ref="fileInput" class="hidden-input" @change="handleImageUpload">
           </div>
         </div>
-
       </div>
     </section>
 
     <section class="body-section-premium">
+      
+      <div class="video-full-width-wrapper">
+        <div class="interaction-style-card">
+          <div class="interaction-card-header">
+            <h3>🎬 Video hướng dẫn</h3>
+          </div>
+          
+          <div class="video-content-body">
+            <div v-if="!post.video" class="video-placeholder-box" @click="triggerVideoUpload">
+              <span class="icon-camera">🎥</span>
+              <span>Tải Video Lên (MP4, Max 50MB)</span>
+            </div>
+            
+            <div v-else class="video-player-wrapper">
+              <video :src="post.video" controls class="interaction-video-tag"></video>
+              <div class="video-action-overlay">
+                <button class="btn-remove-media-float" @click.stop="removeVideo">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                  Xóa
+                </button>
+              </div>
+            </div>
+            <input type="file" ref="videoInput" class="hidden-input" accept="video/*" @change="handleVideoUpload">
+          </div>
+        </div>
+      </div>
+
       <div class="body-container-inner">
         
         <aside class="sidebar-left-sticky">
@@ -194,12 +217,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { useRouter, useRoute, onBeforeRouteLeave } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { getCategories } from '@/services/categoryService'
 import { createPost } from '@/services/postService'
-// Đã mở lại import uploadMedia siêu xịn từ service chung
 import { uploadMedia } from '@/services/uploadService'
 import api from '@/services/api'
 import { toast } from '@/composables/useToast'
@@ -208,14 +230,17 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 
-const eventId = route.query.eventId // Lấy ID sự kiện từ URL (nếu có)
+const eventId = route.query.eventId
 
 const fileInput = ref(null)
+const videoInput = ref(null)
 const stepInputRefs = ref([])
 const categories = ref([])
 const publishing = ref(false)
-const coverImageFile = ref(null)          // actual File for upload
-const stepImageFiles = ref({})             // { [stepIndex]: File }
+
+const coverImageFile = ref(null) 
+const videoFile = ref(null) 
+const stepImageFiles = ref({}) 
 
 const currentUser = computed(() => authStore.user || {})
 
@@ -224,11 +249,31 @@ const post = ref({
   description: '',
   categoryID: '',
   image: null,
+  video: null,
   cookingTime: '',
   level: 'Medium',
-  servings: '',
   ingredients: [{ name: '' }, { name: '' }, { name: '' }],
   steps: [{ id: 1, desc: '', image: null }],
+})
+
+// Dọn dẹp bộ nhớ
+const localUrls = new Set()
+const createSafeUrl = (file) => {
+  const url = URL.createObjectURL(file)
+  localUrls.add(url)
+  return url
+}
+const cleanupUrls = () => {
+  localUrls.forEach(url => URL.revokeObjectURL(url))
+  localUrls.clear()
+}
+onBeforeUnmount(() => cleanupUrls())
+
+onBeforeRouteLeave((to, from, next) => {
+  if (post.value.title && !publishing.value) {
+    if (confirm('Bạn có thay đổi chưa lưu. Bạn thực sự muốn rời đi?')) next()
+    else next(false)
+  } else next()
 })
 
 onMounted(async () => {
@@ -250,20 +295,37 @@ const autoResize = (event) => {
   element.style.height = element.scrollHeight + 'px'
 }
 
+// Handler Upload Bìa
 const triggerUpload = () => fileInput.value.click()
 const handleImageUpload = (e) => {
   const file = e.target.files[0]
   if (!file) return
   coverImageFile.value = file
-  post.value.image = URL.createObjectURL(file) 
+  post.value.image = createSafeUrl(file) 
 }
 
+// Handler Upload Video
+const triggerVideoUpload = () => videoInput.value.click()
+const handleVideoUpload = (e) => {
+  const file = e.target.files[0]
+  if (!file) return
+  if (file.size > 50 * 1024 * 1024) return toast.warn('Video must be < 50MB')
+  videoFile.value = file
+  post.value.video = createSafeUrl(file)
+}
+const removeVideo = () => { 
+  videoFile.value = null; 
+  post.value.video = null;
+  if (videoInput.value) videoInput.value.value = ''; 
+}
+
+// Handler Upload Các bước
 const triggerStepUpload = (idx) => stepInputRefs.value[idx].click()
 const handleStepUpload = (e, idx) => {
   const file = e.target.files[0]
   if (!file) return
   stepImageFiles.value[idx] = file
-  post.value.steps[idx].image = URL.createObjectURL(file) 
+  post.value.steps[idx].image = createSafeUrl(file) 
 }
 
 const addIngredient = () => post.value.ingredients.push({ name: '' })
@@ -274,9 +336,17 @@ const removeStep = (idx) => { if(post.value.steps.length > 1) post.value.steps.s
 
 const levelToInt = (lv) => ({ 'Easy': 1, 'Medium': 2, 'Hard': 3 }[lv] ?? 2)
 
+// Validation mới
+const isFormValid = () => {
+  if (!post.value.title.trim()) { toast.warn('Please enter a dish name!'); return false }
+  if (!post.value.categoryID) { toast.warn('Please select a category!'); return false }
+  if (post.value.ingredients.every(i => !i.name.trim())) { toast.warn('Please enter at least 1 ingredient!'); return false }
+  if (post.value.steps.some(s => !s.desc.trim())) { toast.warn('Step description cannot be empty!'); return false }
+  return true
+}
+
 const handlePublish = async () => {
-  if (!post.value.title.trim()) { toast.warn('Please enter a dish name!'); return }
-  if (!post.value.categoryID) { toast.warn('Please select a category!'); return }
+  if (!isFormValid()) return
   if (publishing.value) return
 
   publishing.value = true
@@ -285,30 +355,22 @@ const handlePublish = async () => {
     const ingredientsStr = post.value.ingredients.map(i => i.name).filter(Boolean).join(', ')
     const cookingTimeInt = parseInt(post.value.cookingTime) || 30
 
+    // Upload Cover
     let coverMediaUrl = ''
     if (coverImageFile.value) {
-      try { 
-        // Gọi thẳng uploadMedia từ file service
-        coverMediaUrl = await uploadMedia(coverImageFile.value, 'posts') 
-      } 
-      catch (error) { 
-        toast.warn('Lỗi upload ảnh bìa!'); 
-        publishing.value = false;
-        return; 
-      }
+      coverMediaUrl = await uploadMedia(coverImageFile.value, 'posts') 
     }
 
+    // Upload Video 
+    let videoMediaUrl = ''
+    if (videoFile.value) {
+      videoMediaUrl = await uploadMedia(videoFile.value, 'videos')
+    }
+
+    // Upload Steps
     const stepUrls = {}
     for (const [idx, file] of Object.entries(stepImageFiles.value)) {
-      try { 
-        // Gọi thẳng uploadMedia cho từng ảnh bước
-        stepUrls[idx] = await uploadMedia(file, 'steps') 
-      } 
-      catch (error) { 
-        toast.warn(`Lỗi upload ảnh ở bước ${parseInt(idx) + 1}!`); 
-        publishing.value = false;
-        return; 
-      }
+      stepUrls[idx] = await uploadMedia(file, 'steps') 
     }
 
     const payload = {
@@ -318,6 +380,7 @@ const handlePublish = async () => {
       description: post.value.description,
       ingredients: ingredientsStr,
       media: coverMediaUrl,
+      video: videoMediaUrl, 
       level: levelToInt(post.value.level),
       cookingTime: cookingTimeInt,
       steps: post.value.steps.map((s, i) => ({
@@ -326,33 +389,24 @@ const handlePublish = async () => {
       }))
     }
     
-    // Bước 1: Gọi API tạo bài viết mới
     const result = await createPost(payload)
     const newPostId = result?.postID || result?.id 
 
-    // Bước 2: Kiểm tra xem có đang tham gia event không
     if (eventId && newPostId) {
       try {
-        await api.post(`/api/events/submit`, {
-          EventID: parseInt(eventId),
-          PostID: newPostId
-        })
+        await api.post(`/api/events/submit`, { EventID: parseInt(eventId), PostID: newPostId })
         toast.success('🎉 Nộp bài thi thành công! Chúc sếp giật giải nhé!')
-        router.push(`/event/${eventId}`) // Chuyển về trang event
+        router.push(`/event/${eventId}`)
       } catch (submitErr) {
         toast.error('Tạo bài thành công nhưng có lỗi khi nộp vào sự kiện!')
         router.push(`/post/${newPostId}`)
       }
     } else {
-      // Đăng bài bình thường không vào sự kiện
-      toast.success('Post submitted for review!')
-      if (newPostId) {
-        router.push(`/post/${newPostId}`)
-      } else {
-        router.push('/home')
-      }
+      toast.success('Post submitted successfully!')
+      cleanupUrls()
+      if (newPostId) router.push(`/post/${newPostId}`)
+      else router.push('/home')
     }
-
   } catch (err) {
     toast.error('Failed to publish. Please try again.')
   } finally {
@@ -362,18 +416,29 @@ const handlePublish = async () => {
 </script>
 
 <style scoped>
-.create-post-container { width: 100%; font-family: 'Mulish', sans-serif; color: #1C1917; overflow-x: hidden; background: #F8FAFC; display: flex; flex-direction: column; min-height: 100vh; }
+/* LOADING OVERLAY */
+.loading-overlay {
+  position: fixed; inset: 0; background: rgba(255,255,255,0.8);
+  backdrop-filter: blur(5px); z-index: 9999;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+}
+.spinner {
+  width: 50px; height: 50px; border: 5px solid #f3f3f3;
+  border-top: 5px solid #EA580C; border-radius: 50%;
+  animation: spin 1s linear infinite; margin: 0 auto 20px;
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-/* HERO SECTION */
+/* TOÀN BỘ CSS CŨ CỦA SẾP GIỮ NGUYÊN */
+.create-post-container { width: 100%; font-family: 'Mulish', sans-serif; color: #1C1917; overflow-x: hidden; background: #F8FAFC; display: flex; flex-direction: column; min-height: 100vh; position: relative; }
+
 .hero-section-full-bleed { width: calc(100% + 80px); margin-left: -40px; margin-right: -40px; margin-top: -40px; padding: 60px 40px 60px; background-color: #fff; border-bottom: 1px solid #F3F4F6; position: relative; z-index: 1; }
 .hero-container-inner { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; }
 
-/* Typography Inputs */
 .recipe-title-input { font-family: 'Playfair Display', serif; font-size: 3.5rem; font-weight: 800; line-height: 1.1; color: #111827; margin-bottom: 16px; border: none; outline: none; width: 100%; background: transparent; resize: none; overflow: hidden; min-height: 80px; }
 .recipe-title-input::placeholder { color: #E5E7EB; }
 .recipe-desc-input { font-family: 'Mulish', sans-serif; font-size: 1.15rem; line-height: 1.8; color: #4B5563; margin-bottom: 32px; border: none; outline: none; width: 100%; resize: none; background: transparent; min-height: 80px; font-weight: 400; }
 
-/* Nav */
 .top-nav-bar { display: flex; margin-bottom: 20px; align-items: center; }
 .nav-left { display: flex; align-items: center; gap: 15px; }
 .btn-back-simple { display: flex; align-items: center; gap: 8px; background: none; border: none; color: #6B7280; font-weight: 700; cursor: pointer; }
@@ -381,7 +446,6 @@ const handlePublish = async () => {
 .sep { color: #E5E7EB; }
 .category-select { border: none; background: #FFF7ED; color: #EA580C; font-weight: 800; padding: 6px 12px; border-radius: 8px; cursor: pointer; outline: none; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; }
 
-/* Meta */
 .recipe-meta-row { display: flex; align-items: center; gap: 24px; margin-bottom: 32px; }
 .meta-box { display: flex; align-items: center; gap: 10px; }
 .meta-box .icon { font-size: 1.4rem; }
@@ -390,14 +454,12 @@ const handlePublish = async () => {
 .meta-inp, .meta-select { border: none; background: #F9FAFB; padding: 4px 8px; border-radius: 6px; font-weight: 700; color: #1F2937; font-size: 1rem; width: 100px; outline: none; }
 .meta-divider { width: 1px; height: 32px; background: #E5E7EB; }
 
-/* Author */
 .author-action-row { display: flex; align-items: center; }
 .author-block { display: flex; align-items: center; gap: 12px; }
 .auth-img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; }
 .auth-text .label { font-size: 0.7rem; color: #6B7280; }
 .auth-text .name { font-weight: 700; color: #111827; }
 
-/* Image Uploader */
 .image-frame-hero { position: relative; height: 520px; border-radius: 32px; overflow: hidden; box-shadow: 20px 30px 60px -10px rgba(0,0,0,0.1); background: #F3F4F6; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
 .image-frame-hero:hover { background: #E5E7EB; }
 .img-hero-cover { width: 100%; height: 100%; object-fit: cover; }
@@ -407,18 +469,15 @@ const handlePublish = async () => {
 .edit-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; opacity: 0; transition: 0.2s; color: white; font-weight: 700; }
 .image-frame-hero:hover .edit-overlay { opacity: 1; }
 
-/* BODY */
 .body-section-premium { width: 100%; background-color: #F8FAFC; padding: 60px 0; flex: 1; padding-bottom: 100px; }
 .body-container-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; display: grid; grid-template-columns: 380px 1fr; gap: 60px; }
 .sticky-wrapper { position: sticky; top: 100px; }
 
-/* Card */
 .premium-card { background: white; border-radius: 24px; border: 1px solid #E2E8F0; box-shadow: 0 10px 30px -5px rgba(0,0,0,0.03); overflow: hidden; }
 .card-header-gradient { background: linear-gradient(135deg, #FFF7ED 0%, #FFFFFF 100%); padding: 25px 30px; border-bottom: 1px solid #FED7AA; }
 .header-content h3 { font-family: 'Playfair Display', serif; font-size: 1.6rem; margin: 0; color: #111827; }
 .header-content .sub-text { font-size: 0.85rem; color: #9A3412; }
 
-/* Ingredients */
 .ingredients-list-editor { padding: 10px 0; }
 .ing-row-edit { display: flex; align-items: center; gap: 12px; padding: 12px 30px; border-bottom: 1px dashed #E5E5E5; transition: 0.2s; }
 .checkbox-visual { width: 22px; height: 22px; border: 2px solid #E2E8F0; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
@@ -429,7 +488,6 @@ const handlePublish = async () => {
 .btn-add-dashed { width: calc(100% - 60px); margin: 10px 30px 30px; padding: 14px; border: 2px dashed #CBD5E1; background: #F8FAFC; color: #64748B; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.2s; }
 .btn-add-dashed:hover { border-color: #EA580C; color: #EA580C; background: #FFF7ED; }
 
-/* Steps */
 .steps-card { padding: 40px; }
 .steps-header-modern { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 2px solid #F1F5F9; padding-bottom: 20px; }
 .steps-header-modern h2 { font-family: 'Playfair Display', serif; font-size: 2.2rem; margin: 0; color: #111827; }
@@ -460,7 +518,6 @@ const handlePublish = async () => {
 .btn-add-step-large { width: 100%; padding: 16px; background: #F1F5F9; color: #64748B; font-weight: 700; border: none; border-radius: 16px; cursor: pointer; transition: 0.2s; font-size: 1rem; }
 .btn-add-step-large:hover { background: #E2E8F0; color: #1E293B; }
 
-/* ACTION FOOTER */
 .action-footer { position: sticky; bottom: 0; background: white; border-top: 1px solid #E2E8F0; padding: 15px 0; z-index: 99; margin-top: auto; box-shadow: 0 -4px 20px rgba(0,0,0,0.05); }
 .footer-container { max-width: 1200px; margin: 0 auto; padding: 0 40px; display: flex; justify-content: space-between; align-items: center; }
 .btn-preview { background: none; border: none; font-weight: 600; color: #64748B; cursor: pointer; }
@@ -469,7 +526,6 @@ const handlePublish = async () => {
 .btn-publish { padding: 10px 30px; border: none; background: #EA580C; border-radius: 30px; font-weight: 700; color: white; cursor: pointer; box-shadow: 0 4px 12px rgba(234, 88, 12, 0.3); }
 .btn-publish:hover { background: #C2410C; transform: translateY(-2px); }
 
-/* Animation List */
 .list-enter-active, .list-leave-active { transition: all 0.3s ease; }
 .list-enter-from, .list-leave-to { opacity: 0; transform: translateX(-20px); }
 
@@ -481,6 +537,113 @@ const handlePublish = async () => {
   .image-frame-hero { height: 350px; }
   .body-container-inner { grid-template-columns: 1fr; gap: 40px; }
   .sticky-wrapper { position: static; }
-  .step-gallery-floating { grid-template-columns: 1fr; }
+}
+
+/* =========================================
+   STYLE MỚI: DÀNH RIÊNG CHO KHỐI VIDEO DỜI XUỐNG
+   ========================================= */
+.video-full-width-wrapper {
+  max-width: 1200px;
+  margin: 0 auto 40px auto;
+  padding: 0 24px;
+}
+
+.interaction-style-card {
+  background: #ffffff;
+  border: 1px solid #E5E7EB;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.interaction-card-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #E5E7EB;
+  background: #ffffff;
+}
+
+.interaction-card-header h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.4rem;
+  color: #111827;
+  margin: 0;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.video-content-body {
+  padding: 24px;
+  background: #ffffff;
+}
+
+.video-placeholder-box {
+  border: 2px dashed #CBD5E1;
+  border-radius: 12px;
+  padding: 50px 20px;
+  text-align: center;
+  cursor: pointer;
+  color: #64748B;
+  transition: 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  background: #F8FAFC;
+}
+
+.video-placeholder-box:hover {
+  border-color: #EA580C;
+  background: #FFF7ED;
+  color: #EA580C;
+}
+
+.video-placeholder-box .icon-camera {
+  font-size: 2rem;
+  opacity: 0.8;
+}
+
+.video-player-wrapper {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+  border: 1px solid #E5E7EB;
+}
+
+.interaction-video-tag {
+  width: 100%;
+  display: block;
+  max-height: 450px;
+  object-fit: contain;
+}
+
+.video-action-overlay {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  z-index: 10;
+}
+
+.btn-remove-media-float {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: 0.2s;
+}
+
+.btn-remove-media-float:hover {
+  background: #DC2626;
 }
 </style>

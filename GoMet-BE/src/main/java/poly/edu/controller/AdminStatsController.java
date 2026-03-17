@@ -19,7 +19,8 @@ public class AdminStatsController {
 
     private final AccountDAO accountDAO;
     private final PostDAO postDAO;
-    private final ReportDAO reportDAO;
+    // 🔥 ĐÃ THAY ĐỔI: Dùng TicketDAO thay cho ReportDAO đã bị xóa
+    private final TicketDAO ticketDAO;
     private final NotificationDAO notificationDAO;
     private final FollowDAO followDAO;
     private final FavoriteDAO favoriteDAO;
@@ -33,12 +34,19 @@ public class AdminStatsController {
     public ResponseEntity<Map<String, Object>> getStats() {
         List<Account> allAccounts = accountDAO.findAll();
         List<Post> allPosts = postDAO.findAll();
+        List<Ticket> allTickets = ticketDAO.findAll(); // Lấy tất cả Ticket
 
         long totalUsers = allAccounts.size();
         long totalPosts = allPosts.size();
         long pendingPosts = allPosts.stream().filter(p -> p.getIsApproved() == 0 && p.getIsActive() == 1).count();
         long approvedPosts = allPosts.stream().filter(p -> p.getIsApproved() == 1 && p.getIsActive() == 1).count();
-        long totalReports = reportDAO.count();
+
+        // 🔥 ĐÃ THAY ĐỔI: Đếm số lượng Report dựa trên TicketType
+        long totalReports = allTickets.stream().filter(t -> "REPORT".equalsIgnoreCase(t.getTicketType())).count();
+        // Em thêm luôn số liệu Bug và Feedback phòng khi FE của sếp cần hiển thị Dashboard
+        long totalBugs = allTickets.stream().filter(t -> "BUG".equalsIgnoreCase(t.getTicketType())).count();
+        long totalFeedbacks = allTickets.stream().filter(t -> "FEEDBACK".equalsIgnoreCase(t.getTicketType())).count();
+
         long totalNotifications = notificationDAO.count();
         long bannedUsers = allAccounts.stream().filter(a -> a.getIsActive() == 0).count();
         long premiumUsers = allAccounts.stream().filter(a -> a.getIsPremium() == 1).count();
@@ -46,7 +54,7 @@ public class AdminStatsController {
 
         LocalDate today = LocalDate.now();
         long newUsersToday = allAccounts.stream()
-                .filter(a -> a.getCreatedAt() != null && a.getCreatedAt().equals(today))
+                .filter(a -> a.getCreatedAt() != null && a.getCreatedAt().toLocalDate().equals(today)) // Fix lỗi so sánh kiểu ngày
                 .count();
         long newPostsToday = allPosts.stream()
                 .filter(p -> p.getCreatedAt() != null && p.getCreatedAt().equals(today))
@@ -63,7 +71,12 @@ public class AdminStatsController {
         stats.put("totalPosts", totalPosts);
         stats.put("pendingPosts", pendingPosts);
         stats.put("approvedPosts", approvedPosts);
+
+        // Trả về số liệu Ticket
         stats.put("totalReports", totalReports);
+        stats.put("totalBugs", totalBugs);             // Dữ liệu mới
+        stats.put("totalFeedbacks", totalFeedbacks);   // Dữ liệu mới
+
         stats.put("totalNotifications", totalNotifications);
         stats.put("bannedUsers", bannedUsers);
         stats.put("premiumUsers", premiumUsers);
@@ -137,9 +150,9 @@ public class AdminStatsController {
         return ResponseEntity.ok(result);
     }
 
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ─────────────────────────────────────────────────────────────────────────────────
     // USER DETAIL STATS
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ─────────────────────────────────────────────────────────────────────────────────
     @GetMapping("/users-detail")
     public ResponseEntity<Map<String, Object>> getUsersDetail() {
         List<Account> allAccounts = accountDAO.findAll();
@@ -205,9 +218,9 @@ public class AdminStatsController {
                 .collect(Collectors.toList());
     }
 
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ─────────────────────────────────────────────────────────────────────────────────
     // POST DETAIL STATS
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ─────────────────────────────────────────────────────────────────────────────────
     @GetMapping("/posts-detail")
     public ResponseEntity<Map<String, Object>> getPostsDetail() {
         List<Post> allPosts = postDAO.findAll().stream()
@@ -228,12 +241,12 @@ public class AdminStatsController {
         // average rating per post
         Map<Integer, Double> avgRatingMap = allRatings.stream()
                 .collect(Collectors.groupingBy(r -> r.getPost().getPostID(),
-                         Collectors.averagingInt(Rating::getRate)));
+                        Collectors.averagingInt(Rating::getRate)));
 
         // top commented
         List<Map<String, Object>> topByComments = allPosts.stream()
                 .sorted((a, b) -> Long.compare(commentCountMap.getOrDefault(b.getPostID(), 0L),
-                                               commentCountMap.getOrDefault(a.getPostID(), 0L)))
+                        commentCountMap.getOrDefault(a.getPostID(), 0L)))
                 .limit(10)
                 .map(p -> buildPostEntry(p, commentCountMap.getOrDefault(p.getPostID(), 0L)))
                 .collect(Collectors.toList());
@@ -241,7 +254,7 @@ public class AdminStatsController {
         // top liked
         List<Map<String, Object>> topByLikes = allPosts.stream()
                 .sorted((a, b) -> Long.compare(likeCountMap.getOrDefault(b.getPostID(), 0L),
-                                               likeCountMap.getOrDefault(a.getPostID(), 0L)))
+                        likeCountMap.getOrDefault(a.getPostID(), 0L)))
                 .limit(10)
                 .map(p -> buildPostEntry(p, likeCountMap.getOrDefault(p.getPostID(), 0L)))
                 .collect(Collectors.toList());
@@ -250,7 +263,7 @@ public class AdminStatsController {
         List<Map<String, Object>> topByRating = allPosts.stream()
                 .filter(p -> avgRatingMap.containsKey(p.getPostID()))
                 .sorted((a, b) -> Double.compare(avgRatingMap.getOrDefault(b.getPostID(), 0.0),
-                                                 avgRatingMap.getOrDefault(a.getPostID(), 0.0)))
+                        avgRatingMap.getOrDefault(a.getPostID(), 0.0)))
                 .limit(10)
                 .map(p -> {
                     Map<String, Object> m = buildPostEntry(p, 0L);
@@ -269,7 +282,7 @@ public class AdminStatsController {
                 .map(e -> {
                     Map<String, Object> m = new LinkedHashMap<>();
                     m.put("level", e.getKey());
-                    m.put("label", "Cáº¥p " + e.getKey());
+                    m.put("label", "Cấp " + e.getKey());
                     m.put("count", e.getValue());
                     return m;
                 })
@@ -295,9 +308,9 @@ public class AdminStatsController {
         return m;
     }
 
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ─────────────────────────────────────────────────────────────────────────────────
     // EVENT DETAIL STATS
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ─────────────────────────────────────────────────────────────────────────────────
     @GetMapping("/events-detail")
     public ResponseEntity<Map<String, Object>> getEventsDetail() {
         List<Event>      allEvents     = eventDAO.findAll();
@@ -313,7 +326,7 @@ public class AdminStatsController {
                         ep -> ep.getEvent().getEventID(),
                         Collectors.collectingAndThen(
                                 Collectors.mapping(ep -> ep.getPost().getAccount().getAccountID(),
-                                                   Collectors.toSet()),
+                                        Collectors.toSet()),
                                 set -> (long) set.size())));
 
         List<Map<String, Object>> topByParticipations = allEvents.stream()
@@ -339,7 +352,7 @@ public class AdminStatsController {
         LocalDateTime now      = LocalDateTime.now();
         long activeEvents  = allEvents.stream()
                 .filter(e -> e.getStartAt() != null && e.getEndAt() != null
-                          && !now.isBefore(e.getStartAt()) && !now.isAfter(e.getEndAt()))
+                        && !now.isBefore(e.getStartAt()) && !now.isAfter(e.getEndAt()))
                 .count();
         long totalEntries  = allEventPosts.size();
 

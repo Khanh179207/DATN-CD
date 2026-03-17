@@ -10,13 +10,17 @@ public class EventDTO {
     private String eventName;
     private LocalDateTime startAt;
     private LocalDateTime endAt;
-    private String bannerImage; // Cho Slider Vue nó húp
+    private String bannerImage;
     private Integer winnerPostID;
-    private Long postCount; // Đổi tên cho khớp logic nộp bài
+    private Long postCount;
     private String status;
     private LocalDateTime voteStartAt;
     private LocalDateTime voteEndAt;
     private String description;
     private String rules;
     private String reward;
+
+    // 🔥 THÊM 2 DÒNG NÀY VÀO LÀ CỨU CẢ THẾ GIỚI
+    private Integer isActive;
+    private Integer isForceEnded;
 }

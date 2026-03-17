@@ -20,10 +20,23 @@ export const useAuthStore = defineStore('auth', () => {
     }
   })
 
-  // Force-logout event fired by api.js interceptor on 401
-  window.addEventListener('auth:force-logout', () => {
+// 🔥 Force-logout event fired by api.js interceptor on 401/403
+  window.addEventListener('auth:force-logout', (event) => {
+    // 1. Dọn dẹp state
     user.value = null
-    router.push('/').catch(() => {})
+    localStorage.removeItem('user') // Đảm bảo clear sạch local storage
+
+    // 2. Phân loại lý do để báo lỗi
+    const isBanned = event.detail?.isBanned
+
+    if (isBanned) {
+      toast.error('🚨 TÀI KHOẢN BỊ KHÓA: Bạn đã bị đăng xuất do vi phạm tiêu chuẩn cộng đồng GOMET!', { timeout: 8000 })
+    } else {
+      toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.')
+    }
+
+    // 3. Đá về trang chủ hoặc trang login
+    router.push('/login').catch(() => {})
   })
 
   // 2. GETTERS
@@ -31,7 +44,7 @@ export const useAuthStore = defineStore('auth', () => {
   const isAdmin = computed(() => user.value?.isAdmin === true || user.value?.role === 'admin')
   const currentUser = computed(() => user.value)
 
-  // 3. ACTIONS
+// 3. ACTIONS
   async function login(email, password) {
     try {
       const data = await authService.login(email, password)
@@ -49,9 +62,10 @@ export const useAuthStore = defineStore('auth', () => {
       }
       localStorage.setItem('user', JSON.stringify(user.value))
       return user.value.role
-    } catch (err) {
-      const msg = err.response?.data?.message || 'Incorrect email or password'
-      throw new Error(msg)
+   } catch (err) {
+      // 🔥 TRẢ NGUYÊN LỖI GỐC CHO GIAO DIỆN XỬ LÝ
+      const rawError = err.response?.data?.message || err.message || 'Incorrect email or password'
+      throw new Error(rawError) 
     }
   }
 

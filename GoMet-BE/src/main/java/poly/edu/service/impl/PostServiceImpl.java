@@ -28,6 +28,7 @@ public class PostServiceImpl implements PostService {
             dto.setPostID(post.getPostID());
             dto.setTitle(post.getTitle());
             dto.setMedia(post.getMedia());
+            dto.setVideo(post.getVideo());
             dto.setCreatedAt(post.getCreatedAt());
             dto.setViews(post.getViews());
             dto.setLikeCount(post.getLikeCount());
