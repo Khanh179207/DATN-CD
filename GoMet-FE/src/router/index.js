@@ -202,12 +202,7 @@ router.beforeEach((to, from, next) => {
   const user = userStr ? JSON.parse(userStr) : null
   const isLoggedIn = !!user?.token
 
-  // NEW: Strict guard — guests may only access the landing root ('/')
-  if (!isLoggedIn && to.path !== '/') {
-    // show toast and redirect to landing
-    toast.error('Vui lòng đăng nhập để xem chi tiết')
-    return next({ path: '/' })
-  }
+  // 🗑️ ĐÃ XÓA ĐOẠN STRICT GUARD CHẶN KHÁCH VÔ DUYÊN Ở ĐÂY
 
   const isPremium = isLoggedIn && (
     String(user?.isPremium) === "true" || 
