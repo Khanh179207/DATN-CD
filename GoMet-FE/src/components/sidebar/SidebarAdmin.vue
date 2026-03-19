@@ -122,6 +122,13 @@
 
         <div class="nav-section anim-stagger" style="--d: 0.4s">
           <label class="section-tag">Hệ thống</label>
+          <router-link to="/admin/appeals" class="nav-link-lux" active-class="active">
+            <div class="icon-orb"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2.5">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2m1 15h-2v-2h2v2m0-4h-2V7h2v6z"></path>
+              </svg></div>
+            <span class="link-text">Khiếu nại ban nhầm</span>
+          </router-link>
           <router-link to="/admin/tickets" class="nav-link-lux warning-vibe" active-class="active">
             <div class="icon-orb"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                 stroke-width="2.5">

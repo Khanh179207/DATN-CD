@@ -379,22 +379,12 @@ CREATE TABLE Comment (
 
 	CREATE TABLE Ticket (
 		TicketID INT IDENTITY(1,1) PRIMARY KEY,
-		AccountID INT NOT NULL,            -- Người gửi ticket
-    
-		-- Phân loại Ticket (Dùng code để quy định)
-		-- VD: 'BUG' (Báo lỗi), 'REPORT' (Báo cáo vi phạm), 'FEEDBACK' (Góp ý)
-		TicketType NVARCHAR(50) NOT NULL,  
-    
-		-- Dành riêng cho loại 'REPORT' (Nếu họ báo cáo một bài viết)
-		TargetPostID INT NULL,             
-    
-		-- Nội dung chính
+		AccountID INT NOT NULL,
+		TicketType NVARCHAR(50) NOT NULL,
+		TargetPostID INT NULL,
 		Title NVARCHAR(255) NOT NULL,
 		Description NVARCHAR(MAX) NOT NULL,
-		Attachment NVARCHAR(500) NULL,     -- Ảnh đính kèm (Lỗi, hoặc bằng chứng vi phạm)
-    
-		-- Trạng thái xử lý (Quy trình Admin)
-		-- VD: 0 = 'Chưa xem', 1 = 'Đang xử lý', 2 = 'Đã giải quyết', 3 = 'Từ chối'
+		Attachment NVARCHAR(500) NULL,
 		Status INT DEFAULT 0,              
     
 		-- Tracking thời gian
@@ -406,6 +396,19 @@ CREATE TABLE Comment (
 		CONSTRAINT FK_Ticket_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
 		CONSTRAINT FK_Ticket_Post FOREIGN KEY (TargetPostID) REFERENCES Post(PostID)
 	);
+	GO
+
+	CREATE TABLE dbo.Appeals (
+  		AppealID        INT IDENTITY(1,1) PRIMARY KEY,
+  		Email           NVARCHAR(254) NOT NULL,
+  		Reason          NVARCHAR(MAX) NOT NULL,
+  		Status          NVARCHAR(50) NOT NULL DEFAULT 'Pending', -- Pending, Review, Resolved, Rejected
+  		CreatedAt       DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+  		UpdatedAt       DATETIME2 NULL,
+  		CreatedByIP     NVARCHAR(45) NULL,
+  		Note            NVARCHAR(MAX) NULL
+	);
+
 	GO
 	-- ==========================================
 	-- 6. TRIGGERS TỰ ĐỘNG CẬP NHẬT
@@ -452,33 +455,14 @@ CREATE TABLE Comment (
 
 	INSERT INTO Category (CategoryName) VALUES (N'Món Việt'), (N'Món Âu'), (N'Món Chay');
 
+	INSERT INTO Post (AccountID, CategoryID, Title, Description, Ingredients, isApproved, isActive) VALUES 
+		(2, 1, N'Phở Bò Nam Định', N'Nấu chuẩn vị gia truyền', N'Xương bò, bánh phở, thịt bò', 1, 1),
+		3, 1, N'Bún Chả Hà Nội', N'Ngon như ngoài hàng', N'Thịt nạc vai, bún, đu đủ', 1, 1);
+
 	-- Dữ liệu Event đầy đủ mô tả, thời gian vote
 	INSERT INTO Event (EventName, BannerImage, Description, Rules, Reward, StartAt, EndAt, VoteStartAt, VoteEndAt) VALUES 
 	(N'Siêu Đầu Bếp Tháng 3', 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?q=80', N'Thi nấu ăn dành riêng cho tháng 3', N'- Nộp tối đa 3 bài<br>- Không sao chép', N'Huy hiệu Siêu Đầu Bếp', '2026-03-01 00:00:00', '2026-03-20 23:59:59', '2026-03-15 00:00:00', '2026-03-25 23:59:59');
 
-	C
+	
 	INSERT INTO EventPosts (EventID, PostID) VALUES (1, 1), (1, 2);
 	GO
-
-	SELECT * FROM Post;
-
-	SELECT * FROM Cookingsteps;
-
-	SELECT * FROM event;
-
-	SELECT * FROM Votes;
-
-	SELECT * FROM Likes;
-
-	SELECT * FROM account;
-
-	SELECT * FROM Subscription;
-
-	SELECT * FROM PaymentTransaction;
-
-	SELECT * FROM Ticket;
-
-	SELECT * FROM Comment;
-
-	SELECT * FROM category;
-
