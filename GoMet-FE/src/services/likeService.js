@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 // Giả sử sếp đã cấu hình axios instance, nếu chưa thì import axios thường và thay base url
-const API_URL = 'http://localhost:8080/api/likes'
+const API_URL = 'http://localhost:8081/api/likes'
 
 export const togglePostLike = async (accountId, postId) => {
   try {

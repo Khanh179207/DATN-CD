@@ -10,13 +10,15 @@
 
     <section class="hero-section-full-bleed fade-in-up">
       <div class="hero-container-inner">
-        
+
         <div class="hero-info-col">
           <div class="top-nav-bar">
             <div class="nav-left">
               <button @click="$router.back()" class="btn-back-simple">
                 <div class="icon-circle">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M19 12H5M12 19l-7-7 7-7" />
+                  </svg>
                 </div>
                 <span>Hủy bỏ</span>
               </button>
@@ -32,21 +34,11 @@
             </div>
           </div>
 
-          <textarea 
-            v-model="post.title" 
-            class="recipe-title-input" 
-            placeholder="Tên món ăn của bạn?..." 
-            rows="1"
-            @input="autoResize"
-          ></textarea>
-          
-          <textarea 
-            v-model="post.description" 
-            class="recipe-desc-input" 
-            placeholder="Kể một chút về câu chuyện của món ăn này..." 
-            rows="2"
-            @input="autoResize"
-          ></textarea>
+          <textarea v-model="post.title" class="recipe-title-input" placeholder="Tên món ăn của bạn?..." rows="1"
+            @input="autoResize"></textarea>
+
+          <textarea v-model="post.description" class="recipe-desc-input"
+            placeholder="Kể một chút về câu chuyện của món ăn này..." rows="2" @input="autoResize"></textarea>
 
           <div class="recipe-meta-row">
             <div class="meta-box">
@@ -72,15 +64,10 @@
 
           <div class="author-action-row">
             <div class="author-block">
-              <img 
-                :src="userAvatar" 
-                class="auth-img"
-                alt="Chef Avatar"
-                @error="handleAvatarError"
-              >
+              <img :src="userAvatar" class="auth-img" alt="Chef Avatar" @error="handleAvatarError">
               <div class="auth-text">
                 <span class="label">Người thực hiện</span>
-                <span class="name">{{ currentUser.fullName || currentUser.username || 'Đầu bếp GOMET' }}</span> 
+                <span class="name">{{ currentUser.fullName || currentUser.username || 'Đầu bếp GOMET' }}</span>
               </div>
             </div>
           </div>
@@ -116,7 +103,10 @@
               <video :src="post.video" controls class="interaction-video-tag"></video>
               <div class="video-action-overlay">
                 <button class="btn-remove-media-float" @click.stop="removeVideo">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
                   Gỡ bỏ Video
                 </button>
               </div>
@@ -138,9 +128,13 @@
               </div>
               <div class="ingredients-list-editor">
                 <div v-for="(ing, index) in post.ingredients" :key="index" class="ing-row-edit">
-                  <div class="checkbox-visual"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-                  <input v-model="ing.name" class="ing-input-text" placeholder="VD: 500g thịt bò thăn..." @keyup.enter="addIngredient">
-                  <button class="btn-remove" @click="removeIngredient(index)" v-if="post.ingredients.length > 1">×</button>
+                  <div class="checkbox-visual"><svg viewBox="0 0 24 24">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg></div>
+                  <input v-model="ing.name" class="ing-input-text" placeholder="VD: 500g thịt bò thăn..."
+                    @keyup.enter="addIngredient">
+                  <button class="btn-remove" @click="removeIngredient(index)"
+                    v-if="post.ingredients.length > 1">×</button>
                 </div>
               </div>
               <button class="btn-add-dashed" @click="addIngredient">+ Thêm dòng nguyên liệu</button>
@@ -164,15 +158,11 @@
                   <div class="step-content-col">
                     <div class="step-top-row">
                       <h4 class="step-heading">BƯỚC {{ index + 1 }}</h4>
-                      <button class="btn-del-step" @click="removeStep(index)" v-if="post.steps.length > 1">Xóa bước</button>
+                      <button class="btn-del-step" @click="removeStep(index)" v-if="post.steps.length > 1">Xóa
+                        bước</button>
                     </div>
-                    <textarea 
-                      v-model="step.desc" 
-                      class="step-desc-input" 
-                      placeholder="Chi tiết cách thực hiện bước này..."
-                      rows="3"
-                      @input="autoResize"
-                    ></textarea>
+                    <textarea v-model="step.desc" class="step-desc-input"
+                      placeholder="Chi tiết cách thực hiện bước này..." rows="3" @input="autoResize"></textarea>
                     <div class="step-media-upload">
                       <div v-if="step.image" class="media-preview" @click="triggerStepUpload(index)">
                         <img :src="step.image">
@@ -181,7 +171,8 @@
                       <div v-else class="upload-trigger-small" @click="triggerStepUpload(index)">
                         <span class="icon">📷</span> Thêm ảnh minh họa cho bước {{ index + 1 }}
                       </div>
-                      <input type="file" :ref="el => stepInputRefs[index] = el" class="hidden-input" accept="image/*" @change="handleStepUpload($event, index)">
+                      <input type="file" :ref="el => stepInputRefs[index] = el" class="hidden-input" accept="image/*"
+                        @change="handleStepUpload($event, index)">
                     </div>
                   </div>
                 </div>
@@ -201,7 +192,7 @@
         <div class="right">
           <button class="btn-draft">Lưu bản nháp</button>
           <button class="btn-publish" :disabled="publishing" @click="handlePublish">
-              {{ publishing ? 'Đang xuất bản...' : 'Xuất bản bài viết' }}
+            {{ publishing ? 'Đang xuất bản...' : 'Xuất bản bài viết' }}
           </button>
         </div>
       </div>
@@ -231,9 +222,9 @@ const categories = ref([])
 const publishing = ref(false)
 const publishStatus = ref('')
 
-const coverImageFile = ref(null) 
-const videoFile = ref(null) 
-const stepImageFiles = ref({}) 
+const coverImageFile = ref(null)
+const videoFile = ref(null)
+const stepImageFiles = ref({})
 
 // --- XỬ LÝ CURRENT USER TRÁNH UNDEFINED ---
 const currentUser = computed(() => {
@@ -258,7 +249,7 @@ const handleAvatarError = (e) => {
 const post = ref({
   title: '',
   description: '',
-  categoryID: null, 
+  categoryID: null,
   image: null,
   video: null,
   cookingTime: '',
@@ -283,7 +274,7 @@ onBeforeUnmount(() => cleanupUrls())
 onMounted(async () => {
   try {
     const res = await getCategories()
-    categories.value = res 
+    categories.value = res
   } catch (e) {
     toast.error('Không thể lấy danh mục từ hệ thống!')
   }
@@ -295,7 +286,7 @@ const handleImageUpload = (e) => {
   const file = e.target.files[0]
   if (!file) return
   coverImageFile.value = file
-  post.value.image = createSafeUrl(file) 
+  post.value.image = createSafeUrl(file)
 }
 
 const triggerVideoUpload = () => videoInput.value.click()
@@ -313,7 +304,7 @@ const handleStepUpload = (e, idx) => {
   const file = e.target.files[0]
   if (!file) return
   stepImageFiles.value[idx] = file
-  post.value.steps[idx].image = createSafeUrl(file) 
+  post.value.steps[idx].image = createSafeUrl(file)
 }
 
 const autoResize = (event) => {
@@ -323,10 +314,10 @@ const autoResize = (event) => {
 }
 
 const addIngredient = () => post.value.ingredients.push({ name: '' })
-const removeIngredient = (idx) => { if(post.value.ingredients.length > 1) post.value.ingredients.splice(idx, 1) }
+const removeIngredient = (idx) => { if (post.value.ingredients.length > 1) post.value.ingredients.splice(idx, 1) }
 
 const addStep = () => post.value.steps.push({ id: Date.now(), desc: '', image: null })
-const removeStep = (idx) => { if(post.value.steps.length > 1) post.value.steps.splice(idx, 1) }
+const removeStep = (idx) => { if (post.value.steps.length > 1) post.value.steps.splice(idx, 1) }
 
 const levelToInt = (lv) => ({ 'Easy': 1, 'Medium': 2, 'Hard': 3 }[lv] ?? 2)
 
@@ -355,35 +346,35 @@ const handlePublish = async () => {
     stepIndices.forEach(idx => {
       uploadTasks.push(uploadMedia(stepImageFiles.value[idx], 'steps'))
     })
-    
+
     publishStatus.value = '☁️ Đang đẩy dữ liệu lên Cloudinary...'
     const results = await Promise.all(uploadTasks)
-    
+
     const coverMediaUrl = results[0] || ''
     const videoMediaUrl = results[1] || ''
     const stepUrls = results.slice(2)
 
     publishStatus.value = '💾 Đang lưu bài viết vào Database...'
     const ingredientsStr = post.value.ingredients.map(i => i.name).filter(Boolean).join(', ')
-    
-// 1. Chốt cứng số 1 nếu sếp không chọn danh mục (Không gửi null nữa)
+
+    // 1. Chốt cứng số 1 nếu sếp không chọn danh mục (Không gửi null nữa)
     const finalCatID = (post.value.categoryID && !isNaN(post.value.categoryID)) ? parseInt(post.value.categoryID) : 1;
-    
+
     // 2. Đảm bảo ID người dùng là số chuẩn
     const finalAccID = parseInt(accID);
 
     // 3. Đóng gói Payload "Bao vây" 360 độ
     const payload = {
-      accountID: finalAccID, 
+      accountID: finalAccID,
       categoryID: finalCatID,
       title: post.value.title.trim(),
       description: post.value.description || '',
       ingredients: ingredientsStr,
       media: coverMediaUrl,
-      video: videoMediaUrl, 
+      video: videoMediaUrl,
       level: levelToInt(post.value.level),
       cookingTime: parseInt(post.value.cookingTime) || 30,
-      
+
       // 🔥 MỞ KHÓA STEPS: Khớp 100% với StepRequestDTO (desc, image) của sếp
       steps: post.value.steps.map((s, i) => {
         const fileIdx = stepIndices.indexOf(i.toString());
@@ -395,16 +386,16 @@ const handlePublish = async () => {
     };
 
     console.log("Payload gửi đi (Đã có Steps):", payload);
-    
+
     const result = await createPost(payload)
-    const newPostId = result?.postID || result?.id || result?.data?.postID 
+    const newPostId = result?.postID || result?.id || result?.data?.postID
 
     if (eventId && newPostId) {
-        publishStatus.value = '🏆 Đang nộp bài vào sự kiện...'
-        await api.post(`/api/events/submit`, { EventID: parseInt(eventId), PostID: newPostId })
-        toast.success('🎉 Đã xuất bản và nộp bài dự thi thành công!')
+      publishStatus.value = '🏆 Đang nộp bài vào sự kiện...'
+      await api.post(`/api/events/submit`, { EventID: parseInt(eventId), PostID: newPostId })
+      toast.success('🎉 Đã xuất bản và nộp bài dự thi thành công!')
     } else {
-        toast.success('✨ Xuất bản bài viết thành công!')
+      toast.success('✨ Đã gửi bài viết, vui lòng đợi Admin duyệt!')
     }
 
     cleanupUrls()
@@ -412,7 +403,7 @@ const handlePublish = async () => {
 
   } catch (err) {
     console.error("Lỗi xuất bản chi tiết:", err.response?.data || err)
-    
+
     // Xử lý lỗi 400 thông minh
     const errorMsg = err.response?.data?.message || err.response?.data?.error || 'Có lỗi khi lưu! Hãy kiểm tra dữ liệu.';
     toast.error(errorMsg);

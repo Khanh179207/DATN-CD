@@ -22,7 +22,8 @@ import java.util.stream.Collectors;
 public class TicketServiceImpl implements TicketService {
 
     private final TicketDAO ticketDAO;
-    // 🔥 Giữ lại cả AccountDAO, PostDAO (của sếp) và SimpMessagingTemplate (của develop)
+    // 🔥 Giữ lại cả AccountDAO, PostDAO (của sếp) và SimpMessagingTemplate (của
+    // develop)
     private final AccountDAO accountDAO;
     private final PostDAO postDAO;
     private final SimpMessagingTemplate messagingTemplate;
@@ -47,7 +48,8 @@ public class TicketServiceImpl implements TicketService {
                     .ifPresent(ticket::setAccount);
         }
 
-        // 🔥 Logic của sếp: Tìm và gán bài viết bị báo cáo (Sử dụng targetPostId từ DTO)
+        // 🔥 Logic của sếp: Tìm và gán bài viết bị báo cáo (Sử dụng targetPostId từ
+        // DTO)
         if (dto.getTargetPostId() != null) {
             postDAO.findById(dto.getTargetPostId())
                     .ifPresent(ticket::setTargetPost);
@@ -86,7 +88,8 @@ public class TicketServiceImpl implements TicketService {
         ticket.setStatus(newStatus);
 
         // 🔥 1. NẾU LÀ TIẾP NHẬN (Status = 1) -> Lưu giờ bắt đầu xử lý
-        // Dùng điều kiện == null để lỡ sếp có bấm lại nút này nó cũng không bị ghi đè giờ cũ (Giữ comment của develop)
+        // Dùng điều kiện == null để lỡ sếp có bấm lại nút này nó cũng không bị ghi đè
+        // giờ cũ (Giữ comment của develop)
         if (newStatus == 1 && ticket.getProcessedAt() == null) {
             ticket.setProcessedAt(LocalDateTime.now());
         }
@@ -158,14 +161,15 @@ public class TicketServiceImpl implements TicketService {
     }
 
     /**
-     * Send admin alert for new ticket
+     * Send admin alert for new ticket using NotificationService
      */
     private void sendAdminAlert(Ticket ticket) {
         try {
-            AdminTicketDTO dto = convertToAdminDTO(ticket);
-            messagingTemplate.convertAndSend("/topic/admin-alerts", dto);
+            String userUsername = ticket.getAccount() != null ? ticket.getAccount().getUsername() : "Unknown User";
+            notificationService.notifyAdminTicket(userUsername, ticket.getTicketID());
         } catch (Exception e) {
-            System.err.println("Failed to send admin alert: " + e.getMessage());
+            System.err.println("Failed to notify admin about ticket: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

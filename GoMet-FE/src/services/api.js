@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: 'http://localhost:8080',
+  baseURL: 'http://localhost:8081',
   timeout: 10000,
   headers: { 'Content-Type': 'application/json' }
 })
@@ -24,12 +24,12 @@ api.interceptors.response.use(
       const user = JSON.parse(localStorage.getItem('user') || 'null')
       if (user?.token) {
         localStorage.removeItem('user')
-        
+
         // 🔥 SỬA DÒNG NÀY: Check đúng cái KEY mà Backend gửi (ACCOUNT_BANNED)
         const isBanned = err.response?.data?.message === 'ACCOUNT_BANNED' || err.response?.status === 403;
 
         window.dispatchEvent(new CustomEvent('auth:force-logout', {
-            detail: { isBanned: isBanned }
+          detail: { isBanned: isBanned }
         }))
       }
     }

@@ -31,6 +31,8 @@
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
           </svg>
+          <!-- Unread notification badge -->
+          <div v-if="unreadCount > 0" class="notification-badge">{{ unreadCount }}</div>
           <div class="radar-dot"></div>
           <div class="radar-waves"></div>
         </button>
@@ -39,33 +41,31 @@
           <div v-if="showNoti" class="panel-zenith noti-panel">
             <div class="z-head">
               <span class="z-title">Thông báo hệ thống</span>
-              <button class="z-mark-read">Đã đọc hết</button>
+              <button class="z-mark-read" @click="markAllAsRead" :disabled="unreadCount === 0">
+                Đã đọc hết
+              </button>
             </div>
-            <div class="z-body custom-scroll">
-
-              <div class="z-card unread">
-                <div class="card-icon alert">!</div>
+            <div class="z-body custom-scroll" v-if="notifications.length > 0">
+              <!-- Real notifications from backend -->
+              <div v-for="notification in notifications" :key="notification.notificationID" class="z-card"
+                :class="{ unread: notification.isRead === 0 }" @click="handleNotificationClick(notification)">
+                <div class="card-icon" :class="notification.type">
+                  {{ notification.type === 'alert' ? '!' : notification.type === 'post' ? '📝' : '🔔' }}
+                </div>
                 <div class="card-desc">
                   <div class="title-row">
-                    <p>Cảnh báo bảo mật</p>
-                    <span class="badge-new">MỚI</span>
+                    <p>{{ notification.title }}</p>
+                    <span v-if="notification.isRead === 0" class="badge-new">MỚI</span>
                   </div>
-                  <span class="sub-txt">Phát hiện đăng nhập từ IP lạ (Hà Nội)</span>
-                  <span class="time-txt">Vừa xong</span>
+                  <span class="sub-txt">{{ notification.content }}</span>
+                  <span class="time-txt">{{ timeAgo(notification.createdAt) }}</span>
                 </div>
               </div>
-
-              <div class="z-card">
-                <div class="card-icon success">✓</div>
-                <div class="card-desc">
-                  <div class="title-row">
-                    <p>Cập nhật hệ thống</p>
-                  </div>
-                  <span class="sub-txt">Phiên bản Gomet v2.5 đã khởi chạy</span>
-                  <span class="time-txt">2 giờ trước</span>
-                </div>
-              </div>
-
+            </div>
+            <div v-else class="z-body custom-scroll empty-state">
+              <p style="text-align: center; color: #999; padding: 40px 20px;">
+                Không có thông báo nào
+              </p>
             </div>
             <div class="z-foot">
               <button @click="$router.push('/admin/notifications')">Xem tất cả thông báo</button>
@@ -139,12 +139,17 @@
 
     </div>
   </header>
+
+  <!-- Audio element for notification sound -->
+  <audio id="adminNotificationSound" src="/sounds/notification.mp3" preload="auto"></audio>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import webSocketService from '@/services/webSocketService'
+import { getNotifications, markNotificationRead, markAllNotificationsRead } from '@/services/notificationService'
 
 const route = useRoute()
 const router = useRouter()
@@ -153,121 +158,255 @@ const auth = useAuthStore()
 const showNoti = ref(false)
 const showUser = ref(false)
 const isScrolled = ref(false)
-const alerts = ref([])
-const alertInterval = ref(null)
+const notifications = ref([])
 
-// Fetch alerts from backend APIs
-const fetchAlerts = async () => {
+// Computed: unread notification count
+const unreadCount = computed(() =>
+  notifications.value.filter(n => n.isRead === 0).length
+)
+
+/**
+ * Update page title to show unread notification count
+ */
+const updatePageTitle = () => {
+  if (unreadCount.value > 0) {
+    document.title = `(${unreadCount.value}) Admin - GoMet`
+  } else {
+    document.title = 'Admin - GoMet'
+  }
+}
+
+/**
+ * Determine the correct link for a notification based on type
+ */
+const getLinkForNotificationType = (notification) => {
+  const type = notification.type?.toUpperCase() || ''
+
+  if (type === 'TICKET') return '/admin/tickets'
+  if (type === 'POST_PENDING_APPROVAL') return '/admin/posts'
+  if (type === 'FEEDBACK') return '/admin/feedback'
+  if (type === 'REPORT') return '/admin/reports'
+
+  // Default to the link from notification or admin page
+  return notification.link || '/admin'
+}
+
+/**
+ * Load notifications from API
+ */
+const loadNotifications = async () => {
+  if (!auth.currentUser?.accountID) return
+
   try {
-    const [tickets, posts] = await Promise.all([
-      getOpenTickets(),
-      getPendingPosts()
-    ])
-
-    // Merge and transform alerts
-    const ticketAlerts = tickets.map(ticket => ({
-      id: `ticket-${ticket.ticketID}`,
-      type: 'TICKET',
-      title: ticket.title,
-      message: `New support ticket: "${ticket.title}" from ${ticket.username}`,
-      createdAt: ticket.createdAt,
-      link: '/admin/tickets'
+    const data = await getNotifications(auth.currentUser.accountID)
+    notifications.value = data.map(n => ({
+      notificationID: n.notificationID,
+      title: n.title,
+      content: n.content,
+      type: n.type || 'admin',
+      isRead: n.isRead === 1 ? 1 : 0,
+      createdAt: n.createdAt,
+      link: getLinkForNotificationType(n)
     }))
-
-    const postAlerts = posts.map(post => ({
-      id: `post-${post.postID}`,
-      type: 'POST_PENDING',
-      title: post.title,
-      message: `New post waiting for approval: "${post.title}" by ${post.username}`,
-      createdAt: post.createdAt,
-      link: '/admin/posts/pending'
-    }))
-
-    alerts.value = [...ticketAlerts, ...postAlerts]
+    updatePageTitle()
+    console.log('✅ Loaded admin notifications:', notifications.value)
   } catch (error) {
-    console.error('Failed to fetch alerts:', error)
+    console.error('❌ Failed to load notifications:', error)
   }
 }
 
-// Start periodic alert fetching
-const startAlertPolling = () => {
-  // Fetch immediately
-  fetchAlerts()
-
-  // Set up polling every 30 seconds
-  alertInterval.value = setInterval(fetchAlerts, 30000)
-}
-
-// Stop periodic alert fetching
-const stopAlertPolling = () => {
-  if (alertInterval.value) {
-    clearInterval(alertInterval.value)
-    alertInterval.value = null
-  }
-}
-
-// Handle real-time alert updates via WebSocket
+/**
+ * Handle real-time admin alert updates (from WebSocket broadcast)
+ */
 const handleRealtimeAlert = (event) => {
   const alertData = event.detail
 
-  // Transform backend alert to frontend format
-  const newAlert = {
-    id: alertData.id,
-    type: alertData.type,
-    title: alertData.title,
-    message: alertData.message,
-    createdAt: alertData.createdAt,
-    link: alertData.link
+  // Transform backend alert to admin notification format
+  // IMPORTANT: Use notificationID (pascal case) from backend DTO
+  const newNotification = {
+    notificationID: alertData.notificationID,
+    title: alertData.title || 'System Alert',
+    content: alertData.content || alertData.message || '',
+    type: alertData.type || 'alert',
+    isRead: 0, // New notifications are always unread
+    createdAt: alertData.createdAt || new Date().toISOString(),
+    link: getLinkForNotificationType(alertData)
   }
 
-  // Add new alert to the beginning
-  alerts.value.unshift(newAlert)
-
-  // Play notification sound
-  playNotificationSound()
+  // Only add if we have a valid notification ID from backend
+  if (newNotification.notificationID) {
+    // Check if notification already exists (avoid duplicates)
+    const exists = notifications.value.some(n => n.notificationID === newNotification.notificationID)
+    if (!exists) {
+      notifications.value.unshift(newNotification)
+      playNotificationSound()
+      updatePageTitle()
+      console.log('🚨 Real-time admin alert received:', newNotification)
+    }
+  } else {
+    console.warn('⚠️ Received admin alert without notificationID:', alertData)
+  }
 }
 
-// Play notification sound
+/**
+ * Handle real-time admin notifications (user-specific)
+ */
+const handleRealtimeAdminNotification = (event) => {
+  const notificationData = event.detail
+
+  // Transform notification to admin notification format
+  // IMPORTANT: Use notificationID (pascal case) from backend DTO
+  const newNotification = {
+    notificationID: notificationData.notificationID,
+    title: notificationData.title || 'Notification',
+    content: notificationData.content || '',
+    type: notificationData.type || 'notification',
+    isRead: 0, // New notifications are always unread
+    createdAt: notificationData.createdAt || new Date().toISOString(),
+    link: getLinkForNotificationType(notificationData)
+  }
+
+  // Only add if we have a valid notification ID from backend
+  if (newNotification.notificationID) {
+    // Check if notification already exists (avoid duplicates from broadcast)
+    const exists = notifications.value.some(n => n.notificationID === newNotification.notificationID)
+    if (!exists) {
+      notifications.value.unshift(newNotification)
+      playNotificationSound()
+      updatePageTitle()
+      console.log('📬 Real-time admin notification received:', newNotification)
+    }
+  } else {
+    console.warn('⚠️ Received admin notification without notificationID:', notificationData)
+  }
+}
+
+/**
+ * Start real-time alert system (WebSocket)
+ */
+const startRealtimeSystem = () => {
+  // Connect to WebSocket for real-time notifications
+  webSocketService.connect()
+
+  // Listen for broadcast admin alerts
+  window.addEventListener('admin-alert', handleRealtimeAlert)
+
+  // Listen for user-specific admin notifications
+  window.addEventListener('admin-notification', handleRealtimeAdminNotification)
+
+  console.log('🔌 Real-time admin notification system started')
+}
+
+/**
+ * Stop real-time alert system
+ */
+const stopRealtimeSystem = () => {
+  window.removeEventListener('admin-alert', handleRealtimeAlert)
+  window.removeEventListener('admin-notification', handleRealtimeAdminNotification)
+  console.log('🔌 Real-time admin notification system stopped')
+}
+
+/**
+ * Mark a single notification as read
+ */
+const markAsRead = async (notificationID) => {
+  try {
+    await markNotificationRead(notificationID)
+
+    // Update UI immediately
+    const notification = notifications.value.find(n => n.notificationID === notificationID)
+    if (notification) {
+      notification.isRead = 1
+    }
+
+    updatePageTitle()
+    console.log('✅ Marked notification as read:', notificationID)
+  } catch (error) {
+    console.error('❌ Failed to mark notification as read:', error)
+  }
+}
+
+/**
+ * Mark all notifications as read
+ */
+const markAllAsRead = async () => {
+  if (!auth.currentUser?.accountID) return
+
+  try {
+    await markAllNotificationsRead(auth.currentUser.accountID)
+
+    // Update all notifications in UI
+    notifications.value.forEach(n => {
+      n.isRead = 1
+    })
+
+    updatePageTitle()
+    console.log('✅ Marked all notifications as read')
+  } catch (error) {
+    console.error('❌ Failed to mark all notifications as read:', error)
+  }
+}
+
+/**
+ * Handle notification click
+ */
+const handleNotificationClick = async (notification) => {
+  // Mark as read if not already
+  if (notification.isRead === 0) {
+    await markAsRead(notification.notificationID)
+  }
+
+  // Navigate to link if available
+  if (notification.link) {
+    router.push(notification.link)
+  }
+
+  // Close dropdown
+  showNoti.value = false
+}
+
+/**
+ * Play notification sound
+ */
 const playNotificationSound = () => {
-  const sound = document.getElementById("adminNotificationSound");
+  const sound = document.getElementById("adminNotificationSound")
   if (sound) {
-    sound.currentTime = 0;
-    sound.play().catch(err => console.log('Admin sound play failed:', err));
+    sound.currentTime = 0
+    sound.play().catch(err => console.log('Admin sound play failed:', err))
   }
 }
 
-// Format time ago
+/**
+ * Format time ago (relative time display)
+ */
 const timeAgo = (dateString) => {
   const now = new Date()
   const date = new Date(dateString)
   const diffInSeconds = Math.floor((now - date) / 1000)
 
-  if (diffInSeconds < 60) return 'Just now'
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`
-  return `${Math.floor(diffInSeconds / 86400)} days ago`
-}
-
-// Clear all alerts
-const clearAllAlerts = () => {
-  alerts.value = []
-}
-
-// Handle alert click navigation
-const handleAlertClick = (alert) => {
-  if (alert.link) {
-    router.push(alert.link)
-  }
-  showNoti.value = false
+  if (diffInSeconds < 60) return 'Vừa xong'
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m trước`
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h trước`
+  return `${Math.floor(diffInSeconds / 86400)}d trước`
 }
 
 // --- 🏗️ LIFECYCLE ---
-onMounted(() => {
+onMounted(async () => {
   window.addEventListener('scroll', handleScroll)
+
+  // Load notifications from API first
+  await loadNotifications()
+
+  // Start real-time system
+  startRealtimeSystem()
+
+  // Update page title with unread badge
+  updatePageTitle()
 })
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
+  stopRealtimeSystem()
 })
 
 const handleScroll = () => { isScrolled.value = window.scrollY > 15 }
@@ -447,6 +586,28 @@ const vClickOutside = {
   animation: radarPulse 2s infinite;
 }
 
+/* Notification badge on bell icon */
+.notification-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: linear-gradient(135deg, #ea580c, #fb923c);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 50%;
+  min-width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--z-bg-scrolled);
+  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.3);
+  z-index: 3;
+  animation: badgePulse 2s infinite;
+}
+
 /* Identity Capsule */
 .capsule-trigger {
   display: flex;
@@ -574,8 +735,13 @@ const vClickOutside = {
   transition: 0.2s;
 }
 
-.z-mark-read:hover {
+.z-mark-read:hover:not(:disabled) {
   color: #c2410c;
+}
+
+.z-mark-read:disabled {
+  color: #ccc;
+  cursor: not-allowed;
 }
 
 .z-body {
@@ -594,10 +760,18 @@ const vClickOutside = {
 
 .z-card:hover {
   background: var(--z-item-hover);
+  transform: translateX(4px);
 }
 
 .z-card.unread {
   background: rgba(234, 88, 12, 0.05);
+}
+
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
 }
 
 .card-icon {
@@ -608,13 +782,20 @@ const vClickOutside = {
   align-items: center;
   justify-content: center;
   font-weight: 900;
-  font-size: 16px;
+  font-size: 18px;
   flex-shrink: 0;
+  background: rgba(234, 88, 12, 0.1);
+  color: #ea580c;
 }
 
 .card-icon.alert {
   background: rgba(239, 68, 68, 0.1);
   color: #ef4444;
+}
+
+.card-icon.post {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
 }
 
 .card-icon.success {
@@ -845,6 +1026,23 @@ const vClickOutside = {
   100% {
     transform: scale(3.5);
     opacity: 0;
+  }
+}
+
+@keyframes badgePulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 2px 8px rgba(234, 88, 12, 0.3);
+  }
+
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 2px 12px rgba(234, 88, 12, 0.5);
+  }
+
+  100% {
+    transform: scale(1);
+    box-shadow: 0 2px 8px rgba(234, 88, 12, 0.3);
   }
 }
 

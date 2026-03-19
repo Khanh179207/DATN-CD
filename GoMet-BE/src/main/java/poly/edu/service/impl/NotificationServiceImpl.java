@@ -232,20 +232,21 @@ public class NotificationServiceImpl implements NotificationService {
 
     /**
      * Send a real-time notification to a specific user via WebSocket
+     * Uses topic-based delivery to avoid principal mismatch issues
      * 
      * @param accountId       The account ID of the recipient
      * @param notificationDTO The notification data to send
      */
     private void sendRealtimeNotification(Integer accountId, NotificationDTO notificationDTO) {
         try {
-            // Send to the specific user using their account ID as the user identifier
-            messagingTemplate.convertAndSendToUser(
-                    accountId.toString(),
-                    "/queue/notifications",
-                    notificationDTO);
+            // Send to user-specific topic based on account ID
+            String destination = "/topic/notifications/" + accountId;
+            messagingTemplate.convertAndSend(destination, notificationDTO);
+            System.out.println("Sent notification to " + destination);
         } catch (Exception e) {
             // Log the error but don't fail the notification creation
             System.err.println("Failed to send real-time notification: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -256,13 +257,24 @@ public class NotificationServiceImpl implements NotificationService {
      */
     private void sendAdminAlert(Notification notification) {
         try {
-            // Send to the admin alerts topic
+            NotificationDTO dto = convertToDTO(notification);
+
+            // Send to broadcast admin alerts topic (all admins receive)
             messagingTemplate.convertAndSend(
                     "/topic/admin-alerts",
-                    convertToDTO(notification));
+                    dto);
+
+            // Also send user-specific admin notification
+            Integer adminAccountId = notification.getAccount().getAccountID();
+            messagingTemplate.convertAndSend(
+                    "/topic/admin-notifications/" + adminAccountId,
+                    dto);
+
+            System.out.println("Sent admin alert to broadcast and user " + adminAccountId);
         } catch (Exception e) {
             // Log the error but don't fail the notification creation
             System.err.println("Failed to send admin alert: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -274,7 +286,7 @@ public class NotificationServiceImpl implements NotificationService {
      */
     private NotificationDTO convertToDTO(Notification notification) {
         return NotificationDTO.builder()
-                .notificationId(notification.getNotificationID())
+                .notificationID(notification.getNotificationID())
                 .title(notification.getTitle())
                 .content(notification.getContent())
                 .type(notification.getType())

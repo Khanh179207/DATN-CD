@@ -20,44 +20,71 @@ class WebSocketService {
             return;
         }
 
-        if (this.connected) {
+        if (this.connected && this.stompClient) {
             console.log('WebSocket already connected');
             return;
         }
 
-        // Create SockJS connection
-        const socket = new SockJS('http://localhost:8080/ws');
-        this.stompClient = Stomp.over(socket);
+        try {
+            // Create SockJS connection
+            const socket = new SockJS('http://localhost:8081/ws');
+            this.stompClient = Stomp.over(socket);
 
-        // Disable debug logs in production
-        this.stompClient.debug = () => { };
+            // Disable debug logs in production
+            this.stompClient.debug = () => { };
 
-        this.stompClient.connect(
-            {}, // headers
-            (frame) => {
-                console.log('WebSocket connected:', frame);
-                this.connected = true;
-                this.setupSubscriptions();
-            },
-            (error) => {
-                console.error('WebSocket connection error:', error);
-                this.connected = false;
-                // Retry connection after 5 seconds
-                setTimeout(() => this.connect(), 5000);
-            }
-        );
+            this.stompClient.connect(
+                {}, // headers
+                (frame) => {
+                    console.log('✅ WebSocket connected successfully');
+                    this.connected = true;
+                    // Setup subscriptions after a brief delay to ensure full connection
+                    this.setupSubscriptions();
+                },
+                (error) => {
+                    console.error('❌ WebSocket connection error:', error);
+                    this.connected = false;
+
+                    // Retry connection after 5 seconds
+                    console.log('⏳ Retrying connection in 5 seconds...');
+                    setTimeout(() => {
+                        console.log('🔄 Attempting to reconnect...');
+                        this.connect();
+                    }, 5000);
+                }
+            );
+        } catch (error) {
+            console.error('❌ Error creating WebSocket connection:', error);
+            this.connected = false;
+
+            // Retry after 5 seconds
+            setTimeout(() => this.connect(), 5000);
+        }
     }
 
     /**
      * Disconnect from WebSocket server
      */
     disconnect() {
-        if (this.stompClient && this.connected) {
-            this.stompClient.disconnect(() => {
-                console.log('WebSocket disconnected');
+        try {
+            if (this.stompClient && this.connected) {
+                this.stompClient.disconnect(() => {
+                    console.log('✅ WebSocket disconnected');
+                    this.connected = false;
+                    this.subscriptions.clear();
+                    this.stompClient = null;
+                });
+            } else if (this.stompClient) {
+                this.stompClient.disconnect();
                 this.connected = false;
                 this.subscriptions.clear();
-            });
+                this.stompClient = null;
+            }
+        } catch (error) {
+            console.error('Error disconnecting WebSocket:', error);
+            this.connected = false;
+            this.subscriptions.clear();
+            this.stompClient = null;
         }
     }
 
@@ -67,38 +94,74 @@ class WebSocketService {
     setupSubscriptions() {
         const authStore = useAuthStore();
 
-        if (!authStore.user?.accountID) return;
+        if (!authStore.user?.accountID) {
+            console.warn('No user authenticated, cannot setup subscriptions');
+            return;
+        }
 
-        // Subscribe to user-specific notifications
-        const notificationSubscription = this.stompClient.subscribe(
-            `/user/queue/notifications`,
-            (message) => {
-                try {
-                    const notification = JSON.parse(message.body);
-                    console.log('Received notification:', notification);
-                    this.handleNotification(notification);
-                } catch (error) {
-                    console.error('Error parsing notification:', error);
-                }
+        const accountId = authStore.user.accountID;
+
+        // Add a small delay to ensure the connection is fully established
+        // before sending subscription requests
+        setTimeout(() => {
+            try {
+                // Subscribe to user-specific notifications using topic-based approach
+                const notificationTopic = `/topic/notifications/${accountId}`;
+                const notificationSubscription = this.stompClient.subscribe(
+                    notificationTopic,
+                    (message) => {
+                        try {
+                            const notification = JSON.parse(message.body);
+                            console.log('Received notification:', notification);
+                            this.handleNotification(notification);
+                        } catch (error) {
+                            console.error('Error parsing notification:', error);
+                        }
+                    }
+                );
+                this.subscriptions.set('notifications', notificationSubscription);
+                console.log('Subscribed to: ' + notificationTopic);
+
+                // Subscribe to admin notifications (for admin users)
+                const adminNotificationTopic = `/topic/admin-notifications/${accountId}`;
+                const adminNotificationSubscription = this.stompClient.subscribe(
+                    adminNotificationTopic,
+                    (message) => {
+                        try {
+                            const notification = JSON.parse(message.body);
+                            console.log('Received admin notification:', notification);
+                            this.handleAdminNotification(notification);
+                        } catch (error) {
+                            console.error('Error parsing admin notification:', error);
+                        }
+                    }
+                );
+                this.subscriptions.set('admin-notifications', adminNotificationSubscription);
+                console.log('Subscribed to: ' + adminNotificationTopic);
+
+                // Subscribe to broadcast admin alerts (all admins get these)
+                const adminAlertSubscription = this.stompClient.subscribe(
+                    `/topic/admin-alerts`,
+                    (message) => {
+                        try {
+                            const alert = JSON.parse(message.body);
+                            console.log('Received admin alert (broadcast):', alert);
+                            this.handleAdminAlert(alert);
+                        } catch (error) {
+                            console.error('Error parsing admin alert:', error);
+                        }
+                    }
+                );
+                this.subscriptions.set('admin-alerts', adminAlertSubscription);
+                console.log('Subscribed to: /topic/admin-alerts');
+
+                console.log('All WebSocket subscriptions setup successfully');
+            } catch (error) {
+                console.error('Error during subscription setup:', error);
+                // Retry subscriptions after 2 seconds
+                setTimeout(() => this.setupSubscriptions(), 2000);
             }
-        );
-
-        // Subscribe to admin alerts (for admin users)
-        const adminAlertSubscription = this.stompClient.subscribe(
-            `/topic/admin-alerts`,
-            (message) => {
-                try {
-                    const alert = JSON.parse(message.body);
-                    console.log('Received admin alert:', alert);
-                    this.handleAdminAlert(alert);
-                } catch (error) {
-                    console.error('Error parsing admin alert:', error);
-                }
-            }
-        );
-
-        this.subscriptions.set('notifications', notificationSubscription);
-        this.subscriptions.set('admin-alerts', adminAlertSubscription);
+        }, 200); // Wait 200ms for connection to fully stabilize
     }
 
     /**
@@ -113,7 +176,18 @@ class WebSocketService {
     }
 
     /**
-     * Handle incoming admin alert
+     * Handle incoming admin notification (user-specific)
+     */
+    handleAdminNotification(notificationDTO) {
+        // Emit custom event for admin components to listen to
+        const event = new CustomEvent('admin-notification', {
+            detail: notificationDTO
+        });
+        window.dispatchEvent(event);
+    }
+
+    /**
+     * Handle incoming admin alert (broadcast to all admins)
      */
     handleAdminAlert(alertData) {
         // Emit custom event for admin components to listen to

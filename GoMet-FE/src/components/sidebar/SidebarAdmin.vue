@@ -333,7 +333,6 @@ onMounted(() => {
   margin: 0;
   line-height: 1;
   background: linear-gradient(to bottom, #FFD07F 0%, #FFFFFF 50%, #FF9500 100%);
-  -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   filter: drop-shadow(0 2px 10px rgba(234, 88, 12, 0.4));
 }
