@@ -35,7 +35,7 @@ export default defineConfig({
 
     proxy: {
       '/api': {
-        target: 'http://localhost:8081',
+        target: 'http://localhost:8080',
         changeOrigin: true,
         secure: false,
         // NOTE: No rewrite — keep /api prefix so BE controller mapping matches

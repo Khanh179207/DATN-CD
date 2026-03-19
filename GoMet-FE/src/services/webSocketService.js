@@ -27,7 +27,7 @@ class WebSocketService {
 
         try {
             // Create SockJS connection
-            const socket = new SockJS('http://localhost:8081/ws');
+            const socket = new SockJS('http://localhost:8080/ws');
             this.stompClient = Stomp.over(socket);
 
             // Disable debug logs in production
