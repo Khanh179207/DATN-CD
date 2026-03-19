@@ -56,7 +56,8 @@ export const getTrendingPosts = (limit = 10) =>
 
 /**
  * Create a new post (pending approval).
- * @param {object} data - { accountID, categoryID, title, description, ingredients, media, level, cookingTime, steps }
+ * @param {object} data - { accountID, categoryID, title, description, ingredients, media, video, level, cookingTime, steps }
+ * (Đã thêm trường video vào payload)
  */
 export const createPost = (data) =>
   api.post('/api/posts', data).then(r => r.data)
@@ -65,7 +66,6 @@ export const createPost = (data) =>
 // ── Helpers: map BE DTO fields to FE-compatible shape ──────────────────────
 /**
  * Normalise a PublicPostDTO from BE into the shape RecipeCard expects.
- * RecipeCard uses: id, title, image, time, difficulty, likes, author.name, author.avatar, category
  */
 export function normalizePost(dto) {
   if (!dto) return null
@@ -73,7 +73,10 @@ export function normalizePost(dto) {
   return {
     id:         dto.postID,
     title:      dto.title,
+    // media thường là ảnh bìa
     image:      dto.media || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&q=80',
+    // MỚI: Thêm link video để Frontend có thể sử dụng <video> tag
+    video:      dto.video || null, 
     time:       dto.cookingTime ? `${dto.cookingTime}p` : '—',
     difficulty: diffMap[dto.level] || 'Medium',
     likes:      dto.favoriteCount ?? 0,

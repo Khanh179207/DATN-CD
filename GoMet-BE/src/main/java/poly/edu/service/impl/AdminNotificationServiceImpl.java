@@ -11,7 +11,7 @@ import poly.edu.entity.Notification;
 import poly.edu.entity.Post;
 import poly.edu.service.AdminNotificationService;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -26,11 +26,12 @@ public class AdminNotificationServiceImpl implements AdminNotificationService {
         return Notification.builder()
                 .title(dto.getTitle())
                 .content(dto.getContent())
-                .type(dto.getType())
+                .type("ADMIN_MANUAL")
                 .account(acc)
                 .post(post)
                 .isRead(0)
-                .createdAt(LocalDate.now())
+                .createdAt(LocalDateTime.now())
+                .link(dto.getLink())
                 .build();
     }
 

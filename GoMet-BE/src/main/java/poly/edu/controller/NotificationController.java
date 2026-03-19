@@ -9,7 +9,8 @@ import poly.edu.dao.NotificationDAO;
 import poly.edu.dto.AdminNotificationDTO;
 import poly.edu.entity.Notification;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -17,10 +18,10 @@ import java.util.stream.Collectors;
 /**
  * User-facing notification endpoints.
  * Endpoints:
- *   GET  /api/notifications/{accountID}          - list notifications for a user
- *   PUT  /api/notifications/{id}/read            - mark single notification as read
- *   PUT  /api/notifications/{accountID}/read-all - mark all as read for a user
- *   DELETE /api/notifications/{id}               - delete a notification
+ * GET /api/notifications/{accountID} - list notifications for a user
+ * PUT /api/notifications/{id}/read - mark single notification as read
+ * PUT /api/notifications/{accountID}/read-all - mark all as read for a user
+ * DELETE /api/notifications/{id} - delete a notification
  */
 @RestController
 @RequestMapping("/api/notifications")
@@ -31,6 +32,7 @@ public class NotificationController {
 
     // ── List notifications for user ──────────────────────────────────────
     @GetMapping("/{accountID}")
+    @Transactional
     public ResponseEntity<List<Map<String, Object>>> getUserNotifications(
             @PathVariable Integer accountID) {
 
@@ -38,15 +40,18 @@ public class NotificationController {
                 .findByAccount_AccountID(accountID)
                 .stream()
                 .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
-                .map(n -> Map.<String, Object>of(
-                        "notificationID", n.getNotificationID(),
-                        "title",          n.getTitle(),
-                        "content",        n.getContent(),
-                        "type",           n.getType(),
-                        "isRead",         n.getIsRead(),
-                        "createdAt",      n.getCreatedAt().toString(),
-                        "postID",         n.getPost() != null ? n.getPost().getPostID() : 0
-                ))
+                .map(n -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("notificationID", n.getNotificationID());
+                    map.put("title", n.getTitle());
+                    map.put("content", n.getContent());
+                    map.put("type", n.getType());
+                    map.put("isRead", n.getIsRead());
+                    map.put("createdAt", n.getCreatedAt().toString());
+                    map.put("postID", n.getPost() != null ? n.getPost().getPostID() : 0);
+                    map.put("link", n.getLink()); // Can be null
+                    return map;
+                })
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(result);
@@ -58,7 +63,7 @@ public class NotificationController {
     public ResponseEntity<?> markRead(@PathVariable Integer id) {
         return notificationDAO.findById(id).map(n -> {
             n.setIsRead(1);
-            n.setReadAt(LocalDate.now());
+            n.setReadAt(LocalDateTime.now());
             notificationDAO.save(n);
             return ResponseEntity.ok(Map.of("message", "Marked as read"));
         }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -77,14 +82,13 @@ public class NotificationController {
 
         unread.forEach(n -> {
             n.setIsRead(1);
-            n.setReadAt(LocalDate.now());
+            n.setReadAt(LocalDateTime.now());
         });
         notificationDAO.saveAll(unread);
 
         return ResponseEntity.ok(Map.of(
                 "message", "All notifications marked as read",
-                "updatedCount", unread.size()
-        ));
+                "updatedCount", unread.size()));
     }
 
     // ── Delete a notification ────────────────────────────────────────────

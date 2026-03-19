@@ -1,32 +1,35 @@
 ⚡️ QUY TRÌNH GIT (GOMET TEAM)
 🛑 NGUYÊN TẮC VÀNG
-KHÔNG code trực tiếp trên main hoặc develop.
+*KHÔNG code trực tiếp trên main hoặc develop.
 
-LUÔN tạo nhánh mới (feature/...) khi bắt đầu làm việc.
+*LUÔN tạo nhánh mới (feature/...) khi bắt đầu làm việc.
 
-LUÔN Pull code về trước khi Push.
+*LUÔN Pull code về trước khi Push.
 
-1️⃣ BẮT ĐẦU code TÍNH NĂNG MỚI (Bắt buộc làm đầu tiên)
-git checkout develop             
-git pull origin develop          
-git checkout -b feature/ten-chuc-nang  
-2️⃣ LẤY CODE MỚI VỀ (chỉ làm sau khi đã tạo nhánh riêng)
+1️⃣ BẮT ĐẦU code TÍNH NĂNG MỚI 
+git checkout develop (chuyển về nhánh chung của cả nhóm, nơi có tất cả code của mọi người)       
+git pull origin develop (lấy code từ nhánh dev về máy tính của mình)       
+git checkout -b feature/ten-chuc-nang (tạo 1 không gian làm viên cá nhân của mình để code chức năng)
+
+2️⃣ LẤY CODE MỚI VỀ KHI CÓ THÀNH VIÊN KHÁC VỪA PUSH LÊN DEVELOP (chỉ làm sau khi đã làm bước  1)
 Chọn 1 trong 2 trường hợp sau:
 
 ✅ TH1: Chưa code gì cả (Máy sạch)
 
-git pull origin develop
+git pull origin develop (lấy code từ nhánh dev về máy tính của mình)
 
 ⚠️ TH2: Đang code dở (Đã sửa file)
 
-git add .
-git commit -m "Luu tam code truoc khi pull"  
-git pull origin develop                      
+git commit -m "save point"  ( Commit tạm)
+git pull origin develop      ( Kéo code mới về cho nó tự merge)
+              
 # -> Nếu báo Conflict (đỏ): Mở file sửa lỗi -> Lưu -> git add . -> git commit
+
 3️⃣ Khi code xong (PUSH & PR)
+git status (check lại  nhánh và các file đã thay đổi của mình)
+git add .  (thêm các file đã code vào git trên máy)
+git commit -m "Hoan thien chuc nang ABC"  (cam kết các file này là gì ) 
+git pull origin develop (check lại xem đã là mới nhất chưa, nếu ra chữ already thì được phép push, ra màn hình xanh đen thì :wq rồi push, conflict thì báo Sếp)
+git push origin feature/ten-chuc-nang ( đẩy code của mình lên server github)
 
-git add .
-git commit -m "Hoan thien chuc nang ABC"
-git push origin feature/ten-chuc-nang
-
-👉 Sau đó: Lên GitHub -> Tạo Pull Request vào develop.
+👉 Sau đó: Lên GitHub -> Tạo Pull Request vào develop. 

@@ -27,20 +27,20 @@
       <div class="footer-col">
         <h4>Khám phá</h4>
         <ul class="footer-links">
-          <li><a href="#">Công thức mới</a></li>
-          <li><a href="#">Bảng xếp hạng</a></li>
-          <li><a href="#">Thử thách tuần</a></li>
-          <li><a href="#">Blog ẩm thực</a></li>
+          <li><router-link to="/home">Công thức mới</router-link></li>
+          <li><router-link to="/leaderboard">Bảng xếp hạng</router-link></li>
+          <li><router-link to="/events">Thử thách tuần</router-link></li>
+          <li><router-link to="/blog">Blog ẩm thực</router-link></li>
         </ul>
       </div>
 
       <div class="footer-col">
         <h4>Về GOMET</h4>
         <ul class="footer-links">
-          <li><a href="#">Giới thiệu</a></li>
-          <li><a href="#">Tuyển dụng</a></li>
-          <li><a href="#">Điều khoản</a></li>
-          <li><a href="#">Bảo mật</a></li>
+          <li><router-link to="/about">Giới thiệu</router-link></li>
+          <li><router-link to="/careers">Tuyển dụng</router-link></li>
+          <li><router-link to="/terms-and-policy">Chính sách & Điều khoản</router-link></li>
+          <li><router-link to="/terms-and-policy">Bảo mật</router-link></li>
         </ul>
       </div>
 
@@ -68,14 +68,18 @@
       <div class="container bottom-flex">
         <p>&copy; 2026 GOMET. All rights reserved.</p>
         <div class="bottom-links">
-          <a href="#">Quyền riêng tư</a>
+          <router-link to="/terms-and-policy">Quyền riêng tư</router-link>
           <span class="dot">•</span>
-          <a href="#">Cookie</a>
+          <router-link to="/terms-and-policy">Cookie</router-link>
         </div>
       </div>
     </div>
   </footer>
 </template>
+
+<script setup>
+// ...existing code...
+</script>
 
 <style scoped>
 .landing-footer {
@@ -134,11 +138,11 @@ h4 {
 
 .footer-links { list-style: none; padding: 0; margin: 0; }
 .footer-links li { margin-bottom: 12px; }
-.footer-links a {
+.footer-links a, .footer-links router-link {
   text-decoration: none; color: #57534E; font-size: 0.95rem; font-weight: 500;
   transition: 0.2s; display: inline-block;
 }
-.footer-links a:hover { color: #F97316; transform: translateX(5px); }
+.footer-links a:hover, .footer-links router-link:hover { color: #F97316; transform: translateX(5px); }
 
 /* --- Contact Column --- */
 .contact-item { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
@@ -153,8 +157,8 @@ h4 {
   padding: 20px 0; font-size: 0.85rem; color: #78716C;
 }
 .bottom-flex { display: flex; justify-content: space-between; align-items: center; }
-.bottom-links a { text-decoration: none; color: #78716C; transition: 0.2s; }
-.bottom-links a:hover { color: #1C1917; }
+.bottom-links a, .bottom-links router-link { text-decoration: none; color: #78716C; transition: 0.2s; }
+.bottom-links a:hover, .bottom-links router-link:hover { color: #1C1917; }
 .dot { margin: 0 10px; opacity: 0.5; }
 
 /* Responsive */

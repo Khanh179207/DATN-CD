@@ -1,5 +1,6 @@
 package poly.edu.dao;
 
+import org.springframework.data.jpa.repository.Modifying;
 import poly.edu.entity.Post;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -20,6 +21,9 @@ public interface PostDAO extends JpaRepository<Post, Integer> {
     List<Post> findByCategory_CategoryID(Integer categoryID);
 
     List<Post> findByCategory_CategoryIDAndIsApprovedAndIsActive(Integer categoryID, Integer isApproved, Integer isActive);
+
+    // Thêm dòng này vào trong interface PostDAO
+    List<Post> findByAccount_AccountIDOrderByCreatedAtDesc(Integer accountId);
 
     @Query("SELECT p FROM Post p WHERE p.isApproved = 1 AND p.isActive = 1 " +
            "AND (LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
@@ -45,4 +49,7 @@ public interface PostDAO extends JpaRepository<Post, Integer> {
 
     @Query("SELECT COUNT(p) FROM Post p WHERE p.account.accountID = :accountID AND p.isApproved = 1 AND p.isActive = 1")
     long countByAccountId(@Param("accountID") Integer accountID);
+    @Modifying
+    @Query("UPDATE Post p SET p.isActive = 0 WHERE p.account.accountID = :accountId")
+    void deactivateAllPostsByAccountId(@Param("accountId") Integer accountId);
 }

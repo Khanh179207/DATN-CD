@@ -16,16 +16,21 @@ api.interceptors.request.use(config => {
 })
 
 // Global error handler
+// Trong file api.js - Đoạn xử lý Interceptor Response
 api.interceptors.response.use(
   res => res,
   err => {
-    if (err.response?.status === 401) {
+    if (err.response?.status === 401 || err.response?.status === 403) {
       const user = JSON.parse(localStorage.getItem('user') || 'null')
-      // Only force logout if the user was actually logged in (not a public-endpoint 401)
       if (user?.token) {
         localStorage.removeItem('user')
-        // Notify the auth store + other tabs
-        window.dispatchEvent(new CustomEvent('auth:force-logout'))
+
+        // 🔥 SỬA DÒNG NÀY: Check đúng cái KEY mà Backend gửi (ACCOUNT_BANNED)
+        const isBanned = err.response?.data?.message === 'ACCOUNT_BANNED' || err.response?.status === 403;
+
+        window.dispatchEvent(new CustomEvent('auth:force-logout', {
+          detail: { isBanned: isBanned }
+        }))
       }
     }
     return Promise.reject(err)

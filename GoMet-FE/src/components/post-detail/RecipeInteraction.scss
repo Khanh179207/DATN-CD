@@ -127,6 +127,25 @@
   }
 }
 
+.btn-view-profile {
+  background: transparent;
+  color: $primary-600;
+  border: 1.5px solid $primary-600;
+  padding: $space-3 $space-6;
+  border-radius: $radius-full;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
+
+  &:hover {
+    background: $primary-50;
+    box-shadow: 0 5px 15px rgba(234, 88, 12, 0.15);
+    transform: translateY(-1px);
+  }
+
+  &:active { transform: scale(0.97); }
+}
+
 .btn-group-header {
   display: flex;
   align-items: center;
@@ -364,117 +383,250 @@
   &:active { transform: scale(0.97); }
 }
 
-// 3. Comment List
+// 3. Comment List (Trình bày kiểu Facebook)
 .comments-feed {
   display: flex;
   flex-direction: column;
-  gap: 30px;
+  gap: $space-5;
 }
 
 .comment-card {
   display: flex;
-  gap: $space-5;
+  gap: 8px; /* Giảm gap để avatar sát bong bóng hơn */
+  margin-bottom: $space-3;
+  position: relative;
 }
 
 .cmt-avatar {
-  width: 50px;
-  height: 50px;
+  width: 40px; /* Avatar FB nhỏ gọn */
+  height: 40px;
   border-radius: $radius-full;
   object-fit: cover;
-  border: 2px solid $neutral-0;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
   flex-shrink: 0;
+  z-index: 2; /* Để đè lên đường viền cây */
 }
 
-.cmt-body {
+.cmt-content-wrapper {
+  display: flex;
+  flex-direction: column;
   flex: 1;
-  border-bottom: 1px solid #F3F4F6;
-  padding-bottom: 30px;
+  min-width: 0; /* Tránh tràn layout */
 }
 
-.comment-card:last-child .cmt-body {
-  border-bottom: none;
-  padding-bottom: 0;
+.cmt-bubble {
+  background: #f0f2f5;
+  border-radius: 18px;
+  padding: 8px 12px;
+  width: fit-content;
+  max-width: 100%;
 }
 
-.cmt-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: $space-1;
-}
-
-.cmt-author { font-weight: 800; font-size: $text-base; color: #111827; }
-.cmt-date   { font-size: $text-xs; color: #9CA3AF; }
-
-.cmt-rating {
+.cmt-author { 
+  font-weight: 600; 
+  font-size: 13px; 
+  color: #050505; 
+  margin-bottom: 2px;
   display: flex;
   align-items: center;
-  gap: $space-3;
-  margin-bottom: $space-3;
+  flex-wrap: wrap;
 }
 
-.stars {
-  color: #D1D5DB;
-  font-size: 0.9rem;
-  letter-spacing: 1px;
-
-  &.filled { color: $warning; }
+.reply-indicator {
+  color: #65676B;
+  font-weight: 500;
+  font-size: 13px;
+  margin-left: 4px;
 }
 
 .verified-badge {
-  font-size: $text-xs;
+  font-size: 11px;
   color: $success;
   font-weight: 700;
-  background: $success-bg;
-  padding: 2px 8px;
-  border-radius: $radius-full;
+  margin-left: 4px;
+}
+
+.stars-inline {
+  display: inline-block;
+  margin-left: 4px;
+  .stars {
+    color: #D1D5DB;
+    font-size: 10px;
+    &.filled { color: $warning; }
+  }
 }
 
 .cmt-text {
-  font-size: $text-base;
-  line-height: 1.6;
-  color: #4B5563;
-  margin-bottom: $space-4;
+  font-size: 15px;
+  line-height: 1.4;
+  color: #050505;
+  margin: 0;
+  word-wrap: break-word;
 }
 
 .cmt-images {
   display: flex;
   gap: $space-3;
-  margin-bottom: $space-4;
+  margin-top: 6px;
 
   img {
-    height: 80px;
-    border-radius: $radius-sm;
+    height: 120px;
+    border-radius: $radius-md;
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: filter 0.2s;
     border: 1px solid $neutral-200;
 
-    &:hover {
-      transform: scale(1.05);
-      box-shadow: $shadow-md;
-    }
+    &:hover { filter: brightness(0.95); }
   }
 }
 
 .cmt-actions {
   display: flex;
-  gap: $space-5;
+  align-items: center;
+  gap: 16px;
+  padding: 2px 0 0 12px;
+  margin-bottom: 4px;
 }
 
 .action-link {
   background: none;
   border: none;
-  color: #6B7280;
-  font-size: 0.85rem;
-  font-weight: 600;
+  color: #65676B;
+  font-size: 12px;
+  font-weight: 700;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  transition: color 0.2s;
+  padding: 0;
+  transition: all 0.2s;
 
-  &:hover { color: $primary-600; }
+  &:hover { text-decoration: underline; }
+  &.liked { color: #ea580c; } /* Màu cam khi đã nhấn Thích */
+}
+
+.cmt-date { 
+  font-size: 12px; 
+  color: #65676B; 
+  font-weight: 400;
+}
+
+/* ── Inline Reply Box ── */
+.inline-reply-box {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+  margin-bottom: 12px;
+}
+
+.reply-user-avt {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.reply-input-area {
+  flex: 1;
+  background: #f0f2f5;
+  border-radius: 18px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  
+  textarea {
+    width: 100%;
+    min-height: 36px;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 15px;
+    font-family: inherit;
+    resize: none;
+    color: #050505;
+    padding: 0;
+    margin-bottom: 8px;
+  }
+}
+
+.reply-controls {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.btn-cancel {
+  background: none;
+  border: none;
+  font-weight: 600;
+  color: #65676B;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+  &:hover { background: #e4e6eb; }
+}
+
+.btn-post {
+  background: none;
+  border: none;
+  font-weight: 600;
+  color: #ea580c; /* Màu cam chủ đạo */
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+  &:hover { background: #fee2e2; }
+  &:disabled { color: #9CA3AF; cursor: not-allowed; background: none; }
+}
+
+/* ── Facebook Style Tree Lines (Nested Replies) ── */
+.nested-replies-fb {
+  position: relative;
+  margin-top: 4px;
+}
+
+/* Đường thẳng đứng nạp từ trên xuống cho toàn khối reply */
+.comment-card > .cmt-content-wrapper > .nested-replies-fb::before {
+  content: '';
+  position: absolute;
+  top: -24px;   /* Bắt đầu ngang hàng với mép dưới của Avatar gốc (size 40px) */
+  bottom: 24px; /* Kết thúc ngang hàng với avatar của reply cuối cùng */
+  left: 19px;   /* Căn thẳng xuống từ giữa Avatar gốc (size 40px => tâm là 20px, trừ đi độ dày viền) */
+  width: 2px;
+  background: #E5E7EB; /* Màu xám viền */
+  z-index: 1;
+}
+
+.nested-card {
+  position: relative;
+  margin-bottom: 8px;
+  padding-left: 50px; /* Thụt lề toàn bộ khối reply con (Avatar + Bubble) vào sâu hơn */
+}
+
+/* Đường rẽ nhánh ngang hình chữ L nạp vào từng avatar con */
+.nested-card::before {
+  content: '';
+  position: absolute;
+  left: 19px;  /* Điểm nối với đường thẳng dọc ở mép trái */
+  top: 16px;   /* Rẽ ngang đúng điểm tâm chiều cao của avatar con (size 32px => tâm ngang 16px) */
+  width: 25px; /* Độ dài đuôi ngang cắm thẳng vào Avatar con */
+  height: 2px;
+  background: #E5E7EB;
+  border-bottom-left-radius: 8px; /* Bo góc ngay mép rẽ nhánh tạo hình chữ L lồng */
+  z-index: 1;
+}
+
+.nested-avt {
+  width: 32px;
+  height: 32px;
+  z-index: 2; /* Đè lên viền ngang */
+  position: relative;
+}
+
+
+.nested-avt {
+  width: 32px;
+  height: 32px;
+  z-index: 2; /* Đè lên viền ngang */
 }
 
 // ── Animations ──────────────────────────────────────────────

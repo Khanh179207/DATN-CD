@@ -40,6 +40,8 @@ public class Post {
 
     private String media;
 
+    private String video;
+
     @Column(nullable = false)
     private Integer level;
 
@@ -75,12 +77,14 @@ public class Post {
     private List<CookingSteps> cookingSteps;
 
     @OneToMany(mappedBy = "post")
-    private List<EventPosts> eventPosts;
-
-    @OneToMany(mappedBy = "post")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<Notification> notifications;
 
-    @OneToMany(mappedBy = "post")
-    private List<Report> reports;
+    // Thay vì mappedBy = "account", sếp phải để là "targetPost"
+    @OneToMany(mappedBy = "targetPost")
+    private List<Ticket> tickets;
+
+    @Column(name = "LikeCount")
+    private Integer likeCount = 0; // Thêm dòng này vào
 
 }

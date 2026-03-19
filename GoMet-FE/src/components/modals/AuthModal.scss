@@ -1,602 +1,244 @@
-// ============================================================
-//  AuthModal.scss — Artistic Login / Register Modal
-// ============================================================
-@use '../../assets/styles/variables' as *;
+// ================= VARIABLES =================
+$primary: #EA580C;
+$primary-light: #FDBA74;
+$text-dark: #1C1917; 
+$text-muted: #78716C;
+$radius-xl: 32px; 
+$font-serif: 'Playfair Display', serif; // ĐỒNG BỘ FONT Ở ĐÂY
+$font-ui: 'Inter', sans-serif; 
 
 // ── Overlay ─────────────────────────────────────────────────
-.modal-overlay {
+.premium-modal-overlay {
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background: rgba(12, 10, 9, 0.9);
-  backdrop-filter: blur(10px);
+  background: rgba(0, 0, 0, 0.7); 
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: $space-5;
+  padding: 20px;
 }
 
+// ── Modal Center Form ───────────────────────────────────────
 .modal-container-artistic {
-  background: $neutral-0;
   width: 100%;
-  max-width: 980px;
-  height: 650px;
+  max-width: 500px; 
   display: flex;
   border-radius: $radius-xl;
-  overflow: hidden;
-  box-shadow: 0 50px 100px -20px rgba(0,0,0,0.6);
-  font-family: $font-ui;
-}
-
-// ── Left Art Panel ───────────────────────────────────────────
-.side-art-panel {
-  flex: 1.2;
+  font-family: $font-ui; // Font UI mặc định
+  background: transparent; 
   position: relative;
-  overflow: hidden;
-  background: $neutral-900;
+  box-shadow: 0 40px 80px rgba(0,0,0,0.5);
 }
 
-.art-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0.9;
-}
-
-.ken-burns {
-  animation: kenBurnsEffect 30s ease-in-out infinite alternate;
-}
-
-@keyframes kenBurnsEffect {
-  from { transform: scale(1); }
-  to   { transform: scale(1.18); }
-}
-
-.art-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.9) 10%, transparent 70%);
-  z-index: 1;
-}
-
-.art-content {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  padding: $space-16;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  color: $neutral-0;
-}
-
-.logo-area-art {
-  display: flex;
-  align-items: center;
-  gap: $space-4;
-}
-
-.mini-logo {
-  width: 42px;
-  height: 42px;
-  border-radius: $radius-full;
-  border: 2px solid $primary-500;
-}
-
-.logo-text-art {
-  font-family: $font-display;
-  font-weight: 800;
-  font-size: 1.6rem;
-  letter-spacing: 2px;
-  color: $primary-500;
-}
-
-.quote-text {
-  font-family: $font-display;
-  font-size: 2.2rem;
-  line-height: 1.3;
-  font-style: italic;
-  text-shadow: 0 2px 10px rgba(0,0,0,0.3);
-}
-
-.quote-decor {
-  width: 60px;
-  height: 3px;
-  background: $primary-500;
-  margin-top: 25px;
-}
-
-// ── Right Form Panel ─────────────────────────────────────────
 .form-panel-interactive {
   flex: 1;
   position: relative;
-  background: $neutral-0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  border-radius: $radius-xl;
+  
+  background: rgba(255, 255, 255, 0.95); 
+  backdrop-filter: blur(30px);
+  border: 1px solid rgba(255,255,255,0.7);
 }
 
+/* Orbs lơ lửng */
+.bg-visuals {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+  .orb {
+    position: absolute; border-radius: 50%; filter: blur(60px); opacity: 0.35;
+    &-1 { width: 250px; height: 250px; background: $primary-light; top: -10%; left: -10%; animation: floatOrb1 8s infinite alternate ease-in-out;}
+    &-2 { width: 300px; height: 300px; background: #FFEDD5; bottom: -10%; right: -10%; animation: floatOrb2 10s infinite alternate ease-in-out;}
+  }
+}
+@keyframes floatOrb1 { to { transform: translate(30px, 30px); } }
+@keyframes floatOrb2 { to { transform: translate(-30px, -30px); } }
+
+// ── Nút Close ───────────────────────────────────────────
 .btn-close-art {
   position: absolute;
-  top: 25px;
-  right: 25px;
+  top: 15px;
+  right: 15px;
   z-index: 10;
-  background: transparent;
-  border: none;
-  color: $neutral-400;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-
-  &:hover {
-    color: $neutral-900;
-    transform: rotate(90deg) scale(1.1);
-  }
-}
-
-.form-scroll-wrapper {
-  flex: 1;
-  overflow-y: auto;
-  padding: 70px 60px;
-  scrollbar-width: none;
-  display: flex;
-  align-items: center;
-
-  &::-webkit-scrollbar { display: none; }
-}
-
-.form-content-wrap { width: 100%; }
-
-.art-title {
-  font-family: $font-display;
-  font-size: $text-4xl;
-  font-weight: 800;
-  color: $neutral-900;
-  margin: 0;
-}
-
-.art-desc {
-  color: $neutral-500;
-  font-size: $text-base;
-  margin-top: $space-3;
-  font-weight: 500;
-}
-
-// ── Input Fields ─────────────────────────────────────────────
-.art-form {
-  margin-top: $space-10;
-  text-align: left;
-}
-
-.input-field-art {
-  position: relative;
-  margin-bottom: 30px;
-
-  input {
-    width: 100%;
-    border: none;
-    border-bottom: 2px solid $neutral-200;
-    padding: 12px 0;
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: $neutral-900;
-    outline: none;
-    background: transparent;
-    transition: all 0.3s ease;
-    font-family: $font-ui;
-
-    &:focus ~ label,
-    &:not(:placeholder-shown) ~ label {
-      top: -20px;
-      font-size: $text-xs;
-      color: $primary-500;
-      font-weight: 800;
-      letter-spacing: 1px;
-    }
-  }
-
-  label {
-    position: absolute;
-    top: 12px;
-    left: 0;
-    font-size: $text-base;
-    color: $neutral-400;
-    font-weight: 600;
-    pointer-events: none;
-    transition: all 0.3s ease;
-  }
-}
-
-.input-highlight {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background: $primary-500;
-  transition: width 0.4s ease;
-}
-
-.input-field-art input:focus ~ .input-highlight { width: 100%; }
-
-.eye-toggle-btn {
-  position: absolute;
-  right: 0;
-  top: 10px;
-  background: none;
-  border: none;
-  color: $neutral-400;
-  cursor: pointer;
-  transition: color 0.2s;
-
-  &:hover { color: $primary-500; }
-}
-
-.input-row {
-  display: flex;
-  gap: 25px;
-
-  .input-field-art { flex: 1; }
-}
-
-// ── Actions & Buttons ────────────────────────────────────────
-.form-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 35px;
-  font-size: $text-sm;
-}
-
-.remember-me {
-  display: flex;
-  align-items: center;
-  gap: $space-3;
-  color: $neutral-600;
-  font-weight: 700;
-  cursor: pointer;
-
-  input { display: none; }
-
-  &:hover .checkmark { border-color: $primary-300; }
-
-  input:checked ~ .checkmark {
-    background: $primary-500;
-    border-color: $primary-500;
-
-    &::after {
-      content: '✓';
-      position: absolute;
-      color: $neutral-0;
-      font-size: 14px;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-    }
-  }
-}
-
-.checkmark {
-  width: 20px;
-  height: 20px;
-  border: 2px solid $neutral-300;
-  border-radius: 6px;
-  transition: border-color 0.2s, background 0.2s;
-  position: relative;
-}
-
-.forgot-link {
-  color: $primary-500;
-  font-weight: 800;
-  text-decoration: none;
-  transition: color 0.3s;
-
-  &:hover { color: $primary-700; }
-}
-
-.auth-error-msg {
-  background: $error-bg;
-  color: $error;
-  border: 1px solid #FCA5A5;
-  border-radius: $radius-sm;
-  padding: 10px 14px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  margin-bottom: $space-3;
-}
-
-.auth-error-banned {
-  background: #FFF7ED;
-  color: #C2410C;
-  border-color: #FDBA74;
-}
-
-.btn-submit-art {
-  width: 100%;
-  height: 60px;
-  background: $neutral-900;
-  color: $neutral-0;
-  border: none;
-  font-family: $font-ui;
-  font-weight: 800;
-  font-size: 0.95rem;
-  letter-spacing: 2px;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  background: rgba(0,0,0,0.05);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  border: none;
+  color: $text-muted;
+  cursor: pointer;
+  transition: 0.3s;
 
-  &:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-    transform: none !important;
-    box-shadow: none !important;
+  &:hover {
+    background: rgba(0,0,0,0.1);
+    color: $text-dark;
+    transform: rotate(90deg);
   }
-
-  &:hover:not(:disabled) {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 30px rgba(0,0,0,0.25);
-  }
-
-  &.btn-orange { background: $primary-500; }
 }
 
-.btn-shine {
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 50%;
-  height: 100%;
-  background: linear-gradient(to right, transparent, rgba(255,255,255,0.3), transparent);
-  transform: skewX(-25deg);
-  transition: left 0.5s;
-}
-
-.btn-submit-art:hover .btn-shine {
-  left: 150%;
-  transition: left 0.7s ease-in-out;
-}
-
-// ── Divider ──────────────────────────────────────────────────
-.divider {
+// ── Nội dung Form & Logo ──────────────────────────────────
+.form-scroll-wrapper {
+  padding: 45px 40px;
   position: relative;
-  margin: 35px 0 25px;
-  text-align: center;
+  z-index: 2;
+}
 
-  &::before {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 0;
-    width: 100%;
-    height: 1px;
-    background: $neutral-200;
+.brand-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 20px;
+
+  .brand-logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%; // Bo tròn hình gomet.jpg
+    border: 2px solid $primary; // Viền cam sang chảnh
+    object-fit: cover;
+    transform: translateY(6px); // Căn chỉnh cho đều chữ
   }
 
-  span {
-    background: $neutral-0;
-    position: relative;
-    padding: 0 $space-5;
-    color: $neutral-400;
-    font-size: $text-xs;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+  .brand-text {
+    font-family: $font-serif; // Đồng bộ font Playfair
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: $text-dark;
+    letter-spacing: 1.5px;
   }
+
+  .logo-dot { 
+    width: 6px; height: 6px; background: $primary; border-radius: 50%;
+  }
+}
+
+.form-header { text-align: center; margin-bottom: 25px; }
+.art-title { font-family: $font-serif; font-size: 1.6rem; font-weight: 800; color: $text-dark; margin: 0 0 8px; }
+.art-desc { color: $text-muted; font-size: 0.95rem; margin: 0; font-weight: 500;}
+
+// ── Inputs ─────────────────────────────────────────────
+.input-field-art {
+  margin-bottom: 15px;
+
+  label {
+    display: block; font-size: 0.85rem; color: $text-dark; margin-bottom: 6px; font-weight: 700;
+  }
+
+  input {
+    width: 100%; padding: 12px 15px; border: 1px solid #E7E5E4; border-radius: 12px;
+    outline: none; font-size: 0.95rem; color: $text-dark; transition: 0.3s; background: rgba(255, 255, 255, 0.7);
+    font-family: $font-ui;
+
+    &:focus { border-color: $primary; background: #ffffff; box-shadow: 0 0 0 3px rgba($primary, 0.15); }
+  }
+}
+
+.password-wrapper {
+  position: relative;
+  input { padding-right: 45px; }
+}
+
+.eye-toggle-btn {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; color: $text-muted; cursor: pointer; padding: 0; transition: 0.2s;
+  &:hover { color: $primary; }
+}
+
+.input-row { display: flex; gap: 15px; }
+.input-row .input-field-art { flex: 1; }
+
+// ── Actions & Buttons ────────────────────────────────────────
+.form-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; font-size: 0.85rem; }
+.remember-me { display: flex; align-items: center; gap: 8px; color: $text-muted; font-weight: 600; cursor: pointer; }
+.forgot-link { color: $primary; font-weight: 700; text-decoration: none; transition: 0.2s; &:hover { color: #C2410C; } }
+
+.auth-error-msg { background: #FEF2F2; color: #DC2626; border: 1px solid #FCA5A5; border-radius: 8px; padding: 10px; font-size: 0.85rem; font-weight: 600; margin-bottom: 15px; text-align: center; }
+
+.btn-submit-art {
+  width: 100%; padding: 14px; background: $text-dark; color: white; border: none; border-radius: 12px;
+  font-weight: 800; font-size: 1rem; cursor: pointer; transition: 0.3s; box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+  font-family: $font-ui;
+  &:hover:not(:disabled) { background: $primary; transform: translateY(-2px); box-shadow: 0 15px 25px rgba($primary, 0.3); }
+  &:disabled { background: #A8A29E; cursor: not-allowed; transform: none; box-shadow: none; }
+}
+
+// ── Divider & Social ──────────────────────────────────────────
+.divider {
+  display: flex; align-items: center; text-align: center; color: #A8A29E; font-size: 0.8rem; font-weight: 700; margin: 20px 0;
+  &::before, &::after { content: ''; flex: 1; border-bottom: 1px solid #E7E5E4; }
+  span { padding: 0 12px; }
 }
 
 .btn-google-art {
-  width: 100%;
-  height: 54px;
-  border: 2px solid $neutral-200;
-  background: $neutral-0;
-  color: $neutral-900;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: $space-3;
-  font-weight: 700;
-  cursor: pointer;
-  transition: border-color 0.3s, background 0.3s, transform 0.3s;
-
-  &:hover {
-    border-color: $neutral-900;
-    background: $neutral-50;
-    transform: scale(1.02);
-  }
+  width: 100%; padding: 12px; background: white; border: 1px solid #E7E5E4; border-radius: 12px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.3s; color: $text-dark; font-weight: 700; font-size: 0.95rem;
+  &:hover { background: #F9FAF8; border-color: #D6D3D1; transform: translateY(-1px); }
 }
 
-.footer-prompt {
-  text-align: center;
-  margin-top: 30px;
-  font-size: 0.95rem;
-  color: $neutral-500;
-  font-weight: 600;
-
-  a {
-    color: $primary-500;
-    font-weight: 800;
-    text-decoration: none;
-    transition: color 0.2s;
-
-    &:hover { color: $primary-700; }
-  }
+/* Hack Nút Google Tàng Hình */
+.custom-google-wrapper { position: relative; width: 100%; }
+.custom-ui-btn { pointer-events: none; }
+.invisible-google-btn {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.001; overflow: hidden; z-index: 10; cursor: pointer;
+  :deep(iframe) { width: 100% !important; height: 60px !important; transform: scale(2); transform-origin: top left; }
 }
 
-// ── OTP Styles ───────────────────────────────────────────────
-.otp-group {
-  display: flex;
-  gap: $space-4;
-  justify-content: center;
-  margin: $space-10 0;
-}
+// ── Footer & OTP ──────────────────────────────────────────────
+.footer-prompt { text-align: center; margin-top: 25px; font-size: 0.9rem; color: $text-muted; font-weight: 500; }
+.footer-prompt a { color: $primary; font-weight: 800; text-decoration: none; &:hover { text-decoration: underline; } }
 
-.otp-input {
-  width: 55px;
-  height: 65px;
-  border: 2px solid $neutral-200;
-  text-align: center;
-  font-size: 1.8rem;
-  font-weight: 800;
-  color: $neutral-900;
-  outline: none;
-  transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
-  background: $neutral-50;
+.otp-group { display: flex; gap: 10px; justify-content: center; margin: 25px 0; }
+.otp-input { width: 45px; height: 55px; border: 1px solid #E7E5E4; border-radius: 10px; text-align: center; font-size: 1.5rem; font-weight: 800; color: $text-dark; outline: none; transition: 0.3s; &:focus { border-color: $primary; box-shadow: 0 0 0 3px rgba($primary, 0.15); transform: translateY(-2px); } }
 
-  &:focus {
-    border-color: $primary-500;
-    background: $neutral-0;
-    transform: translateY(-3px);
-    box-shadow: 0 10px 20px rgba(249, 115, 22, 0.15);
-  }
-}
-
-.btn-back {
-  background: none;
-  border: none;
-  color: $neutral-400;
-  font-weight: 700;
-  cursor: pointer;
-  margin-top: 25px;
-  width: 100%;
-  transition: color 0.2s;
-
-  &:hover { color: $neutral-900; }
-}
+.btn-back { background: none; border: none; color: $text-muted; font-weight: 700; cursor: pointer; margin-top: 20px; width: 100%; transition: 0.2s; &:hover { color: $text-dark; } }
 
 // ── Animations ───────────────────────────────────────────────
-.modal-motion-enter-active,
-.modal-motion-leave-active {
-  transition: opacity var(--duration-slow) var(--ease-out);
+.modal-motion-enter-active, .modal-motion-leave-active { transition: opacity 0.3s ease; .modal-container-artistic { transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); } }
+.modal-motion-enter-from, .modal-motion-leave-to { opacity: 0; }
+.modal-motion-enter-from .modal-container-artistic, .modal-motion-leave-to .modal-container-artistic { transform: scale(0.95) translateY(20px); opacity: 0;}
 
-  .modal-container-artistic {
-    transition:
-      opacity   var(--duration-slow) var(--ease-out),
-      transform var(--duration-slow) var(--ease-out);
-  }
-}
-
-.modal-motion-enter-from { opacity: 0; }
-.modal-motion-leave-to   { opacity: 0; }
-
-.modal-motion-enter-from .modal-container-artistic { transform: scale(0.95) translateY(12px); }
-.modal-motion-leave-to   .modal-container-artistic { transform: scale(0.95) translateY(12px); opacity: 0; }
-
-.view-slide-enter-active,
-.view-slide-leave-active {
-  transition:
-    opacity   var(--duration-normal) var(--ease-in-out),
-    transform var(--duration-normal) var(--ease-in-out);
-}
-
+.view-slide-enter-active, .view-slide-leave-active { transition: all 0.3s ease-in-out; }
 .view-slide-enter-from { opacity: 0; transform: translateX(20px); }
-.view-slide-leave-to   { opacity: 0; transform: translateX(-20px); }
+.view-slide-leave-to { opacity: 0; transform: translateX(-20px); }
 
-.stagger-item {
-  opacity: 0;
-  transform: translateY(16px);
-  animation: slideUpFade 0.5s var(--ease-out) forwards;
-  animation-delay: var(--delay, 0s);
-}
-
+.stagger-item { opacity: 0; transform: translateY(10px); animation: slideUpFade 0.4s ease-out forwards; animation-delay: var(--delay, 0s); }
 @keyframes slideUpFade { to { opacity: 1; transform: translateY(0); } }
 
 // ── Responsive ───────────────────────────────────────────────
-@media (max-width: 900px) {
-  .side-art-panel { display: none; }
-  .modal-container-artistic { max-width: 460px; height: auto; min-height: 600px; }
-  .form-scroll-wrapper { padding: 50px 35px; }
+@media (max-width: 600px) {
+  .premium-modal-overlay { align-items: flex-end; padding: 0; }
+  .modal-container-artistic { border-radius: 24px 24px 0 0; }
+  .form-scroll-wrapper { padding: 35px 25px; }
+  .modal-motion-enter-from .modal-container-artistic, .modal-motion-leave-to .modal-container-artistic { transform: translateY(100%); }
 }
-
-@media (max-width: 640px) {
-  .modal-overlay { align-items: flex-end; padding: 0; }
-
-  .modal-container-artistic {
-    max-width: 100%;
-    width: 100%;
-    height: auto;
-    max-height: 95dvh;
-    border-radius: $radius-xl $radius-xl 0 0;
-    flex-direction: column;
-  }
-
-  .side-art-panel { display: none; }
-
-  .form-scroll-wrapper {
-    padding: var(--space-6) var(--space-5);
-    padding-bottom: calc(var(--space-6) + env(safe-area-inset-bottom, 0px));
-  }
-
-  .modal-motion-enter-from .modal-container-artistic,
-  .modal-motion-leave-to   .modal-container-artistic {
-    transform: translateY(100%) !important;
-  }
-
-  .modal-motion-enter-active .modal-container-artistic,
-  .modal-motion-leave-active .modal-container-artistic {
-    transition: transform var(--duration-slow) var(--ease-spring) !important;
+// Thêm vào AuthModal.scss
+.input-group-checkbox {
+  margin: 15px 0;
+  
+  .checkbox-container {
+    display: flex; gap: 10px; cursor: pointer; font-size: 12px; color: #57534E;
+    input { position: absolute; opacity: 0; cursor: pointer; height: 0; width: 0; }
+    .checkmark {
+      flex-shrink: 0; height: 18px; width: 18px; background-color: rgba(255, 255, 255, 0.5);
+      border: 1.5px solid #D6D3D1; border-radius: 4px; position: relative;
+      &::after {
+        content: ""; position: absolute; display: none; left: 5px; top: 1px;
+        width: 5px; height: 10px; border: solid white; border-width: 0 2px 2px 0; transform: rotate(45deg);
+      }
+    }
+    input:checked ~ .checkmark { background-color: #EA580C; border-color: #EA580C; &::after { display: block; } }
+    .label-text a { color: #EA580C; font-weight: 700; text-decoration: none; }
   }
 }
 
-// ── Forgot-password inline view ──────────────────────────────────────────
-
-.forgot-success {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 16px 0;
-}
-
-.forgot-icon-ring {
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, #D1FAE5, #A7F3D0);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.check-anim {
-  width: 52px;
-  height: 52px;
-}
-
-.check-circle {
-  stroke: #10B981;
-  stroke-width: 2;
-  stroke-dasharray: 166;
-  stroke-dashoffset: 166;
-  animation: checkStroke 0.6s ease forwards;
-}
-
-.check-path {
-  stroke: #10B981;
-  stroke-width: 2;
-  stroke-dasharray: 48;
-  stroke-dashoffset: 48;
-  animation: checkStroke 0.4s 0.5s ease forwards;
-}
-
-@keyframes checkStroke {
-  to { stroke-dashoffset: 0; }
-}
-
-.btn-spinner {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.35);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spinAnim 0.7s linear infinite;
-  margin-right: 6px;
-  flex-shrink: 0;
-}
-
-@keyframes spinAnim {
-  to { transform: rotate(360deg); }
+.btn-submit-art:disabled {
+  background: #D6D3D1 !important;
+  cursor: not-allowed;
+  opacity: 0.7;
 }

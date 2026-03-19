@@ -2,6 +2,7 @@ package poly.edu.dto;
 
 import lombok.Data;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Data
 public class UserProfileDTO {
@@ -13,7 +14,7 @@ public class UserProfileDTO {
     private Integer point;
     private Integer isPremium;
     private Integer isAdmin;
-    private LocalDate createdAt;
+    private LocalDateTime createdAt;
     private Long postCount;
     private Long followerCount;
     private Long followingCount;

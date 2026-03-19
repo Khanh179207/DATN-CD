@@ -8,4 +8,5 @@ public class AdminNotificationDTO {
     private String content;
     private String type;
     private Integer postID; // có thể null
+    private String link; // có thể null
 }

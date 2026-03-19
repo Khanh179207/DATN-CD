@@ -1,9 +1,11 @@
 package poly.edu.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -29,10 +31,12 @@ public class Account {
 
     private String avatar;
 
-    @Column(columnDefinition = "NVARCHAR(500)")
+
     private String bio;
 
-    @Column(nullable = false)
+    // Trong file Account.java
+
+    @Column(name = "token", nullable = true) // 🔥 ĐỔI nullable từ false thành true
     private String token;
 
     @Column(nullable = false)
@@ -48,47 +52,54 @@ public class Account {
     private Integer isActive;
 
     @Column(nullable = false)
-    private LocalDate createdAt;
+    private LocalDateTime createdAt;
 
-    private LocalDate updatedAt;
-    private LocalDate deletedAt;
+    private LocalDateTime updatedAt;
+    private LocalDateTime deletedAt;
 
     // Relationships
-
+    @JsonIgnore
     @OneToMany(mappedBy = "account")
     private List<Post> posts;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "account")
     private List<Comment> comments;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "account")
     private List<Rating> ratings;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "account")
     private List<Favorite> favorites;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "follower")
     private List<Follow> following;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "followee")
     private List<Follow> followers;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "account")
     private List<History> histories;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "account")
     private List<Notification> notifications;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "account")
     private List<Subscription> subscriptions;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "account")
     private List<UserAchievement> userAchievements;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "account")
-    private List<Error> errors;
-
-    @OneToMany(mappedBy = "account")
-    private List<Report> reports;
+    private List<Ticket> tickets;
 
 }

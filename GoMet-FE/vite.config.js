@@ -24,6 +24,15 @@ export default defineConfig({
   server: {
     host: true,
     cors: true,
+    port: 5173,
+
+    // FIX lỗi Google OAuth popup
+    // FIX lỗi Google OAuth popup
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups', // <--- Sửa dòng này
+      'Cross-Origin-Embedder-Policy': 'unsafe-none',
+    },
+
     proxy: {
       '/api': {
         target: 'http://localhost:8080',

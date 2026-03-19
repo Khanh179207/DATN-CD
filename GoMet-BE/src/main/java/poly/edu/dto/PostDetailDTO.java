@@ -11,6 +11,7 @@ public class PostDetailDTO {
     private String description;
     private String ingredients;
     private String media;
+    private String video;
     private Integer level;
     private Integer cookingTime;
     private Integer views;
@@ -42,4 +43,6 @@ public class PostDetailDTO {
 
     // Comments
     private List<CommentDTO> comments;
+    // Thêm vào trong file PostDetailDTO.java
+    private Boolean isLiked;
 }

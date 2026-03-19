@@ -9,6 +9,7 @@ public class PublicPostDTO {
     private String title;
     private String description;
     private String media;
+    private String video;
     private Integer level;
     private Integer cookingTime;
     private Integer views;
@@ -28,4 +29,6 @@ public class PublicPostDTO {
     private Long ratingCount;
     private Long commentCount;
     private Long favoriteCount;
+    // Thêm vào trong file PublicPostDTO.java
+    private Boolean isLiked; // Nhớ dùng Boolean (chữ B hoa) sếp nhé
 }

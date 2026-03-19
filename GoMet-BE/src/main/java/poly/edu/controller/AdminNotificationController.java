@@ -23,7 +23,7 @@ public class AdminNotificationController {
     // GET all notifications (for admin list)
     @GetMapping
     public ResponseEntity<List<Notification>> getAll() {
-        return ResponseEntity.ok(notificationDAO.findAll());
+        return ResponseEntity.ok(notificationDAO.findByTypeOrderByCreatedAtDesc("ADMIN_MANUAL"));
     }
 
     // Gửi cho tất cả user
@@ -36,7 +36,7 @@ public class AdminNotificationController {
     // Gửi cho 1 user
     @PostMapping("/user/{accountID}")
     public ResponseEntity<?> sendOne(@PathVariable Integer accountID,
-                        @RequestBody AdminNotificationDTO dto) {
+            @RequestBody AdminNotificationDTO dto) {
         adminNotificationService.sendToOne(accountID, dto);
         return ResponseEntity.ok(Map.of("message", "Sent to user " + accountID));
     }
@@ -48,4 +48,3 @@ public class AdminNotificationController {
         return ResponseEntity.ok(Map.of("message", "Deleted"));
     }
 }
-

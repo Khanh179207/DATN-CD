@@ -7,7 +7,7 @@
         <h2 class="section-heading">{{ $t('home.categories') }}</h2>
       </div>
       
-      <div class="nav-controls">
+      <div class="nav-controls" v-if="!loading">
         <button class="nav-btn prev" @click="scroll('left')">❮</button>
         <button class="nav-btn next" @click="scroll('right')">❯</button>
       </div>
@@ -20,41 +20,49 @@
     >
       <div class="carousel-track">
         
-        <div 
-          class="cat-card" 
-          v-for="(cat, index) in categories" 
-          :key="index"
-          :class="{ 'active': activeIndex === index }"
-          @click="handleFilter(cat.slug)"
-          @mouseenter="activeIndex = index"
-        >
-          <div class="card-inner">
-            <div class="card-image-wrapper">
-              <img 
-                :src="cat.image" 
-                loading="lazy" 
-                :alt="cat.name"
-                class="parallax-img"
-              >
-              <div class="overlay-gradient"></div>
-            </div>
-            
-            <div class="glass-tag count-tag">{{ cat.count }}</div>
+        <template v-if="loading">
+          <div class="cat-card" v-for="n in 5" :key="'skel-' + n">
+            <div class="card-inner skeleton-loading"></div>
+          </div>
+        </template>
 
-            <div class="glass-pill name-pill">
-              <span class="cat-name">{{ cat.name }}</span>
+        <template v-else>
+          <div 
+            class="cat-card" 
+            v-for="(cat, index) in displayCategories" 
+            :key="cat.id"
+            :class="{ 'active': activeIndex === index }"
+            @click="handleFilter(cat.id, cat.name)"
+            @mouseenter="activeIndex = index"
+          >
+            <div class="card-inner">
+              <div class="card-image-wrapper">
+                <img 
+                  :src="cat.image" 
+                  loading="lazy" 
+                  :alt="cat.name"
+                  class="parallax-img"
+                >
+                <div class="overlay-gradient"></div>
+              </div>
+              
+              <div class="glass-tag count-tag">{{ cat.count }}</div>
+
+              <div class="glass-pill name-pill">
+                <span class="cat-name">{{ cat.name }}</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="cat-card view-more-card" @click="goToSearch">
-          <div class="card-inner view-more-inner">
-            <div class="view-more-content">
-              <div class="icon-pulse-box">➜</div>
-              <h3>{{ $t('home.view_all') }}</h3>
+          <div class="cat-card view-more-card" @click="goToSearch">
+            <div class="card-inner view-more-inner">
+              <div class="view-more-content">
+                <div class="icon-pulse-box">➜</div>
+                <h3>{{ $t('home.view_all') }}</h3>
+              </div>
             </div>
           </div>
-        </div>
+        </template>
 
       </div>
     </div>
@@ -66,48 +74,68 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { getCategories } from '@/services/categoryService'
+import api from '@/services/api.js' // Đảm bảo sếp đã có file config axios
 
 const router = useRouter()
 const { t } = useI18n()
 const carouselRef = ref(null)
 const activeIndex = ref(0)
+const loading = ref(true)
 const apiCategories = ref([])
 
-// Fallback image map for known category names
+// Bộ sưu tập ảnh dự phòng cực đẹp
 const fallbackImages = {
   'dessert': 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=600&fit=crop',
   'drinks': 'https://images.unsplash.com/photo-1544145945-f90425340c7e?q=80&w=600&fit=crop',
   'healthy': 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?q=80&w=600&fit=crop',
   'main': 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?q=80&w=600&fit=crop',
-  'snack': 'https://images.unsplash.com/photo-1526230427044-d092040d48dc?q=80&w=600&fit=crop',
   'veg': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=600&fit=crop',
-  'breakfast': 'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?q=80&w=600&fit=crop',
-  'soup': 'https://images.unsplash.com/photo-1547592166-23ac45744acd?q=80&w=600&fit=crop',
   'default': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=600&fit=crop',
 }
 
-const getCatImage = (name) => {
+const getCatImage = (name, apiImg) => {
+  if (apiImg) return apiImg; // Nếu BE có ảnh thì dùng luôn
   const key = name.toLowerCase()
-  for (const [k, v] of Object.entries(fallbackImages)) {
-    if (key.includes(k)) return v
-  }
+  if (key.includes('chay') || key.includes('rau')) return fallbackImages.veg
+  if (key.includes('uống') || key.includes('nước')) return fallbackImages.drinks
+  if (key.includes('tráng miệng') || key.includes('ngọt')) return fallbackImages.dessert
   return fallbackImages.default
 }
 
-onMounted(async () => {
+const fetchCategories = async () => {
+  loading.value = true
   try {
-    const cats = await getCategories()
-    apiCategories.value = cats
-  } catch { /* keep empty */ }
+    // Gọi API Public (Backend sếp đã xử lý chỉ lấy IsActive = 1)
+    const res = await api.get('/api/categories')
+    apiCategories.value = res.data
+  } catch (error) {
+    console.error("GOMET System: Lỗi lấy danh mục", error)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(fetchCategories)
+
+// Mapping dữ liệu Backend sang giao diện sếp cần
+const displayCategories = computed(() => {
+  return apiCategories.value.map(c => ({
+    id: c.categoryID,
+    name: c.categoryName,
+    count: (c.postCount || 0) + '+',
+    image: getCatImage(c.categoryName, c.categoryImage)
+  }))
 })
 
-const handleFilter = (slug) => { router.push({ name: 'Search', query: { cat: slug } }) }
+const handleFilter = (id, name) => { 
+  router.push({ name: 'Search', query: { categoryID: id, categoryName: name } }) 
+}
+
 const goToSearch = () => { router.push({ name: 'Search' }) }
 
 const scroll = (direction) => {
   if (!carouselRef.value) return;
-  const cardWidth = 240;
+  const cardWidth = 244; // 220px width + 24px gap
   const scrollAmount = direction === 'left' ? -cardWidth : cardWidth;
   carouselRef.value.scrollBy({ left: scrollAmount, behavior: 'smooth' });
 }
@@ -115,29 +143,8 @@ const scroll = (direction) => {
 const handleScroll = () => {
   if (!carouselRef.value) return;
   const scrollLeft = carouselRef.value.scrollLeft;
-  const cardWidth = 240; 
-  activeIndex.value = Math.round(scrollLeft / cardWidth);
+  activeIndex.value = Math.round(scrollLeft / 244);
 }
-
-const categories = computed(() => {
-  if (apiCategories.value.length > 0) {
-    return apiCategories.value.map(c => ({
-      name: c.categoryName,
-      slug: c.categoryName.toLowerCase().replace(/\s+/g, '-'),
-      count: (c.postCount != null ? c.postCount : '?') + '+',
-      image: getCatImage(c.categoryName)
-    }))
-  }
-  // Fallback static
-  return [
-    { name: t('home.cat_dessert'), slug: 'dessert', count: '150+', image: fallbackImages.dessert },
-    { name: t('home.cat_drinks'),  slug: 'drinks',  count: '60+',  image: fallbackImages.drinks },
-    { name: t('home.cat_healthy'), slug: 'healthy', count: '85+',  image: fallbackImages.healthy },
-    { name: t('home.cat_main'),    slug: 'main-course', count: '300+', image: fallbackImages.main },
-    { name: t('home.cat_snacks'),  slug: 'snacks', count: '200+',  image: fallbackImages.snack },
-    { name: t('home.cat_veg'),     slug: 'vegetarian', count: '120+', image: fallbackImages.veg },
-  ]
-})
 </script>
 
 <style scoped>
@@ -174,7 +181,6 @@ const categories = computed(() => {
   cursor: pointer;
   font-size: var(--text-sm); color: var(--color-neutral-900);
   box-shadow: var(--shadow-xs);
-  /* Use composited transform only, not box-shadow */
   transition: background var(--duration-fast) var(--ease-out),
               transform  var(--duration-fast) var(--ease-spring),
               color      var(--duration-fast) var(--ease-out);
@@ -189,7 +195,6 @@ const categories = computed(() => {
   overflow-x: auto;
   scroll-behavior: smooth;
   scrollbar-width: none;
-  /* Padding 40px để chứa hiệu ứng zoom không bị cắt */
   padding: 20px 40px 50px 40px; 
   scroll-snap-type: x mandatory; 
 }
@@ -203,7 +208,6 @@ const categories = computed(() => {
   position: relative; cursor: pointer;
   scroll-snap-align: start;
   perspective: 1000px;
-  /* Promote to own layer so hover changes don’t repaint the whole page */
   will-change: transform;
   transition: transform var(--duration-normal) var(--ease-spring);
 }
@@ -214,10 +218,20 @@ const categories = computed(() => {
   position: relative;
   background: var(--color-neutral-0);
   box-shadow: var(--shadow-md);
-  /* Explicit props only — never 'all' */
   transition: transform  var(--duration-normal) var(--ease-out),
               box-shadow var(--duration-normal) var(--ease-out),
               border     var(--duration-normal) var(--ease-out);
+}
+
+/* Skeleton Effect */
+.skeleton-loading {
+  background: linear-gradient(90deg, #f5f5f4 25%, #e7e5e4 50%, #f5f5f4 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 /* Ảnh Parallax */
@@ -228,13 +242,11 @@ const categories = computed(() => {
 }
 .overlay-gradient {
   position: absolute; inset: 0;
-  /* Gradient đậm hơn ở đáy để làm nổi bật chữ */
   background: linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,0.7) 100%);
   z-index: 1;
 }
 
 /* --- GLASSMORPHISM ELEMENTS --- */
-/* Tag số lượng */
 .glass-tag {
   position: absolute; top: 15px; right: 15px; z-index: 2;
   background: rgba(255, 255, 255, 0.25);
@@ -243,10 +255,8 @@ const categories = computed(() => {
   color: white; font-size: 0.75rem; font-weight: 800;
   padding: 6px 12px; border-radius: 12px;
   box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 
-/* Tên danh mục (Pill) */
 .glass-pill {
   position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); z-index: 2;
   background: rgba(255, 255, 255, 0.9);
@@ -255,22 +265,19 @@ const categories = computed(() => {
   box-shadow: var(--shadow-lg);
   white-space: nowrap;
   border: 1px solid rgba(255, 255, 255, 0.8);
-  /* Only transition composited properties + background */
   transition: background var(--duration-normal) var(--ease-out),
               transform  var(--duration-normal) var(--ease-spring),
               border-color var(--duration-normal) var(--ease-out);
 }
 .cat-name { font-size: var(--text-base); font-weight: var(--font-extrabold); color: var(--color-neutral-900); letter-spacing: -0.5px; }
 
-/* --- INTERACTIVE STATES (HOVER) --- */
+/* --- INTERACTIVE STATES --- */
 .cat-card:hover .card-inner {
   transform: translateY(-12px);
   box-shadow: var(--shadow-primary-lg);
   border: 1px solid rgba(234, 88, 12, 0.2);
 }
-
 .cat-card:hover .parallax-img { transform: scale(1.1); }
-
 .cat-card:hover .glass-pill {
   background: var(--color-primary-600);
   transform: translateX(-50%) scale(1.05);
@@ -283,7 +290,6 @@ const categories = computed(() => {
   background: var(--color-primary-50);
   border: 2px dashed var(--color-primary-300);
   display: flex; align-items: center; justify-content: center;
-  box-shadow: none !important;
 }
 .view-more-content { text-align: center; }
 .icon-pulse-box {
@@ -292,18 +298,15 @@ const categories = computed(() => {
   display: flex; align-items: center; justify-content: center;
   margin: 0 auto var(--space-3); font-size: var(--text-xl);
   box-shadow: var(--shadow-primary-sm);
-  /* Composited pulse: scale only, no box-shadow animation */
   animation: pulseIcon 2.5s var(--ease-in-out) infinite;
 }
 
-/* ⚡ Composited-only pulse using scale + opacity */
 @keyframes pulseIcon {
-  0%, 100% { transform: scale(1);    opacity: 1; }
-  50%       { transform: scale(1.12); opacity: 0.85; }
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.12); opacity: 0.85; }
 }
 
 .view-more-card h3 { font-family: var(--font-ui); font-size: var(--text-base); font-weight: var(--font-extrabold); color: var(--color-primary-700); margin: 0; }
-
 .view-more-card:hover .view-more-inner {
   background: var(--color-primary-100); border-color: var(--color-primary-600); 
   transform: translateY(-5px);
@@ -311,7 +314,7 @@ const categories = computed(() => {
 .view-more-card:hover .icon-pulse-box { background: var(--color-primary-600); color: var(--color-neutral-0); }
 
 @media (max-width: 768px) {
-  .section-header { padding: 0 var(--space-5); margin-bottom: var(--space-4); }
+  .section-header { padding: 0 var(--space-5); }
   .carousel-wrapper { padding: var(--space-3) var(--space-5) var(--space-8) var(--space-5); }
   .cat-card { min-width: 160px; height: 240px; }
   .nav-controls { display: none; }
