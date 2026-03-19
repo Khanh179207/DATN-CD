@@ -3,9 +3,6 @@ package poly.edu.dto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
-
-import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
@@ -22,7 +19,10 @@ public class AdminEventDTO {
     private String reward;
     private Integer maxVotes;
 
-    // 🔥 Đổi hết sang String để nhận dữ liệu an toàn 100%
+    private Integer isActive;
+    private Integer isForceEnded;
+
+    // Đổi sang kiểu String để nhận dữ liệu từ Vue và truyền lại cho Vue một cách an toàn
     private String startAt;
     private String endAt;
     private String voteStartAt;

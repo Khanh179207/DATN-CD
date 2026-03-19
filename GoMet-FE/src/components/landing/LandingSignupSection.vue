@@ -135,7 +135,7 @@
     <input type="checkbox" v-model="registerForm.agreeTerms" required>
     <span class="checkmark"></span>
     <span class="label-text">
-      Tôi đồng ý với <router-link to="/terms">Điều khoản</router-link> và <router-link to="/policy">Chính sách bảo mật</router-link>
+      Tôi đồng ý với <router-link to="/terms-and-policy">Điều khoản</router-link> và <router-link to="/terms-and-policy">Chính sách bảo mật</router-link>
     </span>
   </label>
 </div>

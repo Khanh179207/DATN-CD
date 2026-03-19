@@ -3,8 +3,13 @@ package poly.edu.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import poly.edu.dao.AccountDAO;
+import poly.edu.dao.PostDAO;
 import poly.edu.dao.TicketDAO;
 import poly.edu.dto.AdminTicketDTO;
+import poly.edu.dto.TicketDTO;
+import poly.edu.entity.Account;
+import poly.edu.entity.Post;
 import poly.edu.entity.Ticket;
 import poly.edu.service.NotificationService;
 import poly.edu.service.TicketService;
@@ -17,16 +22,41 @@ import java.util.stream.Collectors;
 public class TicketServiceImpl implements TicketService {
 
     private final TicketDAO ticketDAO;
+    // 🔥 Giữ lại cả AccountDAO, PostDAO (của sếp) và SimpMessagingTemplate (của develop)
+    private final AccountDAO accountDAO;
+    private final PostDAO postDAO;
     private final SimpMessagingTemplate messagingTemplate;
     private final NotificationService notificationService;
 
+    /**
+     * 🔥 HÀM ĐỒNG BỘ: Lưu Ticket từ DTO (FE up ảnh lấy link trước)
+     */
     @Override
-    public Ticket createTicket(Ticket ticket) {
-        ticket.setStatus(0); // 0 = Chờ xử lý
+    public Ticket saveTicket(TicketDTO dto) {
+        Ticket ticket = new Ticket();
+        ticket.setTicketType(dto.getTicketType());
+        ticket.setTitle(dto.getTitle());
+        ticket.setDescription(dto.getDescription());
+        ticket.setAttachment(dto.getAttachment()); // Link secure_url từ FE gửi về
+        ticket.setStatus(0); // Chờ xử lý
         ticket.setCreatedAt(LocalDateTime.now());
+
+        // 🔥 Logic của sếp: Tìm và gán Account (Sử dụng accountId từ DTO)
+        if (dto.getAccountId() != null) {
+            accountDAO.findById(dto.getAccountId())
+                    .ifPresent(ticket::setAccount);
+        }
+
+        // 🔥 Logic của sếp: Tìm và gán bài viết bị báo cáo (Sử dụng targetPostId từ DTO)
+        if (dto.getTargetPostId() != null) {
+            postDAO.findById(dto.getTargetPostId())
+                    .ifPresent(ticket::setTargetPost);
+        }
+
+        // 🔥 Lưu ticket trước
         Ticket savedTicket = ticketDAO.save(ticket);
 
-        // Send admin alert for new ticket
+        // 🔥 Logic của develop: Send admin alert for new ticket
         sendAdminAlert(savedTicket);
 
         return savedTicket;
@@ -35,13 +65,12 @@ public class TicketServiceImpl implements TicketService {
     @Override
     public List<AdminTicketDTO> getTicketsByStatus(Integer status) {
         return ticketDAO.findByStatus(status).stream()
-                .map(this::convertToAdminDTO) // Dùng hàm helper chuẩn
+                .map(this::convertToAdminDTO)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<AdminTicketDTO> getAllTickets() {
-        // 🔥 FIX Ở ĐÂY: Lấy hết và dùng convertToAdminDTO để map cho an toàn
         return ticketDAO.findAll().stream()
                 .map(this::convertToAdminDTO)
                 .collect(Collectors.toList());
@@ -50,20 +79,19 @@ public class TicketServiceImpl implements TicketService {
     @Override
     public Ticket updateTicketStatus(Integer ticketId, Integer newStatus) {
         Ticket ticket = ticketDAO.findById(ticketId)
-                .orElseThrow(() -> new RuntimeException("Ticket not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy Ticket!"));
 
         Integer oldStatus = ticket.getStatus();
 
         ticket.setStatus(newStatus);
 
         // 🔥 1. NẾU LÀ TIẾP NHẬN (Status = 1) -> Lưu giờ bắt đầu xử lý
-        // Dùng điều kiện == null để lỡ sếp có bấm lại nút này nó cũng không bị ghi đè
-        // giờ cũ
+        // Dùng điều kiện == null để lỡ sếp có bấm lại nút này nó cũng không bị ghi đè giờ cũ (Giữ comment của develop)
         if (newStatus == 1 && ticket.getProcessedAt() == null) {
             ticket.setProcessedAt(LocalDateTime.now());
         }
 
-        // 🔥 2. NẾU LÀ GIẢI QUYẾT XONG (2) HOẶC TỪ CHỐI (3) -> Lưu giờ đóng Ticket
+        // 2. NẾU LÀ GIẢI QUYẾT XONG (2) HOẶC TỪ CHỐI (3) -> Lưu giờ đóng Ticket
         if (newStatus == 2 || newStatus == 3) {
             ticket.setResolvedAt(LocalDateTime.now());
         }
@@ -101,7 +129,9 @@ public class TicketServiceImpl implements TicketService {
         return savedTicket;
     }
 
-    // Hàm helper "vàng" - Giữ nguyên nhưng sếp check kỹ tên field trong DTO nhé
+    /**
+     * Hàm helper chuyển đổi Entity sang DTO cho Admin xem
+     */
     private AdminTicketDTO convertToAdminDTO(Ticket ticket) {
         AdminTicketDTO dto = new AdminTicketDTO();
         dto.setTicketID(ticket.getTicketID());
@@ -121,7 +151,6 @@ public class TicketServiceImpl implements TicketService {
         }
 
         if (ticket.getTargetPost() != null) {
-            // Check xem DTO của sếp là setTargetPostId hay setTargetPostID nhé
             dto.setTargetPostId(ticket.getTargetPost().getPostID());
         }
 

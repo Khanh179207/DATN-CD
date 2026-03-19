@@ -1,0 +1,248 @@
+// ==========================================
+// 🎨 GOMET ADMIN - CATEGORY MANAGEMENT (REFINED COMPACT 2026)
+// ==========================================
+
+// 1. VARIABLES (Giữ nguyên hệ thống biến)
+$orange: #ea580c;
+$orange-light: #fff7ed;
+$orange-gradient: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+$text-main: #0f172a;
+$text-sub: #64748b;
+$white: #ffffff;
+$bg-light: #f8fafc;
+$shadow-soft: 0 10px 25px rgba(0, 0, 0, 0.03);
+$shadow-lux: 0 20px 50px rgba(15, 23, 42, 0.06);
+$shadow-hover: 0 25px 60px rgba(234, 88, 12, 0.12);
+$border-soft: rgba(0, 0, 0, 0.04);
+
+// 2. KEYFRAMES
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(30px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+// 3. MAIN WRAPPER
+.category-sovereign-wrapper {
+  max-width: 100% !important;
+  margin: 0;
+  padding: 20px 35px; // 🟢 Thu nhỏ từ 35px 50px
+  font-family: 'Inter', -apple-system, sans-serif;
+  color: $text-main;
+  min-height: 100vh;
+  background: $bg-light;
+  background-image: 
+    radial-gradient(circle at 90% 10%, rgba(234, 88, 12, 0.04), transparent 40%),
+    radial-gradient(circle at 10% 90%, rgba(59, 130, 246, 0.02), transparent 30%);
+
+  .page-header-lux {
+    display: flex; justify-content: space-between; align-items: center; 
+    margin-bottom: 30px; // 🟢 Giảm khoảng cách tiêu đề
+    
+    .page-title { 
+      font-size: 2.2rem; // 🟢 Thu nhỏ từ 2.8rem
+      font-weight: 950; margin: 0; letter-spacing: -1.2px; 
+      background: linear-gradient(to right, #0f172a, #334155);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .page-subtitle { color: $text-sub; margin: 4px 0 0; font-weight: 600; font-size: 1rem; }
+  }
+
+  .btn-action-lux {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    padding: 12px 28px; // 🟢 Thu nhỏ từ 16px 36px
+    background: $orange-gradient; border: none; border-radius: 16px;
+    font-weight: 900; font-size: 0.95rem; color: $white; cursor: pointer; white-space: nowrap;
+    box-shadow: 0 8px 20px rgba(234, 88, 12, 0.2); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    &:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(234, 88, 12, 0.35); }
+  }
+}
+
+// 4. STATS GRID
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 25px; // 🟢 Giảm gap từ 35px
+  margin-bottom: 40px;
+
+  .stat-card {
+    background: $white;
+    padding: 20px 25px; // 🟢 Thu nhỏ padding
+    border-radius: 24px; // 🟢 Bo góc nhỏ lại cho cân đối
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border: 1px solid $border-soft;
+    box-shadow: $shadow-lux;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+    min-width: 0;
+
+    &::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background: transparent; transition: 0.3s; }
+    &:hover { transform: translateY(-5px); border-color: rgba(234, 88, 12, 0.4); &::after { background: $orange-gradient; } }
+    
+    .icon-wrap { 
+      flex-shrink: 0;
+      width: 50px; height: 50px; // 🟢 Thu nhỏ từ 65px
+      border-radius: 15px; display: flex; align-items: center; justify-content: center; 
+      font-size: 1.3rem; transition: 0.4s; 
+    }
+
+    .stat-info {
+      flex: 1; min-width: 0;
+      .label { font-size: 0.75rem; font-weight: 800; color: $text-sub; text-transform: uppercase; letter-spacing: 0.5px; }
+      .value { 
+        font-size: clamp(1.1rem, 1.8vw, 1.9rem); // 🟢 Thu nhỏ trần từ 2.2rem xuống 1.9rem
+        font-weight: 950; color: $text-main; line-height: 1.1; letter-spacing: -0.5px; margin: 0;
+        &.text-truncate { display: block; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      }
+    }
+  }
+  .highlight-card { border: 2px solid #ffedd5; background: linear-gradient(180deg, #ffffff 0%, #fffbf5 100%); .value { color: $orange; } }
+}
+
+// 5. CARDS & GRID LIST
+.grid-list { 
+  display: grid; 
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); // 🟢 Thu nhỏ chiều ngang tối thiểu của card
+  gap: 25px; // 🟢 Giảm gap từ 40px
+}
+
+.lux-cat-card {
+  background: $white; border-radius: 24px; // 🟢 Thu nhỏ từ 36px
+  overflow: hidden; border: 1px solid $border-soft;
+  box-shadow: $shadow-soft; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  display: flex; flex-direction: column; // 🔥 FIX OVERLAP: Đảm bảo content không đè nhau
+
+  &:hover { 
+    transform: translateY(-8px); box-shadow: $shadow-hover; border-color: rgba(234, 88, 12, 0.3);
+    .card-img-wrap .cat-img { transform: scale(1.1); filter: brightness(0.6); }
+    .overlay-actions { opacity: 1 !important; visibility: visible !important; backdrop-filter: blur(4px); }
+    .overlay-actions .btn-act { transform: translateY(0) scale(1) !important; opacity: 1 !important; }
+  }
+
+  .card-img-wrap { 
+    position: relative; height: 170px; // 🟢 Thu nhỏ từ 220px
+    overflow: hidden; background: #e2e8f0;
+    .cat-img { width: 100%; height: 100%; object-fit: cover; transition: 0.7s cubic-bezier(0.2, 0.8, 0.2, 1); }
+    
+    .post-count-badge {
+      position: absolute; top: 15px; left: 15px; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(8px);
+      color: white; padding: 6px 14px; border-radius: 12px; font-weight: 800; font-size: 0.8rem; z-index: 5;
+    }
+
+    .overlay-actions { 
+      position: absolute; inset: 0; background: rgba(15, 23, 42, 0.4);
+      display: flex; align-items: center; justify-content: center; gap: 15px; 
+      opacity: 0; visibility: hidden; transition: 0.4s ease; z-index: 10;
+      
+      .btn-act { 
+        width: 48px; height: 48px; // 🟢 Thu nhỏ từ 60px
+        border-radius: 50%; border: none; cursor: pointer; background: white; color: $text-main;
+        font-size: 1.2rem; display: flex; align-items: center; justify-content: center; 
+        transform: translateY(15px) scale(0.8); opacity: 0; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        &:hover { transform: scale(1.1) !important; }
+        &.edit { color: $orange; &:hover { background: $orange; color: white; } }
+        &.delete { color: #ef4444; &:hover { background: #ef4444; color: white; } }
+      }
+    }
+  }
+
+  .card-content { 
+    padding: 20px 24px; // 🟢 Thu nhỏ từ 35px 30px
+    display: flex; flex-direction: column; gap: 8px; // 🔥 FIX OVERLAP: Tạo khoảng cách tự động
+
+    .cat-name { 
+      margin: 0; font-size: 1.25rem; // 🟢 Thu nhỏ từ 1.5rem
+      font-weight: 950; color: $text-main; letter-spacing: -0.3px; 
+    }
+    .stat-row { display: flex; justify-content: space-between; align-items: center; }
+    .ratio-text { font-size: 0.8rem; font-weight: 800; color: $text-sub; text-transform: uppercase; }
+    .ratio-pct { font-size: 1.1rem; font-weight: 950; color: $orange; }
+    .progress-bar {
+      height: 8px; background: #f1f5f9; border-radius: 10px; overflow: hidden; width: 100%;
+      .fill { height: 100%; background: $orange-gradient; border-radius: 10px; transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1); }
+    }
+  }
+}
+
+// 6. UPLOAD COMPONENTS
+.upload-custom-zone {
+  width: 100%; height: 150px; // 🟢 Thu nhỏ từ 200px
+  border: 2px dashed #e2e8f0; border-radius: 20px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  cursor: pointer; position: relative; overflow: hidden; background: #fafafa; transition: 0.3s;
+  .up-placeholder { gap: 6px; font-size: 0.85rem; color: #94a3b8; font-weight: 700; }
+  .preview-img-box { width: 100%; height: 100%; object-fit: cover; }
+}
+
+.spinner { width: 16px; height: 16px; border: 2.5px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
+
+// 7. MODALS
+.modal-glass-backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(10px); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.modal-lux-content { background: $white; width: 100%; max-width: 550px; // 🟢 Thu nhỏ từ 650px
+border-radius: 30px; box-shadow: 0 40px 100px rgba(0,0,0,0.3); overflow: hidden; }
+
+.modal-header-lux {
+  padding: 25px 35px 15px; display: flex; justify-content: space-between; align-items: center;
+  h3 { margin: 0; font-weight: 950; font-size: 1.7rem; color: $text-main; }
+  .btn-x { background: #f1f5f9; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 1.3rem; cursor: pointer; color: $text-sub; display: flex; align-items: center; justify-content: center; &:hover { background: #fee2e2; color: #ef4444; } }
+}
+
+.modal-body-lux {
+  padding: 10px 35px 30px;
+  .form-group-lux {
+    margin-bottom: 20px; // 🟢 Giảm từ 30px
+    label { display: block; margin-bottom: 8px; font-weight: 900; color: $text-sub; font-size: 0.85rem; text-transform: uppercase; }
+    .input-lux { width: 100%; padding: 14px 20px; border: 2px solid #f1f5f9; border-radius: 16px; font-size: 1rem; font-weight: 700; background: #fafafa; outline: none; }
+    .input-lux:focus { border-color: $orange; background: $white; box-shadow: 0 0 0 5px rgba(234, 88, 12, 0.08); }
+  }
+  .img-preview-lux { margin-top: 15px; border-radius: 20px; overflow: hidden; border: 2px dashed #e2e8f0; background: #f8fafc; padding: 5px; }
+  .img-preview-lux img { width: 100%; height: 160px; object-fit: cover; border-radius: 16px; display: block; }
+}
+
+.modal-footer-lux {
+  padding: 20px 35px; border-top: 1px solid #f1f5f9; display: flex; justify-content: flex-end; gap: 15px;
+  .btn-lux { padding: 12px 30px; border-radius: 16px; font-weight: 950; cursor: pointer; font-size: 0.95rem; border: none; }
+  .btn-reject { background: #f1f5f9; color: $text-sub; }
+  .btn-resolve { background: $orange-gradient; color: white; &:not(:disabled):hover { transform: translateY(-3px); } }
+}
+
+// 8. SKELETONS & ALERTS
+.skeleton { 
+  .skel-img { height: 170px; border-radius: 24px; margin-bottom: 15px; background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite;}
+  .skel-line { height: 14px; background: #f1f5f9; border-radius: 8px; margin-bottom: 10px; animation: shimmer 1.5s infinite; &.short { width: 60%; } }
+}
+
+.error-banner { padding: 15px 25px; border-radius: 16px; margin-bottom: 25px; font-size: 1rem; button { padding: 10px 20px; border-radius: 12px; } }
+.empty-state { padding: 60px; font-size: 1.1rem; border-radius: 30px; }
+
+// 9. RESPONSIVE
+@media (max-width: 1400px) { .category-sovereign-wrapper { padding: 20px 25px; } }
+@media (max-width: 768px) { 
+  .category-sovereign-wrapper { padding: 15px; }
+  .page-header-lux .page-title { font-size: 1.8rem; }
+  .grid-list { grid-template-columns: 1fr; }
+}
+.clickable-card {
+  cursor: pointer;
+  
+  &:hover {
+    .view-posts-hint {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .view-posts-hint {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: $orange;
+    text-align: right;
+    opacity: 0;
+    transform: translateY(5px);
+    transition: all 0.3s ease;
+  }
+}

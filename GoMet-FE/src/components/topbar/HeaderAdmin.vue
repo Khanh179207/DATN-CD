@@ -1,9 +1,9 @@
 <template>
-  <header class="header-admin-global" :class="{ 'is-scrolled': isScrolled }">
+  <header class="header-admin-zenith" :class="{ 'is-scrolled': isScrolled }">
 
     <div class="h-left">
-      <div class="breadcrumb-executive">
-        <div class="root-node">
+      <div class="breadcrumb-zenith">
+        <div class="cube-icon">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <rect x="3" y="3" width="7" height="7"></rect>
             <rect x="14" y="3" width="7" height="7"></rect>
@@ -11,98 +11,127 @@
             <rect x="3" y="14" width="7" height="7"></rect>
           </svg>
         </div>
-        <svg class="path-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          stroke-width="3">
-          <path d="M9 18l6-6-6-6"></path>
-        </svg>
-        <span class="current-path">{{ route.name || 'Control Center' }}</span>
+        <div class="arrow-divider">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+            <path d="M9 18l6-6-6-6"></path>
+          </svg>
+        </div>
+
+        <div class="status-indicator">
+          <span class="route-title">{{ route.name || 'Trung tâm điều khiển' }}</span>
+        </div>
       </div>
     </div>
 
     <div class="h-right">
 
-      <div class="action-wrapper" v-click-outside="closeNoti">
-        <button class="btn-command" :class="{ active: showNoti }" @click="toggleNoti">
+      <div class="action-wrap" v-click-outside="closeNoti">
+        <button class="btn-radar" :class="{ active: showNoti }" @click="toggleNoti">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
           </svg>
-          <div v-if="alertCount > 0" class="indicator-pulse">{{ alertCount }}</div>
+          <div class="radar-dot"></div>
+          <div class="radar-waves"></div>
         </button>
 
-        <transition name="spring-panel">
-          <div v-if="showNoti" class="dropdown-lux noti-panel">
-            <div class="lux-h">
-              <span class="lux-t">System Alerts</span>
-              <button class="lux-link" @click="clearAllAlerts">Clear all</button>
+        <transition name="zenith-drop">
+          <div v-if="showNoti" class="panel-zenith noti-panel">
+            <div class="z-head">
+              <span class="z-title">Thông báo hệ thống</span>
+              <button class="z-mark-read">Đã đọc hết</button>
             </div>
-            <div class="lux-b custom-scroll">
-              <div v-if="sortedAlerts.length === 0" class="empty-state">
-                <p>No new alerts</p>
-              </div>
-              <div v-for="alert in sortedAlerts" :key="alert.id" class="lux-card" :class="{ unread: true }"
-                @click="handleAlertClick(alert)">
-                <div class="c-avatar" :class="alert.type === 'TICKET' ? 'alert' : 'pending'">
-                  {{ alert.type === 'TICKET' ? '!' : '⏳' }}
+            <div class="z-body custom-scroll">
+
+              <div class="z-card unread">
+                <div class="card-icon alert">!</div>
+                <div class="card-desc">
+                  <div class="title-row">
+                    <p>Cảnh báo bảo mật</p>
+                    <span class="badge-new">MỚI</span>
+                  </div>
+                  <span class="sub-txt">Phát hiện đăng nhập từ IP lạ (Hà Nội)</span>
+                  <span class="time-txt">Vừa xong</span>
                 </div>
-                <div class="c-content">
-                  <p>{{ alert.message }}</p>
-                  <span class="c-time">{{ timeAgo(alert.createdAt) }}</span>
+              </div>
+
+              <div class="z-card">
+                <div class="card-icon success">✓</div>
+                <div class="card-desc">
+                  <div class="title-row">
+                    <p>Cập nhật hệ thống</p>
+                  </div>
+                  <span class="sub-txt">Phiên bản Gomet v2.5 đã khởi chạy</span>
+                  <span class="time-txt">2 giờ trước</span>
                 </div>
               </div>
+
             </div>
-            <div class="lux-f">
-              <button @click="$router.push('/admin/notifications')">View Audit Log</button>
+            <div class="z-foot">
+              <button @click="$router.push('/admin/notifications')">Xem tất cả thông báo</button>
             </div>
           </div>
         </transition>
       </div>
 
-      <div class="action-wrapper" v-click-outside="closeUser">
-        <div class="user-capsule" @click="toggleUser" :class="{ active: showUser }">
-          <div class="u-avatar-wrap">
+      <div class="action-wrap" v-click-outside="closeUser">
+        <div class="capsule-trigger" @click="toggleUser" :class="{ active: showUser }">
+          <div class="cap-avatar">
             <img :src="adminAvatar" :alt="adminName">
-            <div class="u-status"></div>
+            <span class="cap-status"></span>
           </div>
-          <div class="u-details">
-            <span class="u-mail">{{ adminEmail }}</span>
-            <span class="u-tag">Super Admin</span>
+          <div class="cap-meta">
+            <span class="cap-mail">{{ adminEmail }}</span>
+            <span class="cap-role">Quản trị cấp cao</span>
           </div>
-          <svg class="u-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            stroke-width="3">
-            <path d="M6 9l6 6 6-6"></path>
-          </svg>
+          <div class="cap-chevron">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+              <path d="M6 9l6 6 6-6"></path>
+            </svg>
+          </div>
         </div>
 
-        <transition name="spring-panel">
-          <div v-if="showUser" class="dropdown-lux user-panel">
-            <div class="user-hero">
-              <div class="hero-avatar">
+        <transition name="zenith-drop">
+          <div v-if="showUser" class="panel-zenith user-panel">
+            <div class="u-cover">
+              <div class="u-avatar-epic">
                 <img :src="adminAvatar" :alt="adminName">
+                <div class="epic-ring"></div>
               </div>
-              <strong>{{ adminName }}</strong>
-              <span>{{ adminEmail }}</span>
+              <h3 class="u-name">{{ adminName }}</h3>
+              <p class="u-email">{{ adminEmail }}</p>
             </div>
-            <div class="user-nav">
-              <button @click="goToProfile"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2.5">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="12" cy="7" r="4"></circle>
-                </svg> Profile Account</button>
-              <button @click="goToSettings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2.5">
-                  <circle cx="12" cy="12" r="3"></circle>
-                  <path
-                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
-                  </path>
-                </svg> Preferences</button>
-              <div class="nav-sep"></div>
-              <button @click="handleLogout" class="danger"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2.5">
+
+            <div class="u-menu-grid">
+              <button class="u-menu-item" @click="goToProfile">
+                <div class="i-box"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg></div>
+                <span>Hồ sơ cá nhân</span>
+              </button>
+              <button class="u-menu-item" @click="goToSettings">
+                <div class="i-box"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path
+                      d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                    </path>
+                  </svg></div>
+                <span>Cấu hình hệ thống</span>
+              </button>
+            </div>
+
+            <div class="u-footer">
+              <button class="btn-logout" @click="handleLogout">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                   <polyline points="16 17 21 12 16 7"></polyline>
                   <line x1="21" y1="12" x2="9" y2="12"></line>
-                </svg> Sign Out System</button>
+                </svg>
+                Đăng xuất an toàn
+              </button>
             </div>
           </div>
         </transition>
@@ -110,14 +139,12 @@
 
     </div>
   </header>
-  <audio id="adminNotificationSound" src="/sounds/notification.mp3" preload="auto"></audio>
 </template>
+
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { getOpenTickets, getPendingPosts } from '@/services/adminService'
-import webSocketService from '@/services/webSocketService'
 
 const route = useRoute()
 const router = useRouter()
@@ -128,8 +155,6 @@ const showUser = ref(false)
 const isScrolled = ref(false)
 const alerts = ref([])
 const alertInterval = ref(null)
-
-const handleScroll = () => { isScrolled.value = window.scrollY > 20 }
 
 // Fetch alerts from backend APIs
 const fetchAlerts = async () => {
@@ -236,62 +261,80 @@ const handleAlertClick = (alert) => {
   showNoti.value = false
 }
 
+// --- 🏗️ LIFECYCLE ---
 onMounted(() => {
   window.addEventListener('scroll', handleScroll)
-
-  // Start alert polling and WebSocket
-  startAlertPolling()
-  webSocketService.connect()
-
-  // Listen for real-time alerts
-  window.addEventListener('admin-alert', handleRealtimeAlert)
 })
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
-
-  // Stop alert polling and WebSocket
-  stopAlertPolling()
-  webSocketService.disconnect()
-
-  // Remove WebSocket listener
-  window.removeEventListener('admin-alert', handleRealtimeAlert)
 })
 
-const adminName = computed(() => auth.currentUser?.username || 'Gomet Master')
-const adminEmail = computed(() => auth.currentUser?.email || 'admin@gomet.system')
+const handleScroll = () => { isScrolled.value = window.scrollY > 15 }
+
+// --- 👤 USER DATA ---
+const adminName = computed(() => auth.currentUser?.username || 'Gomet Admin')
+const adminEmail = computed(() => auth.currentUser?.email || 'admin@gomet.vn')
 const adminAvatar = computed(() =>
   auth.currentUser?.avatar ||
-  `https://ui-avatars.com/api/?name=${encodeURIComponent(adminName.value)}&background=0f172a&color=fb923c&size=128`
+  `https://ui-avatars.com/api/?name=${encodeURIComponent(adminName.value)}&background=f1f5f9&color=ea580c&size=128`
 )
 
-// Computed property for alert count
-const alertCount = computed(() => alerts.value.length)
-
-// Computed property for sorted alerts (newest first)
-const sortedAlerts = computed(() =>
-  alerts.value.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-)
-
-const toggleNoti = () => { showNoti.value = !showNoti.value; showUser.value = false }
+// --- 🕹️ UI CONTROL LOGIC ---
+const toggleNoti = () => { showNoti.value = !showNoti.value; showUser.value = false; }
 const closeNoti = () => { showNoti.value = false }
-const toggleUser = () => { showUser.value = !showUser.value; showNoti.value = false }
+
+const toggleUser = () => { showUser.value = !showUser.value; showNoti.value = false; }
 const closeUser = () => { showUser.value = false }
 
-const handleLogout = () => { auth.logout() }
+// --- 🚀 ACTIONS ---
+const handleLogout = () => {
+  closeUser()
+  auth.logout()
+}
+
 const goToProfile = () => { router.push('/profile'); closeUser() }
+const goToSettings = () => { router.push('/admin/settings'); closeUser() }
+
+// --- 🖱️ DIRECTIVE: CLICK OUTSIDE ---
+const vClickOutside = {
+  mounted(el, binding) {
+    el.clickOutsideEvent = (event) => {
+      if (!(el === event.target || el.contains(event.target))) binding.value()
+    }
+    document.body.addEventListener('click', el.clickOutsideEvent)
+  },
+  unmounted(el) { document.body.removeEventListener('click', el.clickOutsideEvent) }
+}
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
-/* --- ✨ 1. HEADER: FROSTED GLASS MASTER --- */
-.header-admin-global {
-  height: 90px;
-  padding: 0 48px;
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(25px) saturate(180%);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+/* =========================================
+   🎨 COLOR VARIABLES
+========================================= */
+.header-admin-zenith {
+  --z-bg: rgba(255, 255, 255, 0.65);
+  --z-bg-scrolled: rgba(255, 255, 255, 0.95);
+  --z-border: rgba(0, 0, 0, 0.03);
+  --z-text-main: #0f172a;
+  --z-text-sub: #64748b;
+  --z-btn-bg: #f8fafc;
+  --z-btn-bg-hover: #ffffff;
+  --z-panel-bg: rgba(255, 255, 255, 0.98);
+  --z-panel-border: #f1f5f9;
+  --z-item-hover: #f8fafc;
+  --z-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+}
+
+/* --- ✨ 1. HEADER: ZENITH GLASS --- */
+.header-admin-zenith {
+  height: 85px;
+  padding: 0 45px;
+  background: var(--z-bg);
+  backdrop-filter: blur(25px) saturate(200%);
+  border-bottom: 1px solid var(--z-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -299,169 +342,172 @@ const goToProfile = () => { router.push('/profile'); closeUser() }
   top: 0;
   z-index: 900;
   font-family: 'Inter', sans-serif;
-  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.4s ease;
 }
 
-.header-admin-global.is-scrolled {
-  height: 68px;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.04);
-  padding: 0 40px;
+.header-admin-zenith.is-scrolled {
+  height: 65px;
+  background: var(--z-bg-scrolled);
+  box-shadow: var(--z-shadow);
 }
 
-/* --- 🧭 2. BREADCRUMB: EXECUTIVE PATH --- */
-.breadcrumb-executive {
+/* --- 🧭 2. BREADCRUMB --- */
+.breadcrumb-zenith {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
 }
 
-.root-node {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: rgba(234, 88, 12, 0.08);
+.cube-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(234, 88, 12, 0.1), rgba(251, 146, 60, 0.05));
   color: #ea580c;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: inset 0 0 0 1px rgba(234, 88, 12, 0.1);
+  border: 1px solid rgba(234, 88, 12, 0.15);
 }
 
-.path-arrow {
-  color: #cbd5e1;
+.arrow-divider {
+  color: var(--z-text-sub);
+  display: flex;
+  opacity: 0.5;
 }
 
-.current-path {
-  color: #0f172a;
+.status-indicator {
+  display: flex;
+  flex-direction: column;
+}
+
+.route-title {
+  color: var(--z-text-main);
   font-weight: 800;
-  font-size: 1.1rem;
-  letter-spacing: -0.02em;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+  transition: 0.3s;
 }
 
 /* --- ⚡ 3. ACTIONS HUB --- */
 .h-right {
   display: flex;
   align-items: center;
-  gap: 28px;
+  gap: 20px;
 }
 
-.action-wrapper {
+.action-wrap {
   position: relative;
 }
 
-.btn-command {
-  width: 46px;
-  height: 46px;
-  border: 2px solid #ccc;
-  background: transparent;
+.btn-radar {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--z-border);
+  background: var(--z-btn-bg);
   border-radius: 14px;
-  color: #64748b;
+  color: var(--z-text-sub);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   position: relative;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.btn-command:hover {
-  background: #f1f5f9;
-  color: #0f172a;
-  transform: translateY(-1px);
-  border-color: #ea580c;
+.btn-radar:hover,
+.btn-radar.active {
+  background: var(--z-btn-bg-hover);
+  color: #ea580c;
+  box-shadow: 0 10px 20px -5px rgba(234, 88, 12, 0.15), inset 0 0 0 1px rgba(254, 215, 170, 0.3);
+  transform: translateY(-2px);
 }
 
-.btn-command.active {
-  background: #fff;
-  color: #0f172a;
-  border-color: #ea580c;
-  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.1);
-}
-
-.indicator-pulse {
+.radar-dot {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 10px;
+  right: 10px;
+  width: 6px;
+  height: 6px;
   background: #ea580c;
-  color: white;
-  font-size: 10px;
-  font-weight: 900;
-  width: 18px;
-  height: 18px;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 3px solid #fff;
-  box-shadow: 0 0 15px rgba(234, 88, 12, 0.4);
+  box-shadow: 0 0 0 2px var(--z-bg-scrolled);
+  z-index: 2;
 }
 
-/* --- 💊 4. USER CAPSULE --- */
-.user-capsule {
+.radar-waves {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fb923c;
+  z-index: 1;
+  animation: radarPulse 2s infinite;
+}
+
+/* Identity Capsule */
+.capsule-trigger {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   cursor: pointer;
-  padding: 6px 18px 6px 8px;
-  border-radius: 100px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  padding: 5px 14px 5px 5px;
+  border-radius: 50px;
+  background: var(--z-bg-scrolled);
+  border: 1px solid var(--z-panel-border);
+  transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  margin-left: 8px;
 }
 
-.user-capsule:hover,
-.user-capsule.active {
+.capsule-trigger:hover,
+.capsule-trigger.active {
   border-color: #ea580c;
-  background: #fff;
-  box-shadow: 0 10px 25px -5px rgba(234, 88, 12, 0.12);
-  transform: translateY(-1px);
+  box-shadow: 0 12px 24px -8px rgba(234, 88, 12, 0.2);
 }
 
-.u-avatar-wrap {
+.cap-avatar {
   position: relative;
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
 }
 
-.u-avatar-wrap img {
+.cap-avatar img {
   width: 100%;
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid #fff;
-  box-shadow: 0 0 0 1px #e2e8f0;
+  border: 2px solid var(--z-bg-scrolled);
 }
 
-.u-status {
+.cap-status {
   position: absolute;
   bottom: 0;
   right: 0;
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   background: #10b981;
-  border: 2px solid #fff;
+  border: 2px solid var(--z-bg-scrolled);
   border-radius: 50%;
 }
 
-.u-details {
+.cap-meta {
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  transition: 0.3s;
 }
 
-.u-mail {
+.cap-mail {
   font-size: 13px;
   font-weight: 700;
-  color: #1e293b;
-  max-width: 160px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  color: var(--z-text-main);
+  letter-spacing: -0.01em;
 }
 
-.u-tag {
-  font-size: 9px;
+.cap-role {
+  font-size: 10px;
   color: #ea580c;
   font-weight: 800;
   text-transform: uppercase;
@@ -469,247 +515,357 @@ const goToProfile = () => { router.push('/profile'); closeUser() }
   margin-top: -1px;
 }
 
-.u-icon {
-  color: #94a3b8;
+.cap-chevron {
+  color: var(--z-text-sub);
   transition: 0.3s;
+  display: flex;
+  margin-left: 4px;
 }
 
-.active .u-icon {
+.active .cap-chevron {
   transform: rotate(180deg);
   color: #ea580c;
 }
 
-/* --- 🏛️ 5. DROPDOWN LUX DESIGN --- */
-.dropdown-lux {
+/* --- 🏛️ 4. ZENITH PANELS --- */
+.panel-zenith {
   position: absolute;
-  top: calc(100% + 15px);
+  top: calc(100% + 16px);
   right: 0;
-  background: white;
-  width: 320px;
+  background: var(--z-panel-bg);
+  backdrop-filter: blur(20px);
   border-radius: 20px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: 0 0 0 1px var(--z-border), var(--z-shadow);
   overflow: hidden;
   z-index: 1000;
   transform-origin: top right;
 }
 
-.lux-h {
+.user-panel {
+  width: 300px;
+}
+
+.noti-panel {
+  width: 360px;
+}
+
+/* Cấu trúc dùng chung Panel */
+.z-head {
   padding: 20px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--z-panel-border);
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.lux-t {
+.z-title {
   font-weight: 800;
-  color: #0f172a;
-  font-size: 14px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  color: var(--z-text-main);
+  font-size: 15px;
 }
 
-.lux-link {
-  font-size: 11px;
+.z-mark-read {
+  font-size: 12px;
   color: #ea580c;
   background: none;
   border: none;
   cursor: pointer;
   font-weight: 700;
-}
-
-.lux-card {
-  display: flex;
-  gap: 14px;
-  padding: 16px 20px;
-  border-bottom: 1px solid #f8fafc;
   transition: 0.2s;
-  cursor: pointer;
 }
 
-.lux-card:hover {
-  background: #f8fafc;
+.z-mark-read:hover {
+  color: #c2410c;
 }
 
-.lux-card.unread {
-  background: rgba(234, 88, 12, 0.03);
+.z-body {
+  max-height: 400px;
+  overflow-y: auto;
 }
 
-.c-avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
+.z-card {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 900;
-}
-
-.c-avatar.alert {
-  background: #fee2e2;
-  color: #ef4444;
-}
-
-.c-avatar.success {
-  background: #dcfce7;
-  color: #22c55e;
-}
-
-.c-avatar.pending {
-  background: #fef3c7;
-  color: #f59e0b;
-}
-
-.c-content p {
-  margin: 0;
-  font-size: 13px;
-  color: #334155;
-  line-height: 1.5;
-  font-weight: 500;
-}
-
-.c-time {
-  font-size: 11px;
-  color: #94a3b8;
-  margin-top: 4px;
-  display: block;
-}
-
-.empty-state {
-  padding: 40px 20px;
-  text-align: center;
-  color: #94a3b8;
-}
-
-.empty-state p {
-  margin: 0;
-  font-size: 14px;
-}
-
-.lux-f button {
-  width: 100%;
-  padding: 16px;
-  border: none;
-  background: #f8fafc;
-  color: #64748b;
-  font-weight: 700;
-  font-size: 12px;
+  gap: 16px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--z-panel-border);
   cursor: pointer;
   transition: 0.3s;
 }
 
-.lux-f button:hover {
-  background: #f1f5f9;
-  color: #0f172a;
+.z-card:hover {
+  background: var(--z-item-hover);
 }
 
-/* USER HERO */
-.user-hero {
-  padding: 32px 20px;
-  background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
-  text-align: center;
-  border-bottom: 1px solid #f1f5f9;
+.z-card.unread {
+  background: rgba(234, 88, 12, 0.05);
 }
 
-.hero-avatar {
-  width: 72px;
-  height: 72px;
-  border-radius: 24px;
-  margin: 0 auto 16px;
-  padding: 4px;
-  background: linear-gradient(135deg, #fb923c, #ea580c);
-}
-
-.hero-avatar img {
-  width: 100%;
-  height: 100%;
-  border-radius: 20px;
-  border: 4px solid #fff;
-  object-fit: cover;
-}
-
-.user-hero strong {
-  display: block;
-  font-size: 17px;
-  color: #0f172a;
-  letter-spacing: -0.01em;
-}
-
-.user-hero span {
-  font-size: 13px;
-  color: #64748b;
-  font-weight: 500;
-}
-
-.user-nav {
-  padding: 12px;
-}
-
-.user-nav button {
-  width: 100%;
+.card-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border: none;
-  background: transparent;
-  color: #475569;
-  font-weight: 600;
-  font-size: 14px;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: 0.2s;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 16px;
+  flex-shrink: 0;
 }
 
-.user-nav button:hover {
-  background: #f1f5f9;
-  color: #0f172a;
-  transform: translateX(4px);
-}
-
-.user-nav button.danger {
+.card-icon.alert {
+  background: rgba(239, 68, 68, 0.1);
   color: #ef4444;
 }
 
-.user-nav button.danger:hover {
-  background: #fef2f2;
+.card-icon.success {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
 }
 
-.nav-sep {
-  height: 1px;
-  background: #f1f5f9;
-  margin: 8px 12px;
+.card-desc {
+  flex: 1;
 }
 
-/* 🌪️ SPRING PHYSICS ANIMATION */
-.spring-panel-enter-active {
-  animation: spring-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+.title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 4px;
 }
 
-.spring-panel-leave-active {
-  animation: spring-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) reverse;
+.title-row p {
+  margin: 0;
+  font-weight: 700;
+  color: var(--z-text-main);
+  font-size: 14px;
 }
 
-@keyframes spring-in {
+.badge-new {
+  background: #ea580c;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 900;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.sub-txt {
+  display: block;
+  font-size: 13px;
+  color: var(--z-text-sub);
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+
+.time-txt {
+  display: block;
+  font-size: 11px;
+  color: var(--z-text-sub);
+  opacity: 0.8;
+  font-weight: 500;
+}
+
+.z-foot {
+  border-top: 1px solid var(--z-panel-border);
+}
+
+.z-foot button {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  background: transparent;
+  color: var(--z-text-sub);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.z-foot button:hover {
+  color: #ea580c;
+  background: var(--z-item-hover);
+}
+
+/* User Panel Styles */
+.u-cover {
+  padding: 32px 20px;
+  text-align: center;
+  border-bottom: 1px solid var(--z-panel-border);
+}
+
+.u-avatar-epic {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  margin: 0 auto 16px;
+  border-radius: 22px;
+  padding: 3px;
+  background: var(--z-panel-bg);
+  box-shadow: 0 10px 25px rgba(234, 88, 12, 0.15);
+}
+
+.u-avatar-epic img {
+  width: 100%;
+  height: 100%;
+  border-radius: 18px;
+  object-fit: cover;
+  position: relative;
+  z-index: 2;
+}
+
+.epic-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #fb923c, #ea580c);
+  z-index: 1;
+}
+
+.u-name {
+  margin: 0 0 4px;
+  font-size: 18px;
+  color: var(--z-text-main);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.u-email {
+  margin: 0;
+  font-size: 13px;
+  color: var(--z-text-sub);
+  font-weight: 500;
+}
+
+.u-menu-grid {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.u-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+  border: none;
+  background: transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: 0.3s;
+  text-align: left;
+}
+
+.u-menu-item:hover {
+  background: var(--z-item-hover);
+  transform: translateX(6px);
+}
+
+.i-box {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--z-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--z-text-sub);
+  border: 1px solid var(--z-panel-border);
+  transition: 0.3s;
+}
+
+.u-menu-item:hover .i-box {
+  color: #ea580c;
+  border-color: rgba(234, 88, 12, 0.3);
+}
+
+.u-menu-item span {
+  font-weight: 600;
+  color: var(--z-text-main);
+  font-size: 14px;
+}
+
+.u-footer {
+  padding: 12px;
+  border-top: 1px dashed var(--z-panel-border);
+}
+
+.btn-logout {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px;
+  border: none;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  font-weight: 700;
+  font-size: 13px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.btn-logout:hover {
+  background: #ef4444;
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(239, 68, 68, 0.25);
+}
+
+/* --- 🌪️ 5. ANIMATIONS --- */
+.zenith-drop-enter-active {
+  animation: springIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.zenith-drop-leave-active {
+  animation: springIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) reverse;
+}
+
+@keyframes springIn {
   0% {
     opacity: 0;
-    transform: translateY(20px) scale(0.92);
+    transform: scale(0.9) translateY(20px);
+    filter: blur(4px);
   }
 
   100% {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: scale(1) translateY(0);
+    filter: blur(0);
   }
 }
 
-/* CUSTOM SCROLL */
+@keyframes radarPulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: scale(3.5);
+    opacity: 0;
+  }
+}
+
+@keyframes blink {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
+}
+
 .custom-scroll::-webkit-scrollbar {
   width: 4px;
 }
 
 .custom-scroll::-webkit-scrollbar-thumb {
-  background: #e2e8f0;
+  background: var(--z-panel-border);
   border-radius: 10px;
 }
 </style>

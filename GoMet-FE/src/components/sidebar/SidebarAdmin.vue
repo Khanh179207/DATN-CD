@@ -1,5 +1,5 @@
 <template>
-  <aside class="sidebar-vipro-admin">
+  <aside class="sidebar-vipro-admin" :class="{ 'is-collapsed': isCollapsed }">
     <div class="bg-vipro-engine">
       <div class="mesh-glow"></div>
       <div class="sidebar-noise"></div>
@@ -7,7 +7,7 @@
     </div>
 
     <div class="sidebar-header">
-      <div class="brand-vipro">
+      <div class="brand-vipro" v-if="!isCollapsed">
         <div class="logo-artifact">
           <img src="@/assets/images/gomet.jpg" alt="Logo" class="logo-img" />
           <div class="sheen-layer"></div>
@@ -20,31 +20,51 @@
           </div>
         </div>
       </div>
+
+      <div class="brand-vipro-collapsed" v-else>
+        <img src="@/assets/images/gomet.jpg" alt="Logo" class="logo-img-sm" />
+      </div>
+
+      <button class="btn-toggle-sidebar" @click="toggleSidebar" :title="isCollapsed ? 'Mở rộng' : 'Thu gọn'">
+        <svg v-if="!isCollapsed" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+        <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
     </div>
 
     <nav class="nav-scroll-area custom-scrollbar">
       <div class="nav-engine-fixed">
 
         <div class="nav-section anim-stagger" style="--d: 0.1s">
-          <label class="section-tag">Tổng quan</label>
-          <router-link to="/admin/dashboard" class="nav-link-lux" active-class="active">
-            <div class="icon-orb"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          <label class="section-tag" v-if="!isCollapsed">Tổng quan</label>
+          <div class="section-divider" v-else></div>
+
+          <router-link to="/admin/dashboard" class="nav-link-lux" active-class="active"
+            :title="isCollapsed ? 'Dashboard' : ''">
+            <div class="icon-orb"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                 stroke-width="2.5">
-                <rect x="3" y="3" width="7" height="7"></rect>
-                <rect x="14" y="3" width="7" height="7"></rect>
-                <rect x="14" y="14" width="7" height="7"></rect>
-                <rect x="3" y="14" width="7" height="7"></rect>
+                <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+                <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+                <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+                <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
               </svg></div>
-            <span class="link-text">Dashboard</span>
+            <span class="link-text" v-if="!isCollapsed">Dashboard</span>
           </router-link>
-          <router-link to="/admin/statistics" class="nav-link-lux" active-class="active">
-            <div class="icon-orb"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+
+          <router-link to="/admin/statistics" class="nav-link-lux" active-class="active"
+            :title="isCollapsed ? 'Thống kê hệ thống' : ''">
+            <div class="icon-orb"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                 stroke-width="2.5">
                 <path d="M12 20V10"></path>
                 <path d="M18 20V4"></path>
                 <path d="M6 20v-4"></path>
               </svg></div>
-            <span class="link-text">Thống kê hệ thống</span>
+            <span class="link-text" v-if="!isCollapsed">Thống kê hệ thống</span>
           </router-link>
         </div>
 
@@ -120,46 +140,70 @@
         </div>
 
         <div class="nav-section anim-stagger" style="--d: 0.5s">
-          <label class="section-tag">Chiến dịch</label>
-          <router-link to="/admin/events" class="nav-link-lux" active-class="active">
-            <div class="icon-orb"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          <label class="section-tag" v-if="!isCollapsed">Chiến dịch</label>
+          <div class="section-divider" v-else></div>
+
+          <router-link to="/admin/events" class="nav-link-lux" active-class="active"
+            :title="isCollapsed ? 'Quản lý Sự Kiện' : ''">
+            <div class="icon-orb"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                 stroke-width="2.5">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                 <line x1="16" y1="2" x2="16" y2="6"></line>
                 <line x1="8" y1="2" x2="8" y2="6"></line>
               </svg></div>
-            <span class="link-text">Quản lý Sự Kiện</span>
+            <span class="link-text" v-if="!isCollapsed">Quản lý Sự Kiện</span>
           </router-link>
-        </div>
 
-        <div class="nav-section anim-stagger" style="--d: 0.6s">
-          <label class="section-tag">Tài chính</label>
-          <router-link to="/admin/transactions" class="nav-link-lux" active-class="active">
-            <div class="icon-orb"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          <router-link to="/admin/transactions" class="nav-link-lux" active-class="active"
+            :title="isCollapsed ? 'Doanh thu & Hóa đơn' : ''">
+            <div class="icon-orb"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                 stroke-width="2.5">
                 <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
                 <line x1="1" y1="10" x2="23" y2="10"></line>
               </svg></div>
-            <span class="link-text">Doanh thu & Hóa đơn</span>
+            <span class="link-text" v-if="!isCollapsed">Doanh thu & Hóa đơn</span>
           </router-link>
         </div>
-
       </div>
     </nav>
 
     <div class="sidebar-footer">
-      <button class="btn-exit-admin" @click="$router.push('/home')">
+      <button class="btn-exit-admin" @click="$router.push('/home')" :title="isCollapsed ? 'Về Trang Khách' : ''">
         <div class="btn-content">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
           </svg>
-          <span>VỀ TRANG KHÁCH</span>
+          <span v-if="!isCollapsed">VỀ TRANG KHÁCH</span>
         </div>
         <div class="btn-shine"></div>
       </button>
     </div>
   </aside>
 </template>
+
+<script setup>
+import { ref, onMounted } from 'vue';
+
+// Khai báo sự kiện để báo cho Layout cha (AdminLayout) biết Sidebar đang ở trạng thái nào
+const emit = defineEmits(['toggle-collapse']);
+
+// Đọc trạng thái từ LocalStorage để giữ nguyên khi F5 trang
+const isCollapsed = ref(localStorage.getItem('gomet_admin_sidebar_collapsed') === 'true');
+
+const toggleSidebar = () => {
+  isCollapsed.value = !isCollapsed.value;
+  localStorage.setItem('gomet_admin_sidebar_collapsed', isCollapsed.value);
+  emit('toggle-collapse', isCollapsed.value); // Báo ra ngoài cha
+};
+
+// Khi mới vào, bắn tín hiệu ngay lập tức để Layout căn chỉnh lề
+onMounted(() => {
+  emit('toggle-collapse', isCollapsed.value);
+});
+</script>
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Playfair+Display:wght@900&display=swap');
@@ -217,43 +261,56 @@
 
 /* --- 🏷️ 2. HEADER: BIỂU TƯỢNG HOÀNG GIA --- */
 .sidebar-header {
-  height: 100px;
-  padding: 0 24px;
+  height: 90px;
+  padding: 0 20px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   flex-shrink: 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .brand-vipro {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
+}
+
+.brand-vipro-collapsed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.logo-img-sm {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  object-fit: cover;
 }
 
 .logo-artifact {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   background: white;
-  border-radius: 12px;
+  border-radius: 10px;
   padding: 3px;
   position: relative;
   overflow: hidden;
-  box-shadow: none;
-  /* Đã loại bỏ bóng đổ quanh ảnh để tránh ảnh hưởng giao diện */
 }
 
 .logo-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 9px;
+  border-radius: 7px;
 }
 
 .sheen-layer {
   position: absolute;
   inset: 0;
-  background: linear-gradient(45deg, transparent 35%, rgba(255, 255, 255, 0.7) 50%, transparent 65%);
+  background: linear-gradient(45deg, transparent 35%, rgba(255, 255, 255, 0.8) 50%, transparent 65%);
   animation: sheenLoop 6s infinite;
   transform: translateX(-100%);
 }
@@ -272,7 +329,7 @@
 .brand-name {
   font-family: 'Playfair Display', serif;
   font-weight: 900;
-  font-size: 1.65rem;
+  font-size: 1.5rem;
   margin: 0;
   line-height: 1;
   background: linear-gradient(to bottom, #FFD07F 0%, #FFFFFF 50%, #FF9500 100%);
@@ -314,6 +371,38 @@
     transform: scale(1.4);
   }
 }
+
+/* NÚT THU GỌN */
+.btn-toggle-sidebar {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.3s;
+}
+
+.btn-toggle-sidebar:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+/* KHI COLLAPSE, ÉP NÚT TOGGLE RA GIỮA (NẾU MUỐN) */
+.is-collapsed .sidebar-header {
+  flex-direction: column;
+  padding: 15px 0;
+  height: auto;
+  gap: 15px;
+}
+
+.is-collapsed .btn-toggle-sidebar {
+  margin: 0 auto;
+}
+
 
 /* --- 📜 3. NAVIGATION (SMART CENTER & ADAPTIVE) --- */
 .nav-scroll-area {
@@ -367,6 +456,10 @@
   color: #fff;
   transform: translateX(6px);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.sidebar-vipro-admin:not(.is-collapsed) .nav-link-lux:hover {
+  transform: translateX(5px);
 }
 
 /* 🔥 ACTIVE AMBIENT GLOW */
@@ -484,7 +577,7 @@
 .nav-scroll-area,
 .custom-scroll {
   scrollbar-width: thin;
-  scrollbar-color: rgba(234, 88, 12, 0.6) transparent;
+  scrollbar-color: rgba(234, 88, 12, 0.5) transparent;
 }
 
 .nav-scroll-area::-webkit-scrollbar,

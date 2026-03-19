@@ -52,4 +52,10 @@ public class Event {
 
     @Column(name = "MaxVotes")
     private Integer maxVotes;
+
+    @Column(name = "IsActive")
+    private Integer isActive; // Đổi từ Boolean sang Integer
+
+    @Column(name = "IsForceEnded")
+    private Integer isForceEnded; // Đổi từ Boolean sang Integer
 }

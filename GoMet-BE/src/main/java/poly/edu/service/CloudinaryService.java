@@ -14,21 +14,20 @@ public class CloudinaryService {
     private final Cloudinary cloudinary;
 
     public String uploadMedia(MultipartFile file, String folderName) throws IOException {
-        if (file.isEmpty()) {
-            throw new IOException("File is empty");
+        if (file == null || file.isEmpty()) {
+            throw new IOException("File bị trống, không thể upload!");
         }
 
+        // Cấu trúc folder: GoMet/categories, GoMet/events, ...
         Map params = ObjectUtils.asMap(
                 "folder", "GoMet/" + folderName,
-                "resource_type", "auto", // 🔥 Quan trọng: Để Cloudinary tự phân biệt Image/Video
-                "overwrite", true,
-                "resource_type", "auto"
+                "resource_type", "auto", // Tự động nhận diện ảnh/video/raw
+                "overwrite", true
         );
 
-        // Đối với video lớn (> 20MB), Cloudinary khuyến khích dùng upload Large
-        // nhưng với giới hạn 50MB của sếp, hàm upload thường vẫn xử lý tốt.
         Map uploadResult = cloudinary.uploader().upload(file.getBytes(), params);
 
+        // Trả về secure_url (https) cho an toàn và chuyên nghiệp
         return uploadResult.get("secure_url").toString();
     }
 }
