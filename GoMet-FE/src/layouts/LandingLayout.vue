@@ -1,7 +1,5 @@
 <template>
   <div class="landing-layout" ref="layoutWrapper">
-    <div class="custom-cursor" ref="cursor"></div>
-
     <div class="scroll-progress-container">
       <div class="scroll-progress-bar" :style="{ width: scrollProgress + '%' }"></div>
     </div>
@@ -56,21 +54,9 @@ const showModal = ref(false)
 const currentAuthView = ref('login')
 const scrollProgress = ref(0)
 const showBackToTop = ref(false)
-const cursor = ref(null)
 let lenis = null
 
-// --- XỬ LÝ CURSOR ---
-const initCursor = () => {
-  const moveCursor = (e) => {
-    gsap.to(cursor.value, { x: e.clientX, y: e.clientY, duration: 0.3, ease: 'power2.out' })
-  }
-  window.addEventListener('mousemove', moveCursor)
-  
-  document.addEventListener('mouseover', (e) => {
-    if (e.target.closest('a, button, .nav-item')) cursor.value?.classList.add('cursor-hover')
-    else cursor.value?.classList.remove('cursor-hover')
-  })
-}
+// ĐÃ XÓA: Hàm initCursor() và các sự kiện mousemove
 
 // --- XỬ LÝ SCROLL (Sử dụng e.progress của Lenis cho chuẩn) ---
 const handleScroll = (e) => {
@@ -99,7 +85,7 @@ onMounted(() => {
   lenis.on('scroll', handleScroll)
   gsap.ticker.add((time) => lenis.raf(time * 1000))
   
-  initCursor()
+  // ĐÃ XÓA: Lời gọi hàm initCursor()
 })
 
 onUnmounted(() => {
@@ -116,7 +102,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* --- 1. PROGRESS CIRCLE (SỐ 3) --- */
+/* --- 1. PROGRESS CIRCLE --- */
 .progress-wrap {
   position: fixed; right: 30px; bottom: 30px; height: 46px; width: 46px;
   cursor: pointer; display: block; border-radius: 50%; z-index: 1000;
@@ -132,13 +118,7 @@ onUnmounted(() => {
   display: flex; align-items: center; justify-content: center; color: #EA580C;
 }
 
-/* --- 2. CUSTOM CURSOR --- */
-.custom-cursor {
-  position: fixed; width: 30px; height: 30px; border: 2px solid #EA580C;
-  border-radius: 50%; pointer-events: none; z-index: 9999; transform: translate(-50%, -50%);
-  transition: width 0.3s, height 0.3s, background 0.3s;
-}
-.custom-cursor.cursor-hover { width: 60px; height: 60px; background: rgba(234, 88, 12, 0.1); }
+/* ĐÃ XÓA: CSS phần 2. CUSTOM CURSOR */
 
 /* --- 3. SCROLL PROGRESS BAR --- */
 .scroll-progress-container { position: fixed; top: 0; left: 0; width: 100%; height: 3px; z-index: 2000; }
@@ -148,5 +128,5 @@ onUnmounted(() => {
 .page-fade-enter-active { transition: all 0.6s ease-out; }
 .page-fade-enter-from { opacity: 0; transform: translateY(10px); }
 
-@media (max-width: 768px) { .custom-cursor { display: none; } }
+/* ĐÃ XÓA: Media query ẩn custom-cursor trên mobile */
 </style>

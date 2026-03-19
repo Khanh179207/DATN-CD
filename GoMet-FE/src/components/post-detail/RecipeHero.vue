@@ -92,6 +92,7 @@ import { toast } from '@/composables/useToast'
 import { addFavorite, removeFavorite, checkFavorite } from '@/services/socialService'
 // Import thêm service like tương tự như bên RecipeCard
 import { togglePostLike, checkPostLiked } from '@/services/likeService' 
+import FeedbackModal from '@/components/modals/FeedbackModal.vue'
 
 const props = defineProps({ post: { type: Object, required: true } })
 const router = useRouter()

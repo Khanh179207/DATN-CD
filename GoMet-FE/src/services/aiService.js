@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const GROQ_API_KEY = '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'; 
+const GROQ_API_KEY = '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'; 
 
 export const chatWithAIChef = async (chatHistory, newText, dbContext = []) => {
   try {

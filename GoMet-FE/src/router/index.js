@@ -22,18 +22,20 @@ import Leaderboard from '@/pages/Leaderboard.vue'
 // Note: If the two files below haven't been created yet, create empty placeholder files in the pages folder to avoid import errors
 import Suggestions from '@/pages/suggestions/SuggestionsPage.vue'
 import MealPlan from '@/pages/mealplan/MealPlanPage.vue'
+import TermsAndPolicy from '@/pages/terms/TermsAndPolicy.vue'
 
 // --- ADMIN PAGES ---
 import AdminDashboard from '@/pages/admin/Dashboard.vue'
 import PostManagement from '@/pages/admin/PostManagement.vue'
-import CategoryManagement from '@/pages/admin/CategoryManagement.vue'
+import CategoryManagement from '@/pages/admin/categoryadmin/CategoryManagement.vue'
 import UserManagement from '@/pages/admin/UserManagement.vue'
-import EventManagement from '@/pages/admin/EventManagement.vue'
 import CommentManagement from '@/pages/admin/CommentManagement.vue'
 import NotificationManagement from '@/pages/admin/NotificationManagement.vue'
 import AchievementManagement from '@/pages/admin/AchievementManagement.vue'
 import Statistics from '@/pages/admin/Statistics.vue'
-import TicketManagement from '@/pages/admin/TicketManagement.vue'
+import TicketManagement from '@/pages/admin/ticketadmin/TicketManagement.vue'
+import EventManagement from '@/pages/admin/eventadmin/EventManagement.vue'
+import PostEventManagement from '@/pages/admin/eventadmin/PostEventManagement.vue'
 
 const routes = [
   // 1. LANDING PAGE
@@ -45,6 +47,11 @@ const routes = [
         path: '',
         name: 'IntroPage',
         component: () => import('@/pages/intro/IntroPage.vue')
+      },
+      {
+        path: 'terms-and-policy',
+        name: 'TermsAndPolicyLanding',
+        component: () => import('@/pages/terms/TermsAndPolicy.vue')
       }
     ]
   },
@@ -149,7 +156,8 @@ const routes = [
       { path: 'comments', name: 'AdminComments', component: CommentManagement },
       { path: 'achievements', name: 'AdminAchievements', component: AchievementManagement },
       { path: 'notifications', name: 'AdminNotifications', component: NotificationManagement },
-      { path: 'tickets', name: 'AdminTickets', component: TicketManagement }
+      { path: 'tickets', name: 'AdminTickets', component: TicketManagement },
+      { path: 'events/:id/posts', name: 'AdminPostEventManagement', component: PostEventManagement }
     ]
   },
 
@@ -189,15 +197,13 @@ const router = createRouter({
 })
 
 // ─── NAVIGATION GUARDS ────────────────────────────────────────────────────────
-// router/index.js
-
 router.beforeEach((to, from, next) => {
   const userStr = localStorage.getItem('user')
   const user = userStr ? JSON.parse(userStr) : null
   const isLoggedIn = !!user?.token
 
-  // Sửa lại dòng này để kiểm tra "thoáng" hơn
-  // Ép kiểu về String để so sánh cho chắc ăn (tránh lỗi 1 vs "1")
+  // 🗑️ ĐÃ XÓA ĐOẠN STRICT GUARD CHẶN KHÁCH VÔ DUYÊN Ở ĐÂY
+
   const isPremium = isLoggedIn && (
     String(user?.isPremium) === "true" || 
     String(user?.isPremium) === "1" || 
@@ -209,8 +215,6 @@ router.beforeEach((to, from, next) => {
     String(user?.isAdmin) === "1" || 
     user?.role === 'admin'
   )
-
-  // ... các phần sau giữ nguyên ...
 
   // 1. Admin-only routes: must be logged in AND be an admin
   if (to.matched.some(r => r.meta?.requiresAdmin)) {
@@ -228,7 +232,6 @@ router.beforeEach((to, from, next) => {
   if (to.matched.some(r => r.meta?.requiresAuth)) {
     if (!isLoggedIn) {
       toast.error('Vui lòng đăng nhập để xem chi tiết')
-      // Đá về trang chủ, gắn kèm biến login=1 để kích hoạt AuthModal (nếu sếp có setup)
       return next({ path: '/home', query: { login: '1' } }) 
     }
   }

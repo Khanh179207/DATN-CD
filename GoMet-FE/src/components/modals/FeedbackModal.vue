@@ -138,6 +138,8 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { toast } from '@/composables/useToast'
+import api from '@/services/api.js' // 🔥 Dùng api instance chuẩn
+import { uploadMedia } from '@/services/uploadService' // 🔥 Thêm hàm vạn năng
 
 const props = defineProps({
   form: {
@@ -161,45 +163,20 @@ const formData = ref({
   ...props.form
 })
 
-// --- LOGIC COMBOBOX TIÊU ĐỀ ---
+// --- LOGIC COMBOBOX TIÊU ĐỀ (GIỮ NGUYÊN) ---
 const showTitleSuggestions = ref(false)
-
 const titleSuggestions = computed(() => {
   if (formData.value.ticketType === 'BUG') {
-    return [
-      'Lỗi không tải được hình ảnh',
-      'Lỗi không đăng nhập được tài khoản',
-      'Nút thanh toán không hoạt động',
-      'Trang bị văng khi đang xem bài viết'
-    ]
+    return ['Lỗi không tải được hình ảnh', 'Lỗi không đăng nhập được tài khoản', 'Nút thanh toán không hoạt động', 'Trang bị văng khi đang xem bài viết']
   } else if (formData.value.ticketType === 'REPORT') {
-    return [
-      'Nội dung có chứa ngôn từ phản cảm',
-      'Bài viết mang tính chất lừa đảo/Spam',
-      'Xâm phạm bản quyền hình ảnh',
-      'Quảng cáo trái phép'
-    ]
+    return ['Nội dung có chứa ngôn từ phản cảm', 'Bài viết mang tính chất lừa đảo/Spam', 'Xâm phạm bản quyền hình ảnh', 'Quảng cáo trái phép']
   } else {
-    return [
-      'Đề xuất thêm tính năng mới',
-      'Góp ý cải thiện giao diện trang chủ',
-      'Màu sắc chữ hơi khó đọc'
-    ]
+    return ['Đề xuất thêm tính năng mới', 'Góp ý cải thiện giao diện trang chủ', 'Màu sắc chữ hơi khó đọc']
   }
 })
-
-const hideTitleSuggestions = () => {
-  setTimeout(() => { showTitleSuggestions.value = false }, 150)
-}
-
-const toggleTitleSuggestions = () => {
-  showTitleSuggestions.value = !showTitleSuggestions.value
-}
-
-const selectTitle = (text) => {
-  formData.value.title = text
-  showTitleSuggestions.value = false
-}
+const hideTitleSuggestions = () => { setTimeout(() => { showTitleSuggestions.value = false }, 150) }
+const toggleTitleSuggestions = () => { showTitleSuggestions.value = !showTitleSuggestions.value }
+const selectTitle = (text) => { formData.value.title = text; showTitleSuggestions.value = false }
 // -----------------------------
 
 watch(() => props.form, (newVal) => {
@@ -208,8 +185,6 @@ watch(() => props.form, (newVal) => {
     if (!newVal.targetPostID && formData.value.ticketType === 'REPORT') {
       formData.value.ticketType = 'FEEDBACK';
     }
-    // Tự động clear tiêu đề nếu đổi type để chọn lại từ đầu (tuỳ chọn)
-    // formData.value.title = ''; 
   }
 }, { deep: true, immediate: true })
 
@@ -229,34 +204,48 @@ const handleFileChange = (event) => {
 
 const removeFile = () => { formData.value.attachment = null; filePreview.value = null; }
 
+// 🔥 HÀM SUBMIT THEO LUỒNG ĐỒNG BỘ 2 BƯỚC (CHUẨN GOMET)
 const submitFeedback = async () => {
   if (!formData.value.title.trim() || !formData.value.description.trim()) {
-    toast.error('Sếp điền thiếu thông tin rồi!'); return;
+    toast.error('Sếp điền thiếu thông tin rồi!'); 
+    return;
   }
   
   isSubmitting.value = true
   try {
-    const data = new FormData()
-    data.append('accountId', authStore.user.accountID)
-    data.append('ticketType', formData.value.ticketType)
-    data.append('title', formData.value.title)
-    data.append('description', formData.value.description)
-    if (formData.value.targetPostID) data.append('targetPostId', formData.value.targetPostID)
-    if (formData.value.attachment) data.append('attachment', formData.value.attachment)
+    let attachmentUrl = null;
 
-    const response = await fetch('/api/tickets/create', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${authStore.token}` },
-      body: data
-    })
+    // BƯỚC 1: Nếu có ảnh đính kèm, ném lên mây trước (Vào folder 'tickets')
+    if (formData.value.attachment) {
+      try {
+        attachmentUrl = await uploadMedia(formData.value.attachment, 'tickets');
+      } catch (uploadErr) {
+        toast.error('Lỗi khi tải ảnh lên mây, sếp thử lại nhé!');
+        isSubmitting.value = false;
+        return;
+      }
+    }
 
-    if (response.ok) {
-      toast.success('GOMET đã nhận! Cảm ơn bạn nhiều.'); closeModal();
-    } else {
-      toast.error('Lỗi khi gửi phản hồi!');
+    // BƯỚC 2: Chuẩn bị JSON Payload (Khớp hoàn toàn với TicketDTO ở Backend)
+    const payload = {
+      accountId: authStore.user.accountID || authStore.user.id,
+      ticketType: formData.value.ticketType,
+      title: formData.value.title,
+      description: formData.value.description,
+      attachment: attachmentUrl, // Link HTTPS xịn từ Cloudinary
+      targetPostId: formData.value.targetPostID || null
+    };
+
+    // Gửi JSON sạch về Backend (Sử dụng API instance để tự kèm Token)
+    const response = await api.post('/api/tickets/create', payload);
+
+    if (response.data) {
+      toast.success('GOMET đã nhận! Cảm ơn sếp nhiều.');
+      closeModal();
     }
   } catch (e) {
-    toast.error('Lỗi kết nối máy chủ!');
+    console.error("Submit Error:", e);
+    toast.error(e.response?.data?.message || 'Lỗi hệ thống, sếp kiểm tra lại Backend nhé!');
   } finally {
     isSubmitting.value = false
   }
@@ -280,7 +269,7 @@ $text-sub: #64748b;
 
 .gomet-modal-card {
   background: white; width: 100%; max-width: 500px;
-  border-radius: 24px; overflow: visible; /* Thay đổi từ hidden để dropdown không bị cắt */
+  border-radius: 24px; overflow: hidden; /* Trả lại hidden cho toàn bộ card */
   box-shadow: 0 25px 50px -12px rgba(234, 88, 12, 0.2);
   font-family: 'Inter', sans-serif;
   display: flex; flex-direction: column;
@@ -309,7 +298,7 @@ $text-sub: #64748b;
 
 .gomet-modal-header {
   padding: 22px 28px; display: flex; justify-content: space-between; align-items: center;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid #f1f5f9; z-index: 10;
   .header-left { display: flex; align-items: center; gap: 12px; }
   .icon-orb {
     width: 44px; height: 44px; background: $gomet-bg; border-radius: 12px;
@@ -327,7 +316,18 @@ $text-sub: #64748b;
   &:hover { background: $gomet-bg; color: $gomet-orange; transform: rotate(90deg); }
 }
 
-.gomet-modal-body { padding: 25px 28px; max-height: 60vh; overflow-y: visible; /* Đổi để dropdown hiển thị */ }
+/* 🔥 FIX LỖI SCROLL Ở ĐÂY */
+.gomet-modal-body { 
+  padding: 25px 28px; 
+  max-height: 65vh; 
+  overflow-y: auto; /* Bật cuộn dọc */
+  overflow-x: hidden; 
+  position: relative;
+}
+
+.gomet-form-layout {
+  position: relative; /* Giữ ngữ cảnh chứa cho dropdown */
+}
 
 .gomet-field {
   margin-bottom: 22px;
@@ -340,6 +340,11 @@ $text-sub: #64748b;
   border: 1.5px solid #e2e8f0; background: #fff;
   font-size: 0.95rem; font-weight: 500; color: $text-main; transition: 0.2s;
   &:focus { outline: none; border-color: $gomet-orange; box-shadow: 0 0 0 4px rgba(234, 88, 12, 0.1); }
+}
+
+.gomet-textarea {
+  resize: vertical;
+  min-height: 100px;
 }
 
 .gomet-select {
@@ -359,12 +364,14 @@ $text-sub: #64748b;
   display: flex; align-items: center; justify-content: center;
   &:hover { background: #f1f5f9; color: #ea580c; }
 }
+
+/* 🔥 FIX DROPDOWN BỊ CẮT BỞI OVERFLOW-Y: AUTO */
 .combobox-list {
   position: absolute; top: calc(100% + 5px); left: 0; right: 0;
   background: white; border: 1px solid #e2e8f0; border-radius: 12px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
   margin: 0; padding: 5px 0; list-style: none; z-index: 9999;
-  max-height: 200px; overflow-y: auto;
+  max-height: 180px; overflow-y: auto;
 }
 .combobox-list li {
   padding: 10px 16px; cursor: pointer; font-size: 0.85rem;
@@ -374,21 +381,26 @@ $text-sub: #64748b;
 .dropdown-fade-enter-active, .dropdown-fade-leave-active { transition: all 0.2s ease; }
 .dropdown-fade-enter-from, .dropdown-fade-leave-to { opacity: 0; transform: translateY(-10px); }
 
+/* UPLOAD ZONE */
+.upload-container { width: 100%; }
 .upload-zone {
-  display: block; border: 2px dashed #cbd5e1; border-radius: 16px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  border: 2px dashed #cbd5e1; border-radius: 16px; min-height: 120px;
   padding: 18px; text-align: center; cursor: pointer; transition: 0.3s; background: #f8fafc;
-  &:hover { border-color: $gomet-orange; }
-  &.has-file { border-color: $gomet-orange; border-style: solid; background: white; }
+  &:hover { border-color: $gomet-orange; background: #fff; }
+  &.has-file { border-color: $gomet-orange; border-style: solid; background: white; padding: 12px;}
+  .upload-placeholder { display: flex; flex-direction: column; align-items: center; gap: 8px; }
   .upload-placeholder span { color: $text-sub; font-size: 0.85rem; font-weight: 700; }
 }
 
 .upload-preview-wrap {
-  display: flex; align-items: center; gap: 15px;
-  .img-thumb { width: 55px; height: 55px; border-radius: 10px; object-fit: cover; }
+  display: flex; align-items: center; gap: 15px; width: 100%;
+  .img-thumb { width: 60px; height: 60px; border-radius: 10px; object-fit: cover; border: 1px solid #e2e8f0; }
   .file-meta {
-    flex: 1; display: flex; flex-direction: column;
-    .fname { font-size: 0.85rem; font-weight: 700; color: $text-main; }
-    .btn-remove-file { background: none; border: none; color: #ef4444; font-size: 0.75rem; font-weight: 800; cursor: pointer; text-align: left; }
+    flex: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; overflow: hidden;
+    .fname { font-size: 0.85rem; font-weight: 700; color: $text-main; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+    .btn-remove-file { background: #fee2e2; border: none; color: #ef4444; font-size: 0.75rem; font-weight: 700; cursor: pointer; padding: 4px 10px; border-radius: 6px; transition: 0.2s; }
+    .btn-remove-file:hover { background: #fca5a5; color: white;}
   }
 }
 
@@ -396,19 +408,20 @@ $text-sub: #64748b;
 
 .gomet-modal-footer {
   padding: 20px 28px; display: flex; gap: 12px; justify-content: flex-end;
-  background: #f8fafc; border-top: 1px solid #f1f5f9; border-radius: 0 0 24px 24px;
+  background: #f8fafc; border-top: 1px solid #f1f5f9; border-radius: 0 0 24px 24px; z-index: 10;
 }
 
 .btn-cancel-text {
   padding: 12px 20px; border: none; background: transparent;
-  color: $text-sub; font-weight: 700; cursor: pointer; border-radius: 12px;
+  color: $text-sub; font-weight: 700; cursor: pointer; border-radius: 12px; transition: 0.2s;
+  &:hover { background: #e2e8f0; color: $text-main; }
 }
 
 .btn-submit-orange {
   padding: 12px 28px; border: none; border-radius: 12px;
-  background: $gomet-orange; color: white; font-weight: 800; cursor: pointer;
+  background: $gomet-orange; color: white; font-weight: 800; cursor: pointer; transition: 0.3s;
   .btn-content { display: flex; align-items: center; gap: 10px; }
-  &:hover:not(:disabled) { background: $gomet-orange-hover; transform: translateY(-2px); }
+  &:hover:not(:disabled) { background: $gomet-orange-hover; transform: translateY(-2px); box-shadow: 0 8px 15px rgba(234, 88, 12, 0.3); }
   &:disabled { opacity: 0.6; cursor: not-allowed; }
 }
 
@@ -419,6 +432,9 @@ $text-sub: #64748b;
 .gomet-loader { width: 18px; height: 18px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* Tùy chỉnh thanh cuộn */
 .custom-scroll-orange::-webkit-scrollbar { width: 6px; }
+.custom-scroll-orange::-webkit-scrollbar-track { background: transparent; }
 .custom-scroll-orange::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+.custom-scroll-orange::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 </style>
