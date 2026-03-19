@@ -26,7 +26,7 @@ public class AdminNotificationServiceImpl implements AdminNotificationService {
         return Notification.builder()
                 .title(dto.getTitle())
                 .content(dto.getContent())
-                .type(dto.getType())
+                .type("ADMIN_MANUAL")
                 .account(acc)
                 .post(post)
                 .isRead(0)

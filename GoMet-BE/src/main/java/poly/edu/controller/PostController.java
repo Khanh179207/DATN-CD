@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import poly.edu.dao.*;
 import poly.edu.dto.*;
 import poly.edu.entity.*;
+import poly.edu.service.NotificationService;
 
 import java.time.LocalDate;
 import java.util.Comparator;
@@ -31,6 +32,7 @@ public class PostController {
     private final CookingStepsDAO cookingStepsDAO;
     private final SimpMessagingTemplate messagingTemplate;
     private final LikesDAO likesDAO;
+    private final NotificationService notificationService;
 
     @GetMapping("/search-mini")
     public ResponseEntity<List<Map<String, Object>>> searchMini(@RequestParam String q) {
@@ -365,16 +367,11 @@ public class PostController {
 
     private void sendAdminAlert(Post post) {
         try {
-            Map<String, Object> alert = Map.of(
-                    "id", "post-" + post.getPostID(),
-                    "type", "POST_PENDING",
-                    "title", post.getTitle(),
-                    "message",
-                    "New post waiting for approval: \"" + post.getTitle() + "\" by " + post.getAccount().getUsername(),
-                    "createdAt", post.getCreatedAt().toString());
-            messagingTemplate.convertAndSend("/topic/admin-alerts", (Object) alert);
+            String userUsername = post.getAccount() != null ? post.getAccount().getUsername() : "Unknown User";
+            notificationService.notifyAdminPostPendingApproval(userUsername, post.getPostID());
         } catch (Exception e) {
-            System.err.println("Failed to send admin alert: " + e.getMessage());
+            System.err.println("Failed to notify admin about post: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }
