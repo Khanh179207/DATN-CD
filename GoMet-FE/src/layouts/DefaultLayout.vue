@@ -139,6 +139,12 @@ const startLoadingAnimation = () => {
 
 onMounted(() => {
   if (sessionStorage.getItem('just_logged_in') === 'true') startLoadingAnimation();
+  
+  /* START: Daily View Limit - Global Event Listener */
+  window.addEventListener('ui:open-premium', () => {
+    showPremium.value = true
+  })
+  /* END */
 })
 
 watch(() => route.fullPath, () => {

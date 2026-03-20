@@ -1,4 +1,4 @@
-﻿	-- Bước 1: Trở về database master (Bắt buộc)
+	-- Bước 1: Trở về database master (Bắt buộc)
 	USE master;
 	GO
 
@@ -452,11 +452,14 @@ CREATE TABLE Comment (
 
 	INSERT INTO Category (CategoryName) VALUES (N'Món Việt'), (N'Món Âu'), (N'Món Chay');
 
+	INSERT INTO Post (AccountID, CategoryID, Title, Description, Ingredients, isApproved) VALUES 
+	(2, 1, N'Phở Bò Gia Truyền', N'Món phở bò thơm ngon đậm đà hương vị Việt.', N'Bánh phở, thịt bò, xương ống, quế, hồi...', 1),
+	(3, 1, N'Bún Chả Hà Nội', N'Món bún chả đặc sản của thủ đô.', N'Bún, thịt lợn, nước mắm, rau sống...', 1);
+
 	-- Dữ liệu Event đầy đủ mô tả, thời gian vote
 	INSERT INTO Event (EventName, BannerImage, Description, Rules, Reward, StartAt, EndAt, VoteStartAt, VoteEndAt) VALUES 
 	(N'Siêu Đầu Bếp Tháng 3', 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?q=80', N'Thi nấu ăn dành riêng cho tháng 3', N'- Nộp tối đa 3 bài<br>- Không sao chép', N'Huy hiệu Siêu Đầu Bếp', '2026-03-01 00:00:00', '2026-03-20 23:59:59', '2026-03-15 00:00:00', '2026-03-25 23:59:59');
 
-	C
 	INSERT INTO EventPosts (EventID, PostID) VALUES (1, 1), (1, 2);
 	GO
 

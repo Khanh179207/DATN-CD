@@ -20,13 +20,12 @@ api.interceptors.request.use(config => {
 api.interceptors.response.use(
   res => res,
   err => {
-    if (err.response?.status === 401 || err.response?.status === 403) {
+    if (err.response?.status === 401 || (err.response?.status === 403 && err.response?.data?.message === 'ACCOUNT_BANNED')) {
       const user = JSON.parse(localStorage.getItem('user') || 'null')
       if (user?.token) {
         localStorage.removeItem('user')
 
-        // 🔥 SỬA DÒNG NÀY: Check đúng cái KEY mà Backend gửi (ACCOUNT_BANNED)
-        const isBanned = err.response?.data?.message === 'ACCOUNT_BANNED' || err.response?.status === 403;
+        const isBanned = err.response?.data?.message === 'ACCOUNT_BANNED';
 
         window.dispatchEvent(new CustomEvent('auth:force-logout', {
           detail: { isBanned: isBanned }
