@@ -3,6 +3,7 @@ package poly.edu.dao;
 import poly.edu.entity.Account;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface AccountDAO extends JpaRepository<Account, Integer> {
@@ -12,4 +13,6 @@ public interface AccountDAO extends JpaRepository<Account, Integer> {
     Optional<Account> findByUsernameIgnoreCase(String username);
 
     Optional<Account> findByEmail(String email);
+
+    List<Account> findByIsAdmin(Integer isAdmin);
 }

@@ -122,7 +122,7 @@
                       <input type="checkbox" v-model="regForm.agreeTerms" required>
                       <span class="checkmark"></span>
                       <span class="label-text">
-                        Tôi đồng ý với <router-link to="/terms" @click="$emit('close')">Điều khoản</router-link> và <router-link to="/policy" @click="$emit('close')">Chính sách bảo mật</router-link>
+                        Tôi đồng ý với <router-link to="/terms-and-policy" @click="$emit('close')">Điều khoản</router-link> và <router-link to="/terms-and-policy" @click="$emit('close')">Chính sách bảo mật</router-link>
                       </span>
                     </label>
                   </div>
@@ -285,17 +285,19 @@ const handleLogin = async () => {
     emit('close')
     router.push(role === 'admin' ? '/admin' : '/home')
   } catch (err) {
-    const raw = err.message || ''
-    if (raw === 'ACCOUNT_BANNED') {
-      loginError.value = 'Tài khoản của bạn đã bị khóa bởi quản trị viên.'
-      toast.error('Tài khoản của bạn đã bị khóa!')
+    // 🔥 LƯỚI TRỜI LỒNG LỘNG: Bắt mọi kiểu dữ liệu ném ra
+    const errorString = String(err.message || err.response?.data?.message || err).toUpperCase()
+
+    if (errorString.includes('ACCOUNT_BANNED')) {
+      // Set đúng câu này để cái computed isBannedError (hiện icon ổ khóa 🔒) của sếp hoạt động
+      loginError.value = 'Tài khoản của bạn đã bị khóa bởi quản trị viên.' 
+      toast.error('🚨 TÀI KHOẢN BỊ KHÓA: Bạn đã bị cấm vĩnh viễn do vi phạm tiêu chuẩn cộng đồng GOMET!', { timeout: 8000 })
     } else {
-      loginError.value = raw || t('auth.error_login', 'Đăng nhập thất bại')
+      loginError.value = err.message || t('auth.error_login', 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.')
       toast.error(loginError.value)
     }
   }
 }
-
 const handleGoogleCallback = async (response) => {
   loginError.value = ''
   try {
@@ -307,13 +309,13 @@ const handleGoogleCallback = async (response) => {
 
     authStore.user = {
       id:         data.accountID,
-      accountID: data.accountID,
+      accountID:  data.accountID,
       name:       data.username,
       username:   data.username,
       email:      data.email,
       avatar:     data.avatar,
       isAdmin:    data.isAdmin,
-      isPremium: data.isPremium,
+      isPremium:  data.isPremium,
       token:      data.token,
       role:       data.isAdmin ? 'admin' : 'user'
     }
@@ -323,8 +325,17 @@ const handleGoogleCallback = async (response) => {
     router.push(authStore.user.role === 'admin' ? '/admin' : '/home')
   } catch (err) {
     console.error("Google Login Error:", err)
-    loginError.value = err.response?.data?.message || err.message || 'Lỗi đăng nhập bằng Google. Vui lòng thử lại.'
-    toast.error(loginError.value)
+    
+    // 🔥 CHẶN ĐỨNG LỖI TỪ GOOGLE
+    const errorString = String(err.response?.data?.message || err.message || err).toUpperCase()
+
+    if (errorString.includes('ACCOUNT_BANNED')) {
+      loginError.value = 'Tài khoản của bạn đã bị khóa bởi quản trị viên.'
+      toast.error('🚨 TÀI KHOẢN BỊ KHÓA: Bạn không thể đăng nhập bằng Google vì tài khoản này đã bị Ban!', { timeout: 8000 })
+    } else {
+      loginError.value = err.response?.data?.message || err.message || 'Lỗi đăng nhập bằng Google. Vui lòng thử lại.'
+      toast.error(loginError.value)
+    }
   }
 }
 

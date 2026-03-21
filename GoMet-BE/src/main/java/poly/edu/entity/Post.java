@@ -40,6 +40,8 @@ public class Post {
 
     private String media;
 
+    private String video;
+
     @Column(nullable = false)
     private Integer level;
 
@@ -77,8 +79,9 @@ public class Post {
     @OneToMany(mappedBy = "post")
     private List<Notification> notifications;
 
-    @OneToMany(mappedBy = "post")
-    private List<Report> reports;
+    // Thay vì mappedBy = "account", sếp phải để là "targetPost"
+    @OneToMany(mappedBy = "targetPost")
+    private List<Ticket> tickets;
 
     @Column(name = "LikeCount")
     private Integer likeCount = 0; // Thêm dòng này vào

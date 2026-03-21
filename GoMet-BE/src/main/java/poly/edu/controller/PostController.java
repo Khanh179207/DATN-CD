@@ -2,6 +2,7 @@ package poly.edu.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dao.*;
 import poly.edu.dto.*;
@@ -21,16 +22,15 @@ import java.util.stream.Collectors;
 public class PostController {
 
     private final PostDAO postDAO;
-    private final RatingDAO ratingDAO;
     private final FavoriteDAO favoriteDAO;
     private final CommentDAO commentDAO;
     private final FollowDAO followDAO;
     private final AccountDAO accountDAO;
     private final CategoryDAO categoryDAO;
     private final CookingStepsDAO cookingStepsDAO;
-    private final LikesDAO likesDAO; // 🔥 BỔ SUNG: Để giải quyết dứt điểm vụ Like về 0
+    private final SimpMessagingTemplate messagingTemplate;
+    private final LikesDAO likesDAO;
 
-    // ─── API MỚI: Search Mini (Đồng bộ với AI Chat) ────────────────────
     @GetMapping("/search-mini")
     public ResponseEntity<List<Map<String, Object>>> searchMini(@RequestParam String q) {
         List<Post> posts = postDAO.searchByKeyword(q).stream()
@@ -48,31 +48,27 @@ public class PostController {
         return ResponseEntity.ok(result);
     }
 
-    // ─── Lấy bài viết của User (Dùng cho trang Modal chọn bài dự thi) ───
     @GetMapping("/account/{accountId}")
     public ResponseEntity<List<PublicPostDTO>> getPostsByAccountAPI(
             @PathVariable Integer accountId,
             @RequestParam(required = false) Integer currentUserId) {
         List<Post> posts = postDAO.findByAccount_AccountIDOrderByCreatedAtDesc(accountId);
-        // Map kèm theo currentUserId để biết bài nào user đã like
         List<PublicPostDTO> result = posts.stream()
                 .map(p -> toPublicDTO(p, currentUserId))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(result);
     }
 
-    // ─── List latest posts (home feed) ─────────────────────────────────
     @GetMapping("/latest")
     public ResponseEntity<List<PublicPostDTO>> getLatest(
             @RequestParam(defaultValue = "8") int limit,
-            @RequestParam(required = false) Integer accountId) { // 🔥 NHẬN ACCOUNT ID TỪ VUE
+            @RequestParam(required = false) Integer accountId) {
         List<Post> posts = postDAO.findLatest().stream()
                 .limit(limit)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(posts.stream().map(p -> toPublicDTO(p, accountId)).collect(Collectors.toList()));
     }
 
-    // ─── List all approved posts (paginated) ───────────────────────────
     @GetMapping
     public ResponseEntity<List<PublicPostDTO>> getAll(
             @RequestParam(defaultValue = "1") int page,
@@ -80,12 +76,11 @@ public class PostController {
             @RequestParam(required = false) Integer accountId) {
         List<Post> all = postDAO.findByIsApprovedAndIsActive(1, 1);
         int from = Math.min((page - 1) * size, all.size());
-        int to   = Math.min(from + size, all.size());
+        int to = Math.min(from + size, all.size());
         List<Post> paged = all.subList(from, to);
         return ResponseEntity.ok(paged.stream().map(p -> toPublicDTO(p, accountId)).collect(Collectors.toList()));
     }
 
-    // ─── Post detail ───────────────────────────────────────────────────
     @GetMapping("/{id}")
     public ResponseEntity<?> getDetail(
             @PathVariable Integer id,
@@ -93,13 +88,11 @@ public class PostController {
         return postDAO.findById(id).map(post -> {
             post.setViews(post.getViews() + 1);
             postDAO.save(post);
-            // Detail cũng cần check isLiked để hiện tim hồng ở trang chi tiết
             PostDetailDTO dto = toDetailDTO(post, accountId);
             return ResponseEntity.ok(dto);
         }).orElse(ResponseEntity.notFound().build());
     }
 
-    // ─── Search ────────────────────────────────────────────────────────
     @GetMapping("/search")
     public ResponseEntity<List<PublicPostDTO>> search(
             @RequestParam(defaultValue = "") String keyword,
@@ -118,18 +111,20 @@ public class PostController {
         }
 
         List<PublicPostDTO> result = posts.stream().map(p -> toPublicDTO(p, accountId)).collect(Collectors.toList());
-        // Logic sắp xếp giữ nguyên của sếp
         if ("views".equals(sort)) {
-            result.sort(Comparator.comparingInt((PublicPostDTO p) -> p.getViews() != null ? p.getViews() : 0).reversed());
+            result.sort(
+                    Comparator.comparingInt((PublicPostDTO p) -> p.getViews() != null ? p.getViews() : 0).reversed());
         } else if ("rating".equals(sort)) {
-            result.sort(Comparator.comparingDouble((PublicPostDTO p) -> p.getAvgRating() != null ? p.getAvgRating() : 0).reversed());
+            result.sort(Comparator.comparingDouble((PublicPostDTO p) -> p.getAvgRating() != null ? p.getAvgRating() : 0)
+                    .reversed());
         } else {
-            result.sort(Comparator.comparing((PublicPostDTO p) -> p.getCreatedAt() != null ? p.getCreatedAt().toString() : "").reversed());
+            result.sort(Comparator
+                    .comparing((PublicPostDTO p) -> p.getCreatedAt() != null ? p.getCreatedAt().toString() : "")
+                    .reversed());
         }
         return ResponseEntity.ok(result);
     }
 
-    // ─── Related posts (same category) ────────────────────────────────
     @GetMapping("/{id}/related")
     public ResponseEntity<List<PublicPostDTO>> getRelated(
             @PathVariable Integer id,
@@ -145,7 +140,6 @@ public class PostController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
-    // ─── Posts by user ─────────────────────────────────────────────────
     @GetMapping("/by-user/{accountID}")
     public ResponseEntity<List<PublicPostDTO>> getByUser(
             @PathVariable Integer accountID,
@@ -154,7 +148,6 @@ public class PostController {
         return ResponseEntity.ok(posts.stream().map(p -> toPublicDTO(p, currentUserId)).collect(Collectors.toList()));
     }
 
-    // ─── Suggest posts (for SuggestionsPage) ──────────────────────────
     @GetMapping("/suggest")
     public ResponseEntity<List<PublicPostDTO>> suggest(
             @RequestParam(required = false) Integer categoryID,
@@ -175,7 +168,6 @@ public class PostController {
                 .collect(Collectors.toList()));
     }
 
-    // ─── Trending (leaderboard-worthy) ────────────────────────────────
     @GetMapping("/trending")
     public ResponseEntity<List<PublicPostDTO>> getTrending(
             @RequestParam(defaultValue = "10") int limit,
@@ -193,14 +185,13 @@ public class PostController {
         return ResponseEntity.ok(result);
     }
 
-    // ─── Mapping helpers (Sửa đổi để hết lỗi Like 0) ──────────────────
-
     public PublicPostDTO toPublicDTO(Post p, Integer accountId) {
         PublicPostDTO dto = new PublicPostDTO();
         dto.setPostID(p.getPostID());
         dto.setTitle(p.getTitle());
         dto.setDescription(p.getDescription());
         dto.setMedia(p.getMedia());
+        dto.setVideo(p.getVideo());
         dto.setLevel(p.getLevel());
         dto.setCookingTime(p.getCookingTime());
         dto.setViews(p.getViews());
@@ -216,23 +207,30 @@ public class PostController {
             dto.setCategoryName(p.getCategory().getCategoryName());
         }
 
-        // Ratings
-        List<Rating> ratings = p.getRatings();
-        if (ratings != null && !ratings.isEmpty()) {
-            dto.setAvgRating(ratings.stream().mapToInt(Rating::getRate).average().orElse(0));
-            dto.setRatingCount((long) ratings.size());
+        // ================= FIX Ở ĐÂY: Tính Rating từ bảng Comment mới =================
+        List<Comment> ratedComments = p.getComments() != null ?
+                p.getComments().stream()
+                        .filter(c -> c.getRating() != null && c.getRating() > 0)
+                        .collect(Collectors.toList()) : List.of();
+
+        if (!ratedComments.isEmpty()) {
+            dto.setAvgRating(ratedComments.stream().mapToInt(Comment::getRating).average().orElse(0.0));
+            dto.setRatingCount((long) ratedComments.size());
         } else {
             dto.setAvgRating(0.0);
             dto.setRatingCount(0L);
         }
 
-        dto.setCommentCount(p.getComments() != null ? (long) p.getComments().size() : 0L);
+        long commentCount = p.getComments() != null ?
+                p.getComments().stream()
+                        .filter(c -> c.getRating() == null || c.getRating() == 0)
+                        .count() : 0L;
+        dto.setCommentCount(commentCount);
+        // ============================================================================
 
-        // 🔥 FIX LIKE COUNT: Đếm thật từ bảng Likes
         long realLikes = likesDAO.countByPost_PostID(p.getPostID());
         dto.setFavoriteCount(realLikes);
 
-        // 🔥 FIX TIM HỒNG: Check xem user đang xem đã like bài này chưa
         boolean isLiked = false;
         if (accountId != null) {
             isLiked = likesDAO.existsByAccount_AccountIDAndPost_PostID(accountId, p.getPostID());
@@ -249,6 +247,7 @@ public class PostController {
         dto.setDescription(p.getDescription());
         dto.setIngredients(p.getIngredients());
         dto.setMedia(p.getMedia());
+        dto.setVideo(p.getVideo());
         dto.setLevel(p.getLevel());
         dto.setCookingTime(p.getCookingTime());
         dto.setViews(p.getViews());
@@ -277,25 +276,33 @@ public class PostController {
             dto.setEventName(p.getEvent().getEventName());
         }
 
-        // Ratings & Like count chuẩn
-        List<Rating> ratings = p.getRatings();
-        if (ratings != null && !ratings.isEmpty()) {
-            dto.setAvgRating(ratings.stream().mapToInt(Rating::getRate).average().orElse(0));
-            dto.setRatingCount((long) ratings.size());
+        // ================= FIX Ở ĐÂY: Tính Rating từ bảng Comment mới =================
+        List<Comment> ratedComments = p.getComments() != null ?
+                p.getComments().stream()
+                        .filter(c -> c.getRating() != null && c.getRating() > 0)
+                        .collect(Collectors.toList()) : List.of();
+
+        if (!ratedComments.isEmpty()) {
+            dto.setAvgRating(ratedComments.stream().mapToInt(Comment::getRating).average().orElse(0.0));
+            dto.setRatingCount((long) ratedComments.size());
         } else {
             dto.setAvgRating(0.0);
             dto.setRatingCount(0L);
         }
 
-        dto.setCommentCount(p.getComments() != null ? (long) p.getComments().size() : 0L);
-        dto.setFavoriteCount(likesDAO.countByPost_PostID(p.getPostID())); // 🔥 Đếm thật
+        long commentCount = p.getComments() != null ?
+                p.getComments().stream()
+                        .filter(c -> c.getRating() == null || c.getRating() == 0)
+                        .count() : 0L;
+        dto.setCommentCount(commentCount);
+        // ============================================================================
 
-        // Check trạng thái like cho chi tiết
+        dto.setFavoriteCount(likesDAO.countByPost_PostID(p.getPostID()));
+
         if (accountId != null) {
             dto.setIsLiked(likesDAO.existsByAccount_AccountIDAndPost_PostID(accountId, p.getPostID()));
         }
 
-        // Steps & Comments giữ nguyên...
         if (p.getCookingSteps() != null) {
             List<CookingStepDTO> steps = p.getCookingSteps().stream()
                     .sorted(Comparator.comparingInt(CookingSteps::getStepNumber))
@@ -305,49 +312,54 @@ public class PostController {
                         sdto.setStepNumber(s.getStepNumber());
                         sdto.setContent(s.getContent());
                         sdto.setImage(s.getImage());
-                        sdto.setVideo(s.getVideo());
                         return sdto;
                     }).collect(Collectors.toList());
             dto.setSteps(steps);
         }
+
+        // ================= FIX Ở ĐÂY: Gỡ bỏ RatingDAO khỏi map Comment =================
         if (p.getComments() != null) {
             List<CommentDTO> comments = p.getComments().stream().map(c -> {
                 CommentDTO cdto = new CommentDTO();
                 cdto.setCommentID(c.getCommentID());
                 cdto.setPostID(p.getPostID());
                 cdto.setContent(c.getContent());
+
+                // Lấy số sao trực tiếp từ Entity Comment
+                cdto.setRating(c.getRating() != null ? c.getRating() : 0);
+
                 if (c.getAccount() != null) {
                     cdto.setAccountID(c.getAccount().getAccountID());
                     cdto.setAuthorName(c.getAccount().getUsername());
                     cdto.setAuthorAvatar(c.getAccount().getAvatar());
-                    ratingDAO.findByAccount_AccountIDAndPost_PostID(c.getAccount().getAccountID(), p.getPostID())
-                            .ifPresent(r -> cdto.setRating(r.getRate()));
                 }
                 return cdto;
             }).collect(Collectors.toList());
             dto.setComments(comments);
         }
+        // ============================================================================
+
         return dto;
     }
 
-    // ─── Create post ────────────────────────────────────────────────────
-// ─── Create post (Đã đồng bộ Full JSON & DTO) ───────────────────────
     @PostMapping
-    public ResponseEntity<?> createPost(@RequestBody PostDTO dto) { // 🔥 Đổi thành @RequestBody PostDTO
+    public ResponseEntity<?> createPost(@RequestBody PostDTO dto) {
         try {
             Account account = accountDAO.findById(dto.getAccountID()).orElse(null);
-            if (account == null) return ResponseEntity.badRequest().body("Invalid accountID");
+            if (account == null)
+                return ResponseEntity.badRequest().body("Invalid accountID");
             Category category = categoryDAO.findById(dto.getCategoryID()).orElse(null);
-            if (category == null) return ResponseEntity.badRequest().body("Invalid categoryID");
+            if (category == null)
+                return ResponseEntity.badRequest().body("Invalid categoryID");
 
-            // 1. Tạo thực thể Post từ DTO
             Post post = Post.builder()
                     .account(account)
                     .category(category)
                     .title(dto.getTitle() != null ? dto.getTitle() : "")
                     .description(dto.getDescription() != null ? dto.getDescription() : "")
                     .ingredients(dto.getIngredients() != null ? dto.getIngredients() : "")
-                    .media(dto.getMedia() != null ? dto.getMedia() : "") // Link Cloudinary
+                    .media(dto.getMedia() != null ? dto.getMedia() : "")
+                    .video(dto.getVideo())
                     .level(dto.getLevel() != null ? dto.getLevel() : 2)
                     .cookingTime(dto.getCookingTime() != null ? dto.getCookingTime() : 30)
                     .views(0)
@@ -357,21 +369,39 @@ public class PostController {
                     .build();
             post = postDAO.save(post);
 
-            // 2. Lặp qua danh sách Steps từ DTO và lưu
+            sendAdminAlert(post);
+
             if (dto.getSteps() != null) {
                 int stepNum = 1;
                 for (StepRequestDTO s : dto.getSteps()) {
                     CookingSteps step = new CookingSteps();
                     step.setPost(post);
                     step.setStepNumber(stepNum++);
-                    step.setContent(s.getDesc() != null ? s.getDesc() : ""); // Nhận từ desc của Vue
-                    step.setImage(s.getImage()); // Link Cloudinary
+                    step.setContent(s.getDesc() != null ? s.getDesc() : "");
+                    step.setImage(s.getImage());
                     cookingStepsDAO.save(step);
                 }
             }
 
-            return ResponseEntity.ok(Map.of("postID", post.getPostID(), "message", "Post created and pending approval"));
+            return ResponseEntity
+                    .ok(Map.of("postID", post.getPostID(), "message", "Post created and pending approval"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error: " + e.getMessage());
         }
-    }}
+    }
+
+    private void sendAdminAlert(Post post) {
+        try {
+            Map<String, Object> alert = Map.of(
+                    "id", "post-" + post.getPostID(),
+                    "type", "POST_PENDING",
+                    "title", post.getTitle(),
+                    "message",
+                    "New post waiting for approval: \"" + post.getTitle() + "\" by " + post.getAccount().getUsername(),
+                    "createdAt", post.getCreatedAt().toString());
+            messagingTemplate.convertAndSend("/topic/admin-alerts", (Object) alert);
+        } catch (Exception e) {
+            System.err.println("Failed to send admin alert: " + e.getMessage());
+        }
+    }
+}

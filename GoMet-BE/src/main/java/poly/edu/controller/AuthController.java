@@ -60,20 +60,18 @@ public class AuthController {
             if (opt.isPresent()) {
                 // TÌNH HUỐNG 1: ĐÃ CÓ TÀI KHOẢN -> ĐĂNG NHẬP
                 acc = opt.get();
+                // 🔥 CHỐT CHẶN 1 (Google Login): CẤM USER BỊ BAN ĐĂNG NHẬP BẰNG GOOGLE
                 if (acc.getIsActive() == 0) {
                     return ResponseEntity.status(HttpStatus.FORBIDDEN)
                             .body(Map.of("message", "ACCOUNT_BANNED"));
                 }
             } else {
                 // TÌNH HUỐNG 2: CHƯA CÓ TÀI KHOẢN -> TỰ ĐỘNG ĐĂNG KÝ
-
-                // Xử lý trùng lặp Username (nếu tên từ Google bị trùng với user khác)
                 String finalUsername = name.replaceAll("\\s+", ""); // Xóa khoảng trắng
                 if (accountDAO.findByUsername(finalUsername).isPresent()) {
                     finalUsername = finalUsername + "_" + new Random().nextInt(10000);
                 }
 
-                // Mã hóa một chuỗi ngẫu nhiên làm mật khẩu để bảo vệ DB
                 String randomPassword = passwordEncoder.encode(UUID.randomUUID().toString());
 
                 acc = Account.builder()
@@ -85,16 +83,18 @@ public class AuthController {
                         .isAdmin(0)
                         .isPremium(0)
                         .isActive(1)
-                        .createdAt(LocalDateTime.now()) // ĐÃ SỬA THÀNH LocalDateTime.now()
+                        .createdAt(LocalDateTime.now())
                         .build();
+                // 🔥 THÊM DÒNG NÀY (Hồi nãy sếp thiếu) ĐỂ LƯU USER MỚI
+                acc = accountDAO.save(acc);
             }
 
-            // 3. Tạo Token phiên đăng nhập (Giống hệt luồng Login bình thường của sếp)
+            // 3. Tạo Token phiên đăng nhập
             String newToken = UUID.randomUUID().toString();
             acc.setToken(newToken);
             accountDAO.save(acc);
 
-            // 4. Trả về Frontend thông qua buildResponse chuẩn form
+            // 4. Trả về Frontend
             return ResponseEntity.ok(buildResponse(acc));
 
         } catch (Exception e) {
@@ -252,19 +252,32 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
+
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Not authenticated"));
         }
+
         String token = authHeader.substring(7);
+
         Optional<Account> opt = accountDAO.findAll().stream()
                 .filter(a -> token.equals(a.getToken()))
                 .findFirst();
+
         if (opt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Invalid token"));
         }
-        return ResponseEntity.ok(buildResponse(opt.get()));
-    }
 
+        Account acc = opt.get();
+
+        // 🔥 LƯỚI TRỜI LỒNG LỘNG: Check xem Account này có đang bị BAN không
+        if (acc.getIsActive() == 0) {
+            // Ném lỗi 403 Forbidden ra cho Frontend bắt và Đá Văng
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", "ACCOUNT_BANNED"));
+        }
+
+        return ResponseEntity.ok(buildResponse(acc));
+    }
     // ─── HELPERS ─────────────────────────────────────────────────────────────
     private AuthResponseDTO buildResponse(Account acc) {
         AuthResponseDTO res = new AuthResponseDTO();

@@ -2,6 +2,9 @@ package poly.edu.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "Comment")
@@ -20,23 +23,37 @@ public class Comment {
     private Account account;
 
     @ManyToOne
-    @JoinColumn(name = "PostID", nullable = true)
+    @JoinColumn(name = "PostID", nullable = false)
     private Post post;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cmtid")
     private Comment parentComment;
 
+    @Column(name = "Rating")
+    private Integer rating;
+
     @Column(nullable = false, columnDefinition = "NVARCHAR(MAX)")
     private String content;
 
     @Column(name = "Attachments", columnDefinition = "NVARCHAR(MAX)")
     @Convert(converter = poly.edu.util.StringListConverter.class)
-    private java.util.List<String> attachments = new java.util.ArrayList<>();
+    @Builder.Default
+    private List<String> attachments = new ArrayList<>();
 
     @Column(name = "CreatedAt", insertable = false, updatable = false)
-    private java.time.LocalDateTime createdAt;
+    private LocalDateTime createdAt;
+
+    // --- PHẦN FIX LỖI ---
+    @Column(name = "Likes")
+    @Builder.Default
+    private Integer likes = 0; // Con số để hiện trên UI
 
     @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
-    private java.util.List<CommentLike> likes = new java.util.ArrayList<>();
+    @Builder.Default
+    private List<CommentLike> commentLikes = new ArrayList<>(); // Danh sách thực thể Like
+
+    @OneToMany(mappedBy = "parentComment", cascade = CascadeType.ALL)
+    @Builder.Default
+    private List<Comment> replies = new ArrayList<>();
 }

@@ -51,6 +51,9 @@ public class EventServiceImpl implements EventService {
         dto.setDescription(e.getDescription()); // 🔥 Thiếu dòng này là nó null ngay!
         dto.setRules(e.getRules());             // 🔥 Thiếu dòng này là nó null ngay!
         dto.setReward(e.getReward());
+        // Lúc map từ Entity sang DTO, sếp nhớ thêm 2 dòng này:
+        dto.setIsActive(e.getIsActive());
+        dto.setIsForceEnded(e.getIsForceEnded());
 
         long count = (e.getEventPosts() != null) ? e.getEventPosts().size() : 0;
         dto.setPostCount(count);

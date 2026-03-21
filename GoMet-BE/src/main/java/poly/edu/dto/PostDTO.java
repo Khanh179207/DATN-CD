@@ -19,6 +19,7 @@ public class PostDTO {
     private String description;
     private String ingredients; // Vue đang gửi lên dạng String (đã join bằng dấu phẩy)
     private String media;       // Gửi Link Cloudinary
+    private String video;
     private Integer level;
     private Integer cookingTime;
 
@@ -33,5 +34,6 @@ public class PostDTO {
     private Integer isApproved;
 
     // 🔥 Bây giờ nó sẽ tự động hiểu và dùng cái file StepRequestDTO.java riêng biệt ở trên
-    private List<StepRequestDTO> steps;
+    // Trong file PostDTO.java
+    private List<StepRequestDTO> steps; // Dùng cái này là chuẩn nhất vì FE đang gửi lên mảng này
 }

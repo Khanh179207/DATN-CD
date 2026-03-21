@@ -74,12 +74,12 @@
 
       <div class="reveal-wrapper" style="overflow: visible;">
         <div class="cta-group gsap-cta">
-          <router-link to="/home" class="btn-primary-xl shine-btn pulse-hover">
+          <a href="#" @click.prevent="handleExploreClick" class="btn-primary-xl shine-btn pulse-hover">
             <span class="btn-text">{{ $t('landing.cta', 'Khám phá ngay !') }}</span>
             <span class="arrow-icon">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
             </span>
-          </router-link>
+          </a>
           
           <div class="social-proof">
             <div class="avatars">
@@ -104,18 +104,22 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router' // 👈 Thêm Router
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 gsap.registerPlugin(ScrollTrigger)
 
 const { t } = useI18n()
+const router = useRouter() // 👈 Khởi tạo Router
 
 const heroSection = ref(null)
 const marqueeWrapper = ref(null)
 const contentWrapper = ref(null)
 const scrollMouse = ref(null)
-const ctx = ref(null) 
+
+// ❌ KHÔNG dùng const ctx = ref(null) để tránh tràn RAM
+let ctx; // ✅ Khai báo biến let bình thường
 
 const foodImages = [
   'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&q=80',
@@ -146,8 +150,16 @@ const scrollToSignup = () => {
   }
 };
 
+// --- 🔥 HÀM XỬ LÝ KHÁM PHÁ NGAY ---
+const handleExploreClick = () => {
+  // Cắm cờ bật Loading cho MainLayout
+  sessionStorage.setItem('just_logged_in', 'true')
+  // Chuyển trang
+  router.push('/home')
+}
+
 onMounted(() => {
-  ctx.value = gsap.context(() => {
+  ctx = gsap.context(() => { // ✅ Bỏ .value đi
 
     // ==========================================
     // 🎬 HIỆU ỨNG MỞ MÀN ĐIỆN ẢNH (CINEMATIC INTRO)
@@ -207,7 +219,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  if (ctx.value) ctx.value.revert();
+  if (ctx) ctx.revert(); // ✅ Bỏ .value đi
 });
 </script>
 

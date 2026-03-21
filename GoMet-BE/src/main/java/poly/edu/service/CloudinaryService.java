@@ -3,15 +3,9 @@ package poly.edu.service;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Map;
 
 @Service
@@ -20,43 +14,38 @@ public class CloudinaryService {
 
     private final Cloudinary cloudinary;
 
-    @Value("${app.upload.dir:uploads}")
-    private String uploadDir;
+    /**
+     * CHỐT: Tên hàm là uploadMedia để khớp với Controller và hỗ trợ đa phương tiện (ảnh/video).
+     */
+    public String uploadMedia(MultipartFile file, String folderName) throws IOException {
 
-    @Value("${app.base-url:http://localhost:8080}")
-    private String baseUrl;
-
-    public String uploadImage(MultipartFile file, String folderName) throws IOException {
-        // 1. Kiểm tra và tạo thư mục local nếu chưa có (theo yêu cầu của bạn)
-        Path root = Paths.get(uploadDir);
-        if (!Files.exists(root)) {
-            Files.createDirectories(root);
-            System.out.println(">>> CloudinaryService: Đã tạo thư mục lưu trữ local: " + uploadDir);
+        // 1. Kiểm tra file đầu vào (Logic an toàn)
+        if (file == null || file.isEmpty()) {
+            throw new IOException("File bị trống, Cloudinary không thể xử lý!");
         }
 
-        // 2. Lưu file tạm vào local
-        String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-        Path filePath = root.resolve(fileName);
-        Files.copy(file.getInputStream(), filePath);
-        System.out.println(">>> CloudinaryService: Đã lưu file tại: " + filePath.toAbsolutePath());
-
-        // 3. Upload lên Cloudinary
+        // 2. Cấu hình tham số Upload (Giữ cấu trúc folder GOMET của sếp)
         Map params = ObjectUtils.asMap(
                 "folder", "GoMet/" + folderName,
-                "resource_type", "auto"
+                "resource_type", "auto", // Tự động nhận diện ảnh/video/raw (Rất Pro)
+                "overwrite", true
         );
 
         try {
+            System.out.println(">>> [Cloudinary] Đang đẩy file '" + file.getOriginalFilename() + "' lên mây...");
+
+            // 3. Thực hiện Upload trực tiếp từ mảng Byte (Không lưu tạm ở Local cho sạch máy)
             Map uploadResult = cloudinary.uploader().upload(file.getBytes(), params);
+
             String secureUrl = uploadResult.get("secure_url").toString();
-            System.out.println(">>> CloudinaryService: Upload thành công. URL: " + secureUrl);
+            System.out.println(">>> [Cloudinary] SUCCESS! URL: " + secureUrl);
+
+            // Trả về secure_url (https) để đảm bảo bảo mật và chuẩn SEO
             return secureUrl;
+
         } catch (Exception e) {
-            System.err.println(">>> CloudinaryService FAILED, falling back to LOCAL: " + e.getMessage());
-            // Trả về đường dẫn tuyệt đối để frontend không bị nhầm origin
-            String absoluteUrl = baseUrl + "/uploads/" + fileName;
-            System.out.println(">>> CloudinaryService: Fallback URL: " + absoluteUrl);
-            return absoluteUrl;
+            System.err.println(">>> [Cloudinary] UPLOAD FAILED: " + e.getMessage());
+            throw new IOException("Không thể upload file lên Cloudinary: " + e.getMessage());
         }
     }
 }

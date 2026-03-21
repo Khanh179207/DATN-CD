@@ -13,7 +13,8 @@ public class AdminEventPostDTO {
     private String postTitle;
     private String postImage;
     private String username;
-
-    // 🔥 Thêm trường này vào để fix lỗi setVoteCount sếp nhé!
     private Integer voteCount;
+
+    // Thêm trường accountID để show ra ai là người chiến thắng
+    private Integer accountID;
 }

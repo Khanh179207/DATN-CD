@@ -4,17 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import poly.edu.dao.AccountDAO;
-import poly.edu.dao.CommentDAO;
-import poly.edu.dao.PostDAO;
 import poly.edu.dto.CommentDTO;
-import poly.edu.entity.Account;
-import poly.edu.entity.Comment;
-import poly.edu.entity.Post;
 import poly.edu.service.CommentService;
 
 import java.util.List;
-import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -23,114 +16,34 @@ import java.util.Map;
 @CrossOrigin("*")
 public class CommentController {
 
-    private final CommentDAO commentDAO;
-    private final PostDAO postDAO;
-    private final AccountDAO accountDAO;
     private final CommentService commentService;
 
-    @GetMapping("/test")
-    public String test() {
-        System.out.println(">>> CommentController: GET /api/comments/test called");
-        return "CommentController is working!";
-    }
-
     @GetMapping("/post/{postID}")
-    public ResponseEntity<List<CommentDTO>> getByPost(@PathVariable Integer postID) {
-        return ResponseEntity.ok(commentService.getCommentsByPost(postID));
+    public ResponseEntity<List<CommentDTO>> getByPost(
+            @PathVariable Integer postID,
+            @RequestParam(required = false) Integer currentAccountID) { // Nhận ID từ Query Param
+
+        // Gọi Service và truyền cả 2 ID vào
+        return ResponseEntity.ok(commentService.getCommentsByPost(postID, currentAccountID));
     }
 
     @PostMapping
     public ResponseEntity<?> addComment(@RequestBody CommentDTO req) {
-        boolean hasContent = req.getContent() != null && !req.getContent().isBlank();
-        boolean hasImages = req.getImageUrls() != null && !req.getImageUrls().isEmpty();
-
-        if (req.getAccountID() == null || (!hasContent && !hasImages)) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Nội dung bình luận hoặc hình ảnh không được để trống"));
+        try {
+            CommentDTO saved = commentService.saveNewComment(req);
+            return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
-
-        if (req.getAccountID() == null) {
-            System.out.println(">>> CommentController: accountID is NULL");
-            return ResponseEntity.badRequest().body(Map.of("message", "Thiếu accountID"));
-        }
-
-        Account account = accountDAO.findById(req.getAccountID()).orElse(null);
-        if (account == null) {
-            System.out.println(">>> CommentController: Account not found with ID: " + req.getAccountID());
-            return ResponseEntity.badRequest().body(Map.of("message", "Không tìm thấy tài khoản với ID: " + req.getAccountID()));
-        }
-
-        Comment parentComment = null;
-        if (req.getCmtid() != null) {
-            parentComment = commentDAO.findById(req.getCmtid()).orElse(null);
-            if (parentComment == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("message", "Không tìm thấy bình luận gốc"));
-            }
-        }
-
-        Post post = null;
-        if (req.getPostID() != null) {
-            post = postDAO.findById(req.getPostID()).orElse(null);
-            if (post == null) {
-                System.out.println(">>> CommentController: Post not found with ID: " + req.getPostID());
-                return ResponseEntity.badRequest().body(Map.of("message", "Không tìm thấy bài viết"));
-            }
-        } else if (parentComment == null) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Thiếu thông tin bài viết hoặc bình luận gốc"));
-        } else {
-            post = parentComment.getPost(); // Nếu postID null, kế thừa post từ bình luận gốc
-        }
-
-        Comment comment = Comment.builder()
-                .post(post)
-                .parentComment(parentComment)
-                .account(account)
-                .content(req.getContent() != null ? req.getContent() : "")
-                .attachments(req.getImageUrls())
-                .build();
-
-        Comment saved = commentDAO.save(comment);
-        return ResponseEntity.status(HttpStatus.CREATED).body(toDTO(saved));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteComment(@PathVariable Integer id) {
-        if (!commentDAO.existsById(id)) {
-            return ResponseEntity.notFound().build();
+        try {
+            commentService.delete(id);
+            return ResponseEntity.ok(Map.of("message", "Đã xóa bình luận"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
         }
-        commentDAO.deleteById(id);
-        return ResponseEntity.ok(Map.of("message", "Đã xóa bình luận"));
-    }
-
-    private CommentDTO toDTO(Comment c) {
-        CommentDTO dto = new CommentDTO();
-        dto.setCommentID(c.getCommentID());
-        dto.setPostID(c.getPost() != null ? c.getPost().getPostID() : null);
-        dto.setCmtid(c.getParentComment() != null ? c.getParentComment().getCommentID() : null);
-        dto.setContent(c.getContent());
-        if (c.getAccount() != null) {
-            dto.setAccountID(c.getAccount().getAccountID());
-            dto.setAuthorName(c.getAccount().getUsername());
-            dto.setAuthorAvatar(c.getAccount().getAvatar());
-        }
-        dto.setImageUrls(c.getAttachments());
-        dto.setCreatedAt(c.getCreatedAt());
-        return dto;
-    }
-    @PostMapping("/{id}/like")
-    public ResponseEntity<Map<String, Object>> toggleLike(
-            @PathVariable("id") Integer commentID,
-            @RequestBody Map<String, Integer> payload) {
-        
-        Integer accountID = payload.get("accountID");
-        if (accountID == null) {
-            return ResponseEntity.badRequest().body(Map.of("message", "AccountID is required"));
-        }
-
-        int newLikeCount = commentService.toggleLike(accountID, commentID);
-        
-        Map<String, Object> result = new HashMap<>();
-        result.put("likeCount", newLikeCount);
-        return ResponseEntity.ok(result);
     }
 }

@@ -42,10 +42,10 @@
 
     <div class="card-content">
       <div class="meta-top">
-        <div class="rating-box">
+<div class="rating-box">
           <span class="star">★</span>
-          <span class="score">{{ post.rating || 4.5 }}</span>
-          <span class="count">({{ post.reviews || 0 }})</span>
+          <span class="score">{{ post.avgRating > 0 ? Number(post.avgRating).toFixed(1) : 'Mới' }}</span>
+          <span v-if="post.ratingCount > 0" class="count">({{ post.ratingCount }})</span>
         </div>
         <div class="time-badge">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
@@ -222,6 +222,42 @@ const handleSaveToPlan = () => {
   // Gửi sự kiện 'save-to-plan' kèm thông tin bài viết này lên cho trang Home hoặc trang Profile xử lý
   emit('save-to-plan', props.post);
 };
+
+// --- ACTIONS LƯU BÀI VIẾT ---
+const toggleSave = async () => {
+  // 1. Kiểm tra đăng nhập
+  if (!authStore.isAuthenticated) {
+    return toast.warn("Vui lòng đăng nhập để lưu bài viết Sếp nhé!");
+  }
+
+  // 2. Chặn spam click
+  if (isSaving.value) return;
+
+  const uid = authStore.user?.accountID || authStore.user?.id;
+  const pid = props.post.id;
+
+  isSaving.value = true;
+  try {
+    if (isSaved.value) {
+      // Nếu đã lưu thì gọi xóa
+      await removeFavorite(uid, pid);
+      isSaved.value = false;
+      toast.success("Đã bỏ lưu công thức!");
+      emit('unsaved', pid); // Báo cho cha nếu cần (ví dụ trang Profile cần xóa card này)
+    } else {
+      // Nếu chưa lưu thì gọi thêm
+      await addFavorite(uid, pid);
+      isSaved.value = true;
+      toast.success("Đã lưu công thức thành công!");
+    }
+  } catch (error) {
+    console.error("Save error:", error);
+    toast.error("Thao tác thất bại, Sếp kiểm tra lại kết nối nhé!");
+  } finally {
+    isSaving.value = false;
+  }
+};
+
 </script>
 
 <style scoped lang="scss">

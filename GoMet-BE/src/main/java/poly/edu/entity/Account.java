@@ -34,7 +34,9 @@ public class Account {
 
     private String bio;
 
-    @Column(nullable = false)
+    // Trong file Account.java
+
+    @Column(name = "token", nullable = true) // 🔥 ĐỔI nullable từ false thành true
     private String token;
 
     @Column(nullable = false)
@@ -98,10 +100,6 @@ public class Account {
 
     @JsonIgnore
     @OneToMany(mappedBy = "account")
-    private List<Error> errors;
-
-    @JsonIgnore
-    @OneToMany(mappedBy = "account")
-    private List<Report> reports;
+    private List<Ticket> tickets;
 
 }

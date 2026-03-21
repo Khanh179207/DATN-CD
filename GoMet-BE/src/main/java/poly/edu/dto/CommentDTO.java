@@ -1,9 +1,9 @@
 package poly.edu.dto;
 
 import lombok.Data;
-
 import java.util.ArrayList;
 import java.util.List;
+import java.time.LocalDateTime;
 
 @Data
 public class CommentDTO {
@@ -16,9 +16,12 @@ public class CommentDTO {
     private String content;
     private List<String> imageUrls = new ArrayList<>();
     private Integer rating;
-    private Integer likeCount = 0;
+
+    // ĐỔI TÊN Ở ĐÂY: likeCount -> likes
+    private Integer likes = 0;
+
     private Boolean isLiked = false;
-    private java.time.LocalDateTime createdAt;
+    private LocalDateTime createdAt;
 
     /** Nested replies (threaded comments) */
     private List<CommentDTO> children = new ArrayList<>();

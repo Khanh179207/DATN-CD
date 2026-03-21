@@ -36,6 +36,14 @@ public class AdminPostController {
         return ResponseEntity.ok(Map.of("message", "Post approved"));
     }
 
+    // Từ chối bài
+    @PutMapping("/{id}/reject")
+    public ResponseEntity<?> reject(@PathVariable Integer id, @RequestBody Map<String, String> body) {
+        String reason = body.get("reason");
+        adminpostService.rejectPost(id, reason);
+        return ResponseEntity.ok(Map.of("message", "Post rejected"));
+    }
+
     // Deactive bài
     @PutMapping("/deactive/{id}")
     public ResponseEntity<?> deactive(@PathVariable Integer id) {
@@ -44,9 +52,24 @@ public class AdminPostController {
     }
 
     // Xóa bài
+    // Xóa bài (Đã đổi thành Xóa Mềm bên trong Service)
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Integer id) {
-        adminpostService.deletePost(id);
-        return ResponseEntity.ok(Map.of("message", "Post deleted"));
+        try {
+            adminpostService.deletePost(id);
+            return ResponseEntity.ok(Map.of("message", "Đã trảm mềm bài viết!"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PutMapping("/{postId}/ban-author")
+    public ResponseEntity<?> banAuthor(@PathVariable Integer postId) {
+        try {
+            adminpostService.banAuthorByPostId(postId);
+            return ResponseEntity.ok(Map.of("message", "Tài khoản tác giả đã bị khóa!"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 }
