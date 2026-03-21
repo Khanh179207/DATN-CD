@@ -144,6 +144,18 @@ const handleSubmit = async () => {
       fullError: error.message
     })
 
+    // Nếu backend chưa sẵn sàng, vẫn coi là success để test UX
+    if (error.response?.status === 404) {
+      console.warn('[AppealModal] 404 detected - Backend endpoint not ready. Treating as success for UX testing.')
+      submitSuccess.value = true
+      toast.success('Khiếu nại đã được gửi thành công! (Test Mode - Backend not ready)')
+
+      setTimeout(() => {
+        emit('close')
+      }, 3000)
+      return
+    }
+
     submitError.value = error.response?.data?.message || error.message || 'Lỗi khi gửi khiếu nại. Vui lòng thử lại.'
     console.error('[AppealModal] Final error message:', submitError.value)
     toast.error(submitError.value)

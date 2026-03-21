@@ -6,6 +6,7 @@ import poly.edu.dto.AppealDTO;
 import poly.edu.entity.Appeal;
 import poly.edu.entity.Account;
 import poly.edu.service.AppealService;
+import poly.edu.service.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +26,9 @@ public class AppealServiceImpl implements AppealService {
     @Autowired
     private AccountDAO accountDAO;
 
+    @Autowired
+    private NotificationService notificationService;
+
     @Override
     public AppealDTO createAppeal(String email, String reason, String ipAddress) {
         // Check rate limiting
@@ -38,6 +42,26 @@ public class AppealServiceImpl implements AppealService {
         appeal.setCreatedAt(LocalDateTime.now());
 
         Appeal saved = appealDAO.save(appeal);
+
+        // Notify all admins about new appeal
+        try {
+            List<Account> admins = accountDAO.findByIsAdmin(1);
+            for (Account admin : admins) {
+                notificationService.createNotification(
+                        "Khiếu nại mới",
+                        "Người dùng " + email + " đã nộp khiếu nại: " + reason,
+                        "appeal",
+                        admin.getAccountID(),
+                        null,
+                        "/admin/appeals"
+                );
+            }
+        } catch (Exception e) {
+            // Log error but don't fail the appeal creation
+            System.err.println("Error notifying admins about appeal: " + e.getMessage());
+            e.printStackTrace();
+        }
+
         return convertToDTO(saved);
     }
 
