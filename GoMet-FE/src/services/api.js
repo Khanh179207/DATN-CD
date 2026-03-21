@@ -2,8 +2,7 @@ import axios from 'axios'
 
 const api = axios.create({
   baseURL: 'http://localhost:8080',
-  timeout: 10000,
-  headers: { 'Content-Type': 'application/json' }
+  timeout: 10000
 })
 
 // Attach auth token if present
@@ -16,23 +15,29 @@ api.interceptors.request.use(config => {
 })
 
 // Global error handler
-// Trong file api.js - Đoạn xử lý Interceptor Response
 api.interceptors.response.use(
   res => res,
   err => {
-    if (err.response?.status === 401 || err.response?.status === 403) {
+    const status = err.response?.status;
+    const message = err.response?.data?.message;
+
+    // Chỉ ép Logout nếu:
+    // 1. Token hết hạn (401)
+    // 2. Tài khoản bị khóa (403 và message là ACCOUNT_BANNED)
+    if (status === 401 || (status === 403 && message === 'ACCOUNT_BANNED')) {
       const user = JSON.parse(localStorage.getItem('user') || 'null')
       if (user?.token) {
         localStorage.removeItem('user')
-
-        // 🔥 SỬA DÒNG NÀY: Check đúng cái KEY mà Backend gửi (ACCOUNT_BANNED)
-        const isBanned = err.response?.data?.message === 'ACCOUNT_BANNED' || err.response?.status === 403;
+        
+        const isBanned = message === 'ACCOUNT_BANNED';
 
         window.dispatchEvent(new CustomEvent('auth:force-logout', {
           detail: { isBanned: isBanned }
         }))
       }
     }
+    
+    // Nếu là lỗi 403 khác (Ví dụ: VIEW_LIMIT_REACHED), ta trả lỗi về để Component hiện Modal nạp tiền
     return Promise.reject(err)
   }
 )

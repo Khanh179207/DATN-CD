@@ -42,10 +42,10 @@
 
     <div class="card-content">
       <div class="meta-top">
-        <div class="rating-box">
+<div class="rating-box">
           <span class="star">★</span>
-          <span class="score">{{ post.rating || 4.5 }}</span>
-          <span class="count">({{ post.reviews || 0 }})</span>
+          <span class="score">{{ post.avgRating > 0 ? Number(post.avgRating).toFixed(1) : 'Mới' }}</span>
+          <span v-if="post.ratingCount > 0" class="count">({{ post.ratingCount }})</span>
         </div>
         <div class="time-badge">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>

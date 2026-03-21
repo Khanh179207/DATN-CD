@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
 public class PostController {
 
     private final PostDAO postDAO;
-    private final RatingDAO ratingDAO;
     private final FavoriteDAO favoriteDAO;
     private final CommentDAO commentDAO;
     private final FollowDAO followDAO;
@@ -32,7 +31,7 @@ public class PostController {
     private final CookingStepsDAO cookingStepsDAO;
     private final SimpMessagingTemplate messagingTemplate;
     private final LikesDAO likesDAO;
-    private final NotificationService notificationService;
+    private final NotificationService notificationService; // Đã thêm của team
 
     @GetMapping("/search-mini")
     public ResponseEntity<List<Map<String, Object>>> searchMini(@RequestParam String q) {
@@ -210,16 +209,26 @@ public class PostController {
             dto.setCategoryName(p.getCategory().getCategoryName());
         }
 
-        List<Rating> ratings = p.getRatings();
-        if (ratings != null && !ratings.isEmpty()) {
-            dto.setAvgRating(ratings.stream().mapToInt(Rating::getRate).average().orElse(0));
-            dto.setRatingCount((long) ratings.size());
+        // ================= FIX CỦA SẾP: Tính Rating từ bảng Comment =================
+        List<Comment> ratedComments = p.getComments() != null ?
+                p.getComments().stream()
+                        .filter(c -> c.getRating() != null && c.getRating() > 0)
+                        .collect(Collectors.toList()) : List.of();
+
+        if (!ratedComments.isEmpty()) {
+            dto.setAvgRating(ratedComments.stream().mapToInt(Comment::getRating).average().orElse(0.0));
+            dto.setRatingCount((long) ratedComments.size());
         } else {
             dto.setAvgRating(0.0);
             dto.setRatingCount(0L);
         }
 
-        dto.setCommentCount(p.getComments() != null ? (long) p.getComments().size() : 0L);
+        long commentCount = p.getComments() != null ?
+                p.getComments().stream()
+                        .filter(c -> c.getRating() == null || c.getRating() == 0)
+                        .count() : 0L;
+        dto.setCommentCount(commentCount);
+        // ============================================================================
 
         long realLikes = likesDAO.countByPost_PostID(p.getPostID());
         dto.setFavoriteCount(realLikes);
@@ -258,6 +267,7 @@ public class PostController {
 
             long followerCount = followDAO.countByFollowee_AccountIDAndStatus(author.getAccountID(), 1);
             dto.setAuthorFollowerCount(followerCount);
+            dto.setAuthorBio(author.getBio());
         }
         if (p.getCategory() != null) {
             dto.setCategoryID(p.getCategory().getCategoryID());
@@ -268,16 +278,27 @@ public class PostController {
             dto.setEventName(p.getEvent().getEventName());
         }
 
-        List<Rating> ratings = p.getRatings();
-        if (ratings != null && !ratings.isEmpty()) {
-            dto.setAvgRating(ratings.stream().mapToInt(Rating::getRate).average().orElse(0));
-            dto.setRatingCount((long) ratings.size());
+        // ================= FIX CỦA SẾP: Tính Rating từ bảng Comment =================
+        List<Comment> ratedComments = p.getComments() != null ?
+                p.getComments().stream()
+                        .filter(c -> c.getRating() != null && c.getRating() > 0)
+                        .collect(Collectors.toList()) : List.of();
+
+        if (!ratedComments.isEmpty()) {
+            dto.setAvgRating(ratedComments.stream().mapToInt(Comment::getRating).average().orElse(0.0));
+            dto.setRatingCount((long) ratedComments.size());
         } else {
             dto.setAvgRating(0.0);
             dto.setRatingCount(0L);
         }
 
-        dto.setCommentCount(p.getComments() != null ? (long) p.getComments().size() : 0L);
+        long commentCount = p.getComments() != null ?
+                p.getComments().stream()
+                        .filter(c -> c.getRating() == null || c.getRating() == 0)
+                        .count() : 0L;
+        dto.setCommentCount(commentCount);
+        // ============================================================================
+
         dto.setFavoriteCount(likesDAO.countByPost_PostID(p.getPostID()));
 
         if (accountId != null) {
@@ -297,23 +318,29 @@ public class PostController {
                     }).collect(Collectors.toList());
             dto.setSteps(steps);
         }
+
+        // ================= FIX CỦA SẾP: Gỡ bỏ RatingDAO khỏi map Comment =================
         if (p.getComments() != null) {
             List<CommentDTO> comments = p.getComments().stream().map(c -> {
                 CommentDTO cdto = new CommentDTO();
                 cdto.setCommentID(c.getCommentID());
                 cdto.setPostID(p.getPostID());
                 cdto.setContent(c.getContent());
+
+                // Lấy số sao trực tiếp từ Entity Comment
+                cdto.setRating(c.getRating() != null ? c.getRating() : 0);
+
                 if (c.getAccount() != null) {
                     cdto.setAccountID(c.getAccount().getAccountID());
                     cdto.setAuthorName(c.getAccount().getUsername());
                     cdto.setAuthorAvatar(c.getAccount().getAvatar());
-                    ratingDAO.findByAccount_AccountIDAndPost_PostID(c.getAccount().getAccountID(), p.getPostID())
-                            .ifPresent(r -> cdto.setRating(r.getRate()));
                 }
                 return cdto;
             }).collect(Collectors.toList());
             dto.setComments(comments);
         }
+        // ============================================================================
+
         return dto;
     }
 
@@ -344,6 +371,7 @@ public class PostController {
                     .build();
             post = postDAO.save(post);
 
+            // GỌI HÀM THÔNG BÁO CỦA TEAM DEVELOP
             sendAdminAlert(post);
 
             if (dto.getSteps() != null) {
@@ -365,6 +393,7 @@ public class PostController {
         }
     }
 
+    // ================= FIX CỦA TEAM: Dùng NotificationService để báo Admin =================
     private void sendAdminAlert(Post post) {
         try {
             String userUsername = post.getAccount() != null ? post.getAccount().getUsername() : "Unknown User";

@@ -10,7 +10,7 @@
           ref="inputRef"
           type="text"
           v-model="searchKeyword"
-          placeholder="Tìm công thức..."
+          placeholder="Tìm công thức, người dùng..."
           @focus="openSearchHistory"
           @keyup.enter="handleSearch"
           spellcheck="false"

@@ -1,6 +1,5 @@
 <template>
   <header class="header-admin-zenith" :class="{ 'is-scrolled': isScrolled }">
-
     <div class="h-left">
       <div class="breadcrumb-zenith">
         <div class="cube-icon">
@@ -31,7 +30,6 @@
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
           </svg>
-          <!-- Unread notification badge -->
           <div v-if="unreadCount > 0" class="notification-badge">{{ unreadCount }}</div>
           <div class="radar-dot"></div>
           <div class="radar-waves"></div>
@@ -46,7 +44,6 @@
               </button>
             </div>
             <div class="z-body custom-scroll" v-if="notifications.length > 0">
-              <!-- Real notifications from backend -->
               <div v-for="notification in notifications" :key="notification.notificationID" class="z-card"
                 :class="{ unread: notification.isRead === 0 }" @click="handleNotificationClick(notification)">
                 <div class="card-icon" :class="notification.type">
@@ -61,6 +58,7 @@
                   <span class="time-txt">{{ timeAgo(notification.createdAt) }}</span>
                 </div>
               </div>
+
             </div>
             <div v-else class="z-body custom-scroll empty-state">
               <p style="text-align: center; color: #999; padding: 40px 20px;">
@@ -140,7 +138,6 @@
     </div>
   </header>
 
-  <!-- Audio element for notification sound -->
   <audio id="adminNotificationSound" src="/sounds/notification.mp3" preload="auto"></audio>
 </template>
 
@@ -221,21 +218,17 @@ const loadNotifications = async () => {
 const handleRealtimeAlert = (event) => {
   const alertData = event.detail
 
-  // Transform backend alert to admin notification format
-  // IMPORTANT: Use notificationID (pascal case) from backend DTO
   const newNotification = {
     notificationID: alertData.notificationID,
     title: alertData.title || 'System Alert',
     content: alertData.content || alertData.message || '',
     type: alertData.type || 'alert',
-    isRead: 0, // New notifications are always unread
+    isRead: 0, 
     createdAt: alertData.createdAt || new Date().toISOString(),
     link: getLinkForNotificationType(alertData)
   }
 
-  // Only add if we have a valid notification ID from backend
   if (newNotification.notificationID) {
-    // Check if notification already exists (avoid duplicates)
     const exists = notifications.value.some(n => n.notificationID === newNotification.notificationID)
     if (!exists) {
       notifications.value.unshift(newNotification)
@@ -254,21 +247,17 @@ const handleRealtimeAlert = (event) => {
 const handleRealtimeAdminNotification = (event) => {
   const notificationData = event.detail
 
-  // Transform notification to admin notification format
-  // IMPORTANT: Use notificationID (pascal case) from backend DTO
   const newNotification = {
     notificationID: notificationData.notificationID,
     title: notificationData.title || 'Notification',
     content: notificationData.content || '',
     type: notificationData.type || 'notification',
-    isRead: 0, // New notifications are always unread
+    isRead: 0, 
     createdAt: notificationData.createdAt || new Date().toISOString(),
     link: getLinkForNotificationType(notificationData)
   }
 
-  // Only add if we have a valid notification ID from backend
   if (newNotification.notificationID) {
-    // Check if notification already exists (avoid duplicates from broadcast)
     const exists = notifications.value.some(n => n.notificationID === newNotification.notificationID)
     if (!exists) {
       notifications.value.unshift(newNotification)
@@ -285,15 +274,9 @@ const handleRealtimeAdminNotification = (event) => {
  * Start real-time alert system (WebSocket)
  */
 const startRealtimeSystem = () => {
-  // Connect to WebSocket for real-time notifications
   webSocketService.connect()
-
-  // Listen for broadcast admin alerts
   window.addEventListener('admin-alert', handleRealtimeAlert)
-
-  // Listen for user-specific admin notifications
   window.addEventListener('admin-notification', handleRealtimeAdminNotification)
-
   console.log('🔌 Real-time admin notification system started')
 }
 
@@ -313,7 +296,6 @@ const markAsRead = async (notificationID) => {
   try {
     await markNotificationRead(notificationID)
 
-    // Update UI immediately
     const notification = notifications.value.find(n => n.notificationID === notificationID)
     if (notification) {
       notification.isRead = 1
@@ -335,7 +317,6 @@ const markAllAsRead = async () => {
   try {
     await markAllNotificationsRead(auth.currentUser.accountID)
 
-    // Update all notifications in UI
     notifications.value.forEach(n => {
       n.isRead = 1
     })
@@ -351,17 +332,14 @@ const markAllAsRead = async () => {
  * Handle notification click
  */
 const handleNotificationClick = async (notification) => {
-  // Mark as read if not already
   if (notification.isRead === 0) {
     await markAsRead(notification.notificationID)
   }
 
-  // Navigate to link if available
   if (notification.link) {
     router.push(notification.link)
   }
 
-  // Close dropdown
   showNoti.value = false
 }
 
@@ -393,14 +371,8 @@ const timeAgo = (dateString) => {
 // --- 🏗️ LIFECYCLE ---
 onMounted(async () => {
   window.addEventListener('scroll', handleScroll)
-
-  // Load notifications from API first
   await loadNotifications()
-
-  // Start real-time system
   startRealtimeSystem()
-
-  // Update page title with unread badge
   updatePageTitle()
 })
 

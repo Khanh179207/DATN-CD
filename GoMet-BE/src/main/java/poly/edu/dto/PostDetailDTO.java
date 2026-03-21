@@ -23,6 +23,7 @@ public class PostDetailDTO {
     private String authorAvatar;
     private Long authorPostCount;
     private Long authorFollowerCount;
+    private String authorBio;
 
     // Category
     private Integer categoryID;

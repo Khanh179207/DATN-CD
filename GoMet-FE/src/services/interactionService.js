@@ -1,16 +1,34 @@
 import api from './api'
 
+export const toggleCommentLike = async (commentID) => {
+  const user = JSON.parse(localStorage.getItem('user') || 'null')
+  const accountID = user?.accountID
+  if (!accountID) throw new Error('User not logged in')
+  
+  const res = await api.post(`/api/comments/${commentID}/like`, { accountID })
+  return res.data // { likeCount: N }
+}
+
 export const getComments = (postID) =>
   api.get(`/api/comments/post/${postID}`).then(r => r.data)
 
-export const addComment = (postID, accountID, content) =>
-  api.post('/api/comments', { postID, accountID, content }).then(r => r.data)
+export const addComment = (postID, accountID, content, cmtid = null, imageUrls = []) =>
+  api.post('/api/comments', { postID, accountID, content, cmtid, imageUrls }).then(r => r.data)
 
 export const deleteComment = (commentID) =>
   api.delete(`/api/comments/${commentID}`)
 
 export const ratePost = (accountID, postID, rate) =>
   api.post('/api/ratings', { accountID, postID, rate }).then(r => r.data)
+
+export const submitReview = (accountID, postID, rate, comment, imageUrls = []) =>
+  api.post('/api/ratings', { accountID, postID, rate, comment, imageUrls }).then(r => r.data)
+
+export const getRatingSummary = (postID) =>
+  api.get(`/api/ratings/post/${postID}/summary`).then(r => r.data)
+
+export const getRatings = (postID, page = 0, size = 10, filters = {}) =>
+  api.get(`/api/ratings/post/${postID}`, { params: { page, size, ...filters } }).then(r => r.data)
 
 export const checkRating = (accountID, postID) =>
   api.get('/api/ratings/check', { params: { accountID, postID } }).then(r => r.data)

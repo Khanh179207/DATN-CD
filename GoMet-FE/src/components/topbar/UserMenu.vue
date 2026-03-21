@@ -32,6 +32,17 @@
             </div>
             <div class="user-email-pro">{{ authStore.user?.email || 'Chưa cập nhật email' }}</div>
             <div class="user-id-badge">ID: {{ authStore.user?.id || authStore.user?.accountID }}</div>
+            
+            <!-- START: Daily View Limit -->
+            <div v-if="!isPremiumUser && !isAdminUser" class="daily-view-limit-info">
+              <span class="limit-label">Lượt xem hôm nay:</span>
+              <span class="limit-count">{{ remainingViews }}/3</span>
+              <!-- Nút Reset dành cho Demo -->
+              <button @click.stop="authStore.resetViews" class="btn-reset-views-demo" title="Reset (Demo)">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+              </button>
+            </div>
+            <!-- END: Daily View Limit -->
           </div>
         </div>
       </div>
@@ -103,11 +114,18 @@ import { ref, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { toast } from '@/composables/useToast' // 👈 Thêm import toast
+/* START: Daily View Limit */
+import { usePostViewLimit } from '@/composables/usePostViewLimit'
+/* END: Daily View Limit */
 import gsap from 'gsap'
 
 const authStore = useAuthStore()
 const router = useRouter()
 const isOpen = ref(false)
+
+/* START: Daily View Limit */
+const { remainingViews } = usePostViewLimit()
+/* END: Daily View Limit */
 
 const dropdownPanel = ref(null)
 const avatarCircle = ref(null)
@@ -231,6 +249,29 @@ const handleLogout = async () => {
     }
     .user-email-pro { font-size: 11px; color: #64748b; margin-top: 1px; word-break: break-all; font-weight: 500; }
     .user-id-badge { font-size: 9px; color: #94a3b8; font-weight: 700; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    /* START: Daily View Limit Styles */
+    .daily-view-limit-info {
+      margin-top: 8px;
+      padding: 4px 8px;
+      background: rgba(234, 88, 12, 0.1);
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid rgba(234, 88, 12, 0.2);
+      
+      .limit-label { font-size: 10px; color: #64748b; font-weight: 600; }
+      .limit-count { font-size: 11px; color: #EA580C; font-weight: 800; }
+      
+      .btn-reset-views-demo {
+        background: none; border: none; padding: 2px; margin-left: 4px;
+        color: #94a3b8; cursor: pointer; display: flex; align-items: center;
+        transition: color 0.2s, transform 0.2s;
+        &:hover { color: #EA580C; transform: rotate(30deg); }
+      }
+    }
+    /* END: Daily View Limit Styles */
   }
 
   &.header-premium {
