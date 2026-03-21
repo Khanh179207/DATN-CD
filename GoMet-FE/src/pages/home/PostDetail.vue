@@ -156,9 +156,18 @@ import { getPostById, getRelatedPosts, normalizePost } from '@/services/postServ
 import { uploadMedia } from '@/services/uploadService'
 import { recordHistory } from '@/services/interactionService'
 
+/* START: Daily View Limit */
+import { usePostViewLimit } from '@/composables/usePostViewLimit'
+
+/* END */
+
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+
+/* START: Daily View Limit */
+const { checkAndChargeView, remainingViews } = usePostViewLimit()
+/* END */
 const diffMap = { 1: 'Easy', 2: 'Medium', 3: 'Hard' }
 
 const post = ref(null)
@@ -240,6 +249,17 @@ const fetchComments = async (postId) => {
 async function loadPost(id) {
   try {
     const dto = await getPostById(id)
+
+    /* START: Daily View Limit Check (Check after load to know authorId) */
+    const canAccess = checkAndChargeView(Number(id), dto.authorID)
+    if (!canAccess) {
+      toast.warn('Bạn đã hết lượt xem bài viết miễn phí trong ngày hôm nay! Vui lòng nâng cấp Premium.')
+      router.push('/home') // Nhảy về trang Home
+      window.dispatchEvent(new CustomEvent('ui:open-premium')) // Mở modal
+      return
+    }
+    /* END */
+
     post.value = {
       id: dto.postID,
       postID: dto.postID,

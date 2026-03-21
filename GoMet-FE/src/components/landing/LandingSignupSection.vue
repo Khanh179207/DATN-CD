@@ -368,20 +368,7 @@ const handleVerifyOtp = async () => {
   }
   try {
     const data = await authService.verifyOtp(registerForm.email, otpCode.value)
-    
-    authStore.user = {
-      id:        data.accountID,
-      accountID: data.accountID,
-      name:      data.username,
-      username:  data.username,
-      email:     data.email,
-      avatar:    data.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username)}&background=EA580C&color=fff`,
-      isAdmin:   data.isAdmin,
-      isPremium: data.isPremium,
-      token:     data.token,
-      role:      data.isAdmin ? 'admin' : 'user'
-    }
-    localStorage.setItem('user', JSON.stringify(authStore.user))
+    authStore.setUser(data)
     
     toast.success('Đăng ký thành công! Chào mừng bạn đến với GoMet.')
     showOtpModal.value = false
@@ -403,21 +390,7 @@ const handleGoogleCallback = async (response) => {
 
     const idToken = response.credential;
     const data = await authService.googleLogin(idToken);
-
-    authStore.user = {
-      id:        data.accountID,
-      accountID: data.accountID,
-      name:      data.username,
-      username:  data.username,
-      email:     data.email,
-      avatar:    data.avatar,
-      isAdmin:   data.isAdmin,
-      isPremium: data.isPremium,
-      token:     data.token,
-      role:      data.isAdmin ? 'admin' : 'user'
-    }
-
-    localStorage.setItem('user', JSON.stringify(authStore.user))
+    authStore.setUser(data);
 
     toast.success('Đăng nhập Google thành công!')
     

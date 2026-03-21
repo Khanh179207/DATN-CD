@@ -1,6 +1,12 @@
+<<<<<<< HEAD
 -- Bước 1: Trở về database master (Bắt buộc)
 USE master;
 GO
+=======
+	-- Bước 1: Trở về database master (Bắt buộc)
+	USE master;
+	GO
+>>>>>>> origin/feature/gioi-han-luot-xem
 
 -- Bước 2: Đá đít toàn bộ các kết nối đang cắm vào Database này
 IF EXISTS(select * from sys.databases where name='DATN_CD')
@@ -458,6 +464,7 @@ INSERT INTO Event (EventName, BannerImage, Description, Rules, Reward, StartAt, 
 INSERT INTO Post (AccountID, CategoryID, Title, Description, Ingredients, isApproved, isActive) VALUES 
 (2, 1, N'Phở Bò Nam Định', N'Nấu chuẩn vị gia truyền', N'Xương bò, bánh phở, thịt bò', 1, 1),
 (3, 1, N'Bún Chả Hà Nội', N'Ngon như ngoài hàng', N'Thịt nạc vai, bún, đu đủ', 1, 1);
+
 
 
 	SELECT * FROM Post;
