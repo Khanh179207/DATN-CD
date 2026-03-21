@@ -36,6 +36,7 @@ import Statistics from '@/pages/admin/Statistics.vue'
 import TicketManagement from '@/pages/admin/ticketadmin/TicketManagement.vue'
 import EventManagement from '@/pages/admin/eventadmin/EventManagement.vue'
 import PostEventManagement from '@/pages/admin/eventadmin/PostEventManagement.vue'
+import AppealManagement from '@/pages/admin/AppealManagement.vue'
 
 const routes = [
   // 1. LANDING PAGE
@@ -157,7 +158,8 @@ const routes = [
       { path: 'achievements', name: 'AdminAchievements', component: AchievementManagement },
       { path: 'notifications', name: 'AdminNotifications', component: NotificationManagement },
       { path: 'tickets', name: 'AdminTickets', component: TicketManagement },
-      { path: 'events/:id/posts', name: 'AdminPostEventManagement', component: PostEventManagement }
+      { path: 'events/:id/posts', name: 'AdminPostEventManagement', component: PostEventManagement },
+      { path: 'appeals', name: 'AdminAppeals', component: AppealManagement }
     ]
   },
 

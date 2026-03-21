@@ -158,7 +158,6 @@ import { recordHistory } from '@/services/interactionService'
 
 /* START: Daily View Limit */
 import { usePostViewLimit } from '@/composables/usePostViewLimit'
-
 /* END */
 
 const route = useRoute()
@@ -250,12 +249,12 @@ async function loadPost(id) {
   try {
     const dto = await getPostById(id)
 
-    /* START: Daily View Limit Check (Check after load to know authorId) */
+    /* START: Daily View Limit Check */
     const canAccess = checkAndChargeView(Number(id), dto.authorID)
     if (!canAccess) {
       toast.warn('Bạn đã hết lượt xem bài viết miễn phí trong ngày hôm nay! Vui lòng nâng cấp Premium.')
-      router.push('/home') // Nhảy về trang Home
-      window.dispatchEvent(new CustomEvent('ui:open-premium')) // Mở modal
+      router.push('/home')
+      window.dispatchEvent(new CustomEvent('ui:open-premium'))
       return
     }
     /* END */
@@ -412,13 +411,21 @@ const goToDetail = (id) => {
   padding-bottom: 120px; 
 }
 
-/* --- TÁC GIẢ BUNG XÕA --- */
+/* --- TÁC GIẢ BUNG XÕA FULL WIDTH (ĐÃ FIX NHẢY LAYOUT) --- */
+/* --- TÁC GIẢ BUNG XÕA FULL WIDTH (ĐÃ FIX MÀU LUXURY) --- */
 .author-full-width-section {
   width: 100%;
-  background-color: #fafaf9; /* Nền xám nhạt chia cách các phần */
-  padding: 80px 0; 
-  border-top: 1px solid #f1f5f9; 
-  border-bottom: 1px solid #f1f5f9; 
+  background-color: #ffffff; /* 🔥 Đổi về trắng tinh khôi cho đồng bộ */
+  padding: 40px 0; /* Thu gọn lại cho đỡ trống trải */
+  border-top: 1px solid rgba(0, 0, 0, 0.04); /* Viền mờ tinh tế */
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04); 
+  margin: 20px 0; 
+  
+  /* BÙA CHỐNG TRÔI: Giữ nguyên để không đè layout */
+  clear: both;
+  display: block;
+  position: relative;
+  z-index: 10;
 }
 .global-container { max-width: 1240px; margin: 0 auto; padding: 0 24px; }
 
@@ -523,7 +530,7 @@ const goToDetail = (id) => {
 @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes spin { 100% { transform: rotate(360deg); } }
 
-/* --- SKELETON LUXURY (Load như thật) --- */
+/* --- SKELETON LUXURY --- */
 .luxury-loading { width: 100%; padding: 80px 0; background: #fff; }
 .sk-container-inner { max-width: 1240px; margin: 0 auto; padding: 0 24px; display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 60px; align-items: center; }
 .sk-hero-col { display: flex; flex-direction: column; gap: 24px; }
@@ -538,7 +545,6 @@ const goToDetail = (id) => {
 .sk-image-col { width: 100%; }
 .sk-img-box { width: 100%; height: 600px; border-radius: 32px; background: #f1f5f9; position: relative; overflow: hidden; }
 
-/* Hiệu ứng tia sáng quét mượt mà cho Skeleton */
 .sk-badge::after, .sk-title::after, .sk-desc::after, .sk-avatar::after, .sk-meta-text::after, .sk-img-box::after {
   content: ''; position: absolute; inset: 0;
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);

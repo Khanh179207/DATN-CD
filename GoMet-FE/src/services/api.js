@@ -2,11 +2,18 @@ import axios from 'axios'
 
 const api = axios.create({
   baseURL: 'http://localhost:8080',
-  timeout: 10000
+  timeout: 10000,
+  withCredentials: false
+  // Để axios tự detect Content-Type (tốt cho việc up ảnh/khiếu nại)
 })
 
-// Attach auth token if present
+// Interceptor cho Request: Đính kèm Token
 api.interceptors.request.use(config => {
+  // Bỏ qua header auth cho các request OPTIONS (CORS preflight) - Theo bản của team
+  if (config.method?.toUpperCase() === 'OPTIONS') {
+    return config
+  }
+
   const user = JSON.parse(localStorage.getItem('user') || 'null')
   if (user?.token) {
     config.headers.Authorization = `Bearer ${user.token}`
@@ -14,16 +21,26 @@ api.interceptors.request.use(config => {
   return config
 })
 
-// Global error handler
+// Interceptor cho Response: Xử lý thành công & lỗi toàn cục
 api.interceptors.response.use(
-  res => res,
+  res => {
+    // Log thành công để sếp dễ theo dõi (Theo bản của team)
+    console.log('[API Success]:', res.config?.url, res.status);
+    return res
+  },
   err => {
     const status = err.response?.status;
     const message = err.response?.data?.message;
 
-    // Chỉ ép Logout nếu:
-    // 1. Token hết hạn (401)
-    // 2. Tài khoản bị khóa (403 và message là ACCOUNT_BANNED)
+    // Log chi tiết lỗi để sếp bắt bệnh (Cực kỳ hữu ích từ bản của team)
+    console.error('[API Error Details]:', {
+      status,
+      message,
+      url: err.config?.url,
+      method: err.config?.method
+    });
+
+    // logic CHỐT CỦA SẾP: Chỉ ép Logout nếu Token hết hạn (401) hoặc Bị Ban (403 + ACCOUNT_BANNED)
     if (status === 401 || (status === 403 && message === 'ACCOUNT_BANNED')) {
       const user = JSON.parse(localStorage.getItem('user') || 'null')
       if (user?.token) {
@@ -37,7 +54,7 @@ api.interceptors.response.use(
       }
     }
     
-    // Nếu là lỗi 403 khác (Ví dụ: VIEW_LIMIT_REACHED), ta trả lỗi về để Component hiện Modal nạp tiền
+    // Trả lỗi về để các Component (như PostDetail hay Search) tự xử lý logic riêng
     return Promise.reject(err)
   }
 )

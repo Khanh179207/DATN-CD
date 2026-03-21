@@ -40,7 +40,7 @@
           <li><router-link to="/about">Giới thiệu</router-link></li>
           <li><router-link to="/careers">Tuyển dụng</router-link></li>
           <li><router-link to="/terms-and-policy">Chính sách & Điều khoản</router-link></li>
-          <li><router-link to="/terms-and-policy">Bảo mật</router-link></li>
+          <li><a href="#" @click.prevent="showAppealModal = true">Khiếu nại</a></li>
         </ul>
       </div>
 
@@ -75,10 +75,18 @@
       </div>
     </div>
   </footer>
+
+  <!-- Appeal Modal Teleport -->
+  <Teleport to="body">
+    <AppealModal v-if="showAppealModal" @close="showAppealModal = false" />
+  </Teleport>
 </template>
 
 <script setup>
-// ...existing code...
+import { ref } from 'vue'
+import AppealModal from '@/components/modals/AppealModal.vue'
+
+const showAppealModal = ref(false)
 </script>
 
 <style scoped>

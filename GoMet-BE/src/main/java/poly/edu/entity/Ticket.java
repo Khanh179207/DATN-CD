@@ -16,19 +16,20 @@ public class Ticket {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "TicketID") // Đảm bảo khớp PascalCase với SQL
     private Integer ticketID;
 
     @ManyToOne
     @JoinColumn(name = "AccountID")
-    // @JsonIgnore  <-- Sếp tạm thời comment hoặc xóa dòng này đi
+    @JsonIgnore // 🔥 ĐÃ MỞ LẠI PHONG ẤN: Chặn vòng lặp JSON vô tận
     private Account account;
 
-    @Column(nullable = false, length = 50)
+    @Column(name = "TicketType", nullable = false, length = 50)
     private String ticketType;
 
     @ManyToOne
     @JoinColumn(name = "TargetPostID")
-    // @JsonIgnore <-- Sếp tạm thời comment hoặc xóa dòng này đi
+    @JsonIgnore // 🔥 ĐÃ MỞ LẠI PHONG ẤN: Ngăn Jackson mò sang bảng Post và Rating
     private Post targetPost;
 
     // 🔥 HELPER: Tạo "cổng phụ" để FE gọi .username và .targetPostID dễ dàng
@@ -42,25 +43,24 @@ public class Ticket {
         return targetPost != null ? targetPost.getPostID() : null;
     }
 
-    @Column(nullable = false)
+    @Column(name = "Title", nullable = false)
     private String title;
 
-    @Column(nullable = false, columnDefinition = "NVARCHAR(MAX)")
+    @Column(name = "Description", nullable = false, columnDefinition = "NVARCHAR(MAX)")
     private String description;
 
-    @Column(length = 500)
+    @Column(name = "Attachment", length = 500)
     private String attachment;
 
-    @Column(nullable = false)
-    private Integer status; // 0: Pending, 1: Processing, 2: Resolved, 3: Rejected
+    @Column(name = "Status", nullable = false)
+    private Integer status = 0;
 
-    // Ngày người dùng gửi
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "CreatedAt", nullable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
 
-    // 🔥 Ngày Admin bấm nút "Tiếp nhận" (MỚI)
+    @Column(name = "ProcessedAt")
     private LocalDateTime processedAt;
 
-    // Ngày Admin bấm nút "Giải quyết xong"
+    @Column(name = "ResolvedAt")
     private LocalDateTime resolvedAt;
 }

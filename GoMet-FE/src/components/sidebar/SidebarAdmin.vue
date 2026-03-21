@@ -57,9 +57,7 @@
           <router-link to="/admin/statistics" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Thống kê hệ thống' : ''">
             <div class="icon-orb">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <path d="M12 20V10"></path>
-                <path d="M18 20V4"></path>
-                <path d="M6 20v-4"></path>
+                <path d="M12 20V10"></path><path d="M18 20V4"></path><path d="M6 20v-4"></path>
               </svg>
             </div>
             <span class="link-text" v-if="!isCollapsed">Thống kê hệ thống</span>
@@ -79,16 +77,6 @@
             </div>
             <span class="link-text" v-if="!isCollapsed">Quản lý Hội Viên</span>
           </router-link>
-
-          <router-link to="/admin/achievements" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Vinh Danh Danh Hiệu' : ''">
-            <div class="icon-orb">
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <circle cx="12" cy="8" r="7"></circle>
-                <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
-              </svg>
-            </div>
-            <span class="link-text" v-if="!isCollapsed">Vinh Danh Danh Hiệu</span>
-          </router-link>
         </div>
 
         <div class="nav-section anim-stagger" style="--d: 0.3s">
@@ -105,20 +93,6 @@
             <span class="link-text" v-if="!isCollapsed">Duyệt Sáng Tạo</span>
           </router-link>
 
-          <router-link to="/admin/categories" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Cấu trúc Danh Mục' : ''">
-            <div class="icon-orb">
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <line x1="8" y1="6" x2="21" y2="6"></line>
-                <line x1="8" y1="12" x2="21" y2="12"></line>
-                <line x1="8" y1="18" x2="21" y2="18"></line>
-                <circle cx="3" cy="6" r="1.5"></circle>
-                <circle cx="3" cy="12" r="1.5"></circle>
-                <circle cx="3" cy="18" r="1.5"></circle>
-              </svg>
-            </div>
-            <span class="link-text" v-if="!isCollapsed">Cấu trúc Danh Mục</span>
-          </router-link>
-
           <router-link to="/admin/comments" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Kiểm duyệt Tương Tác' : ''">
             <div class="icon-orb">
               <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -132,6 +106,15 @@
         <div class="nav-section anim-stagger" style="--d: 0.4s">
           <label class="section-tag" v-if="!isCollapsed">Hệ thống</label>
           <div class="section-divider" v-else></div>
+
+          <router-link to="/admin/appeals" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Khiếu nại ban nhầm' : ''">
+            <div class="icon-orb">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2m1 15h-2v-2h2v2m0-4h-2V7h2v6z"></path>
+              </svg>
+            </div>
+            <span class="link-text" v-if="!isCollapsed">Khiếu nại ban nhầm</span>
+          </router-link>
 
           <router-link to="/admin/tickets" class="nav-link-lux warning-vibe" active-class="active" :title="isCollapsed ? 'Trung tâm Phản hồi (5)' : ''">
             <div class="icon-orb">
@@ -163,8 +146,7 @@
             <div class="icon-orb">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="16" y1="2" x2="16" y2="6"></line>
-                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line>
               </svg>
             </div>
             <span class="link-text" v-if="!isCollapsed">Quản lý Sự Kiện</span>
@@ -180,10 +162,7 @@
             <span class="link-text" v-if="!isCollapsed">Doanh thu & Hóa đơn</span>
           </router-link>
         </div>
-      </div>
-    </nav>
-
-    <div class="sidebar-footer">
+      </div> </nav> <div class="sidebar-footer">
       <button class="btn-exit-admin" @click="$router.push('/home')" :title="isCollapsed ? 'Về Trang Khách' : ''">
         <div class="btn-content">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
