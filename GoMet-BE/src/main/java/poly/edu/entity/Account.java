@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -18,46 +17,55 @@ public class Account {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "AccountID") // 🔥 Chốt PascalCase để không lệch pha với SQL
     private Integer accountID;
 
-    @Column(nullable = false)
+    @Column(name = "Username", nullable = false)
     private String username;
 
-    @Column(nullable = false)
+    @Column(name = "Email", nullable = false)
     private String email;
 
-    @Column(nullable = false)
+    @Column(name = "Password", nullable = false)
     private String password;
 
+    @Column(name = "Avatar")
     private String avatar;
 
-
+    @Column(name = "Bio", columnDefinition = "NVARCHAR(MAX)")
     private String bio;
 
-    // Trong file Account.java
-
-    @Column(name = "token", nullable = true) // 🔥 ĐỔI nullable từ false thành true
+    @Column(name = "Token", nullable = true)
     private String token;
 
-    @Column(nullable = false)
-    private Integer point;
+    @Column(name = "Point", nullable = false)
+    @Builder.Default
+    private Integer point = 0;
 
-    @Column(nullable = false)
-    private Integer isAdmin;
+    @Column(name = "isAdmin", nullable = false)
+    @Builder.Default
+    private Integer isAdmin = 0;
 
-    @Column(nullable = false)
-    private Integer isPremium;
+    @Column(name = "isPremium", nullable = false)
+    @Builder.Default
+    private Integer isPremium = 0;
 
-    @Column(nullable = false)
-    private Integer isActive;
+    @Column(name = "isActive", nullable = false)
+    @Builder.Default
+    private Integer isActive = 1;
 
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "CreatedAt", nullable = false)
+    @Builder.Default
+    private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(name = "UpdatedAt")
     private LocalDateTime updatedAt;
+
+    @Column(name = "DeletedAt")
     private LocalDateTime deletedAt;
 
-    // Relationships
+    // ================= RELATIONSHIPS =================
+
     @JsonIgnore
     @OneToMany(mappedBy = "account")
     private List<Post> posts;
@@ -66,9 +74,7 @@ public class Account {
     @OneToMany(mappedBy = "account")
     private List<Comment> comments;
 
-    @JsonIgnore
-    @OneToMany(mappedBy = "account")
-    private List<Rating> ratings;
+    // ❌ ĐÃ XÓA HOÀN TOÀN BẢNG RATING Ở ĐÂY ❌
 
     @JsonIgnore
     @OneToMany(mappedBy = "account")
@@ -101,5 +107,4 @@ public class Account {
     @JsonIgnore
     @OneToMany(mappedBy = "account")
     private List<Ticket> tickets;
-
 }

@@ -9,7 +9,7 @@ import poly.edu.dto.*;
 import poly.edu.entity.*;
 import poly.edu.service.NotificationService;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime; // 🔥 Đã đổi sang LocalDateTime
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -31,7 +31,7 @@ public class PostController {
     private final CookingStepsDAO cookingStepsDAO;
     private final SimpMessagingTemplate messagingTemplate;
     private final LikesDAO likesDAO;
-    private final NotificationService notificationService; // Đã thêm của team
+    private final NotificationService notificationService;
 
     @GetMapping("/search-mini")
     public ResponseEntity<List<Map<String, Object>>> searchMini(@RequestParam String q) {
@@ -113,16 +113,17 @@ public class PostController {
         }
 
         List<PublicPostDTO> result = posts.stream().map(p -> toPublicDTO(p, accountId)).collect(Collectors.toList());
+
         if ("views".equals(sort)) {
-            result.sort(
-                    Comparator.comparingInt((PublicPostDTO p) -> p.getViews() != null ? p.getViews() : 0).reversed());
+            result.sort(Comparator.comparingInt((PublicPostDTO p) -> p.getViews() != null ? p.getViews() : 0).reversed());
         } else if ("rating".equals(sort)) {
-            result.sort(Comparator.comparingDouble((PublicPostDTO p) -> p.getAvgRating() != null ? p.getAvgRating() : 0)
-                    .reversed());
+            result.sort(Comparator.comparingDouble((PublicPostDTO p) -> p.getAvgRating() != null ? p.getAvgRating() : 0).reversed());
         } else {
-            result.sort(Comparator
-                    .comparing((PublicPostDTO p) -> p.getCreatedAt() != null ? p.getCreatedAt().toString() : "")
-                    .reversed());
+            // 🔥 Sắp xếp theo LocalDateTime (Mới nhất lên đầu)
+            result.sort((p1, p2) -> {
+                if (p1.getCreatedAt() == null || p2.getCreatedAt() == null) return 0;
+                return p2.getCreatedAt().compareTo(p1.getCreatedAt());
+            });
         }
         return ResponseEntity.ok(result);
     }
@@ -197,7 +198,7 @@ public class PostController {
         dto.setLevel(p.getLevel());
         dto.setCookingTime(p.getCookingTime());
         dto.setViews(p.getViews());
-        dto.setCreatedAt(p.getCreatedAt());
+        dto.setCreatedAt(p.getCreatedAt()); // 🔥 Sẽ tự map LocalDateTime
 
         if (p.getAccount() != null) {
             dto.setAuthorID(p.getAccount().getAccountID());
@@ -209,7 +210,7 @@ public class PostController {
             dto.setCategoryName(p.getCategory().getCategoryName());
         }
 
-        // ================= FIX CỦA SẾP: Tính Rating từ bảng Comment =================
+        // --- Rating Logic ---
         List<Comment> ratedComments = p.getComments() != null ?
                 p.getComments().stream()
                         .filter(c -> c.getRating() != null && c.getRating() > 0)
@@ -228,10 +229,8 @@ public class PostController {
                         .filter(c -> c.getRating() == null || c.getRating() == 0)
                         .count() : 0L;
         dto.setCommentCount(commentCount);
-        // ============================================================================
 
-        long realLikes = likesDAO.countByPost_PostID(p.getPostID());
-        dto.setFavoriteCount(realLikes);
+        dto.setFavoriteCount(likesDAO.countByPost_PostID(p.getPostID()));
 
         boolean isLiked = false;
         if (accountId != null) {
@@ -253,7 +252,7 @@ public class PostController {
         dto.setLevel(p.getLevel());
         dto.setCookingTime(p.getCookingTime());
         dto.setViews(p.getViews());
-        dto.setCreatedAt(p.getCreatedAt());
+        dto.setCreatedAt(p.getCreatedAt()); // 🔥 Sẽ tự map LocalDateTime
 
         if (p.getAccount() != null) {
             Account author = p.getAccount();
@@ -278,7 +277,7 @@ public class PostController {
             dto.setEventName(p.getEvent().getEventName());
         }
 
-        // ================= FIX CỦA SẾP: Tính Rating từ bảng Comment =================
+        // --- Rating Logic ---
         List<Comment> ratedComments = p.getComments() != null ?
                 p.getComments().stream()
                         .filter(c -> c.getRating() != null && c.getRating() > 0)
@@ -297,7 +296,6 @@ public class PostController {
                         .filter(c -> c.getRating() == null || c.getRating() == 0)
                         .count() : 0L;
         dto.setCommentCount(commentCount);
-        // ============================================================================
 
         dto.setFavoriteCount(likesDAO.countByPost_PostID(p.getPostID()));
 
@@ -319,15 +317,12 @@ public class PostController {
             dto.setSteps(steps);
         }
 
-        // ================= FIX CỦA SẾP: Gỡ bỏ RatingDAO khỏi map Comment =================
         if (p.getComments() != null) {
             List<CommentDTO> comments = p.getComments().stream().map(c -> {
                 CommentDTO cdto = new CommentDTO();
                 cdto.setCommentID(c.getCommentID());
                 cdto.setPostID(p.getPostID());
                 cdto.setContent(c.getContent());
-
-                // Lấy số sao trực tiếp từ Entity Comment
                 cdto.setRating(c.getRating() != null ? c.getRating() : 0);
 
                 if (c.getAccount() != null) {
@@ -339,7 +334,6 @@ public class PostController {
             }).collect(Collectors.toList());
             dto.setComments(comments);
         }
-        // ============================================================================
 
         return dto;
     }
@@ -348,11 +342,10 @@ public class PostController {
     public ResponseEntity<?> createPost(@RequestBody PostDTO dto) {
         try {
             Account account = accountDAO.findById(dto.getAccountID()).orElse(null);
-            if (account == null)
-                return ResponseEntity.badRequest().body("Invalid accountID");
+            if (account == null) return ResponseEntity.badRequest().body("Invalid accountID");
+
             Category category = categoryDAO.findById(dto.getCategoryID()).orElse(null);
-            if (category == null)
-                return ResponseEntity.badRequest().body("Invalid categoryID");
+            if (category == null) return ResponseEntity.badRequest().body("Invalid categoryID");
 
             Post post = Post.builder()
                     .account(account)
@@ -367,11 +360,11 @@ public class PostController {
                     .views(0)
                     .isActive(1)
                     .isApproved(0)
-                    .createdAt(LocalDate.now())
+                    .createdAt(LocalDateTime.now()) // 🔥 Đã đổi sang LocalDateTime.now()
                     .build();
+
             post = postDAO.save(post);
 
-            // GỌI HÀM THÔNG BÁO CỦA TEAM DEVELOP
             sendAdminAlert(post);
 
             if (dto.getSteps() != null) {
@@ -386,21 +379,18 @@ public class PostController {
                 }
             }
 
-            return ResponseEntity
-                    .ok(Map.of("postID", post.getPostID(), "message", "Post created and pending approval"));
+            return ResponseEntity.ok(Map.of("postID", post.getPostID(), "message", "Post created and pending approval"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error: " + e.getMessage());
         }
     }
 
-    // ================= FIX CỦA TEAM: Dùng NotificationService để báo Admin =================
     private void sendAdminAlert(Post post) {
         try {
             String userUsername = post.getAccount() != null ? post.getAccount().getUsername() : "Unknown User";
             notificationService.notifyAdminPostPendingApproval(userUsername, post.getPostID());
         } catch (Exception e) {
             System.err.println("Failed to notify admin about post: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 }

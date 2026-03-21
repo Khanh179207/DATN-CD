@@ -411,7 +411,7 @@ const goToDetail = (id) => {
   padding-bottom: 120px; 
 }
 
-/* --- TÁC GIẢ BUNG XÕA FULL WIDTH (ĐÃ FIX NHẢY LAYOUT) --- */
+
 /* --- TÁC GIẢ BUNG XÕA FULL WIDTH (ĐÃ FIX MÀU LUXURY) --- */
 .author-full-width-section {
   width: 100%;

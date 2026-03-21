@@ -87,13 +87,20 @@ onMounted(async () => {
       getCategories()
     ])
     categories.value = rawCats
+    
+    // 🔥 ĐỒNG BỘ FIX LỖI THỜI GIAN VÀ LƯỢT TIM Ở TRANG CHỦ
     posts.value = rawPosts.map(dto => ({
       ...normalizePost(dto),
-      _categoryID: dto.categoryID
+      _categoryID: dto.categoryID,
+      createdAt: dto.createdAt || dto.date || new Date().toISOString(),
+      likes: dto.likes ?? dto.likeCount ?? dto.favoriteCount ?? 0
     }))
+
+    // Debug thử xem nó đã có ngày chưa sếp nhé
+    console.log("Dữ liệu posts sau khi map:", posts.value[0]);
+
   } catch (err) {
     console.warn('HomeLatestRecipes: API error', err)
-    // Fallback: keep empty, user sees empty grid gracefully
   } finally {
     loading.value = false
   }

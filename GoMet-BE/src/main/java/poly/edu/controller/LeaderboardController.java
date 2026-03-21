@@ -9,8 +9,8 @@ import poly.edu.dao.PostDAO;
 import poly.edu.dto.LeaderboardPostDTO;
 import poly.edu.dto.LeaderboardUserDTO;
 import poly.edu.entity.Account;
+import poly.edu.entity.Comment; // 🔥 Đã đổi sang import Comment
 import poly.edu.entity.Post;
-import poly.edu.entity.Rating;
 
 import java.util.Comparator;
 import java.util.List;
@@ -39,18 +39,29 @@ public class LeaderboardController {
                     dto.setMedia(p.getMedia());
                     dto.setViews(p.getViews());
 
-                    // Ratings
-                    List<Rating> ratings = p.getRatings();
-                    if (ratings != null && !ratings.isEmpty()) {
-                        dto.setAvgRating(ratings.stream().mapToInt(Rating::getRate).average().orElse(0));
-                        dto.setRatingCount((long) ratings.size());
+                    // 🔥 FIX LOGIC RATING: Lấy từ Comment thay vì Rating Entity cũ
+                    List<Comment> comments = p.getComments();
+                    if (comments != null && !comments.isEmpty()) {
+                        // Lọc ra những comment có đánh giá sao
+                        List<Comment> ratingComments = comments.stream()
+                                .filter(c -> c.getRating() != null && c.getRating() > 0)
+                                .collect(Collectors.toList());
+
+                        if (!ratingComments.isEmpty()) {
+                            dto.setAvgRating(ratingComments.stream().mapToInt(Comment::getRating).average().orElse(0));
+                            dto.setRatingCount((long) ratingComments.size());
+                        } else {
+                            dto.setAvgRating(0.0);
+                            dto.setRatingCount(0L);
+                        }
                     } else {
                         dto.setAvgRating(0.0);
                         dto.setRatingCount(0L);
                     }
+
                     dto.setFavoriteCount(p.getFavorites() != null ? (long) p.getFavorites().size() : 0L);
 
-                    // Score formula: views * 0.3 + avgRating * 1500 + favorites * 50
+                    // Score formula: views * 0.3 + avgRating * 1500 + favorites * 50 + ratingCount * 100
                     double score = (p.getViews() != null ? p.getViews() * 0.3 : 0)
                             + (dto.getAvgRating() != null ? dto.getAvgRating() * 1500 : 0)
                             + (dto.getFavoriteCount() != null ? dto.getFavoriteCount() * 50 : 0)

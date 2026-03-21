@@ -42,14 +42,17 @@
 
     <div class="card-content">
       <div class="meta-top">
-<div class="rating-box">
-          <span class="star">★</span>
-          <span class="score">{{ post.avgRating > 0 ? Number(post.avgRating).toFixed(1) : 'Mới' }}</span>
-          <span v-if="post.ratingCount > 0" class="count">({{ post.ratingCount }})</span>
+        <div class="rating-box" :class="{ 'is-new': displayRating === 0 }">
+          <span class="star">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          </span>
+          <span class="score">{{ displayRating > 0 ? Number(displayRating).toFixed(1) : 'Mới' }}</span>
+          <span v-if="displayReviewCount > 0" class="count">({{ displayReviewCount }})</span>
         </div>
-        <div class="time-badge">
+        
+        <div class="time-badge" title="Thời gian đăng">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-          {{ post.time || '30p' }}
+          {{ formattedTimeAgo }}
         </div>
       </div>
 
@@ -112,7 +115,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCompareStore } from '@/stores/compare'
 import { useAuthStore } from '@/stores/auth'
@@ -134,23 +137,71 @@ const router = useRouter()
 const compareStore = useCompareStore()
 const authStore = useAuthStore()
 
+// --- COMPACT DATA (Đồng bộ Rating Real) ---
+const displayRating = computed(() => props.post.rating || props.post.avgRating || 0)
+const displayReviewCount = computed(() => props.post.reviews || props.post.ratingCount || 0)
+
+// --- HÀM TÍNH THỜI GIAN ĐĂNG BÀI (Time Ago) ---
+// --- HÀM TÍNH THỜI GIAN ĐĂNG BÀI (Time Ago - Đã Fix Lỗi Date) ---
+const formattedTimeAgo = computed(() => {
+  let dateStr = props.post.createdAt || props.post.date || props.post.savedDate;
+  if (!dateStr) return 'Mới đây';
+
+  // FIX: Xử lý trường hợp Backend trả về mảng LocalDate [YYYY, MM, DD]
+  if (Array.isArray(dateStr)) {
+    // Array tháng của Java là 1-12, js là 0-11 nên phải -1 ở tháng
+    dateStr = new Date(dateStr[0], dateStr[1] - 1, dateStr[2], dateStr[3] || 0, dateStr[4] || 0);
+  } else if (typeof dateStr === 'string' && dateStr.includes('-')) {
+    // FIX: Đảm bảo parse chuẩn ISO string
+    dateStr = new Date(dateStr);
+  } else if (typeof dateStr === 'number') {
+    // FIX: Trường hợp trả về Timestamp
+    dateStr = new Date(dateStr);
+  }
+
+  const date = new Date(dateStr);
+  
+  // Kiểm tra xem parse có bị lỗi "Invalid Date" không
+  if (isNaN(date.getTime())) return 'Mới đây';
+
+  const now = new Date();
+  const seconds = Math.floor((now - date) / 1000);
+
+  if (seconds < 0) return 'Vừa xong';
+
+  let interval = Math.floor(seconds / 31536000);
+  if (interval >= 1) return interval + " năm trước";
+  
+  interval = Math.floor(seconds / 2592000);
+  if (interval >= 1) return interval + " tháng trước";
+  
+  interval = Math.floor(seconds / 86400);
+  if (interval >= 1) return interval + " ngày trước";
+  
+  interval = Math.floor(seconds / 3600);
+  if (interval >= 1) return interval + " giờ trước";
+  
+  interval = Math.floor(seconds / 60);
+  if (interval >= 1) return interval + " phút trước";
+  
+  return "Vừa xong";
+})
+
 // --- STATES ---
 const isSaved = ref(false)
 const isSaving = ref(false)
 const isLiked = ref(false)
 const isLikeLoading = ref(false)
 const isLikeAnimating = ref(false)
-
-// Fix lỗi -1: Luôn đảm bảo giá trị khởi tạo >= 0
-const localLikeCount = ref(Math.max(0, Number(props.post.likes || 0)))
+const localLikeCount = ref(Math.max(0, Number(props.post.likes || props.post.likeCount || 0)))
 
 const showLikesModal = ref(false)
 const likesList = ref([])
 const isLoadingLikesList = ref(false)
 
-// Watch để đồng bộ từ component cha
+// Watch đồng bộ lượt Like
 watch(() => props.post.likes, (newVal) => {
-  localLikeCount.value = Math.max(0, Number(newVal || 0))
+  localLikeCount.value = Math.max(0, Number(newVal || props.post.likeCount || 0))
 })
 
 onMounted(async () => {
@@ -182,7 +233,7 @@ const toggleLike = async () => {
   const previousState = isLiked.value
   const previousCount = localLikeCount.value
 
-  // Optimistic UI: Cập nhật ngay lập tức
+  // Optimistic UI
   isLiked.value = !previousState
   localLikeCount.value = isLiked.value ? localLikeCount.value + 1 : Math.max(0, localLikeCount.value - 1)
   
@@ -191,9 +242,8 @@ const toggleLike = async () => {
 
   try {
     const result = await togglePostLike(uid, props.post.id)
-    isLiked.value = result // Đồng bộ lại từ server
+    isLiked.value = result 
   } catch (error) {
-    // Rollback nếu lỗi
     isLiked.value = previousState
     localLikeCount.value = previousCount
     toast.error("Có lỗi xảy ra!")
@@ -215,22 +265,18 @@ const openLikesModal = async () => {
     isLoadingLikesList.value = false
   }
 }
+
 const handleSaveToPlan = () => {
   if (!authStore.isAuthenticated) {
     return toast.warn("Vui lòng đăng nhập để sử dụng tính năng này!");
   }
-  // Gửi sự kiện 'save-to-plan' kèm thông tin bài viết này lên cho trang Home hoặc trang Profile xử lý
   emit('save-to-plan', props.post);
 };
 
-// --- ACTIONS LƯU BÀI VIẾT ---
 const toggleSave = async () => {
-  // 1. Kiểm tra đăng nhập
   if (!authStore.isAuthenticated) {
     return toast.warn("Vui lòng đăng nhập để lưu bài viết Sếp nhé!");
   }
-
-  // 2. Chặn spam click
   if (isSaving.value) return;
 
   const uid = authStore.user?.accountID || authStore.user?.id;
@@ -239,13 +285,11 @@ const toggleSave = async () => {
   isSaving.value = true;
   try {
     if (isSaved.value) {
-      // Nếu đã lưu thì gọi xóa
       await removeFavorite(uid, pid);
       isSaved.value = false;
       toast.success("Đã bỏ lưu công thức!");
-      emit('unsaved', pid); // Báo cho cha nếu cần (ví dụ trang Profile cần xóa card này)
+      emit('unsaved', pid); 
     } else {
-      // Nếu chưa lưu thì gọi thêm
       await addFavorite(uid, pid);
       isSaved.value = true;
       toast.success("Đã lưu công thức thành công!");
@@ -257,43 +301,82 @@ const toggleSave = async () => {
     isSaving.value = false;
   }
 };
-
 </script>
 
 <style scoped lang="scss">
 @import './RecipeCard.scss';
 
+/* --- UI META TOP (RATING & TIME AGO) --- */
+.meta-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.rating-box {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #fff7ed;
+  color: #ea580c;
+  padding: 4px 10px;
+  border-radius: 100px;
+  font-weight: 800;
+  font-size: 0.85rem;
+
+  .star { display: flex; align-items: center; }
+  .count { color: #fdba74; font-size: 0.8rem; font-weight: 600; margin-left: 2px; }
+
+  &.is-new {
+    background: #f1f5f9;
+    color: #64748b;
+    .star { display: none; }
+  }
+}
+
+.time-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #94a3b8;
+  background: #f8fafc;
+  padding: 4px 10px;
+  border-radius: 100px;
+}
+
 /* --- UI LIKE GROUP --- */
 .stats-like-group {
   display: flex;
   align-items: center;
-  background: #f1f3f5;
+  background: #f8fafc;
   border-radius: 20px;
   padding: 2px 10px 2px 2px;
   border: 1px solid transparent;
   transition: all 0.2s;
 
   &:hover {
-    background: #e9ecef;
-    border-color: #dee2e6;
+    background: #f1f5f9;
   }
 }
 
 .btn-icon-like {
   background: none; border: none; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  width: 30px; height: 30px; border-radius: 50%;
-  color: #adb5bd; transition: all 0.2s;
+  width: 32px; height: 32px; border-radius: 50%;
+  color: #94a3b8; transition: all 0.2s;
 
-  &:hover:not(:disabled) { background: #fff; color: #ff4081; }
-  &.is-liked { color: #ff4081; }
+  &:hover:not(:disabled) { background: #fff; color: #ea580c; box-shadow: 0 2px 5px rgba(0,0,0,0.05);}
+  &.is-liked { color: #ea580c; }
   &.animating svg { animation: heartPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 }
 
 .like-count-text {
-  font-size: 0.85rem; font-weight: 800; color: #495057;
+  font-size: 0.85rem; font-weight: 800; color: #475569;
   margin-left: 5px; cursor: pointer;
-  &:hover { color: #212529; text-decoration: underline; }
+  &:hover { color: #0f172a; }
 }
 
 @keyframes heartPop {
@@ -302,45 +385,44 @@ const toggleSave = async () => {
   100% { transform: scale(1); }
 }
 
-/* --- POPUP STYLING (MONOCHROME) --- */
+/* --- POPUP LIKES --- */
 .likes-popup-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.3);
+  position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4);
   backdrop-filter: blur(4px); z-index: 9999;
   display: flex; align-items: center; justify-content: center;
 }
 
 .likes-popup-container {
-  background: white; width: 280px; max-height: 380px;
-  border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  background: white; width: 300px; max-height: 400px;
+  border-radius: 24px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
   display: flex; flex-direction: column; overflow: hidden;
-  border: 1px solid #eee;
 }
 
 .popup-header {
-  padding: 12px 16px; border-bottom: 1px solid #f1f3f5;
+  padding: 16px 20px; border-bottom: 1px solid #f1f5f9;
   display: flex; justify-content: space-between; align-items: center;
-  span { font-weight: 800; font-size: 0.9rem; color: #212529; }
-  .btn-close-mini { background: none; border: none; font-size: 1.1rem; color: #adb5bd; cursor: pointer; &:hover { color: #000; } }
+  span { font-weight: 800; font-size: 1rem; color: #0f172a; }
+  .btn-close-mini { background: #f1f5f9; border: none; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #64748b; cursor: pointer; font-size: 0.8rem; font-weight: bold; &:hover { background: #e2e8f0; color: #0f172a; } }
 }
 
 .popup-scroll-area {
-  flex: 1; overflow-y: auto; padding: 8px;
-  &::-webkit-scrollbar { width: 4px; }
-  &::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
+  flex: 1; overflow-y: auto; padding: 12px;
+  &::-webkit-scrollbar { width: 6px; }
+  &::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
 }
 
 .liker-item-row {
   display: flex; align-items: center; gap: 12px;
-  padding: 8px 12px; border-radius: 10px; transition: 0.2s;
-  &:hover { background: #f8f9fa; }
+  padding: 10px 12px; border-radius: 12px; transition: 0.2s;
+  &:hover { background: #f8fafc; }
   
-  .liker-avt-mini { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid #eee; }
-  .liker-name-mini { font-size: 0.85rem; font-weight: 600; color: #495057; }
+  .liker-avt-mini { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+  .liker-name-mini { font-size: 0.9rem; font-weight: 700; color: #334155; }
 }
 
-.popup-state { padding: 20px; text-align: center; color: #868e96; font-size: 0.85rem; }
+.popup-state { padding: 30px; text-align: center; color: #94a3b8; font-size: 0.9rem; font-weight: 600; }
 
 /* Transitions */
-.pop-in-enter-active, .pop-in-leave-active { transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
-.pop-in-enter-from, .pop-in-leave-to { opacity: 0; transform: scale(0.9) translateY(10px); }
+.pop-in-enter-active, .pop-in-leave-active { transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+.pop-in-enter-from, .pop-in-leave-to { opacity: 0; transform: scale(0.95) translateY(10px); }
 </style>

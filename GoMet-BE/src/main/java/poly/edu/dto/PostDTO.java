@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -30,7 +31,8 @@ public class PostDTO {
     private String username;
     private String authorAvatar;
     private String categoryName;
-    private LocalDate createdAt;
+    // Trong PostDTO.java và FavoriteDTO.java
+    private LocalDateTime createdAt;
     private Integer isApproved;
 
     // 🔥 Bây giờ nó sẽ tự động hiểu và dùng cái file StepRequestDTO.java riêng biệt ở trên
