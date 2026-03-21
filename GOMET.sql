@@ -1,12 +1,8 @@
-<<<<<<< HEAD
--- Bước 1: Trở về database master (Bắt buộc)
-USE master;
-GO
-=======
+
 	-- Bước 1: Trở về database master (Bắt buộc)
 	USE master;
 	GO
->>>>>>> origin/feature/gioi-han-luot-xem
+
 
 -- Bước 2: Đá đít toàn bộ các kết nối đang cắm vào Database này
 IF EXISTS(select * from sys.databases where name='DATN_CD')
@@ -160,29 +156,27 @@ GO
 	);
 	GO
 
--- 2. Tạo bảng Comment hợp nhất (Chứa cả Đánh giá và Bình luận)
+-- =========================================================
+-- BẢNG COMMENT HỢP NHẤT (Chứa cả Đánh giá sao và Bình luận)
+-- =========================================================
 CREATE TABLE Comment (
     CommentID INT IDENTITY(1,1) PRIMARY KEY,
     AccountID INT NOT NULL,
     PostID INT NOT NULL,
-    Content NVARCHAR(MAX) NOT NULL,
+    
+    Content NVARCHAR(MAX) NULL, 
+    Rating INT DEFAULT 0, 
+    
+    ParentID INT NULL, 
+    
+    ImageURL NVARCHAR(500) NULL, 
+
     CreatedAt DATETIME DEFAULT GETDATE(),
 
     -- Các khóa ngoại
     CONSTRAINT FK_Comment_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
-    CONSTRAINT FK_Comment_Post FOREIGN KEY (PostID) REFERENCES Post(PostID)
-);
-
-
-CREATE TABLE Rating (
-    RatingID INT IDENTITY(1,1) PRIMARY KEY,
-    AccountID INT NOT NULL,
-    PostID INT NOT NULL,
-    Rate INT NOT NULL,
-    CreatedAt DATETIME DEFAULT GETDATE(),
-
-    CONSTRAINT FK_Rating_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
-    CONSTRAINT FK_Rating_Post FOREIGN KEY (PostID) REFERENCES Post(PostID)
+    CONSTRAINT FK_Comment_Post FOREIGN KEY (PostID) REFERENCES Post(PostID),
+    CONSTRAINT FK_Comment_Parent FOREIGN KEY (ParentID) REFERENCES Comment(CommentID)
 );
 GO
 
@@ -384,33 +378,33 @@ GO
 
 	CREATE TABLE Ticket (
 		TicketID INT IDENTITY(1,1) PRIMARY KEY,
-		AccountID INT NOT NULL,            -- Người gửi ticket
-    
-		-- Phân loại Ticket (Dùng code để quy định)
-		-- VD: 'BUG' (Báo lỗi), 'REPORT' (Báo cáo vi phạm), 'FEEDBACK' (Góp ý)
+		AccountID INT NOT NULL,          
 		TicketType NVARCHAR(50) NOT NULL,  
-    
-		-- Dành riêng cho loại 'REPORT' (Nếu họ báo cáo một bài viết)
 		TargetPostID INT NULL,             
-    
-		-- Nội dung chính
 		Title NVARCHAR(255) NOT NULL,
 		Description NVARCHAR(MAX) NOT NULL,
-		Attachment NVARCHAR(500) NULL,     -- Ảnh đính kèm (Lỗi, hoặc bằng chứng vi phạm)
-    
-		-- Trạng thái xử lý (Quy trình Admin)
-		-- VD: 0 = 'Chưa xem', 1 = 'Đang xử lý', 2 = 'Đã giải quyết', 3 = 'Từ chối'
+		Attachment NVARCHAR(500) NULL, 
 		Status INT DEFAULT 0,              
-    
-		-- Tracking thời gian
 		CreatedAt DATETIME DEFAULT GETDATE(),
 		ResolvedAt DATETIME NULL,
-		ProcessedAt DATETIME NULL,  -- Thời gian Admin xử lý xong
+		ProcessedAt DATETIME NULL,  
     
-		-- Khóa ngoại
 		CONSTRAINT FK_Ticket_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
 		CONSTRAINT FK_Ticket_Post FOREIGN KEY (TargetPostID) REFERENCES Post(PostID)
 	);
+	GO
+	
+	CREATE TABLE dbo.Appeals (
+  		AppealID        INT IDENTITY(1,1) PRIMARY KEY,
+  		Email           NVARCHAR(254) NOT NULL,
+  		Reason          NVARCHAR(MAX) NOT NULL,
+  		Status          NVARCHAR(50) NOT NULL DEFAULT 'Pending', -- Pending, Review, Resolved, Rejected
+  		CreatedAt       DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+  		UpdatedAt       DATETIME2 NULL,
+  		CreatedByIP     NVARCHAR(45) NULL,
+  		Note            NVARCHAR(MAX) NULL
+	);
+
 	GO
 	-- ==========================================
 	-- 6. TRIGGERS TỰ ĐỘNG CẬP NHẬT
