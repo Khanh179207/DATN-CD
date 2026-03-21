@@ -156,9 +156,7 @@ GO
 	);
 	GO
 
--- =========================================================
--- BẢNG COMMENT HỢP NHẤT (Chứa cả Đánh giá sao và Bình luận)
--- =========================================================
+
 CREATE TABLE Comment (
     CommentID INT IDENTITY(1,1) PRIMARY KEY,
     AccountID INT NOT NULL,
@@ -166,11 +164,11 @@ CREATE TABLE Comment (
     
     Content NVARCHAR(MAX) NULL, 
     Rating INT DEFAULT 0, 
-    
+    Attachments NVARCHAR(MAX) NULL,
+    Likes INT DEFAULT 0,
     ParentID INT NULL, 
-    
+    cmtid INT NULL,
     ImageURL NVARCHAR(500) NULL, 
-
     CreatedAt DATETIME DEFAULT GETDATE(),
 
     -- Các khóa ngoại
@@ -179,7 +177,20 @@ CREATE TABLE Comment (
     CONSTRAINT FK_Comment_Parent FOREIGN KEY (ParentID) REFERENCES Comment(CommentID)
 );
 GO
+    CREATE TABLE CommentLike (
+        LikeID INT IDENTITY(1,1) PRIMARY KEY,
+        AccountID INT NOT NULL,
+        CommentID INT NOT NULL,
+        CreatedAt DATETIME DEFAULT GETDATE(),
 
+        -- Khóa ngoại trỏ về Account
+        CONSTRAINT FK_CommentLike_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
+        -- Khóa ngoại trỏ về Comment (Đảm bảo CommentID này khớp với tên cột ID trong bảng Comment của sếp nhé)
+        CONSTRAINT FK_CommentLike_Comment FOREIGN KEY (CommentID) REFERENCES Comment(CommentID),
+        -- Đảm bảo 1 user chỉ like 1 comment 1 lần
+        CONSTRAINT UQ_CommentLike UNIQUE (AccountID, CommentID)
+    );
+GO
 	CREATE TABLE Favorite (
 		FavoriteID INT IDENTITY(1,1) PRIMARY KEY,
 		AccountID INT NOT NULL,
@@ -384,6 +395,7 @@ GO
 		Title NVARCHAR(255) NOT NULL,
 		Description NVARCHAR(MAX) NOT NULL,
 		Attachment NVARCHAR(500) NULL, 
+
 		Status INT DEFAULT 0,              
 		CreatedAt DATETIME DEFAULT GETDATE(),
 		ResolvedAt DATETIME NULL,
@@ -393,7 +405,7 @@ GO
 		CONSTRAINT FK_Ticket_Post FOREIGN KEY (TargetPostID) REFERENCES Post(PostID)
 	);
 	GO
-	
+
 	CREATE TABLE dbo.Appeals (
   		AppealID        INT IDENTITY(1,1) PRIMARY KEY,
   		Email           NVARCHAR(254) NOT NULL,
@@ -461,6 +473,7 @@ INSERT INTO Post (AccountID, CategoryID, Title, Description, Ingredients, isAppr
 
 
 
+
 	SELECT * FROM Post;
 
 	SELECT * FROM Cookingsteps;
@@ -469,5 +482,10 @@ INSERT INTO Post (AccountID, CategoryID, Title, Description, Ingredients, isAppr
 
 	SELECT * FROM Votes;
 
-SELECT * FROM Likes;
-SELECT * FROM account;
+	SELECT * FROM Likes;
+
+	SELECT * FROM account;
+
+	SELECT * FROM Appeals;
+
+
