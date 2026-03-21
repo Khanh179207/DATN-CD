@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import poly.edu.dao.*;
 import poly.edu.dto.*;
 import poly.edu.entity.*;
+import poly.edu.service.NotificationService;
 
 import java.time.LocalDate;
 import java.util.Comparator;
@@ -30,6 +31,7 @@ public class PostController {
     private final CookingStepsDAO cookingStepsDAO;
     private final SimpMessagingTemplate messagingTemplate;
     private final LikesDAO likesDAO;
+    private final NotificationService notificationService; // Đã thêm của team
 
     @GetMapping("/search-mini")
     public ResponseEntity<List<Map<String, Object>>> searchMini(@RequestParam String q) {
@@ -207,7 +209,7 @@ public class PostController {
             dto.setCategoryName(p.getCategory().getCategoryName());
         }
 
-        // ================= FIX Ở ĐÂY: Tính Rating từ bảng Comment mới =================
+        // ================= FIX CỦA SẾP: Tính Rating từ bảng Comment =================
         List<Comment> ratedComments = p.getComments() != null ?
                 p.getComments().stream()
                         .filter(c -> c.getRating() != null && c.getRating() > 0)
@@ -276,7 +278,7 @@ public class PostController {
             dto.setEventName(p.getEvent().getEventName());
         }
 
-        // ================= FIX Ở ĐÂY: Tính Rating từ bảng Comment mới =================
+        // ================= FIX CỦA SẾP: Tính Rating từ bảng Comment =================
         List<Comment> ratedComments = p.getComments() != null ?
                 p.getComments().stream()
                         .filter(c -> c.getRating() != null && c.getRating() > 0)
@@ -317,7 +319,7 @@ public class PostController {
             dto.setSteps(steps);
         }
 
-        // ================= FIX Ở ĐÂY: Gỡ bỏ RatingDAO khỏi map Comment =================
+        // ================= FIX CỦA SẾP: Gỡ bỏ RatingDAO khỏi map Comment =================
         if (p.getComments() != null) {
             List<CommentDTO> comments = p.getComments().stream().map(c -> {
                 CommentDTO cdto = new CommentDTO();
@@ -369,6 +371,7 @@ public class PostController {
                     .build();
             post = postDAO.save(post);
 
+            // GỌI HÀM THÔNG BÁO CỦA TEAM DEVELOP
             sendAdminAlert(post);
 
             if (dto.getSteps() != null) {
@@ -390,18 +393,14 @@ public class PostController {
         }
     }
 
+    // ================= FIX CỦA TEAM: Dùng NotificationService để báo Admin =================
     private void sendAdminAlert(Post post) {
         try {
-            Map<String, Object> alert = Map.of(
-                    "id", "post-" + post.getPostID(),
-                    "type", "POST_PENDING",
-                    "title", post.getTitle(),
-                    "message",
-                    "New post waiting for approval: \"" + post.getTitle() + "\" by " + post.getAccount().getUsername(),
-                    "createdAt", post.getCreatedAt().toString());
-            messagingTemplate.convertAndSend("/topic/admin-alerts", (Object) alert);
+            String userUsername = post.getAccount() != null ? post.getAccount().getUsername() : "Unknown User";
+            notificationService.notifyAdminPostPendingApproval(userUsername, post.getPostID());
         } catch (Exception e) {
-            System.err.println("Failed to send admin alert: " + e.getMessage());
+            System.err.println("Failed to notify admin about post: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

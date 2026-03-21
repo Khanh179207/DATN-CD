@@ -153,7 +153,6 @@ import RelatedSuggestions from '@/components/post-detail/RelatedSuggestions.vue'
 
 // --- IMPORT SERVICES ---
 import { getPostById, getRelatedPosts, normalizePost } from '@/services/postService'
-import { getComments } from '@/services/interactionService'
 import { uploadMedia } from '@/services/uploadService'
 import { recordHistory } from '@/services/interactionService'
 
@@ -257,6 +256,9 @@ async function loadPost(id) {
       servings: dto.servings ? `${dto.servings} servings` : '—',
       category: dto.categoryName || '',
       ingredientsRaw: dto.ingredients || '',
+      avgRating: dto.avgRating || 0,
+      ratingCount: dto.ratingCount || 0,
+      favoriteCount: dto.favoriteCount || 0,
       views: dto.views || 0,
       steps: (dto.steps || []).map(s => ({
         stepNumber: s.stepNumber,
@@ -366,11 +368,16 @@ watch(() => route.params.id, (id) => {
 onMounted(() => {
   if (window.location.hash) {
     const element = document.querySelector(window.location.hash)
-    if (element) element.scrollIntoView({ behavior: 'smooth' })
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' })
+    }
   }
 })
 
-const goToDetail = (id) => router.push({ name: 'PostDetail', params: { id: id } })
+const goToDetail = (id) => {
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+  router.push({ name: 'PostDetail', params: { id: id } })
+}
 </script>
 
 <style scoped lang="scss">
@@ -380,6 +387,7 @@ const goToDetail = (id) => router.push({ name: 'PostDetail', params: { id: id } 
   min-height: 100vh;
   font-family: var(--font-ui, 'Mulish', sans-serif);
   width: 100%;
+  max-width: 100vw;
   overflow-x: hidden;
   padding-bottom: 120px; 
 }

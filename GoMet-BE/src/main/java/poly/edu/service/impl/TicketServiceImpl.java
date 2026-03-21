@@ -11,6 +11,7 @@ import poly.edu.dto.TicketDTO;
 import poly.edu.entity.Account;
 import poly.edu.entity.Post;
 import poly.edu.entity.Ticket;
+import poly.edu.service.NotificationService;
 import poly.edu.service.TicketService;
 
 import java.time.LocalDateTime;
@@ -26,6 +27,7 @@ public class TicketServiceImpl implements TicketService {
     private final AccountDAO accountDAO;
     private final PostDAO postDAO;
     private final SimpMessagingTemplate messagingTemplate;
+    private final NotificationService notificationService;
 
     /**
      * 🔥 HÀM ĐỒNG BỘ: Lưu Ticket từ DTO (FE up ảnh lấy link trước)
@@ -80,10 +82,13 @@ public class TicketServiceImpl implements TicketService {
         Ticket ticket = ticketDAO.findById(ticketId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy Ticket!"));
 
+        Integer oldStatus = ticket.getStatus();
+
         ticket.setStatus(newStatus);
 
         // 🔥 1. NẾU LÀ TIẾP NHẬN (Status = 1) -> Lưu giờ bắt đầu xử lý
-        // Dùng điều kiện == null để lỡ sếp có bấm lại nút này nó cũng không bị ghi đè giờ cũ (Giữ comment của develop)
+        // Dùng điều kiện == null để lỡ sếp có bấm lại nút này nó cũng không bị ghi đè
+        // giờ cũ (Giữ comment của develop)
         if (newStatus == 1 && ticket.getProcessedAt() == null) {
             ticket.setProcessedAt(LocalDateTime.now());
         }
@@ -93,7 +98,37 @@ public class TicketServiceImpl implements TicketService {
             ticket.setResolvedAt(LocalDateTime.now());
         }
 
-        return ticketDAO.save(ticket);
+        Ticket savedTicket = ticketDAO.save(ticket);
+
+        // Send real-time notification to ticket owner if status changed to
+        // ACCEPTED/RESOLVED/REJECTED
+        if (oldStatus != null && !oldStatus.equals(newStatus) && (newStatus == 1 || newStatus == 2 || newStatus == 3)) {
+            try {
+                String link = null;
+                String title, content, type;
+
+                if (newStatus == 1) {
+                    title = "Ticket accepted";
+                    content = "Your support ticket is now being processed.";
+                    type = "TICKET_ACCEPTED";
+                } else if (newStatus == 2) {
+                    title = "Ticket resolved";
+                    content = "Your support ticket has been resolved.";
+                    type = "TICKET_RESOLVED";
+                } else { // 3
+                    title = "Ticket rejected";
+                    content = "Your support ticket has been rejected by admin.";
+                    type = "TICKET_REJECTED";
+                }
+
+                notificationService.createNotification(title, content, type, ticket.getAccount().getAccountID(), null,
+                        link);
+            } catch (Exception e) {
+                System.err.println("Failed to send ticket status notification: " + e.getMessage());
+            }
+        }
+
+        return savedTicket;
     }
 
     /**
@@ -125,14 +160,15 @@ public class TicketServiceImpl implements TicketService {
     }
 
     /**
-     * Send admin alert for new ticket
+     * Send admin alert for new ticket using NotificationService
      */
     private void sendAdminAlert(Ticket ticket) {
         try {
-            AdminTicketDTO dto = convertToAdminDTO(ticket);
-            messagingTemplate.convertAndSend("/topic/admin-alerts", dto);
+            String userUsername = ticket.getAccount() != null ? ticket.getAccount().getUsername() : "Unknown User";
+            notificationService.notifyAdminTicket(userUsername, ticket.getTicketID());
         } catch (Exception e) {
-            System.err.println("Failed to send admin alert: " + e.getMessage());
+            System.err.println("Failed to notify admin about ticket: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

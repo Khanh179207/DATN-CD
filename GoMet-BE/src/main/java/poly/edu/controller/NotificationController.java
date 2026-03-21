@@ -10,6 +10,7 @@ import poly.edu.dto.AdminNotificationDTO;
 import poly.edu.entity.Notification;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -31,6 +32,7 @@ public class NotificationController {
 
     // ── List notifications for user ──────────────────────────────────────
     @GetMapping("/{accountID}")
+    @Transactional
     public ResponseEntity<List<Map<String, Object>>> getUserNotifications(
             @PathVariable Integer accountID) {
 
@@ -38,15 +40,18 @@ public class NotificationController {
                 .findByAccount_AccountID(accountID)
                 .stream()
                 .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
-                .map(n -> Map.<String, Object>of(
-                        "notificationID", n.getNotificationID(),
-                        "title", n.getTitle(),
-                        "content", n.getContent(),
-                        "type", n.getType(),
-                        "isRead", n.getIsRead(),
-                        "createdAt", n.getCreatedAt().toString(),
-                        "postID", n.getPost() != null ? n.getPost().getPostID() : 0,
-                        "link", n.getLink()))
+                .map(n -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("notificationID", n.getNotificationID());
+                    map.put("title", n.getTitle());
+                    map.put("content", n.getContent());
+                    map.put("type", n.getType());
+                    map.put("isRead", n.getIsRead());
+                    map.put("createdAt", n.getCreatedAt().toString());
+                    map.put("postID", n.getPost() != null ? n.getPost().getPostID() : 0);
+                    map.put("link", n.getLink()); // Can be null
+                    return map;
+                })
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(result);

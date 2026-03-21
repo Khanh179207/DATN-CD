@@ -1,15 +1,14 @@
+-- Bước 1: Trở về database master (Bắt buộc)
+USE master;
+GO
 
-﻿	-- Bước 1: Trở về database master (Bắt buộc)
-	USE master;
-	GO
-
-
-	IF EXISTS(select * from sys.databases where name='DATN_CD')
-	BEGIN
-		ALTER DATABASE DATN_CD SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-		DROP DATABASE DATN_CD;
-	END
-	GO
+-- Bước 2: Đá đít toàn bộ các kết nối đang cắm vào Database này
+IF EXISTS(select * from sys.databases where name='DATN_CD')
+BEGIN
+    ALTER DATABASE DATN_CD SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE DATN_CD;
+END
+GO
 
 	-- Bước 3: Khởi tạo lại Database
 	CREATE DATABASE DATN_CD;
@@ -157,40 +156,28 @@ GO
 
 -- 2. Tạo bảng Comment hợp nhất (Chứa cả Đánh giá và Bình luận)
 CREATE TABLE Comment (
-    CommentID   INT IDENTITY(1,1) PRIMARY KEY,
-    AccountID   INT NOT NULL,
-    PostID      INT NOT NULL,
-    cmtid       INT NULL,           -- NULL = Bình luận gốc / Đánh giá | NOT NULL = Trả lời
-    Content     NVARCHAR(MAX) NULL, -- Cho phép NULL nếu khách chỉ chấm sao không viết chữ
-    Rating      INT NULL,           -- NULL = Bình luận thường | 1-5 = Đánh giá (Review)
-	Likes INT DEFAULT 0,
-    Attachments NVARCHAR(MAX) NULL, -- Lưu JSON danh sách ảnh
-    CreatedAt   DATETIME DEFAULT GETDATE(),
+    CommentID INT IDENTITY(1,1) PRIMARY KEY,
+    AccountID INT NOT NULL,
+    PostID INT NOT NULL,
+    Content NVARCHAR(MAX) NOT NULL,
+    CreatedAt DATETIME DEFAULT GETDATE(),
 
+    -- Các khóa ngoại
     CONSTRAINT FK_Comment_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
-    CONSTRAINT FK_Comment_Post FOREIGN KEY (PostID) REFERENCES Post(PostID),
-    CONSTRAINT FK_Comment_Parent FOREIGN KEY (cmtid) REFERENCES Comment(CommentID)
+    CONSTRAINT FK_Comment_Post FOREIGN KEY (PostID) REFERENCES Post(PostID)
 );
-GO
 
--- 3. Bảng Like (Dùng chung cho cả Review và Comment)
-CREATE TABLE  (
-    LikeID      INT IDENTITY(1,1) PRIMARY KEY,
-    AccountID   INT NOT NULL,
-    CommentID   INT NOT NULL,
-    CreatedAt   DATETIME DEFAULT GETDATE(),
 
-    CONSTRAINT FK_CommentLike_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
-    CONSTRAINT FK_CommentLike_Comment FOREIGN KEY (CommentID) REFERENCES Comment(CommentID),
-    CONSTRAINT UQ_Account_Comment_Like UNIQUE (AccountID, CommentID)
+CREATE TABLE Rating (
+    RatingID INT IDENTITY(1,1) PRIMARY KEY,
+    AccountID INT NOT NULL,
+    PostID INT NOT NULL,
+    Rate INT NOT NULL,
+    CreatedAt DATETIME DEFAULT GETDATE(),
+
+    CONSTRAINT FK_Rating_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
+    CONSTRAINT FK_Rating_Post FOREIGN KEY (PostID) REFERENCES Post(PostID)
 );
-GO
-
--- 4. RÀNG BUỘC CỰC XỊN: Chống spam đánh giá
--- Mỗi người chỉ được Rating (chấm sao) 1 lần trên 1 bài viết.
-CREATE UNIQUE INDEX UQ_One_Rating_Per_User 
-ON Comment(AccountID, PostID) 
-WHERE Rating IS NOT NULL;
 GO
 
 	CREATE TABLE Favorite (
@@ -468,9 +455,12 @@ GO
 	INSERT INTO Event (EventName, BannerImage, Description, Rules, Reward, StartAt, EndAt, VoteStartAt, VoteEndAt) VALUES 
 	(N'Siêu Đầu Bếp Tháng 3', 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?q=80', N'Thi nấu ăn dành riêng cho tháng 3', N'- Nộp tối đa 3 bài<br>- Không sao chép', N'Huy hiệu Siêu Đầu Bếp', '2026-03-01 00:00:00', '2026-03-20 23:59:59', '2026-03-15 00:00:00', '2026-03-25 23:59:59');
 
+INSERT INTO Post (AccountID, CategoryID, Title, Description, Ingredients, isApproved, isActive) VALUES 
+(2, 1, N'Phở Bò Nam Định', N'Nấu chuẩn vị gia truyền', N'Xương bò, bánh phở, thịt bò', 1, 1),
+(3, 1, N'Bún Chả Hà Nội', N'Ngon như ngoài hàng', N'Thịt nạc vai, bún, đu đủ', 1, 1);
 
-	INSERT INTO EventPosts (EventID, PostID) VALUES (1, 1), (1, 2);
-	GO
+INSERT INTO EventPosts (EventID, PostID) VALUES (1, 1), (1, 2);
+GO
 
 	SELECT * FROM Post;
 
@@ -480,22 +470,5 @@ GO
 
 	SELECT * FROM Votes;
 
-	SELECT * FROM Likes;
-
-	SELECT * FROM account;
-
-	SELECT * FROM Subscription;
-
-	SELECT * FROM PaymentTransaction;
-
-	SELECT * FROM Ticket;
-
-	SELECT * FROM Comment;
-
-	SELECT * FROM category;
-
-	SELECT * FROM Comment;
-
-	SELECT * FROM Favorite;
-
-	SELECT * FROM CommentLike;
+SELECT * FROM Likes;
+SELECT * FROM account;

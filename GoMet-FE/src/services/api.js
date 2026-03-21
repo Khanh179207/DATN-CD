@@ -28,7 +28,7 @@ api.interceptors.response.use(
         const isBanned = err.response?.data?.message === 'ACCOUNT_BANNED' || err.response?.status === 403;
 
         window.dispatchEvent(new CustomEvent('auth:force-logout', {
-            detail: { isBanned: isBanned }
+          detail: { isBanned: isBanned }
         }))
       }
     }

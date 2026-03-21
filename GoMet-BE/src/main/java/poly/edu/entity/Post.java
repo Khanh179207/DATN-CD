@@ -77,6 +77,7 @@ public class Post {
     private List<CookingSteps> cookingSteps;
 
     @OneToMany(mappedBy = "post")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<Notification> notifications;
 
     // Thay vì mappedBy = "account", sếp phải để là "targetPost"
