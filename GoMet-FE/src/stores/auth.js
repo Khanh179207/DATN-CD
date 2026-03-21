@@ -7,8 +7,21 @@ import { toast } from '@/composables/useToast'
 export const useAuthStore = defineStore('auth', () => {
   const router = useRouter()
 
-  // 1. STATE — persist to localStorage
-  const user = ref(JSON.parse(localStorage.getItem('user')) || null)
+  // 1. STATE — persist to localStorage (có migration cho dữ liệu cũ)
+  const user = ref((() => {
+    const saved = localStorage.getItem('user')
+    if (!saved) return null
+    const userData = JSON.parse(saved)
+    // Nếu dữ liệu cũ thiếu trường mới, gán mặc định để tránh NaN
+    if (userData && userData.remainingPostViews === undefined) {
+      const now = new Date()
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+      userData.remainingPostViews = (userData.isPremium || userData.isAdmin) ? Infinity : 3
+      userData.lastViewDate = today
+      userData.viewedPostIds = []
+    }
+    return userData
+  })())
 
   // Cross-tab sync: when another tab logs in/out, update this tab too
   window.addEventListener('storage', (e) => {
@@ -44,23 +57,55 @@ export const useAuthStore = defineStore('auth', () => {
   const isAdmin = computed(() => user.value?.isAdmin === true || user.value?.role === 'admin')
   const currentUser = computed(() => user.value)
 
-// 3. ACTIONS
+
+  // 🌟 NEW ACTION: Centralized user initialization (Handles login, google, register)
+  function setUser(data) {
+    if (!data) return
+
+    // Logic tính toán số lượt xem (ưu tiên từ persistent cache)
+    const now = new Date()
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+    
+    const limitsCache = JSON.parse(localStorage.getItem('gomet_view_limits') || '{}')
+    const uid = String(data.accountID || data.id)
+    const cache = limitsCache[uid]
+
+    let views = 3
+    let ids = []
+
+    if (cache && cache.date === today) {
+      views = Number(cache.count)
+      ids = cache.ids || []
+    } else {
+      // Nếu không có cache hôm nay, lấy từ backend hoặc mặc định 3
+      views = Number(data.remainingPostViews ?? ((String(data.isPremium) === '1' || data.isAdmin) ? Infinity : 3))
+    }
+
+    user.value = {
+      id:        data.accountID,
+      accountID: data.accountID,
+      name:      data.username,
+      username:  data.username,
+      email:     data.email,
+      avatar:    data.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username)}&background=EA580C&color=fff`,
+      isAdmin:   data.isAdmin,
+      isPremium: data.isPremium,
+      token:     data.token || user.value?.token, // Giữ token cũ nếu refresh
+      role:      data.isAdmin ? 'admin' : 'user',
+      /* START: Daily View Limit Persistence Logic */
+      remainingPostViews: views,
+      lastViewDate: today,
+      viewedPostIds: ids
+      /* END: Daily View Limit Persistence Logic */
+    }
+    
+    localStorage.setItem('user', JSON.stringify(user.value))
+  }
+
   async function login(email, password) {
     try {
       const data = await authService.login(email, password)
-      user.value = {
-        id:        data.accountID,
-        accountID: data.accountID,
-        name:      data.username,
-        username:  data.username,
-        email:     data.email,
-        avatar:    data.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username)}&background=EA580C&color=fff`,
-        isAdmin:   data.isAdmin,
-        isPremium: data.isPremium,
-        token:     data.token,
-        role:      data.isAdmin ? 'admin' : 'user'
-      }
-      localStorage.setItem('user', JSON.stringify(user.value))
+      setUser(data)
       return user.value.role
    } catch (err) {
       // 🔥 TRẢ NGUYÊN LỖI GỐC CHO GIAO DIỆN XỬ LÝ
@@ -72,19 +117,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function register(username, email, password) {
     try {
       const data = await authService.register(username, email, password)
-      user.value = {
-        id:        data.accountID,
-        accountID: data.accountID,
-        name:      data.username,
-        username:  data.username,
-        email:     data.email,
-        avatar:    data.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username)}&background=EA580C&color=fff`,
-        isAdmin:   data.isAdmin,
-        isPremium: data.isPremium,
-        token:     data.token,
-        role:      'user'
-      }
-      localStorage.setItem('user', JSON.stringify(user.value))
+      setUser(data)
       return user.value
     } catch (err) {
       const msg = err.response?.data?.message || 'Registration failed'
@@ -96,16 +129,7 @@ export const useAuthStore = defineStore('auth', () => {
     if (!user.value?.token) return
     try {
       const data = await authService.getMe()
-      user.value = {
-        ...user.value,
-        name:      data.username,
-        username:  data.username,
-        email:     data.email,
-        avatar:    data.avatar || user.value.avatar,
-        isAdmin:   data.isAdmin,
-        isPremium: data.isPremium
-      }
-      localStorage.setItem('user', JSON.stringify(user.value))
+      setUser(data)
     } catch {
       logout()
     }
@@ -118,5 +142,33 @@ export const useAuthStore = defineStore('auth', () => {
     router.push('/')
   }
 
-  return { user, isAuthenticated, isAdmin, currentUser, login, register, logout, refreshProfile }
+  // 🌟 NEW ACTION: Reset views for demo purposes
+  function resetViews() {
+    if (!user.value) return
+    
+    const now = new Date()
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+    
+    // Reset trong state
+    user.value.remainingPostViews = (user.value.isPremium || user.value.isAdmin) ? Infinity : 3
+    user.value.viewedPostIds = []
+    user.value.lastViewDate = today
+    
+    // Cập nhật localStorage 'user'
+    localStorage.setItem('user', JSON.stringify(user.value))
+    
+    // Cập nhật Persistent Cache
+    const limitsCache = JSON.parse(localStorage.getItem('gomet_view_limits') || '{}')
+    const uid = String(user.value.accountID || user.value.id)
+    limitsCache[uid] = {
+      count: user.value.remainingPostViews,
+      ids: [],
+      date: today
+    }
+    localStorage.setItem('gomet_view_limits', JSON.stringify(limitsCache))
+    
+    toast.success('Đã reset lượt xem (Demo Mode)')
+  }
+
+  return { user, isAuthenticated, isAdmin, currentUser, login, register, logout, refreshProfile, setUser, resetViews }
 })

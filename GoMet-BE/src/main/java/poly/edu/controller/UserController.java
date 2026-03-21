@@ -11,6 +11,8 @@ import poly.edu.dto.UserProfileDTO;
 import poly.edu.entity.Account;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -95,5 +97,22 @@ public class UserController {
         dto.setTotalViews(totalViews);
 
         return dto;
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<?> searchUsers(@RequestParam(required = false, defaultValue = "") String keyword) {
+        List<Account> accounts;
+
+        if (keyword.isBlank()) {
+            accounts = accountDAO.findAll(); // Nếu không gõ gì thì lấy tất cả
+        } else {
+            accounts = accountDAO.findByUsernameContainingIgnoreCase(keyword.trim()); // Tìm theo tên
+        }
+
+        List<UserProfileDTO> result = accounts.stream()
+                .map(this::toDTO)
+                .toList();
+
+        return ResponseEntity.ok(result);
     }
 }

@@ -3,11 +3,17 @@ import axios from 'axios'
 const api = axios.create({
   baseURL: 'http://localhost:8080',
   timeout: 10000,
-  headers: { 'Content-Type': 'application/json' }
+  withCredentials: false
+  // Để axios tự detect Content-Type (tốt cho việc up ảnh/khiếu nại)
 })
 
-// Attach auth token if present
+// Interceptor cho Request: Đính kèm Token
 api.interceptors.request.use(config => {
+  // Bỏ qua header auth cho các request OPTIONS (CORS preflight) - Theo bản của team
+  if (config.method?.toUpperCase() === 'OPTIONS') {
+    return config
+  }
+
   const user = JSON.parse(localStorage.getItem('user') || 'null')
   if (user?.token) {
     config.headers.Authorization = `Bearer ${user.token}`
@@ -15,24 +21,40 @@ api.interceptors.request.use(config => {
   return config
 })
 
-// Global error handler
-// Trong file api.js - Đoạn xử lý Interceptor Response
+// Interceptor cho Response: Xử lý thành công & lỗi toàn cục
 api.interceptors.response.use(
-  res => res,
+  res => {
+    // Log thành công để sếp dễ theo dõi (Theo bản của team)
+    console.log('[API Success]:', res.config?.url, res.status);
+    return res
+  },
   err => {
-    if (err.response?.status === 401 || err.response?.status === 403) {
+    const status = err.response?.status;
+    const message = err.response?.data?.message;
+
+    // Log chi tiết lỗi để sếp bắt bệnh (Cực kỳ hữu ích từ bản của team)
+    console.error('[API Error Details]:', {
+      status,
+      message,
+      url: err.config?.url,
+      method: err.config?.method
+    });
+
+    // logic CHỐT CỦA SẾP: Chỉ ép Logout nếu Token hết hạn (401) hoặc Bị Ban (403 + ACCOUNT_BANNED)
+    if (status === 401 || (status === 403 && message === 'ACCOUNT_BANNED')) {
       const user = JSON.parse(localStorage.getItem('user') || 'null')
       if (user?.token) {
         localStorage.removeItem('user')
-
-        // 🔥 SỬA DÒNG NÀY: Check đúng cái KEY mà Backend gửi (ACCOUNT_BANNED)
-        const isBanned = err.response?.data?.message === 'ACCOUNT_BANNED' || err.response?.status === 403;
+        
+        const isBanned = message === 'ACCOUNT_BANNED';
 
         window.dispatchEvent(new CustomEvent('auth:force-logout', {
           detail: { isBanned: isBanned }
         }))
       }
     }
+    
+    // Trả lỗi về để các Component (như PostDetail hay Search) tự xử lý logic riêng
     return Promise.reject(err)
   }
 )

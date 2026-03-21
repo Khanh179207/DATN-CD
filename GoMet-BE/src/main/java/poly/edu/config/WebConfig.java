@@ -11,11 +11,13 @@ import java.nio.file.Paths;
 public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // Lấy đường dẫn tuyệt đối đến thư mục uploads
-        Path uploadDir = Paths.get("src/main/resources/static/uploads");
-        String uploadPath = uploadDir.toFile().getAbsolutePath();
+        // Sử dụng đường dẫn vật lý cố định để đảm bảo Spring Boot đọc được ngay cả khi đang chạy
+        String userDir = System.getProperty("user.dir");
+        Path uploadDir = Paths.get(userDir, "src/main/resources/static/uploads");
+        String uploadPath = uploadDir.toFile().getAbsolutePath().replace("\\", "/");
 
-        // Cấu hình: Mọi URL bắt đầu bằng /uploads/** sẽ trỏ vào thư mục vật lý này
+        System.out.println(">>> WebConfig: Mapping /uploads/** to file:/" + uploadPath + "/");
+
         registry.addResourceHandler("/uploads/**")
                 .addResourceLocations("file:/" + uploadPath + "/");
     }

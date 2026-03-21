@@ -2,27 +2,28 @@ package poly.edu.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Rating")
+@Table(name = "CommentLike")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Rating {
+public class CommentLike {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer ratingID;
+    private Integer likeID;
 
     @ManyToOne
     @JoinColumn(name = "AccountID", nullable = false)
     private Account account;
 
     @ManyToOne
-    @JoinColumn(name = "PostID", nullable = false)
-    private Post post;
+    @JoinColumn(name = "CommentID", nullable = false)
+    private Comment comment;
 
-    @Column(nullable = false)
-    private Integer rate;
+    @Column(name = "CreatedAt", insertable = false, updatable = false)
+    private LocalDateTime createdAt;
 }

@@ -65,6 +65,12 @@
                     <span v-if="isBannedError">🔒 </span>{{ loginError }}
                   </div>
 
+                  <div v-if="loginError && wrongPasswordCount >= 3" class="appeal-hint">
+                    <button type="button" class="btn-appeal-link" @click="showAppealModal = true">
+                      Bạn nghĩ mình bị ban nhầm? → Nộp khiếu nại
+                    </button>
+                  </div>
+
                   <button class="btn-submit-art stagger-item" style="--delay: 0.5s">
                     <span>{{ $t('auth.sign_in_btn', 'Đăng Nhập Ngay') }}</span>
                   </button>
@@ -215,6 +221,11 @@
       </div>
     </div>
   </transition>
+
+  <!-- Appeal Modal Teleport -->
+  <Teleport to="body">
+    <AppealModal v-if="showAppealModal" @close="showAppealModal = false" />
+  </Teleport>
 </template>
 
 <script setup>
@@ -227,6 +238,7 @@ import { toast } from '@/composables/useToast'
 import * as authService from '@/services/authService'
 import { forgotPassword } from '@/services/authService'
 import { GoogleLogin } from 'vue3-google-login'
+import AppealModal from '@/components/modals/AppealModal.vue'
 
 const { t } = useI18n()
 const props = defineProps({ initialView: { type: String, default: 'login' } })
@@ -239,6 +251,7 @@ const currentView = ref(props.initialView)
 const showPassword = ref(false)
 const otpDigits = ref(['', '', '', '', '', ''])
 const sendingOtp = ref(false)
+const showAppealModal = ref(false)
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -248,6 +261,7 @@ const password = ref('')
 const loginError = ref('')
 const regError = ref('')
 const otpError = ref('')
+const wrongPasswordCount = ref(0) // Counter cho lần nhập sai mật khẩu
 
 // 🌟 ĐÃ CẬP NHẬT regForm ĐỂ THÊM agreeTerms 🌟
 const regForm = reactive({ 
@@ -263,12 +277,20 @@ const forgotState      = ref('idle')
 const forgotError      = ref('')
 
 watch(() => props.initialView, (val) => { currentView.value = val })
+
+// Debug watch for wrongPasswordCount
+watch(() => wrongPasswordCount.value, (newVal) => {
+  console.log('[Watch] wrongPasswordCount updated:', { newVal, shouldShowAppeal: newVal >= 3 })
+})
+
 const switchView = (name) => {
   currentView.value = name
   loginError.value = ''
   regError.value = ''
   otpError.value = ''
   forgotError.value = ''
+  // ❌ KHÔNG reset wrongPasswordCount ở đây - nó phải persist khi user back to login
+  // wrongPasswordCount.value = 0
   if (name !== 'forgot-password') {
     forgotState.value = 'idle'
     forgotIdentifier.value = ''
@@ -282,18 +304,28 @@ const handleLogin = async () => {
   try {
     const role = await authStore.login(email.value, password.value)
     toast.success(t('toast.login_ok', 'Đăng nhập thành công!'))
+    wrongPasswordCount.value = 0 // Reset counter khi đăng nhập thành công
     emit('close')
     router.push(role === 'admin' ? '/admin' : '/home')
   } catch (err) {
-    // 🔥 LƯỚI TRỜI LỒNG LỘNG: Bắt mọi kiểu dữ liệu ném ra
-    const errorString = String(err.message || err.response?.data?.message || err).toUpperCase()
+    // 🔥 Bắt mọi kiểu dữ liệu ném ra
+    const errorMessage = err.message || err.response?.data?.message || String(err)
+    const errorString = errorMessage.toUpperCase()
+
+    console.log('[Login Error]', { errorMessage, errorString })
 
     if (errorString.includes('ACCOUNT_BANNED')) {
-      // Set đúng câu này để cái computed isBannedError (hiện icon ổ khóa 🔒) của sếp hoạt động
+      // Set đúng câu này để cái computed isBannedError (hiện icon ổ khóa 🔒) hoạt động
       loginError.value = 'Tài khoản của bạn đã bị khóa bởi quản trị viên.' 
       toast.error('🚨 TÀI KHOẢN BỊ KHÓA: Bạn đã bị cấm vĩnh viễn do vi phạm tiêu chuẩn cộng đồng GOMET!', { timeout: 8000 })
+    } else if (errorString.includes('INCORRECT') || errorString.includes('PASSWORD')) {
+      // Tăng counter lần nhập sai mật khẩu
+      wrongPasswordCount.value++
+      loginError.value = 'Mật khẩu không đúng'
+      console.log('[Wrong Password]', { count: wrongPasswordCount.value, shouldShow: wrongPasswordCount.value >= 3 })
+      toast.error(`${loginError.value} (${wrongPasswordCount.value}/3)`)
     } else {
-      loginError.value = err.message || t('auth.error_login', 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.')
+      loginError.value = errorMessage || t('auth.error_login', 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.')
       toast.error(loginError.value)
     }
   }
@@ -306,20 +338,7 @@ const handleGoogleCallback = async (response) => {
     }
     const idToken = response.credential
     const data = await authService.googleLogin(idToken)
-
-    authStore.user = {
-      id:         data.accountID,
-      accountID:  data.accountID,
-      name:       data.username,
-      username:   data.username,
-      email:      data.email,
-      avatar:     data.avatar,
-      isAdmin:    data.isAdmin,
-      isPremium:  data.isPremium,
-      token:      data.token,
-      role:       data.isAdmin ? 'admin' : 'user'
-    }
-    localStorage.setItem('user', JSON.stringify(authStore.user))
+    authStore.setUser(data)
     toast.success(t('toast.login_ok', 'Đăng nhập Google thành công!'))
     emit('close')
     router.push(authStore.user.role === 'admin' ? '/admin' : '/home')
@@ -383,19 +402,7 @@ const handleOtpVerify = async () => {
   }
   try {
     const data = await authService.verifyOtp(regForm.email, code)
-    authStore.user = {
-      id:         data.accountID,
-      accountID: data.accountID,
-      name:       data.username,
-      username:   data.username,
-      email:      data.email,
-      avatar:     data.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username)}&background=EA580C&color=fff`,
-      isAdmin:    data.isAdmin,
-      isPremium: data.isPremium,
-      token:      data.token,
-      role:       data.isAdmin ? 'admin' : 'user'
-    }
-    localStorage.setItem('user', JSON.stringify(authStore.user))
+    authStore.setUser(data)
     toast.success(t('toast.register_ok', 'Đăng ký thành công!'))
     emit('close')
     router.push('/home')
@@ -432,6 +439,8 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.body.style.overflow = ''
+  // Reset counter khi modal đóng
+  wrongPasswordCount.value = 0
 })
 </script>
 

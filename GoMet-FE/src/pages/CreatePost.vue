@@ -158,8 +158,7 @@
                   <div class="step-content-col">
                     <div class="step-top-row">
                       <h4 class="step-heading">BƯỚC {{ index + 1 }}</h4>
-                      <button class="btn-del-step" @click="removeStep(index)" v-if="post.steps.length > 1">Xóa
-                        bước</button>
+                      <button class="btn-del-step" @click="removeStep(index)" v-if="post.steps.length > 1">Xóa bước</button>
                     </div>
                     <textarea v-model="step.desc" class="step-desc-input"
                       placeholder="Chi tiết cách thực hiện bước này..." rows="3" @input="autoResize"></textarea>

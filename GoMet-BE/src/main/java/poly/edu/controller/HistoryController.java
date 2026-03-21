@@ -36,6 +36,12 @@ public class HistoryController {
     private final PostDAO       postDAO;
     private final PostController postController;
 
+    @GetMapping("/test")
+    public String test() {
+        System.out.println(">>> HistoryController: GET /api/history/test called");
+        return "HistoryController is working!";
+    }
+
     // ── GET history for a user ───────────────────────────────────────────
     @GetMapping("/{accountID}")
     public ResponseEntity<List<PublicPostDTO>> getHistory(
@@ -59,6 +65,7 @@ public class HistoryController {
     // ── POST record a view ───────────────────────────────────────────────
     @PostMapping
     public ResponseEntity<?> recordView(@RequestBody Map<String, Integer> body) {
+        System.out.println(">>> HistoryController: POST /api/history called with: " + body);
         Integer accountID = body.get("accountID");
         Integer postID    = body.get("postID");
 
@@ -71,7 +78,8 @@ public class HistoryController {
         Post    post    = postDAO.findById(postID).orElse(null);
 
         if (account == null || post == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            System.out.println(">>> HistoryController: Account or Post NOT FOUND. AccountID: " + accountID + ", PostID: " + postID);
+            return ResponseEntity.badRequest()
                     .body(Map.of("message", "Account or Post not found"));
         }
 

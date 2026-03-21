@@ -6,15 +6,16 @@ import org.springframework.transaction.annotation.Transactional;
 import poly.edu.dao.AccountDAO;
 import poly.edu.dao.CategoryDAO;
 import poly.edu.dao.PostDAO;
-import poly.edu.dao.CookingStepsDAO; // 🔥 Nhớ Import DAO của CookingSteps
+import poly.edu.dao.CookingStepsDAO;
 import poly.edu.dto.PostDTO;
 import poly.edu.dto.StepRequestDTO;
 import poly.edu.entity.Account;
 import poly.edu.entity.Category;
 import poly.edu.entity.Post;
-import poly.edu.entity.CookingSteps; // 🔥 Nhớ Import Entity CookingSteps
+import poly.edu.entity.CookingSteps;
 import poly.edu.service.PostService;
 
+import java.time.LocalDateTime; // 🔥 Đã đổi sang LocalDateTime
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,7 +26,7 @@ public class PostServiceImpl implements PostService {
     private final PostDAO postDAO;
     private final CategoryDAO categoryDAO;
     private final AccountDAO accountDAO;
-    private final CookingStepsDAO cookingStepsDAO; // 🔥 Inject thêm DAO này
+    private final CookingStepsDAO cookingStepsDAO;
 
     @Override
     public List<PostDTO> getPostsByAccountId(Integer accountId) {
@@ -38,7 +39,7 @@ public class PostServiceImpl implements PostService {
     @Transactional
     public PostDTO createPost(PostDTO postDTO) {
         if (postDTO.getAccountID() == null) {
-            throw new RuntimeException("Không thể tạo bài viết vì thiếu ID tài khoản (Người dùng chưa đăng nhập)!");
+            throw new RuntimeException("Không thể tạo bài viết vì thiếu ID tài khoản!");
         }
 
         Post post = new Post();
@@ -46,15 +47,15 @@ public class PostServiceImpl implements PostService {
         // 1. Map thông tin cơ bản
         mapDtoToEntity(postDTO, post);
 
-        // 2. Logic ID 1
+        // 2. Logic Category
         Integer targetCatID = (postDTO.getCategoryID() == null) ? 1 : postDTO.getCategoryID();
         Category cat = categoryDAO.findById(targetCatID)
-                .orElseThrow(() -> new RuntimeException("Danh mục ID " + targetCatID + " không tồn tại!"));
+                .orElseThrow(() -> new RuntimeException("Danh mục không tồn tại!"));
         post.setCategory(cat);
 
         // 3. Map người dùng
         Account acc = accountDAO.findById(postDTO.getAccountID())
-                .orElseThrow(() -> new RuntimeException("Tài khoản ID " + postDTO.getAccountID() + " không tồn tại trên hệ thống!"));
+                .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại!"));
         post.setAccount(acc);
 
         // 4. Trạng thái mặc định
@@ -63,22 +64,18 @@ public class PostServiceImpl implements PostService {
         post.setViews(0);
         post.setLikeCount(0);
 
-        // 🔥 5. Lưu Post trước để lấy ID
+        // 🔥 5. Lưu Post (Ngày giờ đã được set trong mapDtoToEntity bên dưới)
         Post savedPost = postDAO.save(post);
 
-        // 🔥 6. XỬ LÝ LƯU COOKING STEPS
+        // 6. Xử lý Cooking Steps
         if (postDTO.getSteps() != null && !postDTO.getSteps().isEmpty()) {
             for (int i = 0; i < postDTO.getSteps().size(); i++) {
                 StepRequestDTO stepDto = postDTO.getSteps().get(i);
-
                 CookingSteps stepEntity = new CookingSteps();
-                stepEntity.setPost(savedPost); // Gắn vào bài viết vừa lưu
-                stepEntity.setStepNumber(i + 1); // Đánh số tự động: 1, 2, 3...
-
-                // Map từ StepRequestDTO sang Entity (Khớp tên biến của sếp)
+                stepEntity.setPost(savedPost);
+                stepEntity.setStepNumber(i + 1);
                 stepEntity.setContent(stepDto.getDesc());
-                stepEntity.setImage(stepDto.getImage()); // Sếp xem lại entity có trường này không, nếu là mediaUrl thì đổi lại nhé
-
+                stepEntity.setImage(stepDto.getImage());
                 cookingStepsDAO.save(stepEntity);
             }
         }
@@ -90,15 +87,14 @@ public class PostServiceImpl implements PostService {
     @Transactional
     public PostDTO updatePost(Integer postId, PostDTO dto) {
         if (postId == null) throw new RuntimeException("ID bài viết không được để trống!");
-
         Post post = postDAO.findById(postId)
-                .orElseThrow(() -> new RuntimeException("Bài viết không tồn tại để sửa!"));
+                .orElseThrow(() -> new RuntimeException("Bài viết không tồn tại!"));
 
         mapDtoToEntity(dto, post);
 
         if (dto.getCategoryID() != null) {
             Category cat = categoryDAO.findById(dto.getCategoryID())
-                    .orElseThrow(() -> new RuntimeException("Danh mục mới không hợp lệ!"));
+                    .orElseThrow(() -> new RuntimeException("Danh mục không hợp lệ!"));
             post.setCategory(cat);
         }
 
@@ -133,6 +129,11 @@ public class PostServiceImpl implements PostService {
         entity.setVideo(dto.getVideo());
         entity.setLevel(dto.getLevel() != null ? dto.getLevel() : 1);
         entity.setCookingTime(dto.getCookingTime() != null ? dto.getCookingTime() : 30);
+
+        // 🔥 CHỐT HẠ: Đã đổi sang LocalDateTime.now() để có giờ phút giây
+        if (entity.getPostID() == null) {
+            entity.setCreatedAt(LocalDateTime.now());
+        }
     }
 
     private PostDTO convertToDTO(Post post) {
@@ -148,6 +149,8 @@ public class PostServiceImpl implements PostService {
         dto.setViews(post.getViews());
         dto.setLikeCount(post.getLikeCount());
         dto.setIsApproved(post.getIsApproved());
+
+        // Trả về LocalDateTime chuẩn xịn cho Frontend
         dto.setCreatedAt(post.getCreatedAt());
 
         if (post.getAccount() != null) dto.setAccountID(post.getAccount().getAccountID());
@@ -155,8 +158,6 @@ public class PostServiceImpl implements PostService {
             dto.setCategoryID(post.getCategory().getCategoryID());
             dto.setCategoryName(post.getCategory().getCategoryName());
         }
-
-        // Sếp có thể thêm code convert list CookingSteps sang DTO ở đây nếu sau này API cần trả về detail nhé
 
         return dto;
     }
