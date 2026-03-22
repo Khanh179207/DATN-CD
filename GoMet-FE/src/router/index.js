@@ -26,7 +26,7 @@ import TermsAndPolicy from '@/pages/terms/TermsAndPolicy.vue'
 
 // --- ADMIN PAGES ---
 import AdminDashboard from '@/pages/admin/Dashboard.vue'
-import PostManagement from '@/pages/admin/PostManagement.vue'
+import PostManagement from '@/pages/admin/postadmin/PostManagement.vue'
 import CategoryManagement from '@/pages/admin/categoryadmin/CategoryManagement.vue'
 import UserManagement from '@/pages/admin/UserManagement.vue'
 import CommentManagement from '@/pages/admin/CommentManagement.vue'
@@ -37,6 +37,8 @@ import TicketManagement from '@/pages/admin/ticketadmin/TicketManagement.vue'
 import EventManagement from '@/pages/admin/eventadmin/EventManagement.vue'
 import PostEventManagement from '@/pages/admin/eventadmin/PostEventManagement.vue'
 import AppealManagement from '@/pages/admin/AppealManagement.vue'
+// 🔥 IMPORT TRANG BLACKLIST MỚI TẠO Ở ĐÂY
+import BlacklistManagement from '@/pages/admin/BlacklistManagement.vue'
 
 const routes = [
   // 1. LANDING PAGE
@@ -159,7 +161,9 @@ const routes = [
       { path: 'notifications', name: 'AdminNotifications', component: NotificationManagement },
       { path: 'tickets', name: 'AdminTickets', component: TicketManagement },
       { path: 'events/:id/posts', name: 'AdminPostEventManagement', component: PostEventManagement },
-      { path: 'appeals', name: 'AdminAppeals', component: AppealManagement }
+      { path: 'appeals', name: 'AdminAppeals', component: AppealManagement },
+      // 🔥 ĐĂNG KÝ TRANG TỪ KHÓA CẤM VÀO ĐÂY
+      { path: 'blacklist', name: 'AdminBlacklist', component: BlacklistManagement }
     ]
   },
 
@@ -203,8 +207,6 @@ router.beforeEach((to, from, next) => {
   const userStr = localStorage.getItem('user')
   const user = userStr ? JSON.parse(userStr) : null
   const isLoggedIn = !!user?.token
-
-  // 🗑️ ĐÃ XÓA ĐOẠN STRICT GUARD CHẶN KHÁCH VÔ DUYÊN Ở ĐÂY
 
   const isPremium = isLoggedIn && (
     String(user?.isPremium) === "true" || 

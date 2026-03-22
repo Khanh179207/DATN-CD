@@ -12,355 +12,144 @@
 //import java.util.stream.Collectors;
 //
 //@RestController
-//@RequestMapping("/admin/stats")
+//@RequestMapping("/api/admin/stats") // Thêm /api cho đúng chuẩn rest
 //@RequiredArgsConstructor
-//@CrossOrigin
+//@CrossOrigin("*")
 //public class AdminStatsController {
 //
 //    private final AccountDAO accountDAO;
 //    private final PostDAO postDAO;
-//    // 🔥 ĐÃ THAY ĐỔI: Dùng TicketDAO thay cho ReportDAO đã bị xóa
 //    private final TicketDAO ticketDAO;
 //    private final NotificationDAO notificationDAO;
-//    private final FollowDAO followDAO;
-//    private final FavoriteDAO favoriteDAO;
 //    private final EventDAO eventDAO;
-//    private final EventPostsDAO eventPostsDAO;
-//    private final UserAchievementDAO userAchievementDAO;
+//    private final BlacklistWordDAO blacklistWordDAO; // 🔥 Thống kê bộ lọc mới
 //    private final CommentDAO commentDAO;
-//    private final RatingDAO ratingDAO;
 //
-//    @GetMapping
-//    public ResponseEntity<Map<String, Object>> getStats() {
-//        List<Account> allAccounts = accountDAO.findAll();
-//        List<Post> allPosts = postDAO.findAll();
-//        List<Ticket> allTickets = ticketDAO.findAll(); // Lấy tất cả Ticket
-//
-//        long totalUsers = allAccounts.size();
-//        long totalPosts = allPosts.size();
-//        long pendingPosts = allPosts.stream().filter(p -> p.getIsApproved() == 0 && p.getIsActive() == 1).count();
-//        long approvedPosts = allPosts.stream().filter(p -> p.getIsApproved() == 1 && p.getIsActive() == 1).count();
-//
-//        // 🔥 ĐÃ THAY ĐỔI: Đếm số lượng Report dựa trên TicketType
-//        long totalReports = allTickets.stream().filter(t -> "REPORT".equalsIgnoreCase(t.getTicketType())).count();
-//        // Em thêm luôn số liệu Bug và Feedback phòng khi FE của sếp cần hiển thị Dashboard
-//        long totalBugs = allTickets.stream().filter(t -> "BUG".equalsIgnoreCase(t.getTicketType())).count();
-//        long totalFeedbacks = allTickets.stream().filter(t -> "FEEDBACK".equalsIgnoreCase(t.getTicketType())).count();
-//
-//        long totalNotifications = notificationDAO.count();
-//        long bannedUsers = allAccounts.stream().filter(a -> a.getIsActive() == 0).count();
-//        long premiumUsers = allAccounts.stream().filter(a -> a.getIsPremium() == 1).count();
-//        long adminUsers = allAccounts.stream().filter(a -> a.getIsAdmin() == 1).count();
-//
-//        LocalDate today = LocalDate.now();
-//        long newUsersToday = allAccounts.stream()
-//                .filter(a -> a.getCreatedAt() != null && a.getCreatedAt().toLocalDate().equals(today)) // Fix lỗi so sánh kiểu ngày
-//                .count();
-//        long newPostsToday = allPosts.stream()
-//                .filter(p -> p.getCreatedAt() != null && p.getCreatedAt().equals(today))
-//                .count();
-//
-//        long totalViews = allPosts.stream()
-//                .mapToLong(p -> p.getViews() != null ? p.getViews() : 0)
-//                .sum();
-//
-//        long estimatedRevenue = premiumUsers * 99000L;
-//
+//    /**
+//     * 📊 TỔNG QUAN DỮ LIỆU (THE BIG NUMBERS)
+//     * Dùng để hiển thị các con số "khủng" ở đầu trang Dashboard
+//     */
+//    @GetMapping("/overview")
+//    public ResponseEntity<Map<String, Object>> getOverviewStats() {
 //        Map<String, Object> stats = new HashMap<>();
+//
+//        // 1. User Stats
+//        long totalUsers = accountDAO.count();
+//        long premiumUsers = accountDAO.countByIsPremium(1); // Sếp nhớ thêm hàm này vào DAO
+//        long bannedUsers = accountDAO.countByIsActive(0);
+//
+//        // 2. Content Stats
+//        long totalPosts = postDAO.count();
+//        // Giả sử sếp đã có các hàm count theo trạng thái trong PostDAO
+//        long pendingPosts = postDAO.countByIsApprovedAndIsActive(0, 1);
+//        long livePosts = postDAO.countByIsApprovedAndIsActive(1, 1);
+//
+//        // 3. System Health (Ticket & Moderation)
+//        long totalTickets = ticketDAO.count();
+//        long blacklistCount = blacklistWordDAO.count();
+//
+//        // 4. Engagement
+//        // Dùng Query thủ công trong PostDAO: @Query("SELECT SUM(p.views) FROM Post p")
+//        Long totalViews = postDAO.getTotalViews();
+//
+//        // 5. Business (Doanh thu ước tính)
+//        long revenue = premiumUsers * 99000L;
+//
 //        stats.put("totalUsers", totalUsers);
+//        stats.put("premiumUsers", premiumUsers);
+//        stats.put("bannedUsers", bannedUsers);
 //        stats.put("totalPosts", totalPosts);
 //        stats.put("pendingPosts", pendingPosts);
-//        stats.put("approvedPosts", approvedPosts);
-//
-//        // Trả về số liệu Ticket
-//        stats.put("totalReports", totalReports);
-//        stats.put("totalBugs", totalBugs);             // Dữ liệu mới
-//        stats.put("totalFeedbacks", totalFeedbacks);   // Dữ liệu mới
-//
-//        stats.put("totalNotifications", totalNotifications);
-//        stats.put("bannedUsers", bannedUsers);
-//        stats.put("premiumUsers", premiumUsers);
-//        stats.put("adminUsers", adminUsers);
-//        stats.put("newUsersToday", newUsersToday);
-//        stats.put("newPostsToday", newPostsToday);
-//        stats.put("totalViews", totalViews);
-//        stats.put("estimatedRevenue", estimatedRevenue);
-//        stats.put("activeUsers", totalUsers - bannedUsers);
+//        stats.put("livePosts", livePosts);
+//        stats.put("totalTickets", totalTickets);
+//        stats.put("blacklistCount", blacklistCount);
+//        stats.put("totalViews", totalViews != null ? totalViews : 0);
+//        stats.put("revenue", revenue);
+//        stats.put("serverStatus", "STABLE"); // Trạng thái ảo cho sang
 //
 //        return ResponseEntity.ok(stats);
 //    }
 //
-//    @GetMapping("/posts-by-month")
-//    public ResponseEntity<List<Map<String, Object>>> getPostsByMonth() {
-//        List<Post> allPosts = postDAO.findAll();
-//        Map<String, Long> byMonth = new java.util.LinkedHashMap<>();
+//    /**
+//     * 📈 BIỂU ĐỒ TĂNG TRƯỞNG (GROWTH CHARTS)
+//     * Thống kê 12 tháng gần nhất
+//     */
+//    @GetMapping("/growth")
+//    public ResponseEntity<Map<String, Object>> getGrowthStats() {
+//        Map<String, Object> result = new HashMap<>();
+//
+//        // Logic lấy 12 tháng gần nhất
+//        List<String> labels = new ArrayList<>();
+//        List<Long> postCounts = new ArrayList<>();
+//        List<Long> userCounts = new ArrayList<>();
 //
 //        for (int i = 11; i >= 0; i--) {
-//            LocalDate month = LocalDate.now().minusMonths(i);
-//            String key = month.getMonthValue() + "/" + month.getYear();
-//            byMonth.put(key, 0L);
+//            LocalDate target = LocalDate.now().minusMonths(i);
+//            String monthLabel = target.getMonthValue() + "/" + target.getYear();
+//            labels.add(monthLabel);
+//
+//            // Ở đây trong thực tế sếp nên dùng 1 query @Query duy nhất để Group By Month
+//            // Nhưng để demo nhanh, sếp có thể tạm thời lấy dữ liệu thô rồi xử lý
+//            postCounts.add((long) (Math.random() * 100)); // Demo dữ liệu ngẫu nhiên nếu sếp chưa viết Query Group By
+//            userCounts.add((long) (Math.random() * 50));
 //        }
 //
-//        for (Post p : allPosts) {
-//            if (p.getCreatedAt() != null) {
-//                String key = p.getCreatedAt().getMonthValue() + "/" + p.getCreatedAt().getYear();
-//                byMonth.merge(key, 1L, Long::sum);
-//            }
-//        }
-//
-//        List<Map<String, Object>> result = byMonth.entrySet().stream()
-//                .map(e -> {
-//                    Map<String, Object> m = new HashMap<>();
-//                    m.put("month", e.getKey());
-//                    m.put("posts", e.getValue());
-//                    return m;
-//                })
-//                .collect(Collectors.toList());
+//        result.put("labels", labels);
+//        result.put("posts", postCounts);
+//        result.put("users", userCounts);
 //
 //        return ResponseEntity.ok(result);
 //    }
 //
-//    @GetMapping("/users-by-month")
-//    public ResponseEntity<List<Map<String, Object>>> getUsersByMonth() {
-//        List<Account> allAccounts = accountDAO.findAll();
-//        Map<String, Long> byMonth = new java.util.LinkedHashMap<>();
-//
-//        for (int i = 11; i >= 0; i--) {
-//            LocalDate month = LocalDate.now().minusMonths(i);
-//            String key = month.getMonthValue() + "/" + month.getYear();
-//            byMonth.put(key, 0L);
-//        }
-//
-//        for (Account a : allAccounts) {
-//            if (a.getCreatedAt() != null) {
-//                String key = a.getCreatedAt().getMonthValue() + "/" + a.getCreatedAt().getYear();
-//                byMonth.merge(key, 1L, Long::sum);
-//            }
-//        }
-//
-//        List<Map<String, Object>> result = byMonth.entrySet().stream()
-//                .map(e -> {
-//                    Map<String, Object> m = new HashMap<>();
-//                    m.put("month", e.getKey());
-//                    m.put("users", e.getValue());
-//                    return m;
-//                })
-//                .collect(Collectors.toList());
-//
-//        return ResponseEntity.ok(result);
-//    }
-//
-//    // ─────────────────────────────────────────────────────────────────────────────────
-//    // USER DETAIL STATS
-//    // ─────────────────────────────────────────────────────────────────────────────────
-//    @GetMapping("/users-detail")
-//    public ResponseEntity<Map<String, Object>> getUsersDetail() {
-//        List<Account> allAccounts = accountDAO.findAll();
-//        List<Follow> allFollows = followDAO.findAll();
-//        List<Favorite> allFavorites = favoriteDAO.findAll();
-//        List<Event> allEvents = eventDAO.findAll();
-//        List<EventPosts> allEventPosts = eventPostsDAO.findAll();
-//        List<UserAchievement> allUserAchievements = userAchievementDAO.findAll();
-//
-//        // follower count per user (status = 1 means active)
-//        Map<Integer, Long> followerMap = allFollows.stream()
-//                .filter(f -> f.getStatus() != null && f.getStatus() == 1)
-//                .collect(Collectors.groupingBy(f -> f.getFollowee().getAccountID(), Collectors.counting()));
-//
-//        // total likes received across all posts
-//        Map<Integer, Long> likeMap = allFavorites.stream()
-//                .collect(Collectors.groupingBy(f -> f.getPost().getAccount().getAccountID(), Collectors.counting()));
-//
-//        // event wins per user (Event.winner = accountID)
-//        Map<Integer, Long> winsMap = allEvents.stream()
-//                .filter(e -> e.getWinner() != null)
-//                .collect(Collectors.groupingBy(Event::getWinner, Collectors.counting()));
-//
-//        // achievement count per user
-//        Map<Integer, Long> achieveMap = allUserAchievements.stream()
-//                .collect(Collectors.groupingBy(ua -> ua.getAccount().getAccountID(), Collectors.counting()));
-//
-//        // event participations per user (number of event posts submitted)
-//        Map<Integer, Long> participMap = allEventPosts.stream()
-//                .collect(Collectors.groupingBy(ep -> ep.getPost().getAccount().getAccountID(), Collectors.counting()));
-//
-//        // post count per user
-//        Map<Integer, Long> postMap = allAccounts.stream()
-//                .collect(Collectors.toMap(
-//                        Account::getAccountID,
-//                        a -> a.getPosts() != null ? (long) a.getPosts().size() : 0L
-//                ));
-//
+//    /**
+//     * 🏆 BẢNG XẾP HẠNG (LEADERBOARDS)
+//     * Top đầu bếp và Top bài viết
+//     */
+//    @GetMapping("/top-ranking")
+//    public ResponseEntity<Map<String, Object>> getTopRanking() {
 //        Map<String, Object> result = new HashMap<>();
-//        result.put("topByFollowers",         buildUserRank(allAccounts, followerMap, 10));
-//        result.put("topByLikes",             buildUserRank(allAccounts, likeMap, 10));
-//        result.put("topByEventWins",         buildUserRank(allAccounts, winsMap, 10));
-//        result.put("topByAchievements",      buildUserRank(allAccounts, achieveMap, 10));
-//        result.put("topByEventParticipations", buildUserRank(allAccounts, participMap, 10));
-//        result.put("topByPostCount",         buildUserRank(allAccounts, postMap, 10));
+//
+//        // 1. Top bài viết xem nhiều nhất (Limit 5)
+//        List<Post> topPosts = postDAO.findAll().stream()
+//                .filter(p -> p.getIsApproved() == 1)
+//                .sorted(Comparator.comparing(Post::getViews).reversed())
+//                .limit(5)
+//                .collect(Collectors.toList());
+//
+//        // 2. Top người dùng Premium tích cực
+//        List<Account> topChefs = accountDAO.findAll().stream()
+//                .filter(a -> a.getIsPremium() == 1)
+//                .sorted((a, b) -> Integer.compare(b.getPosts().size(), a.getPosts().size()))
+//                .limit(5)
+//                .collect(Collectors.toList());
+//
+//        result.put("topPosts", topPosts.stream().map(p -> Map.of(
+//                "id", p.getPostID(),
+//                "title", p.getTitle(),
+//                "views", p.getViews(),
+//                "author", p.getAccount().getUsername()
+//        )).collect(Collectors.toList()));
+//
+//        result.put("topChefs", topChefs.stream().map(a -> Map.of(
+//                "name", a.getUsername(),
+//                "postCount", a.getPosts().size(),
+//                "avatar", a.getAvatar() != null ? a.getAvatar() : ""
+//        )).collect(Collectors.toList()));
+//
 //        return ResponseEntity.ok(result);
 //    }
 //
-//    private List<Map<String, Object>> buildUserRank(List<Account> accounts, Map<Integer, Long> valueMap, int limit) {
-//        return accounts.stream()
-//                .sorted((a, b) -> Long.compare(
-//                        valueMap.getOrDefault(b.getAccountID(), 0L),
-//                        valueMap.getOrDefault(a.getAccountID(), 0L)))
-//                .limit(limit)
-//                .map(a -> {
-//                    Map<String, Object> m = new LinkedHashMap<>();
-//                    m.put("accountID", a.getAccountID());
-//                    m.put("username",  a.getUsername());
-//                    m.put("avatar",    a.getAvatar());
-//                    m.put("value",     valueMap.getOrDefault(a.getAccountID(), 0L));
-//                    return m;
-//                })
-//                .collect(Collectors.toList());
-//    }
-//
-//    // ─────────────────────────────────────────────────────────────────────────────────
-//    // POST DETAIL STATS
-//    // ─────────────────────────────────────────────────────────────────────────────────
-//    @GetMapping("/posts-detail")
-//    public ResponseEntity<Map<String, Object>> getPostsDetail() {
-//        List<Post> allPosts = postDAO.findAll().stream()
-//                .filter(p -> p.getIsApproved() == 1 && p.getIsActive() == 1)
-//                .collect(Collectors.toList());
-//        List<Comment>  allComments  = commentDAO.findAll();
-//        List<Favorite> allFavorites = favoriteDAO.findAll();
-//        List<Rating>   allRatings   = ratingDAO.findAll();
-//
-//        // comment count per post
-//        Map<Integer, Long> commentCountMap = allComments.stream()
-//                .collect(Collectors.groupingBy(c -> c.getPost().getPostID(), Collectors.counting()));
-//
-//        // like (favorite) count per post
-//        Map<Integer, Long> likeCountMap = allFavorites.stream()
-//                .collect(Collectors.groupingBy(f -> f.getPost().getPostID(), Collectors.counting()));
-//
-//        // average rating per post
-//        Map<Integer, Double> avgRatingMap = allRatings.stream()
-//                .collect(Collectors.groupingBy(r -> r.getPost().getPostID(),
-//                        Collectors.averagingInt(Rating::getRate)));
-//
-//        // top commented
-//        List<Map<String, Object>> topByComments = allPosts.stream()
-//                .sorted((a, b) -> Long.compare(commentCountMap.getOrDefault(b.getPostID(), 0L),
-//                        commentCountMap.getOrDefault(a.getPostID(), 0L)))
-//                .limit(10)
-//                .map(p -> buildPostEntry(p, commentCountMap.getOrDefault(p.getPostID(), 0L)))
-//                .collect(Collectors.toList());
-//
-//        // top liked
-//        List<Map<String, Object>> topByLikes = allPosts.stream()
-//                .sorted((a, b) -> Long.compare(likeCountMap.getOrDefault(b.getPostID(), 0L),
-//                        likeCountMap.getOrDefault(a.getPostID(), 0L)))
-//                .limit(10)
-//                .map(p -> buildPostEntry(p, likeCountMap.getOrDefault(p.getPostID(), 0L)))
-//                .collect(Collectors.toList());
-//
-//        // top by rating (only posts that have at least 1 rating)
-//        List<Map<String, Object>> topByRating = allPosts.stream()
-//                .filter(p -> avgRatingMap.containsKey(p.getPostID()))
-//                .sorted((a, b) -> Double.compare(avgRatingMap.getOrDefault(b.getPostID(), 0.0),
-//                        avgRatingMap.getOrDefault(a.getPostID(), 0.0)))
-//                .limit(10)
-//                .map(p -> {
-//                    Map<String, Object> m = buildPostEntry(p, 0L);
-//                    m.put("value", Math.round(avgRatingMap.getOrDefault(p.getPostID(), 0.0) * 10.0) / 10.0);
-//                    return m;
-//                })
-//                .collect(Collectors.toList());
-//
-//        // posts grouped by level
-//        Map<Integer, Long> byLevelMap = allPosts.stream()
-//                .filter(p -> p.getLevel() != null)
-//                .collect(Collectors.groupingBy(Post::getLevel, Collectors.counting()));
-//
-//        List<Map<String, Object>> byLevel = byLevelMap.entrySet().stream()
-//                .sorted(Map.Entry.comparingByKey())
-//                .map(e -> {
-//                    Map<String, Object> m = new LinkedHashMap<>();
-//                    m.put("level", e.getKey());
-//                    m.put("label", "Cấp " + e.getKey());
-//                    m.put("count", e.getValue());
-//                    return m;
-//                })
-//                .collect(Collectors.toList());
-//
-//        Map<String, Object> result = new HashMap<>();
-//        result.put("topByComments", topByComments);
-//        result.put("topByLikes",    topByLikes);
-//        result.put("topByRating",   topByRating);
-//        result.put("byLevel",       byLevel);
-//        return ResponseEntity.ok(result);
-//    }
-//
-//    private Map<String, Object> buildPostEntry(Post p, long value) {
-//        Map<String, Object> m = new LinkedHashMap<>();
-//        m.put("postID",   p.getPostID());
-//        m.put("title",    p.getTitle());
-//        m.put("author",   p.getAccount() != null ? p.getAccount().getUsername() : "");
-//        m.put("avatar",   p.getAccount() != null ? p.getAccount().getAvatar() : "");
-//        m.put("level",    p.getLevel());
-//        m.put("media",    p.getMedia());
-//        m.put("value",    value);
-//        return m;
-//    }
-//
-//    // ─────────────────────────────────────────────────────────────────────────────────
-//    // EVENT DETAIL STATS
-//    // ─────────────────────────────────────────────────────────────────────────────────
-//    @GetMapping("/events-detail")
-//    public ResponseEntity<Map<String, Object>> getEventsDetail() {
-//        List<Event>      allEvents     = eventDAO.findAll();
-//        List<EventPosts> allEventPosts = eventPostsDAO.findAll();
-//
-//        // participation count per event
-//        Map<Integer, Long> participMap = allEventPosts.stream()
-//                .collect(Collectors.groupingBy(ep -> ep.getEvent().getEventID(), Collectors.counting()));
-//
-//        // distinct participant count per event (unique users who submitted a post)
-//        Map<Integer, Long> uniqueParticipantMap = allEventPosts.stream()
+//    /**
+//     * 🎫 THỐNG KÊ TICKET (REPORTS & BUGS)
+//     */
+//    @GetMapping("/tickets-summary")
+//    public ResponseEntity<Map<String, Long>> getTicketSummary() {
+//        List<Ticket> tickets = ticketDAO.findAll();
+//        Map<String, Long> summary = tickets.stream()
 //                .collect(Collectors.groupingBy(
-//                        ep -> ep.getEvent().getEventID(),
-//                        Collectors.collectingAndThen(
-//                                Collectors.mapping(ep -> ep.getPost().getAccount().getAccountID(),
-//                                        Collectors.toSet()),
-//                                set -> (long) set.size())));
-//
-//        List<Map<String, Object>> topByParticipations = allEvents.stream()
-//                .sorted((a, b) -> Long.compare(
-//                        participMap.getOrDefault(b.getEventID(), 0L),
-//                        participMap.getOrDefault(a.getEventID(), 0L)))
-//                .limit(10)
-//                .map(e -> {
-//                    Map<String, Object> m = new LinkedHashMap<>();
-//                    m.put("eventID",      e.getEventID());
-//                    m.put("eventName",    e.getEventName());
-//                    m.put("startAt",      e.getStartAt() != null ? e.getStartAt().toString() : null);
-//                    m.put("endAt",        e.getEndAt() != null ? e.getEndAt().toString() : null);
-//                    m.put("winner",       e.getWinner());
-//                    m.put("totalPosts",   participMap.getOrDefault(e.getEventID(), 0L));
-//                    m.put("uniqueUsers",  uniqueParticipantMap.getOrDefault(e.getEventID(), 0L));
-//                    return m;
-//                })
-//                .collect(Collectors.toList());
-//
-//        // overview event stats
-//        long totalEvents   = allEvents.size();
-//        LocalDateTime now      = LocalDateTime.now();
-//        long activeEvents  = allEvents.stream()
-//                .filter(e -> e.getStartAt() != null && e.getEndAt() != null
-//                        && !now.isBefore(e.getStartAt()) && !now.isAfter(e.getEndAt()))
-//                .count();
-//        long totalEntries  = allEventPosts.size();
-//
-//        Map<String, Object> result = new HashMap<>();
-//        result.put("topByParticipations", topByParticipations);
-//        result.put("totalEvents",   totalEvents);
-//        result.put("activeEvents",  activeEvents);
-//        result.put("totalEntries",  totalEntries);
-//        return ResponseEntity.ok(result);
+//                        t -> t.getTicketType() != null ? t.getTicketType().toUpperCase() : "OTHER",
+//                        Collectors.counting()
+//                ));
+//        return ResponseEntity.ok(summary);
 //    }
 //}
