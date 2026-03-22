@@ -241,13 +241,17 @@ async function fetchPostsRaw() {
       }
     })
 
+    // 🔥 SỬA ĐOẠN MAPPING NÀY ĐỂ FIX LỖI THỜI GIAN VÀ TIM BỊ 0
     let mapped = res.data.map(dto => ({
       ...normalizePost(dto),
       _level: dto.level,
       _cookingTime: dto.cookingTime || 0,
-      _categoryID: dto.categoryID
+      _categoryID: dto.categoryID,
+      createdAt: dto.createdAt || dto.date || new Date().toISOString(), // 👈 Đảm bảo có ngày hợp lệ
+      likes: dto.likes ?? dto.likeCount ?? dto.favoriteCount ?? 0       // 👈 Hứng đúng trường tim
     }))
 
+    // Logic lọc phía client (giữ nguyên của sếp)
     if (filters.value.difficulty) {
       const level = diffLevelMap[filters.value.difficulty]
       mapped = mapped.filter(p => p._level === level)

@@ -83,14 +83,25 @@
           <label class="section-tag" v-if="!isCollapsed">Nội dung</label>
           <div class="section-divider" v-else></div>
 
-          <router-link to="/admin/posts" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Duyệt Sáng Tạo' : ''">
+          <router-link to="/admin/categories" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Quản lý Danh mục' : ''">
+            <div class="icon-orb">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                <polyline points="2 12 12 17 22 12"></polyline>
+                <polyline points="2 17 12 22 22 17"></polyline>
+              </svg>
+            </div>
+            <span class="link-text" v-if="!isCollapsed">Quản lý Danh mục</span>
+          </router-link>
+
+          <router-link to="/admin/posts" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Quản lý Bài viết' : ''">
             <div class="icon-orb">
               <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                 <polyline points="14 2 14 8 20 8"></polyline>
               </svg>
             </div>
-            <span class="link-text" v-if="!isCollapsed">Duyệt Sáng Tạo</span>
+            <span class="link-text" v-if="!isCollapsed">Quản lý Bài viết</span>
           </router-link>
 
           <router-link to="/admin/comments" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Kiểm duyệt Tương Tác' : ''">

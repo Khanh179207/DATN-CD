@@ -1,5 +1,6 @@
 package poly.edu.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
@@ -15,6 +16,7 @@ public class Post {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "PostID") // 🔥 Bắt buộc để tránh lệch pha
     private Integer postID;
 
     @ManyToOne
@@ -29,62 +31,69 @@ public class Post {
     @JoinColumn(name = "EventID")
     private Event event;
 
-    @Column(nullable = false)
+    @Column(name = "Title", nullable = false)
     private String title;
 
-    @Column(nullable = false, columnDefinition = "NVARCHAR(MAX)")
+    @Column(name = "Description", nullable = false, columnDefinition = "NVARCHAR(MAX)")
     private String description;
 
-    @Column(nullable = false, columnDefinition = "NVARCHAR(MAX)")
+    @Column(name = "Ingredients", nullable = false, columnDefinition = "NVARCHAR(MAX)")
     private String ingredients;
 
+    @Column(name = "Media")
     private String media;
 
+    @Column(name = "Video")
     private String video;
 
-    @Column(nullable = false)
+    @Column(name = "Level", nullable = false)
     private Integer level;
 
-    @Column(nullable = false)
+    @Column(name = "CookingTime", nullable = false)
     private Integer cookingTime;
 
-    @Column(nullable = false)
+    @Column(name = "Views", nullable = false)
     private Integer views;
 
-    @Column(nullable = false)
+    @Column(name = "isActive", nullable = false)
     private Integer isActive;
 
-    @Column(nullable = false)
+    @Column(name = "isApproved", nullable = false)
     private Integer isApproved;
 
-    @Column(nullable = false)
-    private LocalDate createdAt;
+    // Trong Post.java
+    @Column(name = "CreatedAt", nullable = false)
+    private java.time.LocalDateTime createdAt; // Đổi từ LocalDate sang LocalDateTime
+
+    @Column(name = "LikeCount")
+    @Builder.Default // 🔥 Thêm cái này để hết báo Warning lúc Build Maven
+    private Integer likeCount = 0;
 
     // Relationships
     @OneToMany(mappedBy = "post")
+    @JsonIgnore // 🔥 Nên có để tránh loop JSON khi gọi từ Comment
     private List<Comment> comments;
 
-    @OneToMany(mappedBy = "post")
-    private List<Rating> ratings;
+    // ❌ ĐÃ XÓA KHÚC NÀY ❌
+    // @OneToMany(mappedBy = "post")
+    // private List<Rating> ratings;
 
     @OneToMany(mappedBy = "post")
+    @JsonIgnore // 🔥 Thêm JsonIgnore để tối ưu hiệu năng API
     private List<Favorite> favorites;
 
     @OneToMany(mappedBy = "post")
+    @JsonIgnore
     private List<History> histories;
 
     @OneToMany(mappedBy = "post")
     private List<CookingSteps> cookingSteps;
 
     @OneToMany(mappedBy = "post")
-    @com.fasterxml.jackson.annotation.JsonIgnore
+    @JsonIgnore
     private List<Notification> notifications;
 
-    // Thay vì mappedBy = "account", sếp phải để là "targetPost"
     @OneToMany(mappedBy = "targetPost")
+    @JsonIgnore
     private List<Ticket> tickets;
-
-    @Column(name = "LikeCount")
-    private Integer likeCount = 0; // Thêm dòng này vào
-
 }

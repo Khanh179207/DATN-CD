@@ -21,6 +21,7 @@ public class AdminPostServiceImpl implements AdminPostService {
     private final AccountDAO accountDAO;
     private final NotificationService notificationService;
 
+    // Helper map từ Entity sang DTO cho Admin
     private AdminPostDTO toDTO(Post post) {
         AdminPostDTO dto = new AdminPostDTO();
         dto.setPostID(post.getPostID());
@@ -28,17 +29,23 @@ public class AdminPostServiceImpl implements AdminPostService {
         dto.setDescription(post.getDescription());
         dto.setMedia(post.getMedia());
         dto.setLevel(post.getLevel());
-        dto.setCookingTime(post.getCookingTime());
         dto.setViews(post.getViews());
         dto.setIsActive(post.getIsActive());
         dto.setIsApproved(post.getIsApproved());
+
+        // 🔥 Đã đồng bộ lấy LocalDateTime từ Entity Post
         dto.setCreatedAt(post.getCreatedAt());
 
-        dto.setUsername(post.getAccount().getUsername());
-        dto.setAccountID(post.getAccount().getAccountID());
-        dto.setAccountAvatar(post.getAccount().getAvatar());
-        dto.setCategoryName(post.getCategory().getCategoryName());
-        dto.setCategoryID(post.getCategory().getCategoryID());
+        if (post.getAccount() != null) {
+            dto.setUsername(post.getAccount().getUsername());
+            dto.setAccountID(post.getAccount().getAccountID());
+            dto.setAccountAvatar(post.getAccount().getAvatar());
+        }
+
+        if (post.getCategory() != null) {
+            dto.setCategoryName(post.getCategory().getCategoryName());
+            dto.setCategoryID(post.getCategory().getCategoryID());
+        }
 
         return dto;
     }
@@ -60,53 +67,52 @@ public class AdminPostServiceImpl implements AdminPostService {
     }
 
     @Override
+    @Transactional
     public void approvePost(Integer id) {
-        Post post = postDAO.findById(id).orElseThrow();
+        Post post = postDAO.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy bài viết!"));
         post.setIsApproved(1);
         postDAO.save(post);
 
-        // Send notification to post owner
+        // Gửi thông báo cho chủ bài viết
         notificationService.notifyPostApproved(id);
     }
 
     @Override
+    @Transactional
     public void rejectPost(Integer id, String reason) {
-        Post post = postDAO.findById(id).orElseThrow();
-        post.setIsApproved(-1); // Assuming -1 means rejected
+        Post post = postDAO.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy bài viết!"));
+        post.setIsApproved(-1); // Từ chối phê duyệt
         postDAO.save(post);
 
-        // Send notification to post owner
+        // Gửi thông báo kèm lý do cho chủ bài viết
         notificationService.notifyPostRejected(id, reason);
     }
 
     @Override
+    @Transactional
     public void deactivePost(Integer id) {
-        Post post = postDAO.findById(id).orElseThrow();
+        Post post = postDAO.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy bài viết!"));
         post.setIsActive(0);
         postDAO.save(post);
 
-        // Send notification to post owner
+        // Thông báo cho người dùng bài viết bị ẩn
         notificationService.notifyPostDisabled(id);
     }
 
-    // Sửa hàm này, TUYỆT ĐỐI KHÔNG dùng postDAO.deleteById(id) nữa sếp nhé!
     @Override
+    @Transactional
     public void deletePost(Integer id) {
         Post post = postDAO.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy bài viết số " + id));
 
-        // 🔥 Trảm mềm: Chuyển trạng thái hoạt động về 0 (Bị ẩn)
+        // 🔥 Xử lý "Trảm mềm" (Soft Delete) để giữ lại data đối soát
         post.setIsActive(0);
-
-        // (Tùy chọn) Sếp có thể tước luôn tích xanh phê duyệt của nó
         post.setIsApproved(-1);
-
         postDAO.save(post);
     }
-    // Tiêm thêm DAO này vào
 
     @Override
-    @Transactional // Nhớ thêm Transactional để đảm bảo nếu lỗi thì không ban cũng không ẩn bài
+    @Transactional
     public void banAuthorByPostId(Integer postId) {
         Post post = postDAO.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy bài viết!"));
@@ -115,15 +121,14 @@ public class AdminPostServiceImpl implements AdminPostService {
         if (author == null)
             throw new RuntimeException("Tác giả không tồn tại!");
 
-        // 1. Trảm tài khoản: Đổi trạng thái thành 0 (BANNED)
+        // 1. Trảm tài khoản
         author.setIsActive(0);
 
-        // 🔥 2. ĐÁ VĂNG KHỎI APP: Xóa trắng cái Token hiện tại của họ
+        // 2. Đá văng khỏi app bằng cách xóa Token
         author.setToken(null);
         accountDAO.save(author);
 
-        // 🚀 3. QUÉT SẠCH DẤU VẾT: Ẩn toàn bộ bài viết của thằng này
-        // Giả sử sếp dùng cột 'is_active' hoặc 'status' trong bảng Post để ẩn bài
+        // 3. Quét sạch: Ẩn toàn bộ bài viết của tài khoản này
         postDAO.deactivateAllPostsByAccountId(author.getAccountID());
     }
 }

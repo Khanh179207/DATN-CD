@@ -2,6 +2,7 @@ package poly.edu.dto;
 
 import lombok.Data;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Data
 public class PublicPostDTO {
@@ -13,7 +14,7 @@ public class PublicPostDTO {
     private Integer level;
     private Integer cookingTime;
     private Integer views;
-    private LocalDate createdAt;
+    private LocalDateTime createdAt;
 
     // Author
     private Integer authorID;

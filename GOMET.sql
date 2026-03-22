@@ -1,5 +1,4 @@
-
-	-- Bước 1: Trở về database master (Bắt buộc)
+-- Bước 1: Trở về database master (Bắt buộc)
 	USE master;
 	GO
 
@@ -12,6 +11,7 @@ BEGIN
 END
 GO
 
+	
 	-- Bước 3: Khởi tạo lại Database
 	CREATE DATABASE DATN_CD;
 	GO
@@ -53,23 +53,18 @@ GO
 	CREATE TABLE Event (
 		EventID INT IDENTITY(1,1) PRIMARY KEY,
 		EventName NVARCHAR(255) NOT NULL,
-    
-		-- Ảnh đại diện
 		BannerImage NVARCHAR(MAX),
     
-		-- MÔ TẢ & THỂ LỆ
 		Description NVARCHAR(MAX),
 		Rules NVARCHAR(MAX),
 		Reward NVARCHAR(255),
     
-		-- THỜI GIAN
 		StartAt DATETIME NOT NULL,
 		EndAt DATETIME NOT NULL,
 		VoteStartAt DATETIME NOT NULL,
 		VoteEndAt DATETIME NOT NULL,
 
 		MaxVotes INT DEFAULT 3,
-		-- NGƯỜI THẮNG
 		Winner INT NULL, 
 
 		IsActive INT DEFAULT 1, -- 1: Tồn tại, 0: Đã xóa (Xóa mềm)
@@ -164,17 +159,14 @@ CREATE TABLE Comment (
     
     Content NVARCHAR(MAX) NULL, 
     Rating INT DEFAULT 0, 
-    Attachments NVARCHAR(MAX) NULL,
+    Attachments NVARCHAR(MAX) NULL, 
     Likes INT DEFAULT 0,
-    ParentID INT NULL, 
     cmtid INT NULL,
-    ImageURL NVARCHAR(500) NULL, 
     CreatedAt DATETIME DEFAULT GETDATE(),
 
-    -- Các khóa ngoại
     CONSTRAINT FK_Comment_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
     CONSTRAINT FK_Comment_Post FOREIGN KEY (PostID) REFERENCES Post(PostID),
-    CONSTRAINT FK_Comment_Parent FOREIGN KEY (ParentID) REFERENCES Comment(CommentID)
+    CONSTRAINT FK_Comment_Parent FOREIGN KEY (cmtid) REFERENCES Comment(CommentID)
 );
 GO
     CREATE TABLE CommentLike (
@@ -183,11 +175,9 @@ GO
         CommentID INT NOT NULL,
         CreatedAt DATETIME DEFAULT GETDATE(),
 
-        -- Khóa ngoại trỏ về Account
+
         CONSTRAINT FK_CommentLike_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
-        -- Khóa ngoại trỏ về Comment (Đảm bảo CommentID này khớp với tên cột ID trong bảng Comment của sếp nhé)
         CONSTRAINT FK_CommentLike_Comment FOREIGN KEY (CommentID) REFERENCES Comment(CommentID),
-        -- Đảm bảo 1 user chỉ like 1 comment 1 lần
         CONSTRAINT UQ_CommentLike UNIQUE (AccountID, CommentID)
     );
 GO
@@ -418,6 +408,15 @@ GO
 	);
 
 	GO
+
+CREATE TABLE BlacklistWord (
+    WordID INT IDENTITY(1,1) PRIMARY KEY,
+    Word NVARCHAR(100) NOT NULL UNIQUE,
+    CreatedAt DATETIME DEFAULT GETDATE()
+);
+GO
+
+
 	-- ==========================================
 	-- 6. TRIGGERS TỰ ĐỘNG CẬP NHẬT
 	-- ==========================================
@@ -456,21 +455,140 @@ GO
 	-- 7. DỮ LIỆU MẪU (MOCK DATA) ĐÃ CẬP NHẬT
 	-- ==========================================
 
-INSERT INTO Account (Username, Email, Password, isAdmin) VALUES 
-('admin', 'admin@gomet.com', 'admin123', 1),
-('user1', 'user1@gmail.com', '123456', 0),
-('user2', 'user2@gmail.com', '123456', 0);
+-- ==========================================================
+-- BỘ DỮ LIỆU MẪU ĐỒ SỘ CHO DỰ ÁN GOMET KITCHEN (DATN_CD)
+-- Thiết kế: Dành cho Review dự án (Demo Ready)
+-- ==========================================================
 
-INSERT INTO Category (CategoryName) VALUES (N'Món Việt'), (N'Món Âu'), (N'Món Chay');
+USE DATN_CD;
+GO
 
--- Dữ liệu Event đầy đủ mô tả, thời gian vote
-INSERT INTO Event (EventName, BannerImage, Description, Rules, Reward, StartAt, EndAt, VoteStartAt, VoteEndAt) VALUES 
-(N'Siêu Đầu Bếp Tháng 3', 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?q=80', N'Thi nấu ăn dành riêng cho tháng 3', N'- Nộp tối đa 3 bài<br>- Không sao chép', N'Huy hiệu Siêu Đầu Bếp', '2026-03-01 00:00:00', '2026-03-20 23:59:59', '2026-03-15 00:00:00', '2026-03-25 23:59:59');
+-- Xóa dữ liệu cũ để tránh trùng lặp nếu chạy lại (Tùy chọn)
+-- DELETE FROM Ticket; DELETE FROM Message; DELETE FROM Conversation; ...
 
-INSERT INTO Post (AccountID, CategoryID, Title, Description, Ingredients, isApproved, isActive) VALUES 
-(2, 1, N'Phở Bò Nam Định', N'Nấu chuẩn vị gia truyền', N'Xương bò, bánh phở, thịt bò', 1, 1),
-(3, 1, N'Bún Chả Hà Nội', N'Ngon như ngoài hàng', N'Thịt nạc vai, bún, đu đủ', 1, 1);
+-- 1. DỮ LIỆU TÀI KHOẢN (Đa dạng phân quyền)
+-- ==========================================================
+INSERT INTO Account (Username, Email, Password, Avatar, Point, isAdmin, isPremium, isActive, Bio, CreatedAt) VALUES
+(N'admin_gomet', 'admin@gomet.vn', '123', 'https://i.pravatar.cc/150?u=1', 9999, 1, 1, 1, N'Quản trị viên hệ thống GoMet.', '2025-01-01'),
+(N'chef_quang', 'quangchef@gmail.com', '123', 'https://i.pravatar.cc/150?u=2', 2500, 0, 1, 1, N'Đầu bếp chuyên nghiệp với 10 năm kinh nghiệm món Âu.', '2026-01-10'),
+(N'nguyenvana', 'vana@gmail.com', '123', 'https://i.pravatar.cc/150?u=3', 450, 0, 1, 1, N'Yêu nấu ăn và chia sẻ công thức gia đình.', '2026-02-15'),
+(N'tranthib', 'thib@gmail.com', '123', 'https://i.pravatar.cc/150?u=4', 120, 0, 0, 1, N'Sinh viên tập tành vào bếp.', '2026-03-01'),
+(N'le_minh', 'minhle@gmail.com', '123', 'https://i.pravatar.cc/150?u=5', 50, 0, 0, 1, N'Thích ăn ngon nhưng lười nấu.', '2026-03-10'),
+(N'pham_dung', 'dungpham@gmail.com', '123', 'https://i.pravatar.cc/150?u=6', 0, 0, 0, 0, N'Tài khoản bị khóa để demo.', '2026-03-15');
+GO
 
+-- 2. DANH MỤC & THÀNH TỰU
+-- ==========================================================
+INSERT INTO Category (CategoryName, CategoryImage, IsActive) VALUES
+(N'Món Việt', 'https://cdn-icons-png.flaticon.com/512/5328/5328065.png', 1),
+(N'Món Á', 'https://cdn-icons-png.flaticon.com/512/2276/2276931.png', 1),
+(N'Món Âu', 'https://cdn-icons-png.flaticon.com/512/5328/5328003.png', 1),
+(N'Món Chay', 'https://cdn-icons-png.flaticon.com/512/2918/2918148.png', 1),
+(N'Tráng Miệng', 'https://cdn-icons-png.flaticon.com/512/2550/2550300.png', 1);
+
+INSERT INTO Achievement (AchievementName, Description, Icon) VALUES
+(N'Tân binh bếp núc', N'Đăng bài viết đầu tiên thành công.', 'https://img.icons8.com/color/96/seedling.png'),
+(N'Siêu đầu bếp', N'Có bài viết đạt trên 100 lượt thích.', 'https://img.icons8.com/color/96/chef-hat.png'),
+(N'Người truyền cảm hứng', N'Có 50 người theo dõi.', 'https://img.icons8.com/color/96/star--v1.png');
+GO
+
+-- 3. SỰ KIỆN (Trạng thái: Đang diễn ra và Đã kết thúc)
+-- ==========================================================
+INSERT INTO Event (EventName, BannerImage, Description, Rules, Reward, StartAt, EndAt, VoteStartAt, VoteEndAt, MaxVotes, Winner, IsActive) VALUES
+(N'Vua Bếp Việt 2026', 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1', N'Tìm kiếm công thức món Việt sáng tạo.', N'Ít nhất 5 bước thực hiện.', N'Huy hiệu Vàng & 1.000.000đ', '2026-03-01', '2026-04-01', '2026-04-02', '2026-04-10', 3, NULL, 1),
+(N'Giải Cứu Món Chay', 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd', N'Thử thách nấu món chay ngon.', N'Chỉ nguyên liệu thực vật.', N'Gói Premium 1 năm', '2026-02-01', '2026-03-15', '2026-03-16', '2026-03-20', 1, 2, 1);
+GO
+
+-- 4. BÀI VIẾT (Gồm bài đã duyệt, chưa duyệt và bài tham gia sự kiện)
+-- ==========================================================
+INSERT INTO Post (AccountID, CategoryID, EventID, Title, Description, Ingredients, Media, Level, CookingTime, Views, LikeCount, isActive, isApproved, CreatedAt) VALUES
+(2, 3, NULL, N'Steak Bò Mỹ Sốt Vang Đỏ', N'Món Âu sang trọng cho tối lãng mạn.', N'Bò Mỹ 300g, Rượu vang đỏ, Lá hương thảo, Bơ.', 'https://images.unsplash.com/photo-1546241072-48010ad28c2c', 3, 45, 1500, 120, 1, 1, DATEADD(HOUR, -2, GETDATE())),
+(3, 1, 1, N'Phở Bò Nam Định Chuẩn Vị', N'Nước dùng trong, ngọt thanh từ xương.', N'Bánh phở, Xương ống, Gừng, Quế, Hồi.', 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43', 2, 180, 850, 45, 1, 1, DATEADD(DAY, -1, GETDATE())),
+(4, 5, NULL, N'Bánh Tiramisu Không Cần Lò', N'Công thức siêu dễ cho người mới.', N'Bánh sâm panh, Cà phê, Mascarpone.', 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9', 1, 30, 320, 15, 1, 1, DATEADD(MINUTE, -30, GETDATE())),
+(3, 4, 2, N'Gỏi Cuốn Chay Ngũ Sắc', N'Món chay thanh đạm, bắt mắt.', N'Bánh tráng, Bún, Đậu phụ, Rau thơm.', 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd', 1, 20, 210, 8, 1, 1, '2026-03-10'),
+(5, 1, NULL, N'Bún Chả Hà Nội', N'Đang chờ phê duyệt...', N'Thịt ba chỉ, bún, mắm.', 'https://images.unsplash.com/photo-1562967914-6c189891c92a', 2, 60, 5, 0, 1, 0, GETDATE());
+GO
+
+-- 5. CÁC BƯỚC NẤU ĂN (CookingSteps)
+-- ==========================================================
+INSERT INTO CookingSteps (PostID, StepNumber, Content, Image) VALUES
+(1, 1, N'Ướp thịt bò với muối, tiêu và tỏi băm.', 'https://i.imgur.com/example1.jpg'),
+(1, 2, N'Áp chảo thịt với bơ và lá hương thảo cho vàng đều các mặt.', NULL),
+(1, 3, N'Làm sốt vang đỏ từ nước dùng bò và rượu.', NULL),
+(2, 1, N'Ninh xương bò trong 5 tiếng để lấy nước dùng ngọt.', NULL),
+(3, 1, N'Nhúng bánh sâm panh vào cà phê rồi xếp lớp.', NULL);
+GO
+
+-- 6. BÌNH LUẬN & TRẢ LỜI (Bình luận đa tầng)
+-- ==========================================================
+-- Lưu ý: cmtid là cột lưu ID của bình luận cha
+INSERT INTO Comment (AccountID, PostID, Content, Rating, Likes, cmtid, CreatedAt) VALUES
+(4, 1, N'Nhìn ngon quá sếp ơi!', 5, 5, NULL, DATEADD(HOUR, -1, GETDATE())), -- CommentID 1
+(2, 1, N'Cảm ơn bạn nhé, chúc bạn thành công!', 0, 2, 1, DATEADD(MINUTE, -30, GETDATE())), -- Reply cho ID 1
+(5, 1, N'Cho mình hỏi mua rượu vang loại nào thì ngon?', 0, 0, 1, DATEADD(MINUTE, -10, GETDATE())), -- Reply cho ID 1
+(3, 2, N'Phở này nhìn nước dùng hơi đậm màu nhỉ?', 4, 1, NULL, '2026-03-20');
+GO
+
+-- 7. TƯƠNG TÁC (Likes, CommentLike, Favorite, Follow, Votes)
+-- ==========================================================
+INSERT INTO Likes (AccountID, PostID) VALUES (1, 1), (3, 1), (4, 1), (5, 1), (2, 2);
+INSERT INTO CommentLike (AccountID, CommentID) VALUES (1, 1), (2, 1);
+INSERT INTO Favorite (AccountID, PostID) VALUES (3, 1), (4, 2), (3, 3);
+INSERT INTO Follow (FollowerID, FolloweeID, Status) VALUES (3, 2, 1), (4, 2, 1), (5, 3, 1);
+
+-- Bài tham gia sự kiện
+INSERT INTO EventPosts (EventID, PostID, VoteCount) VALUES (1, 2, 15), (2, 4, 10);
+INSERT INTO Votes (AccountID, EventPostID) VALUES (1, 1), (4, 1), (5, 2);
+GO
+
+-- 8. TIỆN ÍCH (Note, Shopping, MealPlan)
+-- ==========================================
+INSERT INTO Note (AccountID, PostID, Content) VALUES (3, 1, N'Lần sau nên cho ít muối hơn một chút.');
+INSERT INTO ShoppingList (AccountID, PostID, IngredientName, IsBought) VALUES 
+(3, 1, N'Thịt bò thăn', 1), (3, 1, N'Rượu vang đỏ', 0), (4, 2, N'Bánh phở', 0);
+
+INSERT INTO MealPlan (AccountID, PostID, CustomMealName, PlanDate, MealType, Notes) VALUES 
+(3, 1, N'Kỷ niệm ngày cưới', '2026-03-25', N'Dinner', N'Nấu món Âu sang chảnh.'),
+(3, 4, N'Thứ 2 thanh tịnh', '2026-03-23', N'Lunch', N'Ăn chay tốt cho sức khỏe.');
+GO
+
+-- 9. HỆ THỐNG (Notification, Search, History, Payment)
+-- ==========================================================
+INSERT INTO Notification (Title, Content, Type, AccountID, Link, PostID, isRead) VALUES 
+(N'Bài viết đã được duyệt', N'Chúc mừng! Bài Steak của bạn đã được Admin phê duyệt.', 'SYSTEM', 2, '/post/1', 1, 0),
+(N'Lượt thích mới', N'nguyenvana đã thích bài viết của bạn.', 'LIKE', 2, '/post/1', 1, 1);
+
+INSERT INTO SearchHistory (AccountID, Keyword) VALUES (3, N'Bún bò'), (3, N'Món chay ngon');
+INSERT INTO History (AccountID, PostID) VALUES (3, 1), (3, 2);
+
+-- Thanh toán Premium
+INSERT INTO PaymentTransaction (AccountID, OrderCode, Amount, PlanType, Status, PaidAt) VALUES 
+(2, 'GOMET_PRE_001', 99000, 1, 'PAID', '2026-01-10'),
+(3, 'GOMET_PRE_002', 990000, 2, 'PAID', '2026-02-15');
+
+INSERT INTO Subscription (AccountID, PlanType, StartAt, EndAt, isActive, TransactionID) VALUES 
+(2, 1, '2026-01-10', '2026-02-10', 0, 1), -- Hết hạn
+(3, 2, '2026-02-15', '2027-02-15', 1, 2); -- Đang dùng
+GO
+
+-- 10. TIN NHẮN (Conversations & Messages)
+-- ==========================================================
+INSERT INTO Conversation (UserOneID, UserTwoID) VALUES (2, 3); -- Đầu bếp Quang & Nguyễn Văn A
+INSERT INTO Message (ConversationID, SenderID, Content, IsRead) VALUES 
+(1, 3, N'Chào Chef, cho em hỏi công thức Steak này dùng bò nội được không?', 1),
+(1, 2, N'Được bạn nhé, nhưng nhớ đập dập thịt cho mềm.', 0);
+GO
+
+-- 11. HỖ TRỢ (Tickets)
+-- ==========================================================
+INSERT INTO Ticket (AccountID, TicketType, TargetPostID, Title, Description, Status, CreatedAt) VALUES 
+(4, 'REPORT', 1, N'Nội dung sai sự thật', N'Ảnh này lấy trên mạng chứ không phải chủ bài viết nấu.', 0, GETDATE()),
+(3, 'SUPPORT', NULL, N'Lỗi thanh toán', N'Tôi đã chuyển khoản nhưng chưa lên Premium.', 1, '2026-03-20');
+GO
+
+INSERT INTO BlacklistWord (Word) VALUES 
+(N'cờ bạc'), (N'lô đề'), (N'phản động'), (N'chửi thề'), (N'18+'), (N'đánh bài');
+GO
 
 
 
@@ -487,5 +605,7 @@ INSERT INTO Post (AccountID, CategoryID, Title, Description, Ingredients, isAppr
 	SELECT * FROM account;
 
 	SELECT * FROM Appeals;
+
+	SELECT * FROM Comment;
 
 

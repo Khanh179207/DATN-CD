@@ -5,8 +5,10 @@ import org.springframework.stereotype.Service;
 import poly.edu.dao.AccountDAO;
 import poly.edu.dao.FavoriteDAO;
 import poly.edu.dao.PostDAO;
+import poly.edu.dao.LikesDAO; // 🔥 PHẢI IMPORT THÊM DAO NÀY
 import poly.edu.dto.FavoriteDTO;
 import poly.edu.entity.Account;
+import poly.edu.entity.Comment;
 import poly.edu.entity.Favorite;
 import poly.edu.entity.Post;
 import poly.edu.service.FavoriteService;
@@ -26,9 +28,11 @@ public class FavoriteServiceImpl implements FavoriteService {
     @Autowired
     private PostDAO postDAO;
 
+    @Autowired
+    private LikesDAO likesDAO; // 🔥 TIÊM VÀO ĐỂ FIX LỖI LIKE
+
     @Override
     public void saveFavorite(Integer accountID, Integer postID) {
-
         if (favoriteDAO.existsByAccount_AccountIDAndPost_PostID(accountID, postID)) {
             return;
         }
@@ -50,11 +54,9 @@ public class FavoriteServiceImpl implements FavoriteService {
 
     @Override
     public List<FavoriteDTO> getFavorites(Integer accountID) {
-
         List<Favorite> favorites = favoriteDAO.findByAccount_AccountID(accountID);
 
         return favorites.stream().map(f -> {
-
             Post p = f.getPost();
 
             FavoriteDTO dto = new FavoriteDTO();
@@ -65,21 +67,35 @@ public class FavoriteServiceImpl implements FavoriteService {
             dto.setCookingTime(p.getCookingTime());
             dto.setLevel(p.getLevel());
             dto.setCategoryName(p.getCategory().getCategoryName());
-
-            // thêm dữ liệu mới
-            double avgRating = 0;
-
-            if (p.getRatings() != null && !p.getRatings().isEmpty()) {
-                avgRating = p.getRatings()
-                        .stream()
-                        .mapToDouble(r -> r.getRate())   // hoặc r.getRating()
-                        .average()
-                        .orElse(0);
-            }
-            dto.setRating(avgRating);
             dto.setViews(p.getViews());
             dto.setUserName(p.getAccount().getUsername());
             dto.setAvatar(p.getAccount().getAvatar());
+
+            // 🔥 1. FIX LỖI THỜI GIAN "MỚI ĐÂY"
+            // Lấy chính xác LocalDateTime từ Post để RecipeCard tính "5 phút trước"
+            dto.setCreatedAt(p.getCreatedAt());
+
+            // 🔥 2. FIX LỖI LIKE VỀ 0
+            // Đếm tổng số lượt like thực tế của bài viết này trong bảng Likes
+            long totalLikes = likesDAO.countByPost_PostID(p.getPostID());
+            dto.setFavoriteCount((int) totalLikes);
+
+            // 🔥 3. FIX LỖI MẤT TIM ĐỎ (TRẠNG THÁI LIKE)
+            // Kiểm tra xem user đang xem (accountID) đã từng nhấn Like bài này chưa
+            boolean checkIsLiked = likesDAO.existsByAccount_AccountIDAndPost_PostID(accountID, p.getPostID());
+            dto.setIsLiked(checkIsLiked);
+
+            // --- Logic tính Rating từ Comment (Giữ nguyên của sếp) ---
+            double avgRating = 0;
+            if (p.getComments() != null && !p.getComments().isEmpty()) {
+                avgRating = p.getComments()
+                        .stream()
+                        .filter(c -> c.getRating() != null && c.getRating() > 0)
+                        .mapToDouble(Comment::getRating)
+                        .average()
+                        .orElse(0.0);
+            }
+            dto.setRating(avgRating);
 
             return dto;
 
@@ -88,14 +104,12 @@ public class FavoriteServiceImpl implements FavoriteService {
 
     @Override
     public void removeFavorite(Integer accountID, Integer postID) {
-
         favoriteDAO.findByAccount_AccountIDAndPost_PostID(accountID, postID)
                 .ifPresent(favoriteDAO::delete);
     }
 
     @Override
     public boolean checkFavorite(Integer accountID, Integer postID) {
-
         return favoriteDAO.existsByAccount_AccountIDAndPost_PostID(accountID, postID);
     }
 }

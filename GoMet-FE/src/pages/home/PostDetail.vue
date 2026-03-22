@@ -42,7 +42,7 @@
               
               <div class="reviews-header">
                 <h3 class="section-title">Cộng đồng GoMet</h3>
-                <p class="section-subtitle">Chia sẻ cảm nhận và hình ảnh thực tế của sếp</p>
+                <p class="section-subtitle">Chia sẻ cảm nhận và hình ảnh thực tế của bạn</p>
               </div>
 
               <ReviewSummary 
@@ -56,7 +56,7 @@
                   <img :src="currentUserAvatar" class="current-user-avt" alt="User">
                   
                   <div class="rating-selector" v-if="!hasUserRated">
-                    <span class="prompt-text">Sếp chấm món này mấy sao?</span>
+                    <span class="prompt-text">Bạn chấm món này mấy sao?</span>
                     <div class="star-rating-input">
                       <span v-for="star in 5" :key="star" @click="userRating = star" :class="{ active: star <= userRating }">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
@@ -65,7 +65,7 @@
                   </div>
 
                   <div class="rating-selector locked" v-else>
-                    <span class="prompt-text text-muted">Đánh giá của sếp:</span>
+                    <span class="prompt-text text-muted">Đánh giá của bạn:</span>
                     <div class="star-rating-locked">
                       <span v-for="star in 5" :key="star" :class="{ 'filled': star <= (currentUserReview.rating || currentUserReview.rate) }">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
@@ -376,7 +376,7 @@ const handleToggleLikeComment = async (comment) => {
   } catch (err) {
     targetComment.isLiked = previousIsLiked; targetComment.likes = previousLikesCount;
     comment.isLiked = previousIsLiked; comment.likes = previousLikesCount;
-    toast.error('Máy chủ đang bận, sếp thử lại sau nhé!');
+    toast.error('Máy chủ đang bận, bạn thử lại sau nhé!');
   }
 }
 
@@ -411,7 +411,7 @@ const goToDetail = (id) => {
   padding-bottom: 120px; 
 }
 
-/* --- TÁC GIẢ BUNG XÕA FULL WIDTH (ĐÃ FIX NHẢY LAYOUT) --- */
+
 /* --- TÁC GIẢ BUNG XÕA FULL WIDTH (ĐÃ FIX MÀU LUXURY) --- */
 .author-full-width-section {
   width: 100%;

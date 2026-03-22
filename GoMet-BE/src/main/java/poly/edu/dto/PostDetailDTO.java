@@ -1,7 +1,7 @@
 package poly.edu.dto;
 
 import lombok.Data;
-import java.time.LocalDate;
+import java.time.LocalDateTime; // 🔥 Đã đổi từ LocalDate sang LocalDateTime
 import java.util.List;
 
 @Data
@@ -15,7 +15,7 @@ public class PostDetailDTO {
     private Integer level;
     private Integer cookingTime;
     private Integer views;
-    private LocalDate createdAt;
+    private LocalDateTime createdAt; // 🔥 Đã cập nhật kiểu dữ liệu
 
     // Author
     private Integer authorID;
@@ -44,6 +44,7 @@ public class PostDetailDTO {
 
     // Comments
     private List<CommentDTO> comments;
-    // Thêm vào trong file PostDetailDTO.java
+
+    // Trạng thái Like của người dùng hiện tại
     private Boolean isLiked;
 }

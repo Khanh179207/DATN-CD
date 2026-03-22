@@ -2,6 +2,8 @@ package poly.edu.dto;
 
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 @Data
 public class AdminPostDTO {
     private Integer postID;
@@ -19,5 +21,5 @@ public class AdminPostDTO {
     private String accountAvatar;
     private String categoryName; // from Category
     private Integer categoryID;
-    private java.time.LocalDate createdAt;
+    private LocalDateTime createdAt;
 }

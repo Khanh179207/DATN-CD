@@ -194,17 +194,16 @@ const notificationChannel = ref(null);
 
 // 🔥 LOGIC QUYẾT ĐỊNH MÀU HEADER: ĐEN HAY TRẮNG
 const isDark = computed(() => {
-  // 1. Nếu route có meta isDark: true
+  // 1. Nếu router cố tình đánh dấu là Dark Theme
   if (route.meta?.isDark) return true;
 
-  // 2. Nếu đang ở các trang Admin
+  // 2. Nếu là trang Admin (luôn dùng Header đen/đậm)
   if (route.path.startsWith('/admin')) return true;
 
-  // 3. Nếu đang ở các trang Premium (Cộng đồng tinh hoa)
-  const premiumRoutes = ['/leaderboard', '/meal-plan', '/suggestions', '/storage'];
+  // 3. Các trang có nền màu/dark theme (ĐÃ XÓA '/storage' KHỎI DANH SÁCH NÀY)
+  const premiumRoutes = ['/leaderboard', '/meal-plan', '/suggestions'];
   return premiumRoutes.some(path => route.path.startsWith(path));
 });
-
 const unreadNotiCount = computed(() => notifications.value.filter(n => !n.isRead).length)
 
 const increaseBadge = () => {
