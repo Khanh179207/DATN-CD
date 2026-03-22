@@ -220,7 +220,7 @@ const userStore = useAuthStore()
 const BANK_ID = 'TCB' 
 const BANK_NAME = 'Techcombank'
 const ACCOUNT_NO = '9686179207' 
-const ACCOUNT_NAME = 'TEN CUA SEP' // Nhớ điền tên sếp nhé
+const ACCOUNT_NAME = 'TEN NGUOI NHAN'
 
 const paymentStep = ref('select') 
 const isLoading = ref(false)

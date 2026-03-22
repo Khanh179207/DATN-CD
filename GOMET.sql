@@ -408,6 +408,15 @@ GO
 	);
 
 	GO
+
+CREATE TABLE BlacklistWord (
+    WordID INT IDENTITY(1,1) PRIMARY KEY,
+    Word NVARCHAR(100) NOT NULL UNIQUE,
+    CreatedAt DATETIME DEFAULT GETDATE()
+);
+GO
+
+
 	-- ==========================================
 	-- 6. TRIGGERS TỰ ĐỘNG CẬP NHẬT
 	-- ==========================================
@@ -575,6 +584,10 @@ GO
 INSERT INTO Ticket (AccountID, TicketType, TargetPostID, Title, Description, Status, CreatedAt) VALUES 
 (4, 'REPORT', 1, N'Nội dung sai sự thật', N'Ảnh này lấy trên mạng chứ không phải chủ bài viết nấu.', 0, GETDATE()),
 (3, 'SUPPORT', NULL, N'Lỗi thanh toán', N'Tôi đã chuyển khoản nhưng chưa lên Premium.', 1, '2026-03-20');
+GO
+
+INSERT INTO BlacklistWord (Word) VALUES 
+(N'cờ bạc'), (N'lô đề'), (N'phản động'), (N'chửi thề'), (N'18+'), (N'đánh bài');
 GO
 
 

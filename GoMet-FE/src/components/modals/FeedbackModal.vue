@@ -84,7 +84,7 @@
                 <label>Nội dung chi tiết <span class="star">*</span></label>
                 <textarea
                   v-model="formData.description"
-                  placeholder="Mô tả chi tiết để chúng mình hỗ trợ sếp nhanh nhất nhé..."
+                  placeholder="Mô tả chi tiết để chúng mình hỗ trợ bạn nhanh nhất nhé..."
                   rows="4"
                   required
                   class="gomet-input gomet-textarea"
@@ -98,7 +98,7 @@
                   <label for="file-support" class="upload-zone" :class="{ 'has-file': filePreview }">
                     <div v-if="!filePreview" class="upload-placeholder">
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                      <span>Nhấn để tải ảnh từ máy sếp</span>
+                      <span>Nhấn để tải ảnh từ thiết bị</span>
                     </div>
                     <div v-else class="upload-preview-wrap">
                       <img :src="filePreview" class="img-thumb" />
@@ -207,7 +207,7 @@ const removeFile = () => { formData.value.attachment = null; filePreview.value =
 // 🔥 HÀM SUBMIT THEO LUỒNG ĐỒNG BỘ 2 BƯỚC (CHUẨN GOMET)
 const submitFeedback = async () => {
   if (!formData.value.title.trim() || !formData.value.description.trim()) {
-    toast.error('Sếp điền thiếu thông tin rồi!'); 
+    toast.error('Vui lòng điền đầy đủ thông tin!'); 
     return;
   }
   
@@ -220,7 +220,7 @@ const submitFeedback = async () => {
       try {
         attachmentUrl = await uploadMedia(formData.value.attachment, 'tickets');
       } catch (uploadErr) {
-        toast.error('Lỗi khi tải ảnh lên mây, sếp thử lại nhé!');
+        toast.error('Lỗi khi tải ảnh lên, vui lòng thử lại!');
         isSubmitting.value = false;
         return;
       }
@@ -240,12 +240,12 @@ const submitFeedback = async () => {
     const response = await api.post('/api/tickets/create', payload);
 
     if (response.data) {
-      toast.success('GOMET đã nhận! Cảm ơn sếp nhiều.');
+      toast.success('GOMET đã nhận được phản hồi! Cảm ơn bạn nhiều.');
       closeModal();
     }
   } catch (e) {
     console.error("Submit Error:", e);
-    toast.error(e.response?.data?.message || 'Lỗi hệ thống, sếp kiểm tra lại Backend nhé!');
+    toast.error(e.response?.data?.message || 'Lỗi hệ thống, vui lòng thử lại!');
   } finally {
     isSubmitting.value = false
   }

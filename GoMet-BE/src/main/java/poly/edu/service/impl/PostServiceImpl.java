@@ -7,15 +7,18 @@ import poly.edu.dao.AccountDAO;
 import poly.edu.dao.CategoryDAO;
 import poly.edu.dao.PostDAO;
 import poly.edu.dao.CookingStepsDAO;
+import poly.edu.dao.BlacklistWordDAO;
 import poly.edu.dto.PostDTO;
 import poly.edu.dto.StepRequestDTO;
 import poly.edu.entity.Account;
 import poly.edu.entity.Category;
 import poly.edu.entity.Post;
 import poly.edu.entity.CookingSteps;
+import poly.edu.entity.BlacklistWord;
 import poly.edu.service.PostService;
 
-import java.time.LocalDateTime; // 🔥 Đã đổi sang LocalDateTime
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,48 +30,72 @@ public class PostServiceImpl implements PostService {
     private final CategoryDAO categoryDAO;
     private final AccountDAO accountDAO;
     private final CookingStepsDAO cookingStepsDAO;
+    private final BlacklistWordDAO blacklistWordDAO;
 
     @Override
     public List<PostDTO> getPostsByAccountId(Integer accountId) {
         if (accountId == null) return List.of();
+        // 🔥 CHỈ LẤY BÀI CHƯA XÓA (isActive = 1)
         List<Post> posts = postDAO.findByAccount_AccountIDOrderByCreatedAtDesc(accountId);
-        return posts.stream().map(this::convertToDTO).collect(Collectors.toList());
+        return posts.stream()
+                .filter(p -> p.getIsActive() == 1)
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
     @Override
     @Transactional
     public PostDTO createPost(PostDTO postDTO) {
         if (postDTO.getAccountID() == null) {
-            throw new RuntimeException("Không thể tạo bài viết vì thiếu ID tài khoản!");
+            throw new RuntimeException("Thiếu mã tài khoản người đăng!");
         }
 
-        Post post = new Post();
-
-        // 1. Map thông tin cơ bản
-        mapDtoToEntity(postDTO, post);
-
-        // 2. Logic Category
-        Integer targetCatID = (postDTO.getCategoryID() == null) ? 1 : postDTO.getCategoryID();
-        Category cat = categoryDAO.findById(targetCatID)
-                .orElseThrow(() -> new RuntimeException("Danh mục không tồn tại!"));
-        post.setCategory(cat);
-
-        // 3. Map người dùng
         Account acc = accountDAO.findById(postDTO.getAccountID())
                 .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại!"));
-        post.setAccount(acc);
 
-        // 4. Trạng thái mặc định
-        post.setIsActive(1);
-        post.setIsApproved(0);
+        // 🛡️ TẦNG 1: RATE LIMITING (CHỐNG SPAM)
+        // Quy tắc: Chỉ chặn User thường và Premium. Admin được đăng liên tục.
+        if (acc.getIsAdmin() != 1) {
+            List<Post> lastPosts = postDAO.findByAccount_AccountIDOrderByCreatedAtDesc(acc.getAccountID());
+            if (!lastPosts.isEmpty() && lastPosts.get(0).getCreatedAt() != null) {
+                long minutes = Duration.between(lastPosts.get(0).getCreatedAt(), LocalDateTime.now()).toMinutes();
+                if (minutes < 3) {
+                    throw new RuntimeException("Hệ thống chống Spam: Sếp đăng bài quá nhanh! Vui lòng đợi " + (3 - minutes) + " phút nữa.");
+                }
+            }
+        }
+
+        // 🛡️ TẦNG 2: BỘ LỌC TỪ KHÓA (BLACKLIST)
+        String contentToCheck = (postDTO.getTitle() + " " + postDTO.getDescription() + " " + postDTO.getIngredients()).toLowerCase();
+        List<BlacklistWord> badWords = blacklistWordDAO.findAll();
+        for (BlacklistWord bw : badWords) {
+            if (contentToCheck.contains(bw.getWord().toLowerCase())) {
+                throw new RuntimeException("Vi phạm tiêu chuẩn: Nội dung chứa từ khóa bị cấm (" + bw.getWord() + ").");
+            }
+        }
+
+        // 🛡️ TẦNG 3: ĐẶC QUYỀN DUYỆT BÀI
+        // Quy tắc: Admin và Premium được duyệt thẳng.
+        int autoApprove = (acc.getIsAdmin() == 1 || acc.getIsPremium() == 1) ? 1 : 0;
+
+        // BẮT ĐẦU LƯU
+        Post post = new Post();
+        mapDtoToEntity(postDTO, post);
+
+        Category cat = categoryDAO.findById(postDTO.getCategoryID() == null ? 1 : postDTO.getCategoryID())
+                .orElseThrow(() -> new RuntimeException("Danh mục không hợp lệ!"));
+
+        post.setCategory(cat);
+        post.setAccount(acc);
+        post.setIsActive(1);    // Luôn là 1 khi mới tạo
+        post.setIsApproved(autoApprove);
         post.setViews(0);
         post.setLikeCount(0);
 
-        // 🔥 5. Lưu Post (Ngày giờ đã được set trong mapDtoToEntity bên dưới)
         Post savedPost = postDAO.save(post);
 
-        // 6. Xử lý Cooking Steps
-        if (postDTO.getSteps() != null && !postDTO.getSteps().isEmpty()) {
+        // Lưu các bước nấu ăn
+        if (postDTO.getSteps() != null) {
             for (int i = 0; i < postDTO.getSteps().size(); i++) {
                 StepRequestDTO stepDto = postDTO.getSteps().get(i);
                 CookingSteps stepEntity = new CookingSteps();
@@ -86,9 +113,16 @@ public class PostServiceImpl implements PostService {
     @Override
     @Transactional
     public PostDTO updatePost(Integer postId, PostDTO dto) {
-        if (postId == null) throw new RuntimeException("ID bài viết không được để trống!");
         Post post = postDAO.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Bài viết không tồn tại!"));
+
+        // 🛡️ CHỐT CHẶN AN NINH CỰC CAO
+        if (post.getIsApproved() == -1) {
+            throw new RuntimeException("Bài viết này đã bị Admin khóa vĩnh viễn, không thể chỉnh sửa!");
+        }
+        if (post.getIsActive() == 0) {
+            throw new RuntimeException("Bài viết này không còn tồn tại trên hệ thống!");
+        }
 
         mapDtoToEntity(dto, post);
 
@@ -102,24 +136,28 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public PostDTO getPostById(Integer postId) {
-        if (postId == null) throw new RuntimeException("ID bài viết không hợp lệ!");
-        Post post = postDAO.findById(postId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy bài viết!"));
-        return convertToDTO(post);
-    }
-
-    @Override
     @Transactional
     public void deletePost(Integer postId) {
-        if (postId == null) return;
         Post post = postDAO.findById(postId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy bài để xóa!"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy bài viết để xóa!"));
+
+        // 🔥 SOFT DELETE: Chỉ ẩn đi, không xóa khỏi DB để lưu vết
         post.setIsActive(0);
         postDAO.save(post);
     }
 
-    // --- HELPER METHODS ---
+    @Override
+    public PostDTO getPostById(Integer postId) {
+        Post post = postDAO.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Bài viết không tồn tại!"));
+
+        // Nếu bài đã xóa mà vẫn cố truy cập bằng link trực tiếp
+        if (post.getIsActive() == 0) {
+            throw new RuntimeException("Bài viết này đã được gỡ bỏ!");
+        }
+
+        return convertToDTO(post);
+    }
 
     private void mapDtoToEntity(PostDTO dto, Post entity) {
         entity.setTitle(dto.getTitle());
@@ -130,7 +168,6 @@ public class PostServiceImpl implements PostService {
         entity.setLevel(dto.getLevel() != null ? dto.getLevel() : 1);
         entity.setCookingTime(dto.getCookingTime() != null ? dto.getCookingTime() : 30);
 
-        // 🔥 CHỐT HẠ: Đã đổi sang LocalDateTime.now() để có giờ phút giây
         if (entity.getPostID() == null) {
             entity.setCreatedAt(LocalDateTime.now());
         }
@@ -149,11 +186,13 @@ public class PostServiceImpl implements PostService {
         dto.setViews(post.getViews());
         dto.setLikeCount(post.getLikeCount());
         dto.setIsApproved(post.getIsApproved());
-
-        // Trả về LocalDateTime chuẩn xịn cho Frontend
         dto.setCreatedAt(post.getCreatedAt());
 
-        if (post.getAccount() != null) dto.setAccountID(post.getAccount().getAccountID());
+        if (post.getAccount() != null) {
+            dto.setAccountID(post.getAccount().getAccountID());
+            dto.setUsername(post.getAccount().getUsername());
+            dto.setAuthorAvatar(post.getAccount().getAvatar());
+        }
         if (post.getCategory() != null) {
             dto.setCategoryID(post.getCategory().getCategoryID());
             dto.setCategoryName(post.getCategory().getCategoryName());

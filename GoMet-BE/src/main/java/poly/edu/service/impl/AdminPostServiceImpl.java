@@ -29,7 +29,6 @@ public class AdminPostServiceImpl implements AdminPostService {
         dto.setDescription(post.getDescription());
         dto.setMedia(post.getMedia());
         dto.setLevel(post.getLevel());
-        dto.setCookingTime(post.getCookingTime());
         dto.setViews(post.getViews());
         dto.setIsActive(post.getIsActive());
         dto.setIsApproved(post.getIsApproved());

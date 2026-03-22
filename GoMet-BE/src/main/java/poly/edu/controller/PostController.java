@@ -32,6 +32,7 @@ public class PostController {
     private final SimpMessagingTemplate messagingTemplate;
     private final LikesDAO likesDAO;
     private final NotificationService notificationService;
+    private final poly.edu.service.PostService postService;
 
     @GetMapping("/search-mini")
     public ResponseEntity<List<Map<String, Object>>> searchMini(@RequestParam String q) {
@@ -337,60 +338,33 @@ public class PostController {
 
         return dto;
     }
-
     @PostMapping
-    public ResponseEntity<?> createPost(@RequestBody PostDTO dto) {
+    public ResponseEntity<?> createPost(@RequestBody PostDTO postDTO) {
         try {
-            Account account = accountDAO.findById(dto.getAccountID()).orElse(null);
-            if (account == null) return ResponseEntity.badRequest().body("Invalid accountID");
+            // 🔥 BƯỚC 1: Gọi tầng Service xử lý (Lọc Từ Cấm, Chống Spam, Auto Approve)
+            PostDTO createdPost = postService.createPost(postDTO);
 
-            Category category = categoryDAO.findById(dto.getCategoryID()).orElse(null);
-            if (category == null) return ResponseEntity.badRequest().body("Invalid categoryID");
-
-            Post post = Post.builder()
-                    .account(account)
-                    .category(category)
-                    .title(dto.getTitle() != null ? dto.getTitle() : "")
-                    .description(dto.getDescription() != null ? dto.getDescription() : "")
-                    .ingredients(dto.getIngredients() != null ? dto.getIngredients() : "")
-                    .media(dto.getMedia() != null ? dto.getMedia() : "")
-                    .video(dto.getVideo())
-                    .level(dto.getLevel() != null ? dto.getLevel() : 2)
-                    .cookingTime(dto.getCookingTime() != null ? dto.getCookingTime() : 30)
-                    .views(0)
-                    .isActive(1)
-                    .isApproved(0)
-                    .createdAt(LocalDateTime.now()) // 🔥 Đã đổi sang LocalDateTime.now()
-                    .build();
-
-            post = postDAO.save(post);
-
-            sendAdminAlert(post);
-
-            if (dto.getSteps() != null) {
-                int stepNum = 1;
-                for (StepRequestDTO s : dto.getSteps()) {
-                    CookingSteps step = new CookingSteps();
-                    step.setPost(post);
-                    step.setStepNumber(stepNum++);
-                    step.setContent(s.getDesc() != null ? s.getDesc() : "");
-                    step.setImage(s.getImage());
-                    cookingStepsDAO.save(step);
+            // 🔥 BƯỚC 2: Nếu bài viết rơi vào diện Chờ Duyệt (isApproved = 0), bắn thông báo Admin
+            if (createdPost.getIsApproved() != null && createdPost.getIsApproved() == 0) {
+                try {
+                    // Lấy thẳng username từ Database cho chắc chắn
+                    Account account = accountDAO.findById(postDTO.getAccountID()).orElse(null);
+                    String userUsername = (account != null) ? account.getUsername() : "Unknown User";
+                    notificationService.notifyAdminPostPendingApproval(userUsername, createdPost.getPostID());
+                } catch (Exception e) {
+                    System.err.println("Gửi thông báo Admin thất bại: " + e.getMessage());
                 }
             }
 
-            return ResponseEntity.ok(Map.of("postID", post.getPostID(), "message", "Post created and pending approval"));
+            // 🔥 BƯỚC 3: Trả kết quả về Frontend
+            return ResponseEntity.ok(createdPost);
+
+        } catch (RuntimeException e) {
+            // 🛡️ BẮT LỖI TỪ CẤM / SPAM Ở ĐÂY
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(Map.of("message", "Lỗi server: " + e.getMessage()));
         }
     }
 
-    private void sendAdminAlert(Post post) {
-        try {
-            String userUsername = post.getAccount() != null ? post.getAccount().getUsername() : "Unknown User";
-            notificationService.notifyAdminPostPendingApproval(userUsername, post.getPostID());
-        } catch (Exception e) {
-            System.err.println("Failed to notify admin about post: " + e.getMessage());
-        }
-    }
 }

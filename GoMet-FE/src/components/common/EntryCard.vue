@@ -77,13 +77,13 @@ const getImageUrl = (path) => {
 
 // 🔥 ĐÃ FIX HÀM VOTE: THÊM ĐẦY ĐỦ ACCOUNT ID
 const handleVote = async () => {
-  if (!authStore.isAuthenticated) return toast.info("Sếp đăng nhập để ủng hộ Idol nhé!");
+  if (!authStore.isAuthenticated) return toast.info("Vui lòng đăng nhập để bình chọn!");
   
   // Vét cạn các trường hợp tên biến ID của User
   const uid = authStore.user?.accountID || authStore.user?.accountId || authStore.user?.id;
   
   if (!uid) {
-    toast.error("Không tìm thấy thông tin tài khoản, sếp thử đăng nhập lại nhé!");
+    toast.error("Không tìm thấy thông tin tài khoản, vui lòng thử đăng nhập lại!");
     return;
   }
 
@@ -102,7 +102,7 @@ const handleVote = async () => {
     localVoteCount.value = res.data.newVoteCount;
     
     if (isVoted.value) {
-      toast.success(res.data.message || "Đã ghi nhận phiếu bầu của sếp!");
+      toast.success(res.data.message || "Đã ghi nhận phiếu bầu của bạn!");
     } else {
       toast.warn(res.data.message || "Đã hủy bình chọn!");
     }
