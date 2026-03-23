@@ -15,7 +15,7 @@
       </div>
       
       <div class="header-actions">
-        <div class="sort-box-lux">
+         <div class="sort-box-lux">
           <select v-model="sortOption" class="sort-select" title="Sắp xếp bài viết">
             <option value="newest">Ngày đăng (Mới nhất)</option>
             <option value="oldest">Ngày đăng (Cũ nhất)</option>
