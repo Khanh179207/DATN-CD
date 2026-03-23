@@ -10,7 +10,7 @@ import jakarta.persistence.PersistenceContext;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.time.LocalDateTime; // Đổi sang LocalDateTime để tính bằng Giây
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/payments")
@@ -50,8 +50,8 @@ public class PaymentController {
                 .setParameter("accId", accountId)
                 .executeUpdate();
 
-// ==========================================================
-        // 🔥 BƯỚC MỚI: TÌM XEM CÒN HẠN KHÔNG ĐỂ CỘNG DỒN THỜI GIAN
+        // ==========================================================
+        // BƯỚC MỚI: TÌM XEM CÒN HẠN KHÔNG ĐỂ CỘNG DỒN THỜI GIAN
         // ==========================================================
         LocalDateTime currentEndDate = null;
         try {
@@ -61,16 +61,14 @@ public class PaymentController {
                     .getSingleResult();
 
             if (result != null) {
-                // Xử lý thông minh: Dù Driver trả về Timestamp, String hay LocalDateTime thì cũng parse được hết
                 if (result instanceof java.time.LocalDateTime) {
                     currentEndDate = (java.time.LocalDateTime) result;
                 } else if (result instanceof java.sql.Timestamp) {
                     currentEndDate = ((java.sql.Timestamp) result).toLocalDateTime();
                 } else {
-                    // Nếu trả về String dạng "2026-03-14 11:00:00.0"
                     String dateStr = result.toString();
                     if(dateStr.contains(" ")) {
-                        dateStr = dateStr.replace(" ", "T"); // Format lại chuẩn ISO
+                        dateStr = dateStr.replace(" ", "T");
                     }
                     currentEndDate = LocalDateTime.parse(dateStr);
                 }
@@ -81,8 +79,6 @@ public class PaymentController {
             System.err.println("Cảnh báo khi parse ngày: " + ex.getMessage());
         }
 
-        // Nếu còn hạn: Thời gian bắt đầu tính = Ngày hết hạn cũ
-        // Nếu hết hạn hoặc mua lần đầu: Thời gian bắt đầu tính = Hiện tại
         LocalDateTime startDate = (currentEndDate != null && currentEndDate.isAfter(LocalDateTime.now()))
                 ? currentEndDate
                 : LocalDateTime.now();
@@ -90,71 +86,88 @@ public class PaymentController {
         LocalDateTime endDate;
         int amount = 0;
 
-        // 2. Cộng thêm thời gian vào startDate
+        // 2. Cộng thêm thời gian vào startDate và GÁN GIÁ TIỀN (Khớp với FE)
         if (planType == 0) {
             endDate = startDate.plusSeconds(10);
-            amount = 10000;
+            amount = 1000;      // Gói Test 10s: 1.000đ
         } else if (planType == 1) {
             endDate = startDate.plusMonths(1);
-            amount = 50000;
+            amount = 25000;     // Gói Tháng: 25.000đ
         } else if (planType == 2) {
             endDate = startDate.plusYears(1);
-            amount = 500000;
+            amount = 100000;    // Gói Năm: 100.000đ
         } else {
             endDate = startDate.plusYears(99);
-            amount = 999000;
+            amount = 1000000;   // Gói Trọn Đời: 1.000.000đ
         }
 
-        // 3. Vô hiệu hóa các gói cũ đang chạy (Để hệ thống chỉ lấy 1 gói Active duy nhất làm chuẩn)
+        // 3. Vô hiệu hóa các gói cũ đang chạy
         String disableOldSubSql = "UPDATE Subscription SET isActive = 0 WHERE AccountID = :accId";
         entityManager.createNativeQuery(disableOldSubSql)
                 .setParameter("accId", accountId)
                 .executeUpdate();
 
-        // 4. Thêm gói mới (Đã cộng dồn ngày) vào lịch sử Subscription
-        String insertSubSql = "INSERT INTO Subscription (AccountID, PlanType, StartAt, EndAt, isActive) " +
-                "VALUES (:accId, :planType, :start, :end, 1)";
-        entityManager.createNativeQuery(insertSubSql)
-                .setParameter("accId", accountId)
-                .setParameter("planType", planType)
-                .setParameter("start", startDate) // Lưu lại điểm mốc nối tiếp
-                .setParameter("end", endDate)     // Ngày hết hạn cuối cùng
-                .executeUpdate();
+        // ==========================================================
+        // 🔥 ĐẢO LẠI THỨ TỰ: TẠO HÓA ĐƠN TRƯỚC, RỒI MỚI GHI VÀO GÓI
+        // ==========================================================
+        Integer newTransactionId = null;
 
-        // 5. GHI BIÊN LAI VÀO BẢNG PaymentTransaction
+        // 4. GHI BIÊN LAI VÀO BẢNG PaymentTransaction
         try {
             String orderCode = "DEV_" + System.currentTimeMillis();
+            // Dùng OUTPUT INSERTED.TransactionID để tóm ngay cái ID vừa tự động sinh ra
             String insertTxSql = "INSERT INTO PaymentTransaction (AccountID, OrderCode, Amount, PlanType, Status, CreatedAt, PaidAt) " +
+                    "OUTPUT INSERTED.TransactionID " +
                     "VALUES (:accId, :orderCode, :amount, :planType, 'PAID', :now, :now)";
 
-            entityManager.createNativeQuery(insertTxSql)
+            Object txnResult = entityManager.createNativeQuery(insertTxSql)
                     .setParameter("accId", accountId)
                     .setParameter("orderCode", orderCode)
                     .setParameter("amount", amount)
                     .setParameter("planType", planType)
-                    .setParameter("now", LocalDateTime.now()) // Biên lai thì vẫn phải lấy giờ hiện tại
-                    .executeUpdate();
+                    .setParameter("now", LocalDateTime.now())
+                    .getSingleResult();
+
+            // Ép kiểu an toàn để lấy ID
+            if (txnResult != null) {
+                newTransactionId = ((Number) txnResult).intValue();
+            }
 
         } catch (Exception e) {
             System.err.println("Lỗi khi ghi lịch sử giao dịch: " + e.getMessage());
         }
+
+        // 5. Thêm gói mới vào lịch sử Subscription (Kèm theo TransactionID vừa lấy được)
+        try {
+            String insertSubSql = "INSERT INTO Subscription (AccountID, PlanType, StartAt, EndAt, isActive, TransactionID) " +
+                    "VALUES (:accId, :planType, :start, :end, 1, :txnId)";
+
+            entityManager.createNativeQuery(insertSubSql)
+                    .setParameter("accId", accountId)
+                    .setParameter("planType", planType)
+                    .setParameter("start", startDate)
+                    .setParameter("end", endDate)
+                    .setParameter("txnId", newTransactionId) // Liên kết khóa ngoại
+                    .executeUpdate();
+        } catch (Exception e) {
+            System.err.println("Lỗi khi ghi Subscription: " + e.getMessage());
+        }
     }
+
     // =================================================================
     // 2. JOB TỰ ĐỘNG HỦY GÓI (CHẾ ĐỘ TEST: Quét 5 giây/lần)
     // =================================================================
-    @Scheduled(fixedRate = 5000) // ⏱️ Cứ 5 giây là chạy ngầm rà soát DB
+    @Scheduled(fixedRate = 5000)
     @Transactional
     public void autoCancelExpiredSubscriptions() {
         LocalDateTime now = LocalDateTime.now();
 
         try {
-            // 1. Quét và tắt (isActive = 0) những gói đã quá hạn
             String updateSubSql = "UPDATE Subscription SET isActive = 0 WHERE EndAt < :now AND isActive = 1";
             int expiredCount = entityManager.createNativeQuery(updateSubSql)
                     .setParameter("now", now)
                     .executeUpdate();
 
-            // 2. Hạ cấp (isPremium = 0) cho những User không còn gói nào đang Active
             if (expiredCount > 0) {
                 String updateAccSql = "UPDATE Account SET isPremium = 0 WHERE AccountID NOT IN " +
                         "(SELECT AccountID FROM Subscription WHERE isActive = 1)";
@@ -165,13 +178,13 @@ public class PaymentController {
             System.err.println("Lỗi khi chạy Job hủy gói: " + e.getMessage());
         }
     }
+
     // =================================================================
     // 3. API TRA CỨU NGÀY HẾT HẠN PREMIUM
     // =================================================================
     @GetMapping("/check-expiry/{accountId}")
     public ResponseEntity<?> checkPremiumExpiry(@PathVariable Integer accountId) {
         try {
-            // Lấy ra gói Subscription MỚI NHẤT đang Active của User này
             String sql = "SELECT TOP 1 EndAt FROM Subscription " +
                     "WHERE AccountID = :accId AND isActive = 1 " +
                     "ORDER BY EndAt DESC";
@@ -183,7 +196,7 @@ public class PaymentController {
             if (result != null) {
                 return ResponseEntity.ok(Map.of(
                         "success", true,
-                        "endAt", result.toString() // Trả về chuỗi thời gian (VD: 2026-03-14 12:00:00)
+                        "endAt", result.toString()
                 ));
             } else {
                 return ResponseEntity.ok(Map.of("success", false, "message", "Không tìm thấy gói Premium nào"));
