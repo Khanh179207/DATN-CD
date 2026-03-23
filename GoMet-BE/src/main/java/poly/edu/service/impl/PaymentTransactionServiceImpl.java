@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import poly.edu.dao.PaymentTransactionDAO;
 import poly.edu.entity.PaymentTransaction;
+import java.util.List;
 
 @Repository
 @Transactional
@@ -36,5 +37,12 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionDAO {
         } catch (NoResultException e) {
             return null; // Không tìm thấy thì trả về null
         }
+    }
+
+    // 🔥 HÀM NÀY MỚI LÀ CHÌA KHÓA CHO GIAO DIỆN ADMIN (Đã thêm)
+    @Override
+    public List<PaymentTransaction> findAllByOrderByCreatedAtDesc() {
+        String jpql = "SELECT p FROM PaymentTransaction p ORDER BY p.createdAt DESC";
+        return entityManager.createQuery(jpql, PaymentTransaction.class).getResultList();
     }
 }
