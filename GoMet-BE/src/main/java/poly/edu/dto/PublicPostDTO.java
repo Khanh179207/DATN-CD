@@ -9,6 +9,7 @@ public class PublicPostDTO {
     private Integer postID;
     private String title;
     private String description;
+    private String ingredients;
     private String media;
     private String video;
     private Integer level;
