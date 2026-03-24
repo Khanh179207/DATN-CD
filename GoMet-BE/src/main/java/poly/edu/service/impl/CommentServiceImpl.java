@@ -15,6 +15,7 @@ import poly.edu.entity.Post;
 import poly.edu.service.CommentService;
 import poly.edu.service.NotificationService;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -35,11 +36,10 @@ public class CommentServiceImpl implements CommentService {
     public List<CommentDTO> getCommentsByPost(Integer postID, Integer currentAccountID) {
         return commentDAO.findByPost_PostID(postID).stream()
                 .map(c -> {
-                    CommentDTO dto = toDTO(c); // Gọi mapper cũ của sếp
+                    CommentDTO dto = toDTO(c);
 
-                    // --- ĐÂY LÀ CHỖ FIX ---
-                    if (currentAccountID != null) {
-                        // Check xem user này đã like comment này chưa
+                    // Chỉ check like cho những comment đang hoạt động (isActive = 1)
+                    if (currentAccountID != null && Integer.valueOf(1).equals(c.getIsActive())) {
                         boolean liked = commentLikeDAO.findByAccountAndComment(currentAccountID, c.getCommentID()).isPresent();
                         dto.setIsLiked(liked);
                     } else {
@@ -55,7 +55,6 @@ public class CommentServiceImpl implements CommentService {
     @Override
     @Transactional
     public CommentDTO saveNewComment(CommentDTO req) {
-        // 1. Validation cơ bản
         boolean hasContent = req.getContent() != null && !req.getContent().isBlank();
         boolean hasImages = req.getImageUrls() != null && !req.getImageUrls().isEmpty();
         boolean hasRating = req.getRating() != null && req.getRating() > 0;
@@ -64,19 +63,16 @@ public class CommentServiceImpl implements CommentService {
             throw new RuntimeException("Vui lòng nhập nội dung, hình ảnh hoặc đánh giá sao");
         }
 
-        // 2. Tìm Account
         Account account = accountDAO.findById(req.getAccountID())
                 .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại"));
 
-        // 3. Xử lý Reply và Rating logic
         Comment parentComment = null;
         Integer finalRating = req.getRating();
         if (req.getCmtid() != null) {
             parentComment = commentDAO.findById(req.getCmtid()).orElse(null);
-            finalRating = null; // Reply thì không có sao
+            finalRating = null;
         }
 
-        // 4. Xác định Post
         Post post = null;
         if (req.getPostID() != null) {
             post = postDAO.findById(req.getPostID()).orElse(null);
@@ -84,11 +80,17 @@ public class CommentServiceImpl implements CommentService {
             post = parentComment.getPost();
         }
 
-        if (post == null) {
-            throw new RuntimeException("Không tìm thấy bài viết");
+        if (post == null) throw new RuntimeException("Không tìm thấy bài viết");
+
+        // 🔥 CHỐT CHẶN BẢO MẬT: CHỐNG SPAM RATING (Mỗi bài chỉ rate 1 lần) 🔥
+        if (finalRating != null && finalRating > 0) {
+            // Đếm xem user này đã từng rate bài này (với isActive = 1) chưa
+            long existingRatings = commentDAO.countRatingsByUserAndPost(post.getPostID(), account.getAccountID());
+            if (existingRatings > 0) {
+                throw new RuntimeException("Bạn đã đánh giá bài viết này rồi! Mỗi bài viết chỉ được đánh giá 1 lần.");
+            }
         }
 
-        // 5. Build và Save
         Comment comment = Comment.builder()
                 .post(post)
                 .parentComment(parentComment)
@@ -96,12 +98,12 @@ public class CommentServiceImpl implements CommentService {
                 .content(req.getContent() != null ? req.getContent() : "")
                 .rating(finalRating)
                 .attachments(req.getImageUrls())
-                .likes(0) // Mặc định 0 like
+                .likes(0)
+                .isActive(1) // Mặc định 1: Đang hoạt động
                 .build();
 
         Comment saved = commentDAO.save(comment);
 
-        // 6. Gửi thông báo cho chủ bài viết
         if (post.getAccount() != null && !account.getAccountID().equals(post.getAccount().getAccountID())) {
             notificationService.notifyComment(
                     account.getUsername(),
@@ -115,27 +117,81 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
+    @Transactional
     public void delete(Integer id) {
-        if (!commentDAO.existsById(id)) throw new RuntimeException("Bình luận không tồn tại");
-        commentDAO.deleteById(id);
+        // 🔥 ADMIN XÓA (-1)
+        Comment comment = commentDAO.findById(id)
+                .orElseThrow(() -> new RuntimeException("Bình luận không tồn tại"));
+
+        comment.setIsActive(-1);
+        commentDAO.save(comment);
+    }
+
+    @Override
+    @Transactional
+    public void deleteByUser(Integer id, Integer userId) {
+        Comment comment = commentDAO.findById(id).orElseThrow(() -> new RuntimeException("Lỗi"));
+        if (!comment.getAccount().getAccountID().equals(userId)) {
+            throw new RuntimeException("Bạn không có quyền!");
+        }
+        // User tự xóa (0)
+        comment.setIsActive(0);
+        commentDAO.save(comment);
+    }
+
+    @Override
+    @Transactional
+    public void restore(Integer id) {
+        // 🔥 ADMIN KHÔI PHỤC (1)
+        Comment comment = commentDAO.findById(id)
+                .orElseThrow(() -> new RuntimeException("Bình luận không tồn tại"));
+
+        comment.setIsActive(1);
+        commentDAO.save(comment);
     }
 
     @Override
     public List<AdminCommentDTO> findAll() {
-        return commentDAO.findAll().stream().map(c -> {
-            AdminCommentDTO dto = new AdminCommentDTO();
-            dto.setCommentID(c.getCommentID());
-            dto.setContent(c.getContent());
-            if (c.getAccount() != null) dto.setUsername(c.getAccount().getUsername());
-            if (c.getPost() != null) dto.setPostTitle(c.getPost().getTitle());
-            return dto;
-        }).collect(Collectors.toList());
+        return commentDAO.findAll().stream()
+                .filter(c -> (c.getContent() != null && !c.getContent().trim().isEmpty())
+                        || (c.getAttachments() != null && !c.getAttachments().isEmpty()))
+                .sorted(Comparator.comparing(Comment::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
+                .map(c -> {
+                    AdminCommentDTO dto = new AdminCommentDTO();
+                    dto.setCommentID(c.getCommentID());
+                    dto.setContent(c.getContent());
+                    dto.setCreatedAt(c.getCreatedAt());
+                    dto.setImageUrls(c.getAttachments());
+
+                    // Trả về đúng trạng thái (1, 0, -1)
+                    dto.setIsActive(c.getIsActive() != null ? c.getIsActive() : 1);
+
+                    dto.setRating(c.getRating() != null ? c.getRating() : 0);
+                    dto.setLikes(c.getLikes() != null ? c.getLikes() : 0);
+                    dto.setHasAttachments(c.getAttachments() != null && !c.getAttachments().isEmpty());
+                    dto.setParentCommentID(c.getParentComment() != null ? c.getParentComment().getCommentID() : null);
+
+                    if (c.getAccount() != null) {
+                        dto.setAuthorID(c.getAccount().getAccountID());
+                        dto.setAuthorName(c.getAccount().getUsername());
+                        dto.setAuthorAvatar(c.getAccount().getAvatar());
+                    } else {
+                        dto.setAuthorName("Người dùng ẩn danh");
+                    }
+
+                    if (c.getPost() != null) {
+                        dto.setPostID(c.getPost().getPostID());
+                        dto.setPostTitle(c.getPost().getTitle());
+                    }
+
+                    return dto;
+                }).collect(Collectors.toList());
     }
 
     @Override
     public Map<String, Object> getRatingStats(Integer postID) {
         List<Comment> ratedComments = commentDAO.findByPost_PostID(postID).stream()
-                .filter(c -> c.getRating() != null && c.getRating() > 0)
+                .filter(c -> c.getRating() != null && c.getRating() > 0 && Integer.valueOf(1).equals(c.getIsActive()))
                 .collect(Collectors.toList());
 
         long total = ratedComments.size();
@@ -154,23 +210,40 @@ public class CommentServiceImpl implements CommentService {
         return stats;
     }
 
-    // Helper Mapper
     private CommentDTO toDTO(Comment c) {
         CommentDTO dto = new CommentDTO();
         dto.setCommentID(c.getCommentID());
         dto.setPostID(c.getPost() != null ? c.getPost().getPostID() : null);
         dto.setCmtid(c.getParentComment() != null ? c.getParentComment().getCommentID() : null);
-        dto.setContent(c.getContent());
-        dto.setRating(c.getRating() != null ? c.getRating() : 0);
 
-        if (c.getAccount() != null) {
-            dto.setAccountID(c.getAccount().getAccountID());
-            dto.setAuthorName(c.getAccount().getUsername());
-            dto.setAuthorAvatar(c.getAccount().getAvatar());
+        Integer activeStatus = c.getIsActive() != null ? c.getIsActive() : 1;
+
+        if (activeStatus == -1) {
+            dto.setContent("[Bình luận này đã bị ẩn bởi Quản trị viên do vi phạm]");
+            dto.setAuthorName("Hệ thống GoMet");
+            dto.setAuthorAvatar(null);
+            dto.setImageUrls(new ArrayList<>());
+            dto.setLikes(0);
+            dto.setRating(0);
+        } else if (activeStatus == 0) {
+            dto.setContent("[Người dùng đã xóa bình luận này]");
+            dto.setAuthorName("Ẩn danh");
+            dto.setAuthorAvatar(null);
+            dto.setImageUrls(new ArrayList<>());
+            dto.setLikes(0);
+            dto.setRating(0);
+        } else {
+            dto.setContent(c.getContent());
+            dto.setRating(c.getRating() != null ? c.getRating() : 0);
+            if (c.getAccount() != null) {
+                dto.setAccountID(c.getAccount().getAccountID());
+                dto.setAuthorName(c.getAccount().getUsername());
+                dto.setAuthorAvatar(c.getAccount().getAvatar());
+            }
+            dto.setImageUrls(c.getAttachments());
+            dto.setLikes(c.getLikes() != null ? c.getLikes() : 0);
         }
 
-        dto.setImageUrls(c.getAttachments());
-        dto.setLikes(c.getLikes() != null ? c.getLikes() : 0);
         dto.setCreatedAt(c.getCreatedAt());
         return dto;
     }

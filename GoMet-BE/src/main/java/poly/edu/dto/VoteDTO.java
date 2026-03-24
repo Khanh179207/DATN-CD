@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class VoteDTO {
+public class VoteDTO {  
 
     // 🔥 Ép Spring Boot đọc chuẩn xác chữ "accountID" (viết hoa chữ ID)
     @JsonProperty("accountID")

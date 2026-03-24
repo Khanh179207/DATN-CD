@@ -79,7 +79,7 @@
                     ref="commentInputRef" 
                     v-model="newComment" 
                     @input="autoResize"
-                    placeholder="Góp ý thêm về gia vị, cách làm hoặc chia sẻ thành quả..."
+                    :placeholder="userRating > 0 && userRating < 3 ? 'Vui lòng chia sẻ lý do bạn chưa hài lòng về món ăn này (* Bắt buộc)' : 'Góp ý thêm về gia vị, cách làm hoặc chia sẻ thành quả...'"
                   ></textarea>
                   
                   <div class="comment-image-previews" v-if="selectedPhotos.length">
@@ -100,9 +100,9 @@
                     
                     <div class="action-buttons">
                       <button v-if="newComment.trim() || selectedPhotos.length || userRating > 0" class="btn-cancel-review" @click="clearForm" :disabled="isUploading">Hủy</button>
-                      <button class="btn-submit-review" @click="submitComment" :disabled="isUploading || (!newComment.trim() && selectedPhotos.length === 0 && userRating === 0)">
+                      <button class="btn-submit-review" @click="submitComment" :disabled="isSubmitDisabled">
                         <svg v-if="isUploading" class="spinner-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>
-                        <span>{{ isUploading ? 'Đang gửi...' : 'Gửi đánh giá' }}</span>
+                      <span>{{ isUploading ? 'Đang gửi...' : (hasUserRated ? 'Gửi bình luận' : 'Gửi đánh giá') }}</span>
                       </button>
                     </div>
                   </div>
@@ -137,7 +137,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, computed } from 'vue'
+import { ref, watch, onMounted, computed, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import { toast } from '@/composables/useToast'
@@ -208,6 +208,16 @@ const ratingDistribution = computed(() => {
   return [ (counts[4]/total)*100, (counts[3]/total)*100, (counts[2]/total)*100, (counts[1]/total)*100, (counts[0]/total)*100 ]
 })
 
+const isSubmitDisabled = computed(() => {
+  if (isUploading.value) return true;
+  const hasText = !!newComment.value.trim();
+  const hasPhoto = selectedPhotos.value.length > 0;
+  
+  if (userRating.value > 0 && userRating.value < 3 && !hasText) return true; // Dưới 3 sao bắt buộc phải nhập text
+  if (!hasText && !hasPhoto && userRating.value === 0) return true; // Trống rỗng thì không cho gửi
+  return false;
+});
+
 // --- TIỆN ÍCH FORM ---
 const autoResize = () => {
   if (commentInputRef.value) {
@@ -242,6 +252,31 @@ const fetchComments = async (postId) => {
     rawCommentsList.value = []
   } finally {
     isCommentsLoading.value = false
+
+    // Cuộn đến và làm nổi bật bình luận nếu có hash trên URL
+    const targetHash = route.hash || window.location.hash;
+    if (targetHash && targetHash.startsWith('#comment-')) {
+      let attempts = 0
+      const findAndScroll = setInterval(() => {
+        const element = document.querySelector(targetHash)
+        if (element) {
+          clearInterval(findAndScroll)
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          element.style.transition = 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)'
+          element.style.backgroundColor = '#fff7ed' // Màu cam siêu nhạt highlight
+          element.style.borderRadius = '16px'
+          element.style.boxShadow = '0 0 0 12px #fff7ed' // Phủ tràn viền bo góc
+          setTimeout(() => {
+            element.style.backgroundColor = 'transparent'
+            element.style.boxShadow = '0 0 0 0 transparent'
+          }, 3000) // Tắt highlight sau 3s
+        }
+        attempts++
+        if (attempts > 10) { // Thử tìm tối đa 10 lần (5 giây), nếu không có thì bỏ qua
+          clearInterval(findAndScroll)
+        }
+      }, 500)
+    }
   }
 }
 
@@ -302,13 +337,52 @@ async function loadPost(id) {
   }
 }
 
+// --- KIỂM TRA TỪ KHÓA CẤM ---
+let blacklistCache = null;
+let blacklistFetchFailed = false;
+const checkBlacklist = async (text) => {
+  if (!text || blacklistFetchFailed) return null;
+  try {
+    if (!blacklistCache) {
+      // Gọi API lấy danh sách blacklist (Nếu backend có endpoint public thì đổi URL ở đây)
+      const res = await axios.get('http://localhost:8080/api/admin/blacklist');
+      blacklistCache = res.data.map(item => item.word.toLowerCase());
+    }
+    const lowerText = text.toLowerCase();
+    for (const word of blacklistCache) {
+      if (lowerText.includes(word)) {
+        return word;
+      }
+    }
+    return null;
+  } catch (error) {
+    blacklistFetchFailed = true; // Lỗi (VD: user thường bị 403) thì bỏ qua, để Backend tự chặn
+    return null;
+  }
+};
+
 // --- LOGIC API ---
 const submitComment = async () => {
-  const content = newComment.value.trim()
+  let content = newComment.value.trim()
+  
+  if (userRating.value > 0 && userRating.value < 3 && !content) {
+    toast.warn('Vui lòng cho biết lý do bạn đánh giá dưới 3 sao!');
+    return;
+  }
+
   if (!content && selectedPhotos.value.length === 0 && userRating.value === 0) return
   if (!authStore.isAuthenticated) { toast.warn('Vui lòng đăng nhập!'); return }
   
   isUploading.value = true
+
+  // Kiểm tra từ khóa cấm ở Frontend
+  const badWord = await checkBlacklist(content);
+  if (badWord) {
+    // Tự động thay đổi nội dung nếu có từ cấm
+    content = "chỉ cần bạn có mặt , món ăn ngon hay dở không quan trọng!";
+    toast.info('Bình luận của bạn đã được hệ thống "hô biến" cho vui vẻ hơn!');
+  }
+
   try {
     const accountID = authStore.user.accountID || authStore.user.id; 
     const postID = post.value?.postID || post.value?.id;
@@ -329,31 +403,67 @@ const submitComment = async () => {
     await fetchComments(postID); 
     toast.success('Đã gửi đánh giá thành công!');
   } catch (err) { 
-    toast.error('Gửi đánh giá thất bại!') 
+    const msg = err.response?.data?.message || 'Gửi đánh giá thất bại!';
+    toast.error(msg);
   } finally { isUploading.value = false }
 }
 
 const handleSubmitReply = async ({ parentId, content }) => {
-  if (!content || !content.trim()) return
+  let textContent = content;
+  if (!textContent || !textContent.trim()) return
   if (!authStore.isAuthenticated) { toast.warn('Vui lòng đăng nhập!'); return }
+
+  // Kiểm tra từ khóa cấm cho các Phản hồi (Reply)
+  const badWord = await checkBlacklist(textContent);
+  if (badWord) {
+    textContent = "chỉ cần bạn có mặt , món ăn ngon hay dở không quan trọng!";
+    toast.info('Phản hồi của bạn đã được hệ thống "hô biến" cho vui vẻ hơn!');
+  }
+
   try {
     const payload = {
       postID: post.value?.postID || post.value?.id, accountID: authStore.user.accountID || authStore.user.id,
-      content: content.trim(), cmtid: parentId, rating: null, imageUrls: []
+      content: textContent.trim(), cmtid: parentId, rating: null, imageUrls: []
     };
     await axios.post('http://localhost:8080/api/comments', payload);
     await fetchComments(payload.postID); 
     toast.success('Đã gửi câu trả lời!');
-  } catch (err) { toast.error('Lỗi khi trả lời!') }
+  } catch (err) { 
+    const msg = err.response?.data?.message || 'Lỗi khi gửi câu trả lời!';
+    toast.error(msg);
+  }
 }
 
 const handleDeleteComment = async (commentId) => {
   if (!authStore.isAuthenticated) { toast.warn('Vui lòng đăng nhập!'); return; }
   try {
-    await axios.delete(`http://localhost:8080/api/comments/${commentId}`);
-    rawCommentsList.value = rawCommentsList.value.filter(c => (c.commentID || c.id) !== commentId);
-    toast.success('Đã xóa bình luận!');
-  } catch (err) { toast.error('Lỗi khi xóa bình luận!'); }
+    // Lấy ID của người dùng đang đăng nhập
+    const userId = authStore.user.accountID || authStore.user.id;
+    const isAdmin = authStore.user.isAdmin || authStore.user.role === 'ADMIN' || authStore.user.role === 'admin';
+    
+    // Tìm bình luận mục tiêu
+    const targetComment = rawCommentsList.value.find(c => (c.commentID || c.id) === commentId);
+    const isOwnComment = targetComment && (targetComment.accountID === userId || targetComment.userId === userId);
+
+    if (isAdmin && !isOwnComment) {
+      // Admin xóa bình luận của người khác -> Gọi API Admin và ẩn nội dung
+      await axios.delete(`http://localhost:8080/api/comments/${commentId}`);
+      if (targetComment) {
+        targetComment.content = "Đã ẩn do vi phạm quy tắc cộng đồng";
+        targetComment.imageUrls = []; // Ẩn luôn hình ảnh vi phạm (nếu có)
+      }
+      toast.success('Đã ẩn bình luận vi phạm!');
+    } else {
+      // 🔥 Gọi API dành cho User tự xóa
+      await axios.delete(`http://localhost:8080/api/comments/user/${commentId}?currentAccountID=${userId}`);
+      
+      // Xóa khỏi giao diện
+      rawCommentsList.value = rawCommentsList.value.filter(c => (c.commentID || c.id) !== commentId);
+      toast.success('Đã xóa bình luận!');
+    }
+  } catch (err) { 
+    toast.error(err.response?.data?.message || 'Lỗi khi xóa bình luận!'); 
+  }
 }
 
 const handleToggleLikeComment = async (comment) => {
@@ -381,12 +491,19 @@ const handleToggleLikeComment = async (comment) => {
 }
 
 watch(() => route.params.id, (id) => { 
-  if (id) { post.value = null; loadPost(id); window.scrollTo({ top: 0, behavior: 'smooth' }) } 
+  if (id) { 
+    post.value = null; 
+    loadPost(id); 
+    if (!window.location.hash) {
+      window.scrollTo({ top: 0, behavior: 'smooth' }) 
+    }
+  } 
 }, { immediate: true })
 
 onMounted(() => {
-  if (window.location.hash) {
-    const element = document.querySelector(window.location.hash)
+  const targetHash = route.hash || window.location.hash;
+  if (targetHash && !targetHash.startsWith('#comment-')) {
+    const element = document.querySelector(targetHash)
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' })
     }
