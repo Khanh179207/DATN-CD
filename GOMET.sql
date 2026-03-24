@@ -163,6 +163,8 @@ CREATE TABLE Comment (
     Likes INT DEFAULT 0,
     cmtid INT NULL,
     CreatedAt DATETIME DEFAULT GETDATE(),
+	 IsActive INT,
+
 
     CONSTRAINT FK_Comment_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
     CONSTRAINT FK_Comment_Post FOREIGN KEY (PostID) REFERENCES Post(PostID),
