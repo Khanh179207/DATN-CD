@@ -39,18 +39,31 @@ public class AdminAccountController {
         return accountService.save(dto);
     }
 
-    /** Ban an account (set isActive = 0) */
+    /** * 🔥 KHÓA TÀI KHOẢN (KÈM LÝ DO & THÔNG TIN ADMIN)
+     * Payload: { "adminId": 1, "adminName": "admin", "adminEmail": "admin@gmail.com", "reason": "Spam" }
+     */
     @PatchMapping("/{id}/ban")
-    public ResponseEntity<?> ban(@PathVariable Integer id) {
-        accountService.ban(id);
-        return ResponseEntity.ok(Map.of("message", "Account banned successfully"));
+    public ResponseEntity<?> ban(@PathVariable Integer id, @RequestBody Map<String, Object> payload) {
+        try {
+            Integer adminId = Integer.valueOf(payload.getOrDefault("adminId", 0).toString());
+            String adminName = (String) payload.getOrDefault("adminName", "Admin Ẩn Danh");
+            String adminEmail = (String) payload.getOrDefault("adminEmail", "Không có Email");
+            String reason = (String) payload.getOrDefault("reason", "Không có lý do");
+
+            // 🔥 Gọi sang Service với ĐỦ 5 tham số
+            accountService.ban(id, adminId, adminName, adminEmail, reason);
+            return ResponseEntity.ok(Map.of("message", "Đã khóa tài khoản và lưu nhật ký thành công!"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Lỗi: " + e.getMessage()));
+        }
     }
 
-    /** Unban an account (set isActive = 1) */
+    /** * 🔥 MỞ KHÓA TÀI KHOẢN
+     */
     @PatchMapping("/{id}/unban")
     public ResponseEntity<?> unban(@PathVariable Integer id) {
         accountService.unban(id);
-        return ResponseEntity.ok(Map.of("message", "Account unbanned successfully"));
+        return ResponseEntity.ok(Map.of("message", "Đã mở khóa tài khoản thành công!"));
     }
 
     @DeleteMapping("/{id}")

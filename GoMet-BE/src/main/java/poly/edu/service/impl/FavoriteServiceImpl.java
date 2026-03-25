@@ -75,10 +75,8 @@ public class FavoriteServiceImpl implements FavoriteService {
             // Lấy chính xác LocalDateTime từ Post để RecipeCard tính "5 phút trước"
             dto.setCreatedAt(p.getCreatedAt());
 
-            // 🔥 2. FIX LỖI LIKE VỀ 0
-            // Đếm tổng số lượt like thực tế của bài viết này trong bảng Likes
-            long totalLikes = likesDAO.countByPost_PostID(p.getPostID());
-            dto.setFavoriteCount((int) totalLikes);
+            // 🔥 Lấy trực tiếp từ field LikeCount do SQL Trigger đã tự động tính toán
+            dto.setFavoriteCount(p.getLikeCount() != null ? p.getLikeCount() : 0);
 
             // 🔥 3. FIX LỖI MẤT TIM ĐỎ (TRẠNG THÁI LIKE)
             // Kiểm tra xem user đang xem (accountID) đã từng nhấn Like bài này chưa

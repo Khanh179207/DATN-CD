@@ -179,9 +179,11 @@
               <div class="profile-stats-box">
                 <div class="p-stat"><strong>{{ detailModal.user.point ?? 0 }}</strong><span>Điểm số</span></div>
                 <div class="stat-divider"></div>
-                <div class="p-stat"><strong>{{ detailModal.user.postCount ?? detailModal.stats?.totalPosts ?? 0 }}</strong><span>Bài viết</span></div>
+                <div class="p-stat"><strong>{{ detailModal.user.postCount ?? 0 }}</strong><span>Bài viết</span></div>
                 <div class="stat-divider"></div>
-                <div class="p-stat"><strong>{{ detailModal.stats?.totalFollowers ?? 0 }}</strong><span>Followers</span></div>
+                <div class="p-stat"><strong>{{ detailModal.user.totalLikes ?? 0 }}</strong><span>Lượt thích</span></div>
+                <div class="stat-divider"></div>
+                <div class="p-stat"><strong>{{ detailModal.user.followerCount ?? 0 }}</strong><span>Followers</span></div>
               </div>
 
               <div class="profile-details">
@@ -196,6 +198,30 @@
                 <div v-if="detailModal.user.bio" class="p-detail-bio">
                   <span class="lbl"><i class="fa-solid fa-quote-left"></i> Tiểu sử</span>
                   <p>{{ detailModal.user.bio }}</p>
+                </div>
+                
+                <div v-if="!detailModal.user.isActive" class="p-detail-ban-reason">
+                  <div class="ban-header">
+                    <i class="fa-solid fa-triangle-exclamation"></i> 
+                    <span>Thông tin khóa tài khoản</span>
+                  </div>
+                  <div class="ban-info-grid">
+                    <div class="ban-info-item">
+                      <span class="info-lbl">Lý do khóa:</span>
+                      <span class="info-val reason-text">{{ detailModal.user.banReason || 'Không có lý do cụ thể (hoặc chưa cập nhật)' }}</span>
+                    </div>
+                    <div v-if="detailModal.user.bannedByName || detailModal.user.bannedByEmail || detailModal.user.bannedBy" class="ban-info-item">
+                      <span class="info-lbl">Người thực hiện:</span>
+                      <div class="info-val admin-info">
+                        <span class="admin-name"><i class="fa-solid fa-shield-halved"></i> {{ detailModal.user.bannedByName || detailModal.user.bannedBy || 'Admin' }}</span>
+                        <span v-if="detailModal.user.bannedByEmail" class="admin-email">{{ detailModal.user.bannedByEmail }}</span>
+                      </div>
+                    </div>
+                    <div v-if="detailModal.user.bannedAt" class="ban-info-item">
+                       <span class="info-lbl">Thời gian khóa:</span>
+                       <span class="info-val time-text">{{ new Date(detailModal.user.bannedAt).toLocaleString('vi-VN') }}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -226,6 +252,19 @@
           </div>
           <h3>{{ banModal.action === 'ban' ? 'Khóa tài khoản?' : 'Mở khóa tài khoản?' }}</h3>
           <p>Xác nhận {{ banModal.action === 'ban' ? 'khóa' : 'khôi phục' }} quyền truy cập của <strong>{{ banModal.username }}</strong>?</p>
+          
+          <div v-if="banModal.action === 'ban'" class="reason-input-group">
+            <label for="banReason">Lý do khóa (bắt buộc):</label>
+            <textarea 
+              id="banReason" 
+              v-model="banModal.reason" 
+              placeholder="Vui lòng nhập lý do vi phạm..." 
+              rows="3" 
+              class="reason-textarea"
+            ></textarea>
+            <span v-if="banModal.showError" class="error-msg">Bạn phải nhập lý do khóa!</span>
+          </div>
+
           <div class="action-btns">
             <button class="btn-cancel" @click="banModal.show = false">Hủy bỏ</button>
             <button class="btn-confirm" :class="banModal.action === 'ban' ? 'btn-danger' : 'btn-success'" @click="confirmBanAction">
@@ -243,6 +282,9 @@
 import { ref, computed, onMounted } from 'vue'
 import api from '@/services/api'
 import { toast } from '@/composables/useToast'
+import { useAuthStore } from '@/stores/auth'
+
+const authStore = useAuthStore()
 
 const users = ref([])
 const isLoading = ref(true)
@@ -256,10 +298,9 @@ const filterTabs = [
   { label: 'Bị khóa', value: 'BANNED' }
 ]
 
-const banModal = ref({ show: false, action: 'ban', accountID: null, username: '', userRef: null })
-const detailModal = ref({ show: false, loading: false, user: null, stats: null })
+const banModal = ref({ show: false, action: 'ban', accountID: null, username: '', userRef: null, reason: '', showError: false })
+const detailModal = ref({ show: false, loading: false, user: null })
 
-// --- HELPER MÀU SẮC DỰA TRÊN DATA TRẢ VỀ ---
 const getAvatarClass = (user) => {
   if (user.role === 'ADMIN') return 'ring-admin'
   if (user.isPremium === 1 || user.isPremium === true) return 'ring-premium'
@@ -277,7 +318,6 @@ const getCoverClass = (user) => {
   return 'cover-normal'
 }
 
-// --- COMPUTED THỐNG KÊ (Fix theo Data mẫu của sếp) ---
 const premiumCount = computed(() => users.value.filter(u => u.isPremium === 1 || u.isPremium === true).length)
 const bannedCount = computed(() => users.value.filter(u => u.isActive === 0 || u.isActive === false).length)
 
@@ -302,7 +342,6 @@ const fetchUsers = async () => {
   isLoading.value = true
   try {
     const res = await api.get('/admin/accounts')
-    // Ánh xạ lại dữ liệu từ API để xài trên frontend
     users.value = res.data.map(u => ({
       ...u,
       role: u.role ? String(u.role).toUpperCase() : (u.isAdmin ? 'ADMIN' : 'USER'),
@@ -331,21 +370,39 @@ const askBanAction = (user) => {
     toast.error('Không thể thao tác trên tài khoản Admin!');
     return;
   }
-  banModal.value = { show: true, action: user.isActive ? 'ban' : 'unban', accountID: user.accountID, username: user.username, userRef: user }
+  banModal.value = { show: true, action: user.isActive ? 'ban' : 'unban', accountID: user.accountID, username: user.username, userRef: user, reason: '', showError: false }
 }
 
 const confirmBanAction = async () => {
-  const { action, accountID, userRef } = banModal.value
-  banModal.value.show = false
+  const { action, accountID, userRef, reason } = banModal.value
+  
+  if (action === 'ban' && !reason.trim()) {
+    banModal.value.showError = true;
+    return;
+  }
+
   try {
-    await api.patch(`/admin/accounts/${accountID}/${action}`)
-    userRef.isActive = action === 'unban'
+    if (action === 'ban') {
+      // 🔥 BẮN ĐỦ THÔNG TIN SANG BACKEND NHƯ ĐÃ THIẾT KẾ
+      await api.patch(`/admin/accounts/${accountID}/ban`, {
+        adminId: authStore.user?.accountID || authStore.user?.id || 0,
+        adminName: authStore.user?.username || authStore.user?.fullName || 'Admin',
+        adminEmail: authStore.user?.email || 'Không có email', // THÊM DÒNG NÀY ĐỂ ĐỒNG BỘ
+        reason: reason.trim()
+      });
+      userRef.isActive = false;
+    } else {
+      await api.patch(`/admin/accounts/${accountID}/unban`);
+      userRef.isActive = true;
+    }
+    
+    banModal.value.show = false;
     toast.success('Cập nhật trạng thái thành công!')
+    fetchUsers() // Lấy lại danh sách để cập nhật dữ liệu người khóa
   } catch (err) {
-    toast.error(`Thao tác thất bại!`)
+    toast.error(`Thao tác thất bại! ${err.response?.data?.message || ''}`)
   }
 }
-
 const deleteUser = async (user) => {
   if (user.role === 'ADMIN') {
     toast.error('Không thể xóa Quản trị viên!');
@@ -361,22 +418,20 @@ const deleteUser = async (user) => {
   }
 }
 
+// 🔥 NÂNG CẤP HÀM OPENDETAIL: Lấy chuẩn DTO từ Backend trả về
 const openDetail = async (user) => {
-  detailModal.value = { show: true, loading: true, user: null, stats: null }
+  detailModal.value = { show: true, loading: true, user: null }
   try {
-    const [userRes, statsRes] = await Promise.allSettled([
-      api.get(`/admin/accounts/${user.accountID}`),
-      api.get(`/api/users/${user.accountID}/stats`)
-    ])
-    const u = userRes.status === 'fulfilled' ? userRes.value.data : user
+    const res = await api.get(`/admin/accounts/${user.accountID}`)
+    const u = res.data;
     detailModal.value.user = {
       ...u,
       role: u.role ? String(u.role).toUpperCase() : (u.isAdmin ? 'ADMIN' : 'USER'),
       isActive: u.isActive === 1 || u.isActive === true,
       isPremium: u.isPremium === 1 || u.isPremium === true
     }
-    if (statsRes.status === 'fulfilled') detailModal.value.stats = statsRes.value.data
   } catch {
+    // Nếu API lỗi, lấy tạm data cũ truyền vào
     detailModal.value.user = { ...user }
   } finally {
     detailModal.value.loading = false
@@ -391,40 +446,36 @@ onMounted(fetchUsers)
 
 .page-container { padding: 32px; font-family: 'Inter', sans-serif; background: #fafafa; min-height: 100vh; color: #1e293b; }
 
-/* ── HEADER ── */
-.page-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; }
+.page-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
 .title { font-size: 1.5rem; font-weight: 700; color: #0f172a; margin: 0 0 6px; }
 .subtitle { color: #64748b; margin: 0; font-size: 0.9rem; }
 .btn-refresh { background: white; border: 1px solid #e2e8f0; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; color: #475569; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
 .btn-refresh:hover:not(:disabled) { background: #f8fafc; color: #0f172a; }
 
-/* ── THỐNG KÊ ── */
-.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 24px; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 24px; }
 .stat-card { background: white; padding: 20px; border-radius: 12px; display: flex; align-items: center; gap: 16px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.02); transition: 0.2s; }
 .stat-icon-wrapper { width: 52px; height: 52px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
 .bg-blue-light { background: #eff6ff; } .text-blue { color: #3b82f6; }
 .bg-orange-light { background: #fffbeb; } .text-orange { color: #f59e0b; }
-.bg-red-light { background: #fef2f2; } .text-red { color: #ef4444; }
+.bg-red-light { background: #fef2f2; } .text-red { color: #ef4444; }  
 .stat-info { display: flex; flex-direction: column; }
 .stat-value { font-size: 1.6rem; font-weight: 700; color: #0f172a; line-height: 1.2; }
 .stat-label { font-size: 0.85rem; color: #64748b; font-weight: 500; }
 .stat-danger { border: 1px solid #fecaca; background: #fffcfc; }
 .stat-danger .stat-value { color: #dc2626; }
 
-/* ── BỘ LỌC ── */
-.filter-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.tabs { display: flex; gap: 4px; background: #f1f5f9; padding: 4px; border-radius: 10px; border: 1px solid #e2e8f0; }
+.filter-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 16px; }
+.tabs { display: flex; flex-wrap: wrap; gap: 4px; background: #f1f5f9; padding: 4px; border-radius: 10px; border: 1px solid #e2e8f0; }
 .filter-tab { background: transparent; border: none; padding: 8px 18px; border-radius: 8px; font-weight: 600; color: #475569; cursor: pointer; transition: 0.2s; font-size: 0.85rem; font-family: inherit; }
 .filter-tab.active { background: white; color: #0f172a; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
 
-.search-box { position: relative; display: flex; align-items: center; width: 300px; }
+.search-box { position: relative; display: flex; align-items: center; width: 300px; max-width: 100%; flex: 1 1 300px; }
 .search-icon { position: absolute; left: 14px; color: #94a3b8; font-size: 0.9rem; }
 .search-input { width: 100%; padding: 10px 32px 10px 38px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; background: white; font-family: inherit; font-size: 0.9rem; }
 .search-input:focus { border-color: #ea580c; box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.1); }
 
-/* ── BẢNG DỮ LIỆU & AVATAR FIX LỖI ── */
-.table-wrapper { background: white; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.03); overflow: hidden; }
-.data-table { width: 100%; border-collapse: collapse; }
+.table-wrapper { background: white; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.03); overflow-x: auto; }
+.data-table { width: 100%; border-collapse: collapse; min-width: 900px; }
 .data-table th { background: #f8fafc; padding: 14px 20px; text-align: left; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; }
 .data-table td { padding: 14px 20px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
 .table-row:hover { background: #f8fafc; }
@@ -432,7 +483,6 @@ onMounted(fetchUsers)
 
 .user-cell { display: flex; align-items: center; gap: 12px; }
 
-/* 🔥 AVATAR RINGS FIX */
 .avatar-ring {
   position: relative;
   display: inline-flex; 
@@ -441,13 +491,11 @@ onMounted(fetchUsers)
 }
 .avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid white; object-fit: cover; }
 
-/* CSS Viền phân cấp */
 .ring-admin { background: linear-gradient(135deg, #3b82f6, #8b5cf6); box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3); }
 .ring-premium { background: linear-gradient(135deg, #f59e0b, #ea580c); box-shadow: 0 2px 8px rgba(234, 88, 12, 0.3); }
 .ring-normal { background: transparent; padding: 0; }
-.ring-normal .avatar { border: 1px solid #e2e8f0; } /* Trả lại viền mỏng cho user thường */
+.ring-normal .avatar { border: 1px solid #e2e8f0; } 
 
-/* Huy hiệu góc */
 .badge-corner { position: absolute; bottom: -2px; right: -2px; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.55rem; color: white; border: 2px solid white; }
 .corner-admin { background: #8b5cf6; }
 .corner-premium { background: #ea580c; }
@@ -457,7 +505,6 @@ onMounted(fetchUsers)
 .sub-name { font-size: 0.8rem; color: #64748b; }
 .text-admin { background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-/* Select Box & Trạng thái */
 .role-select { appearance: none; padding: 4px 12px; border-radius: 6px; font-weight: 600; font-size: 0.8rem; cursor: pointer; border: 1px solid transparent; text-align: center; }
 .select-admin { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; } 
 .select-user { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
@@ -470,7 +517,6 @@ onMounted(fetchUsers)
 .point-badge { color: #64748b; font-weight: 600; font-size: 0.85rem; }
 .icon-star { color: #f59e0b; font-size: 0.8rem; }
 
-/* 🔥 ACTIONS (NÚT TO RÕ, CÓ MÀU) */
 .actions { display: flex; gap: 8px; justify-content: center; }
 .btn-action { width: 34px; height: 34px; border-radius: 8px; border: 1px solid #e2e8f0; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; transition: 0.2s; background: white; color: #64748b; }
 .btn-action:hover:not(.disabled) { transform: translateY(-2px); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
@@ -480,8 +526,7 @@ onMounted(fetchUsers)
 .delete { color: #ef4444; } .delete:hover:not(.disabled) { background: #fef2f2; border-color: #fecaca; }
 .btn-action.disabled { opacity: 0.4; cursor: not-allowed; background: #f8fafc; }
 
-/* ── PROFILE MODAL CÓ NÚT XEM TRANG CÁ NHÂN ── */
-.profile-card { background: white; width: 420px; border-radius: 16px; overflow: hidden; position: relative; box-shadow: 0 25px 50px rgba(0,0,0,0.25); }
+.profile-card { background: white; width: 420px; max-width: 95vw; border-radius: 16px; overflow-x: hidden; overflow-y: auto; max-height: 90vh; position: relative; box-shadow: 0 25px 50px rgba(0,0,0,0.25); }
 .detail-close { position: absolute; top: 12px; right: 12px; width: 30px; height: 30px; border-radius: 8px; background: rgba(0,0,0,0.4); color: white; border: none; cursor: pointer; z-index: 10; }
 .profile-cover { height: 110px; position: relative; }
 .cover-normal { background: #cbd5e1; }
@@ -515,7 +560,45 @@ onMounted(fetchUsers)
 .p-detail-bio { margin-top: 12px; background: #f8fafc; padding: 12px; border-radius: 8px; font-size: 0.85rem; color: #475569; border: 1px dashed #cbd5e1; }
 .p-detail-bio .lbl { display: block; color: #64748b; font-weight: 600; margin-bottom: 4px; font-size: 0.8rem; }
 
-/* Nút bấm xem trang cá nhân */
+/* --- HIỂN THỊ THÔNG TIN BAN RÕ RÀNG HƠN --- */
+.p-detail-ban-reason { 
+  margin-top: 16px; 
+  background: #fff5f5; 
+  border-radius: 12px; 
+  border: 1px solid #fecaca; 
+  overflow: hidden;
+}
+.ban-header { 
+  background: #fef2f2; 
+  padding: 10px 14px; 
+  color: #dc2626; 
+  font-weight: 700; 
+  font-size: 0.85rem; 
+  display: flex; 
+  align-items: center; 
+  gap: 8px; 
+  border-bottom: 1px solid #fee2e2;
+}
+.ban-info-grid { padding: 12px 14px; display: flex; flex-direction: column; gap: 12px; }
+.ban-info-item { display: flex; flex-direction: column; gap: 4px; }
+.info-lbl { font-size: 0.75rem; color: #991b1b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+.info-val { font-size: 0.9rem; color: #7f1d1d; line-height: 1.4; }
+.reason-text { font-style: italic; background: #fff; padding: 8px 10px; border-radius: 6px; border: 1px dashed #fca5a5; }
+.admin-info { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.admin-name { 
+  font-weight: 700; 
+  color: #b91c1c; 
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fee2e2;
+  padding: 4px 12px;
+  border-radius: 100px;
+  font-size: 0.85rem;
+}
+.admin-email { font-weight: 500; color: #991b1b; font-size: 0.8rem; opacity: 0.9; }
+.time-text { font-weight: 600; color: #991b1b; font-size: 0.85rem; }
+
 .btn-full-profile {
   display: flex; justify-content: center; align-items: center; gap: 8px;
   width: 100%; padding: 12px; margin-bottom: 12px;
@@ -529,8 +612,7 @@ onMounted(fetchUsers)
 .btn-profile-ban.ok { background: #f0fdf4; color: #16a34a; border-color: #dcfce7; } .btn-profile-ban.ok:hover { background: #16a34a; color: white; }
 .admin-protect-msg { color: #64748b; font-size: 0.85rem; padding: 12px; background: #f1f5f9; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; }
 
-/* ── ACTION MODAL ── */
-.action-modal { background: white; padding: 28px; border-radius: 16px; width: 380px; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.15); }
+.action-modal { background: white; padding: 28px; border-radius: 16px; width: 380px; max-width: 95vw; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.15); }
 .action-icon { width: 56px; height: 56px; border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
 .bg-red-light { background: #fef2f2; } .text-red { color: #dc2626; }
 .bg-green-light { background: #f0fdf4; } .text-green { color: #16a34a; }
@@ -547,4 +629,48 @@ onMounted(fetchUsers)
 .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.6); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(2px); }
 .animate-enter { animation: fadeUp 0.4s ease-out; }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+.reason-input-group {
+  text-align: left;
+  margin-bottom: 20px;
+}
+.reason-input-group label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 6px;
+}
+.reason-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  outline: none;
+  font-family: inherit;
+  font-size: 0.9rem;
+  resize: none;
+  background: #f8fafc;
+  transition: 0.2s;
+}
+.reason-textarea:focus {
+  border-color: #ef4444;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+.error-msg {
+  display: block;
+  color: #dc2626;
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+@media (max-width: 768px) {
+  .page-container { padding: 16px; }
+  .profile-stats-box { flex-wrap: wrap; gap: 12px; justify-content: space-between; }
+  .p-stat { flex: 1 1 40%; align-items: center; }
+  .stat-divider { display: none; }
+  .p-detail-item { flex-direction: column; align-items: flex-start; gap: 4px; }
+}
 </style>

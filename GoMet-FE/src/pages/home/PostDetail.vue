@@ -337,27 +337,15 @@ async function loadPost(id) {
   }
 }
 
-// --- KIỂM TRA TỪ KHÓA CẤM ---
-let blacklistCache = null;
-let blacklistFetchFailed = false;
-const checkBlacklist = async (text) => {
-  if (!text || blacklistFetchFailed) return null;
+// --- KIỂM TRA TỪ KHÓA CẤM (GỌI BACKEND ĐỂ BẢO MẬT) ---
+const checkContentPolicy = async (text) => {
+  if (!text) return false;
   try {
-    if (!blacklistCache) {
-      // Gọi API lấy danh sách blacklist (Nếu backend có endpoint public thì đổi URL ở đây)
-      const res = await axios.get('http://localhost:8080/api/admin/blacklist');
-      blacklistCache = res.data.map(item => item.word.toLowerCase());
-    }
-    const lowerText = text.toLowerCase();
-    for (const word of blacklistCache) {
-      if (lowerText.includes(word)) {
-        return word;
-      }
-    }
-    return null;
+    const res = await axios.post('http://localhost:8080/api/admin/blacklist/check', { content: text });
+    return res.data.hasBadWord; 
   } catch (error) {
-    blacklistFetchFailed = true; // Lỗi (VD: user thường bị 403) thì bỏ qua, để Backend tự chặn
-    return null;
+    console.warn("Lỗi kiểm duyệt nội dung:", error);
+    return false;
   }
 };
 
@@ -376,11 +364,11 @@ const submitComment = async () => {
   isUploading.value = true
 
   // Kiểm tra từ khóa cấm ở Frontend
-  const badWord = await checkBlacklist(content);
-  if (badWord) {
-    // Tự động thay đổi nội dung nếu có từ cấm
-    content = "chỉ cần bạn có mặt , món ăn ngon hay dở không quan trọng!";
-    toast.info('Bình luận của bạn đã được hệ thống "hô biến" cho vui vẻ hơn!');
+  const isViolating = await checkContentPolicy(content);
+  if (isViolating) {
+    toast.error('Bình luận vi phạm tiêu chuẩn cộng đồng!');
+    isUploading.value = false;
+    return;
   }
 
   try {
@@ -414,10 +402,10 @@ const handleSubmitReply = async ({ parentId, content }) => {
   if (!authStore.isAuthenticated) { toast.warn('Vui lòng đăng nhập!'); return }
 
   // Kiểm tra từ khóa cấm cho các Phản hồi (Reply)
-  const badWord = await checkBlacklist(textContent);
-  if (badWord) {
-    textContent = "chỉ cần bạn có mặt , món ăn ngon hay dở không quan trọng!";
-    toast.info('Phản hồi của bạn đã được hệ thống "hô biến" cho vui vẻ hơn!');
+  const isViolating = await checkContentPolicy(textContent);
+  if (isViolating) {
+    toast.error('Nội dung vi phạm tiêu chuẩn cộng đồng!');
+    return;
   }
 
   try {

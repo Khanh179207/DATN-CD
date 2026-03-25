@@ -8,7 +8,7 @@
             <i class="fa-solid fa-comments"></i>
           </div>
           <div>
-            <h2 class="title">Kiểm Duyệt Tương Tác</h2>
+            <h2 class="title">Quản lý bình luận</h2>
             <p class="subtitle">Quản lý bình luận và hình ảnh từ cộng đồng</p>
           </div>
         </div>

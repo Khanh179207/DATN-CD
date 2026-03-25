@@ -22,24 +22,29 @@ GO
 	-- 1. NHÓM BẢNG CHA (MASTER TABLES)
 	-- ==========================================
 
-	CREATE TABLE Account (
-		AccountID INT IDENTITY(1,1) PRIMARY KEY,
-		Username NVARCHAR(100) NOT NULL,
-		Email NVARCHAR(255) NOT NULL,
-		Password NVARCHAR(255) NOT NULL,
-		Avatar NVARCHAR(255),
-		Token NVARCHAR(255) NULL, 
-		Bio NVARCHAR(MAX) NULL,
-		Point INT DEFAULT 0,
-		isAdmin INT DEFAULT 0,
-		isPremium INT DEFAULT 0,
-		isActive INT DEFAULT 1,
-		CreatedAt DATETIME DEFAULT GETDATE(),
-		UpdatedAt DATETIME,
-		DeletedAt DATETIME
+CREATE TABLE Account (
+    AccountID INT IDENTITY(1,1) PRIMARY KEY,
+    Username NVARCHAR(100) NOT NULL,
+    Email NVARCHAR(255) NOT NULL,
+    Password NVARCHAR(255) NOT NULL,
+    Avatar NVARCHAR(255),
+    Token NVARCHAR(255) NULL, 
+    Bio NVARCHAR(MAX) NULL,
+    Point INT DEFAULT 0,
+    isAdmin INT DEFAULT 0,
+    isPremium INT DEFAULT 0,
+    isActive INT DEFAULT 1,
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    UpdatedAt DATETIME,
+    DeletedAt DATETIME,   
 	
-	);
-	GO
+    BannedBy INT NULL,                 -- Lưu ID của Admin
+    BannedByName NVARCHAR(255) NULL,   -- MỚI THÊM: Lưu thẳng tên Admin (hứng từ Frontend)
+    BannedByEmail NVARCHAR(255) NULL,  -- MỚI THÊM: Lưu thẳng Email Admin (hứng từ Frontend)
+    BanReason NVARCHAR(MAX) NULL,      -- Lưu lý do khóa (Admin tự gõ vào)
+    BannedAt DATETIME NULL             -- Đổi dấu chấm phẩy (;) thành bình thường
+);                                     -- Bổ sung dấu đóng ngoặc tròn và chấm phẩy ở đây
+GO
 
 -- Sửa lại bảng Category cho khớp với các bảng khác của sếp
 CREATE TABLE Category (
@@ -416,6 +421,15 @@ CREATE TABLE BlacklistWord (
     Word NVARCHAR(100) NOT NULL UNIQUE,
     CreatedAt DATETIME DEFAULT GETDATE()
 );
+GO	
+
+CREATE TABLE SystemConfig (
+    ConfigKey VARCHAR(50) PRIMARY KEY,  -- Mã cấu hình (Ví dụ: HERO_BANNER, PREMIUM_PRICE_1)
+    ConfigValue NVARCHAR(MAX) NOT NULL, -- Giá trị (Link ảnh, Số tiền, Đoạn text...)
+    ConfigGroup NVARCHAR(50),           -- Nhóm để dễ phân loại (GIAO_DIEN, GOI_CUOC, QUANG_CAO)
+    Description NVARCHAR(255),          -- Chú thích cho Admin dễ hiểu
+    UpdatedAt DATETIME DEFAULT GETDATE()
+);
 GO
 
 
@@ -504,9 +518,9 @@ GO
 -- 4. BÀI VIẾT (Gồm bài đã duyệt, chưa duyệt và bài tham gia sự kiện)
 -- ==========================================================
 INSERT INTO Post (AccountID, CategoryID, EventID, Title, Description, Ingredients, Media, Level, CookingTime, Views, LikeCount, isActive, isApproved, CreatedAt) VALUES
-(2, 3, NULL, N'Steak Bò Mỹ Sốt Vang Đỏ', N'Món Âu sang trọng cho tối lãng mạn.', N'Bò Mỹ 300g, Rượu vang đỏ, Lá hương thảo, Bơ.', 'https://images.unsplash.com/photo-1546241072-48010ad28c2c', 3, 45, 1500, 120, 1, 1, DATEADD(HOUR, -2, GETDATE())),
-(3, 1, 1, N'Phở Bò Nam Định Chuẩn Vị', N'Nước dùng trong, ngọt thanh từ xương.', N'Bánh phở, Xương ống, Gừng, Quế, Hồi.', 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43', 2, 180, 850, 45, 1, 1, DATEADD(DAY, -1, GETDATE())),
-(4, 5, NULL, N'Bánh Tiramisu Không Cần Lò', N'Công thức siêu dễ cho người mới.', N'Bánh sâm panh, Cà phê, Mascarpone.', 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9', 1, 30, 320, 15, 1, 1, DATEADD(MINUTE, -30, GETDATE())),
+(2, 3, NULL, N'Steak Bò Mỹ Sốt Vang Đỏ', N'Món Âu sang trọng cho tối lãng mạn.', N'Bò Mỹ 300g, Rượu vang đỏ, Lá hương thảo, Bơ.', 'https://images.unsplash.com/photo-1546241072-48010ad28c2c', 3, 45, 1500, 0, 1, 1, DATEADD(HOUR, -2, GETDATE())),
+(3, 1, 1, N'Phở Bò Nam Định Chuẩn Vị', N'Nước dùng trong, ngọt thanh từ xương.', N'Bánh phở, Xương ống, Gừng, Quế, Hồi.', 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43', 2, 180, 850, 0, 1, 1, DATEADD(DAY, -1, GETDATE())),
+(4, 5, NULL, N'Bánh Tiramisu Không Cần Lò', N'Công thức siêu dễ cho người mới.', N'Bánh sâm panh, Cà phê, Mascarpone.', 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9', 1, 30, 320, 0, 1, 1, DATEADD(MINUTE, -30, GETDATE())),
 (3, 4, 2, N'Gỏi Cuốn Chay Ngũ Sắc', N'Món chay thanh đạm, bắt mắt.', N'Bánh tráng, Bún, Đậu phụ, Rau thơm.', 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd', 1, 20, 210, 8, 1, 1, '2026-03-10'),
 (5, 1, NULL, N'Bún Chả Hà Nội', N'Đang chờ phê duyệt...', N'Thịt ba chỉ, bún, mắm.', 'https://images.unsplash.com/photo-1562967914-6c189891c92a', 2, 60, 5, 0, 1, 0, GETDATE());
 GO
@@ -610,4 +624,4 @@ GO
 
 	SELECT * FROM Comment;
 
-
+	SELECT * FROM Follow;
