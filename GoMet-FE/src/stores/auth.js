@@ -43,13 +43,30 @@ export const useAuthStore = defineStore('auth', () => {
     const isBanned = event.detail?.isBanned
 
     if (isBanned) {
-      toast.error('🚨 TÀI KHOẢN BỊ KHÓA: Bạn đã bị đăng xuất do vi phạm tiêu chuẩn cộng đồng GOMET!', { timeout: 8000 })
+      // Truy xuất thông tin khóa tài khoản (Nếu API có gửi kèm theo)
+      const banReason = event.detail?.banReason || event.detail?.reason || 'Vi phạm tiêu chuẩn cộng đồng';
+      const bannedBy = event.detail?.bannedByName || event.detail?.bannedBy || 'Quản trị viên';
+      let timeStr = '';
+      let rawTimeStr = '';
+      if (event.detail?.bannedAt) {
+         const d = new Date(event.detail.bannedAt);
+         rawTimeStr = `${d.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})} ngày ${d.toLocaleDateString('vi-VN')}`;
+         timeStr = ` vào lúc ${rawTimeStr}`;
+      }
+      const fullMsg = `Tài khoản của bạn đã bị khóa${timeStr} bởi ${bannedBy}. Lý do: ${banReason}.`;
+      
+      setTimeout(() => {
+        // Thử kích hoạt mở UI Đăng nhập trước
+        window.dispatchEvent(new CustomEvent('ui:open-login')) 
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('auth:banned-login-prompt', { detail: { msg: fullMsg, details: { reason: banReason, by: bannedBy, time: rawTimeStr } } }))
+        }, 200)
+      }, 300)
     } else {
       toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.')
+      // Nếu lỗi token bình thường thì mới cho đẩy về trang chủ
+      router.push('/').catch(() => {})
     }
-
-    // 3. Đá về trang chủ hoặc trang login
-    router.push('/login').catch(() => {})
   })
 
   // 2. GETTERS
@@ -102,15 +119,14 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem('user', JSON.stringify(user.value))
   }
 
-  async function login(email, password) {
+async function login(email, password) {
     try {
       const data = await authService.login(email, password)
       setUser(data)
       return user.value.role
-   } catch (err) {
-      // 🔥 TRẢ NGUYÊN LỖI GỐC CHO GIAO DIỆN XỬ LÝ
-      const rawError = err.response?.data?.message || err.message || 'Incorrect email or password'
-      throw new Error(rawError) 
+    } catch (err) {
+      // 🔥 SỬA CHỖ NÀY: Ném nguyên object lỗi ra ngoài để AuthModal còn hứng được data
+      throw err 
     }
   }
 

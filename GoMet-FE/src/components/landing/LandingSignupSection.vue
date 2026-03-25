@@ -101,8 +101,8 @@
         <div class="auth-card glass-panel">
           
           <div class="auth-tabs" v-if="activeTab !== 'forgot-password'">
-            <button class="tab-btn" :class="{ active: activeTab === 'login' }" @click="activeTab = 'login'">Đăng Nhập</button>
-            <button class="tab-btn" :class="{ active: activeTab === 'register' }" @click="activeTab = 'register'">Đăng Ký</button>
+            <button class="tab-btn" :class="{ active: activeTab === 'login' }" @click="switchTab('login')">Đăng Nhập</button>
+            <button class="tab-btn" :class="{ active: activeTab === 'register' }" @click="switchTab('register')">Đăng Ký</button>
           </div>
 
           <div class="form-content">
@@ -154,6 +154,43 @@
                   <label class="remember"><input type="checkbox"> Ghi nhớ tôi</label>
                   <a href="#" class="forgot-pass" @click.prevent="activeTab = 'forgot-password'; forgotState = 'idle'; forgotError = ''; forgotIdentifier = '';">Quên mật khẩu?</a>
                 </div>
+
+                <!-- BANNED ALERT BOX LUXURY -->
+                <transition name="fade-slide" mode="out-in">
+                  <div v-if="isBannedBoxVisible" key="banned-local" class="banned-alert-box">
+                    <button type="button" class="btn-close-alert" @click="closeBannedAlert" title="Đóng">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                    <div class="banned-header">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                      <h4>TÀI KHOẢN BỊ KHÓA</h4>
+                    </div>
+                    <div class="banned-body">
+                      <template v-if="bannedDetails">
+                        <div class="b-row" v-if="bannedDetails.time"><span class="b-lbl">Thời gian:</span> <span class="b-val">{{ bannedDetails.time }}</span></div>
+                        <div class="b-row"><span class="b-lbl">Lý do khóa:</span> <span class="b-val reason-text">{{ bannedDetails.reason }}</span></div>
+                      </template>
+                      <template v-else>
+                        <p class="banned-msg">{{ loginError }}</p>
+                      </template>
+                    </div>
+                    <div class="banned-footer">
+                      <button type="button" class="btn-appeal-lux" @click="openAppealAction">
+                        Phát hiện nhầm lẫn? <span>Gửi khiếu nại ngay</span>
+                      </button>
+                    </div>
+                  </div>
+                  <div v-else-if="loginError" key="error-local" class="auth-error-msg">
+                    {{ loginError }}
+                  </div>
+                </transition>
+                <transition name="fade-slide">
+                  <div v-if="loginError && !isBannedBoxVisible && wrongPasswordCount >= 3" class="appeal-hint">
+                    <button type="button" class="btn-appeal-link" @click="openAppealAction">
+                      Bạn nghĩ mình bị ban nhầm? → Nộp khiếu nại
+                    </button>
+                  </div>
+                </transition>
               </div>
 
               <div v-else-if="activeTab === 'forgot-password'" class="fade-in-anim">
@@ -186,7 +223,7 @@
                     <span v-else>Gửi yêu cầu</span>
                   </button>
 
-                  <button type="button" class="btn-back" @click="activeTab = 'login'">
+                  <button type="button" class="btn-back" @click="switchTab('login')">
                     ← Quay lại
                   </button>
                 </div>
@@ -229,19 +266,21 @@
 
     <Teleport to="body">
       <OtpModal v-if="showOtpModal" :email="registerForm.email" v-model="otpCode" @close="showOtpModal = false" @verify="handleVerifyOtp" />
+      <AppealModal v-if="showAppealModal" @close="showAppealModal = false" />
     </Teleport>
 
   </section>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { toast } from '@/composables/useToast'
 import * as authService from '@/services/authService'
 import { GoogleLogin } from 'vue3-google-login'
 import OtpModal from '@/components/modals/OtpModal.vue'
+import AppealModal from '@/components/modals/AppealModal.vue'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
@@ -255,6 +294,11 @@ const showOtpModal = ref(false)
 const otpCode = ref('')
 const isLoading = ref(false)
 const signupSection = ref(null)
+const showAppealModal = ref(false)
+const isBannedBoxVisible = ref(false)
+const bannedDetails = ref(null)
+const loginError = ref('')
+const wrongPasswordCount = ref(0)
 
 const loginForm = reactive({ email: '', password: '' })
 const registerForm = reactive({ 
@@ -270,9 +314,17 @@ const forgotIdentifier = ref('')
 const forgotState      = ref('idle') 
 const forgotError      = ref('')
 
+const switchTab = (tab) => {
+  activeTab.value = tab;
+  loginError.value = '';
+  isBannedBoxVisible.value = false;
+  bannedDetails.value = null;
+  forgotError.value = '';
+}
+
 const switchTabListener = (event) => {
   if (event.detail === 'login' || event.detail === 'register') {
-    activeTab.value = event.detail
+    switchTab(event.detail)
   }
 }
 
@@ -296,6 +348,42 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('switch-auth-tab', switchTabListener)
 })
+
+watch([() => loginForm.email, () => loginForm.password], () => {
+  if (loginError.value || isBannedBoxVisible.value) {
+    loginError.value = ''
+    isBannedBoxVisible.value = false
+    bannedDetails.value = null
+  }
+})
+
+const closeBannedAlert = () => {
+  isBannedBoxVisible.value = false;
+  loginError.value = '';
+  bannedDetails.value = null;
+}
+
+const openAppealAction = () => {
+  showAppealModal.value = true;
+  closeBannedAlert(); // Chủ động dọn dẹp lỗi đỏ để UI thông thoáng khi mở Modal
+}
+
+const processBannedError = (errData, errorMessage) => {
+  isBannedBoxVisible.value = true;
+  const banReason = errData.banReason || 'Vi phạm chính sách và tiêu chuẩn cộng đồng GOMET.';
+  const bannedBy = errData.bannedByName || 'Quản trị viên hệ thống';
+  let timeStr = '';
+  let rawTimeStr = '';
+  
+  if (errData.bannedAt) {
+     const d = new Date(errData.bannedAt);
+     rawTimeStr = `${d.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})} ngày ${d.toLocaleDateString('vi-VN')}`;
+     timeStr = ` vào lúc ${rawTimeStr}`;
+  }
+  bannedDetails.value = { reason: banReason, by: bannedBy, time: rawTimeStr };
+  loginError.value = `Tài khoản bị khóa${timeStr}. Lý do: ${banReason}`;
+  toast.error(`🚨 Đăng nhập thất bại do tài khoản đã bị khóa!`, { timeout: 8000 })
+}
 
 const handleSubmit = async () => {
   // Xử lý Gửi Quên Mật Khẩu
@@ -383,6 +471,8 @@ const handleVerifyOtp = async () => {
 }
 
 const handleGoogleCallback = async (response) => {
+  loginError.value = ''
+  isBannedBoxVisible.value = false
   try {
     if (!response || !response.credential) {
       throw new Error("Không nhận được token từ Google");
@@ -401,15 +491,50 @@ const handleGoogleCallback = async (response) => {
 
   } catch (err) {
     console.error("Google Login Error:", err)
-    const backendMsg = err.response?.data?.message || err.message || ''
-    
-    if (backendMsg.includes('ACCOUNT_BANNED')) {
-      toast.error('🚨 TÀI KHOẢN BỊ KHÓA: Bạn không thể đăng nhập bằng Google vì tài khoản này đã bị Ban!', { timeout: 8000 })
+    const errData = err.response?.data || err?.data || err || {}
+    const errorMessage = errData.message || err.message || String(err)
+    const errorString = errorMessage.toUpperCase()
+
+    if (errorString.includes('ACCOUNT_BANNED') || errorString.includes('BANNED') || errData.status === 403) {
+      processBannedError(errData, errorMessage);
     } else {
-      toast.error(backendMsg || 'Lỗi đăng nhập bằng Google. Vui lòng thử lại.')
+      loginError.value = errorMessage || 'Lỗi đăng nhập bằng Google. Vui lòng thử lại.'
+      toast.error(loginError.value)
     }
   }
 }
 </script>
 
 <style scoped lang="scss" src="./LandingSignupSection.scss"></style>
+<style scoped>
+/* --- BANNED ALERT BOX LUXURY (LOCAL) --- */
+.banned-alert-box {
+  background: #fff5f5; border: 1px solid #fecaca; border-radius: 16px; padding: 16px; margin: 15px 0 20px;
+  text-align: left; box-shadow: 0 8px 20px rgba(220, 38, 38, 0.08); animation: shake 0.4s ease-in-out; position: relative;
+}
+@keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-4px); } 40%, 80% { transform: translateX(4px); } }
+.btn-close-alert { position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: #fca5a5; cursor: pointer; padding: 4px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+.btn-close-alert:hover { background: #fee2e2; color: #dc2626; transform: scale(1.1); }
+.banned-header { display: flex; align-items: center; gap: 10px; color: #dc2626; margin-bottom: 12px; border-bottom: 1px dashed #fca5a5; padding-bottom: 12px; }
+.banned-header h4 { margin: 0; font-size: 0.95rem; font-weight: 800; letter-spacing: 0.5px; }
+.banned-body { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+.b-row { display: flex; flex-direction: column; gap: 4px; font-size: 0.9rem; }
+.b-lbl { color: #dc2626; font-weight: 700; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.5px; }
+.b-val { color: #0f172a; font-weight: 600; line-height: 1.4; }
+.b-val.reason-text { font-style: italic; background: white; padding: 10px 12px; border-radius: 8px; border: 1px solid #fecaca; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); font-size: 0.85rem; color: #7f1d1d;}
+.banned-msg { color: #991b1b; font-size: 0.9rem; line-height: 1.5; margin: 0; font-weight: 500; }
+.banned-footer { text-align: center; }
+.btn-appeal-lux { background: #dc2626; color: white; border: none; padding: 12px 20px; border-radius: 100px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: 0.3s; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3); }
+.btn-appeal-lux span { font-weight: 800; text-decoration: underline; }
+.btn-appeal-lux:hover { background: #b91c1c; transform: translateY(-2px); box-shadow: 0 6px 15px rgba(220, 38, 38, 0.4); }
+
+.auth-error-msg { background: #FEF2F2; color: #DC2626; border: 1px solid #FCA5A5; border-radius: 8px; padding: 10px; font-size: 0.85rem; font-weight: 600; margin-bottom: 15px; text-align: center; }
+
+.appeal-hint { margin-bottom: 15px; }
+.btn-appeal-link { width: 100%; padding: 12px; background: linear-gradient(135deg, rgba(234, 88, 12, 0.15), rgba(251, 146, 60, 0.1)); color: #ea580c; border: 1px solid #fbbf24; border-radius: 8px; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: all 0.3s; text-align: center; }
+.btn-appeal-link:hover { background: linear-gradient(135deg, rgba(234, 88, 12, 0.25), rgba(251, 146, 60, 0.15)); border-color: #ea580c; box-shadow: 0 6px 16px rgba(234, 88, 12, 0.2); transform: translateY(-2px); }
+
+.fade-slide-enter-active, .fade-slide-leave-active { transition: all 0.3s ease; }
+.fade-slide-enter-from { opacity: 0; transform: translateY(-10px); }
+.fade-slide-leave-to { opacity: 0; transform: translateY(-10px); }
+</style>
