@@ -415,11 +415,16 @@ const handleSubmit = async () => {
       
       router.push(role === 'admin' ? '/admin' : '/home')
     } catch (err) {
-      const backendMsg = err.response?.data?.message || err.message || ''
-      if (backendMsg.includes('ACCOUNT_BANNED')) {
-        toast.error('🚨 TÀI KHOẢN BỊ KHÓA: Bạn đã bị cấm vĩnh viễn do vi phạm tiêu chuẩn cộng đồng GOMET!', { timeout: 8000 })
+      const errData = err.response?.data || {}
+      const backendMsg = errData.message || err.message || ''
+      const errorString = backendMsg.toUpperCase()
+      
+      if (errorString.includes('ACCOUNT_BANNED')) {
+        processBannedError(errData, backendMsg)
       } else {
-        toast.error(backendMsg || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.')
+        wrongPasswordCount.value++
+        loginError.value = backendMsg || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.'
+        toast.error(loginError.value)
       }
     } finally {
       isLoading.value = false
