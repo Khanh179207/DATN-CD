@@ -91,15 +91,6 @@
                       {{ loginError }}
                     </div>
                   </transition>
-
-                  <transition name="fade-slide">
-                    <div v-if="loginError && !isBannedError && wrongPasswordCount >= 3" class="appeal-hint stagger-item" style="--delay: 0.46s">
-                      <button type="button" class="btn-appeal-link" @click="openAppealAction">
-                        Bạn nghĩ mình bị ban nhầm? → Nộp khiếu nại
-                      </button>
-                    </div>
-                  </transition>
-
                   <button class="btn-submit-art stagger-item" style="--delay: 0.5s">
                     <span>{{ $t('auth.sign_in_btn', 'Đăng Nhập Ngay') }}</span>
                   </button>
@@ -375,6 +366,7 @@ const handleLogin = async () => {
       
       // 3. Hiện toast bổ trợ
       toast.error(`🚨 TÀI KHOẢN BỊ KHÓA: Đăng nhập thất bại do vi phạm!`, { timeout: 8000 })
+      
       
     } else if (errorString.includes('INCORRECT') || errorString.includes('PASSWORD') || errorString.includes('CREDENTIALS')) {
       wrongPasswordCount.value++

@@ -1,149 +1,247 @@
 <template>
-  <section class="appeals-page">
+  <div class="page-container animate-enter">
+    
     <div class="page-header">
-      <h1>Khiếu nại ban nhầm</h1>
-      <p>Quản lý các khiếu nại từ người dùng bị ban</p>
+      <div class="title-group">
+        <h2 class="title">Khiếu nại ban nhầm</h2>
+        <p class="subtitle">Quản lý và xử lý các khiếu nại từ người dùng bị ban</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn-refresh" @click="loadAppeals" :disabled="loading">
+          <i class="fa-solid fa-rotate-right" :class="{ 'fa-spin': loading }"></i> Đồng bộ dữ liệu
+        </button>
+      </div>
     </div>
 
-    <div class="filters-bar">
-      <input
-        v-model="searchEmail"
-        type="email"
-        placeholder="Tìm kiếm theo email..."
-        class="search-input"
-      />
-      <select v-model="filterStatus" class="filter-select">
-        <option value="">Tất cả trạng thái</option>
-        <option value="Pending">Chờ xử lý</option>
-        <option value="Review">Đang xem xét</option>
-        <option value="Resolved">Đã giải quyết</option>
-        <option value="Rejected">Từ chối</option>
-      </select>
-    </div>
-
-    <div v-if="loading" class="loading-state">
-      <div class="spinner"></div>
-      <p>Đang tải dữ liệu...</p>
-    </div>
-
-    <div v-else-if="appeals.length === 0" class="empty-state">
-      <div class="empty-icon">📋</div>
-      <p>Không có khiếu nại nào</p>
-    </div>
-
-    <div v-else class="appeals-grid">
-      <div v-for="appeal in filteredAppeals" :key="appeal.appealID" class="appeal-card">
-        <div class="card-header">
-          <div class="email-badge">{{ appeal.email }}</div>
-          <div :class="['status-badge', appeal.status.toLowerCase()]">
-            {{ getStatusLabel(appeal.status) }}
-          </div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon-wrapper bg-orange-light">
+          <i class="fa-solid fa-inbox text-orange"></i>
         </div>
-
-        <div class="card-body">
-          <p class="reason-preview">{{ appeal.reason.substring(0, 150) }}...</p>
-          <div class="meta-info">
-            <span class="date">{{ formatDate(appeal.createdAt) }}</span>
-          </div>
+        <div class="stat-info">
+          <span class="stat-value">{{ appeals.length }}</span>
+          <span class="stat-label">Tổng khiếu nại</span>
         </div>
-
-        <div class="card-footer">
-          <button class="btn-detail" @click="openDetail(appeal)">
-            Xem chi tiết
-          </button>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon-wrapper bg-yellow-light">
+          <i class="fa-solid fa-hourglass-start text-yellow"></i>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value">{{ getPendingCount }}</span>
+          <span class="stat-label">Chờ xử lý</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon-wrapper bg-green-light">
+          <i class="fa-solid fa-check-circle text-green"></i>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value">{{ getResolvedCount }}</span>
+          <span class="stat-label">Đã giải quyết</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon-wrapper bg-red-light">
+          <i class="fa-solid fa-xmark-circle text-red"></i>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value">{{ getRejectedCount }}</span>
+          <span class="stat-label">Từ chối</span>
         </div>
       </div>
     </div>
 
-    <!-- Detail Modal -->
-    <transition name="modal-motion">
-      <div v-if="selectedAppeal" class="modal-overlay" @click="closeDetail">
-        <div class="modal-container" @click.stop>
-          <button class="btn-close" @click="closeDetail">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
+    <div class="filter-bar">
+      <div class="tabs">
+        <button v-for="tab in statusTabs" :key="tab.value" 
+                :class="['filter-tab', filterStatus === tab.value ? 'active' : '']"
+                @click="filterStatus = tab.value">
+          {{ tab.label }}
+        </button>
+      </div>
+      
+      <div class="search-box">
+        <i class="fa-solid fa-search search-icon"></i>
+        <input v-model="searchEmail" type="email" placeholder="Tìm kiếm theo email..." class="search-input" />
+        <button v-if="searchEmail" @click="searchEmail = ''" class="clear-search">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+    </div>
 
-          <div class="detail-header">
-            <h2>Chi tiết khiếu nại</h2>
-            <div :class="['status-badge', selectedAppeal.status.toLowerCase()]">
-              {{ getStatusLabel(selectedAppeal.status) }}
-            </div>
-          </div>
+    <div class="table-wrapper">
+      <div v-if="loading" class="loading-state">
+        <div class="spinner-modern"></div>
+        <span>Đang tải dữ liệu...</span>
+      </div>
 
-          <div class="detail-content">
-            <div class="detail-row">
-              <label>Email:</label>
-              <p>{{ selectedAppeal.email }}</p>
-            </div>
-
-            <div class="detail-row">
-              <label>Lý do:</label>
-              <p class="reason-text">{{ selectedAppeal.reason }}</p>
-            </div>
-
-            <div class="detail-row">
-              <label>Ngày gửi:</label>
-              <p>{{ formatDateTime(selectedAppeal.createdAt) }}</p>
-            </div>
-
-            <div v-if="selectedAppeal.note" class="detail-row">
-              <label>Ghi chú admin:</label>
-              <p>{{ selectedAppeal.note }}</p>
-            </div>
-
-            <div v-if="selectedAppeal.status !== 'Resolved'" class="detail-row">
-              <label>Cập nhật trạng thái:</label>
-              <div class="status-actions">
-                <select v-model="updateStatus" class="status-select">
-                  <option value="Pending">Chờ xử lý</option>
-                  <option value="Review">Đang xem xét</option>
-                  <option value="Rejected">Từ chối</option>
-                </select>
+      <table v-else class="data-table">
+        <thead>
+          <tr>
+            <th width="12%">ID</th>
+            <th width="28%">EMAIL</th>
+            <th width="20%">TRẠNG THÁI</th>
+            <th width="18%">NGÀY GỬI</th>
+            <th width="22%" class="text-center">THAO TÁC</th>
+          </tr>
+        </thead>
+        <TransitionGroup tag="tbody" name="list">
+          <tr v-for="appeal in filteredAppeals" :key="appeal.appealID" class="table-row">
+            <td class="col-id">#{{ appeal.appealID }}</td>
+            <td>
+              <div class="email-cell">
+                <div class="email-icon"><i class="fa-solid fa-envelope"></i></div>
+                <div class="email-info">
+                  <span class="email-main">{{ appeal.email }}</span>
+                  <span class="email-reason">{{ appeal.reason.substring(0, 50) }}...</span>
+                </div>
               </div>
-            </div>
+            </td>
+            <td>
+              <div class="status-pill" :class="['status-' + appeal.status.toLowerCase()]">
+                <span class="status-dot"></span> {{ getStatusLabel(appeal.status) }}
+              </div>
+            </td>
+            <td>
+              <span class="date-text">{{ formatDate(appeal.createdAt) }}</span>
+            </td>
+            <td>
+              <div class="actions">
+                <button @click="openDetail(appeal)" class="btn-action view" title="Xem chi tiết">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+                
+                <button v-if="appeal.status !== 'Resolved'" @click="handleUnban" class="btn-action approve" title="Gỡ ban & Phê duyệt">
+                  <i class="fa-solid fa-check"></i>
+                </button>
 
-            <div class="detail-row">
-              <label>Ghi chú:</label>
-              <textarea
-                v-model="updateNote"
-                class="note-textarea"
-                placeholder="Thêm ghi chú admin..."
-              ></textarea>
-            </div>
+                <button @click="closeDetail" class="btn-action" v-if="selectedAppeal?.appealID === appeal.appealID" title="Đóng">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <tr v-if="filteredAppeals.length === 0">
+            <td colspan="5" class="empty-state">
+              <div class="empty-icon"><i class="fa-solid fa-inbox"></i></div>
+              <p>Không có khiếu nại nào.</p>
+            </td>
+          </tr>
+        </TransitionGroup>
+      </table>
+    </div>
+
+    <!-- Confirmation Modal for Unban -->
+    <transition name="modal-fade">
+      <div v-if="showConfirmUnban" class="modal-overlay" @click="cancelUnban">
+        <div class="modal-confirm" @click.stop>
+          <div class="confirm-header">
+            <div class="confirm-icon">⚠️</div>
+            <h3>Xác nhận gỡ ban</h3>
           </div>
-
-          <div class="detail-actions">
-            <button
-              v-if="selectedAppeal.status !== 'Resolved'"
-              class="btn-update"
-              @click="handleUpdate"
-              :disabled="isUpdating"
-            >
-              <span v-if="isUpdating">Đang cập nhật...</span>
-              <span v-else>Cập nhật</span>
+          <p class="confirm-message">
+            Bạn chắc chắn muốn gỡ ban cho tài khoản <strong>{{ selectedAppeal?.email }}</strong>?
+          </p>
+          <div class="confirm-actions">
+            <button class="btn-cancel-confirm" @click="cancelUnban" :disabled="isUnbanning">
+              Hủy
             </button>
-
-            <button
-              v-if="selectedAppeal.status !== 'Resolved'"
-              class="btn-unban"
-              @click="handleUnban"
-              :disabled="isUnbanning"
-            >
-              <span v-if="isUnbanning">Đang gỡ ban...</span>
-              <span v-else>Gỡ ban & Phê duyệt</span>
-            </button>
-
-            <button class="btn-cancel" @click="closeDetail">
-              Đóng
+            <button class="btn-confirm-unban" @click="confirmUnban" :disabled="isUnbanning">
+              <span v-if="isUnbanning"><i class="fa-solid fa-spinner fa-spin"></i> Đang gỡ ban...</span>
+              <span v-else><i class="fa-solid fa-check"></i> Xác nhận gỡ ban</span>
             </button>
           </div>
         </div>
       </div>
     </transition>
-  </section>
+
+    <!-- Detail Modal -->
+    <transition name="modal-fade">
+      <div v-if="selectedAppeal && !showConfirmUnban" class="modal-overlay" @click="closeDetail">
+        <div class="modal-detail" @click.stop>
+          <div class="modal-header">
+            <h3>Chi tiết khiếu nại</h3>
+            <button class="btn-close-modal" @click="closeDetail">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+
+          <div class="modal-body">
+            <div class="detail-section">
+              <div class="detail-row">
+                <label class="detail-label">ID Khiếu nại</label>
+                <p class="detail-value">#{{ selectedAppeal.appealID }}</p>
+              </div>
+
+              <div class="detail-row">
+                <label class="detail-label">Email</label>
+                <p class="detail-value">{{ selectedAppeal.email }}</p>
+              </div>
+
+              <div class="detail-row">
+                <label class="detail-label">Trạng thái</label>
+                <div class="status-pill" :class="['status-' + selectedAppeal.status.toLowerCase()]">
+                  <span class="status-dot"></span> {{ getStatusLabel(selectedAppeal.status) }}
+                </div>
+              </div>
+
+              <div class="detail-row">
+                <label class="detail-label">Lý do khiếu nại</label>
+                <p class="detail-value reason-text">{{ selectedAppeal.reason }}</p>
+              </div>
+
+              <div class="detail-row">
+                <label class="detail-label">Ngày gửi</label>
+                <p class="detail-value">{{ formatDateTime(selectedAppeal.createdAt) }}</p>
+              </div>
+
+              <div v-if="selectedAppeal.note" class="detail-row">
+                <label class="detail-label">Ghi chú Admin</label>
+                <p class="detail-value note-text">{{ selectedAppeal.note }}</p>
+              </div>
+            </div>
+
+            <div v-if="selectedAppeal.status !== 'Resolved'" class="edit-section">
+              <div class="detail-row">
+                <label class="detail-label">Cập nhật trạng thái</label>
+                <select v-model="updateStatus" class="status-input">
+                  <option value="Pending">Chờ xử lý</option>
+                  <option value="Review">Đang xem xét</option>
+                  <option value="Rejected">Từ chối</option>
+                </select>
+              </div>
+
+              <div class="detail-row">
+                <label class="detail-label">Ghi chú</label>
+                <textarea
+                  v-model="updateNote"
+                  class="note-input"
+                  placeholder="Thêm ghi chú admin..."
+                  rows="4"
+                ></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button v-if="selectedAppeal.status !== 'Resolved'" class="btn-primary" @click="handleUpdate" :disabled="isUpdating">
+              <i class="fa-solid fa-save"></i> {{ isUpdating ? 'Đang cập nhật...' : 'Cập nhật' }}
+            </button>
+
+            <button v-if="selectedAppeal.status !== 'Resolved'" class="btn-success" @click="handleUnban" :disabled="isUnbanning">
+              <i class="fa-solid fa-check"></i> {{ isUnbanning ? 'Đang gỡ ban...' : 'Gỡ ban & Phê duyệt' }}
+            </button>
+
+            <button class="btn-secondary" @click="closeDetail">
+              <i class="fa-solid fa-xmark"></i> Đóng
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
+  </div>
 </template>
 
 <script setup>
@@ -156,11 +254,24 @@ const selectedAppeal = ref(null)
 const loading = ref(false)
 const isUpdating = ref(false)
 const isUnbanning = ref(false)
+const showConfirmUnban = ref(false)
 
 const searchEmail = ref('')
 const filterStatus = ref('')
 const updateStatus = ref('Pending')
 const updateNote = ref('')
+
+const statusTabs = [
+  { value: '', label: 'Tất cả' },
+  { value: 'Pending', label: 'Chờ xử lý' },
+  { value: 'Review', label: 'Đang xem xét' },
+  { value: 'Resolved', label: 'Đã giải quyết' },
+  { value: 'Rejected', label: 'Từ chối' }
+]
+
+const getPendingCount = computed(() => appeals.value.filter(a => a.status === 'Pending').length)
+const getResolvedCount = computed(() => appeals.value.filter(a => a.status === 'Resolved').length)
+const getRejectedCount = computed(() => appeals.value.filter(a => a.status === 'Rejected').length)
 
 const filteredAppeals = computed(() => {
   return appeals.value.filter(appeal => {
@@ -238,10 +349,11 @@ const handleUpdate = async () => {
 
 const handleUnban = async () => {
   if (!selectedAppeal.value) return
+  showConfirmUnban.value = true
+}
 
-  if (!confirm(`Bạn chắc chắn muốn gỡ ban cho email ${selectedAppeal.value.email}?`)) {
-    return
-  }
+const confirmUnban = async () => {
+  if (!selectedAppeal.value) return
 
   isUnbanning.value = true
   try {
@@ -251,10 +363,17 @@ const handleUnban = async () => {
     // Reload appeals
     await loadAppeals()
     closeDetail()
+    showConfirmUnban.value = false
   } catch (error) {
     toast.error(error.response?.data?.message || 'Lỗi khi gỡ ban')
   } finally {
     isUnbanning.value = false
+  }
+}
+
+const cancelUnban = () => {
+  if (!isUnbanning.value) {
+    showConfirmUnban.value = false
   }
 }
 
@@ -282,182 +401,507 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.appeals-page {
-  padding: 32px 24px;
-  max-width: 1200px;
+.page-container {
+  padding: 24px;
+  max-width: 1400px;
   margin: 0 auto;
-  font-family: 'Quicksand', sans-serif;
+  animation: fadeIn 0.4s ease;
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-enter {
+  animation: slideInDown 0.5s ease;
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Page Header */
 .page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 32px;
 
-  h1 {
-    font-family: 'Playfair Display', serif;
-    font-size: 32px;
-    font-weight: 800;
-    margin: 0 0 8px;
-    color: #1c1917;
+  .title-group {
+    .title {
+      font-size: 28px;
+      font-weight: 800;
+      margin: 0 0 8px;
+      color: #1c1917;
+      font-family: 'Playfair Display', serif;
+    }
+
+    .subtitle {
+      color: #78716c;
+      font-size: 14px;
+      margin: 0;
+    }
   }
 
-  p {
-    color: #78716c;
-    margin: 0;
+  .header-actions {
+    .btn-refresh {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+
+      &:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      i {
+        font-size: 14px;
+      }
+    }
   }
 }
 
-.filters-bar {
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+
+  .stat-card {
+    display: flex;
+    gap: 16px;
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.5));
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s;
+
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    .stat-icon-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 56px;
+      height: 56px;
+      border-radius: 12px;
+      font-size: 24px;
+
+      &.bg-orange-light {
+        background: rgba(234, 88, 12, 0.1);
+
+        i {
+          color: #ea580c;
+        }
+      }
+
+      &.bg-yellow-light {
+        background: rgba(251, 191, 36, 0.1);
+
+        i {
+          color: #fbbf24;
+        }
+      }
+
+      &.bg-green-light {
+        background: rgba(16, 185, 129, 0.1);
+
+        i {
+          color: #10b981;
+        }
+      }
+
+      &.bg-red-light {
+        background: rgba(239, 68, 68, 0.1);
+
+        i {
+          color: #ef4444;
+        }
+      }
+    }
+
+    .stat-info {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+
+      .stat-value {
+        font-size: 24px;
+        font-weight: 800;
+        color: #1c1917;
+        line-height: 1;
+      }
+
+      .stat-label {
+        font-size: 12px;
+        color: #78716c;
+        margin-top: 4px;
+      }
+    }
+  }
+}
+
+/* Filter Bar */
+.filter-bar {
   display: flex;
   gap: 16px;
   margin-bottom: 24px;
   flex-wrap: wrap;
-}
+  align-items: center;
 
-.search-input,
-.filter-select {
-  padding: 10px 16px;
-  border: 1px solid #e7e5e4;
-  border-radius: 8px;
-  font-family: 'Quicksand', sans-serif;
-  font-size: 14px;
+  .tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
 
-  &:focus {
-    outline: none;
-    border-color: #ea580c;
-    box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.1);
+    .filter-tab {
+      padding: 8px 16px;
+      background: rgba(226, 232, 240, 0.5);
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      color: #475569;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.3s;
+
+      &:hover {
+        background: rgba(226, 232, 240, 0.8);
+        border-color: #cbd5e1;
+      }
+
+      &.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: #667eea;
+      }
+    }
+  }
+
+  .search-box {
+    flex: 1;
+    min-width: 250px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 12px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    transition: all 0.3s;
+
+    &:focus-within {
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .search-icon {
+      color: #94a3b8;
+      font-size: 14px;
+    }
+
+    .search-input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      outline: none;
+      padding: 10px 0;
+      font-size: 14px;
+      color: #1c1917;
+
+      &::placeholder {
+        color: #cbd5e1;
+      }
+    }
+
+    .clear-search {
+      background: none;
+      border: none;
+      color: #cbd5e1;
+      cursor: pointer;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      transition: all 0.3s;
+
+      &:hover {
+        color: #ea580c;
+      }
+    }
   }
 }
 
-.search-input {
-  flex: 1;
-  min-width: 250px;
-}
-
-.loading-state,
-.empty-state {
-  text-align: center;
-  padding: 60px 20px;
-}
-
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #e7e5e4;
-  border-top-color: #ea580c;
-  border-radius: 50%;
-  margin: 0 auto 16px;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.empty-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
-}
-
-.appeals-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 20px;
-}
-
-.appeal-card {
+/* Table Styles */
+.table-wrapper {
   background: white;
-  border: 1px solid #e7e5e4;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
   overflow: hidden;
-  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
 
-  &:hover {
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
-    transform: translateY(-4px);
+  .loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 60px 20px;
+    color: #94a3b8;
+
+    .spinner-modern {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(226, 232, 240, 0.8);
+      border-top-color: #667eea;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+
+    thead {
+      background: linear-gradient(135deg, rgba(226, 232, 240, 0.5), rgba(226, 232, 240, 0.3));
+      border-bottom: 2px solid #e2e8f0;
+
+      th {
+        padding: 16px;
+        text-align: left;
+        font-size: 12px;
+        font-weight: 700;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+
+        &.text-center {
+          text-align: center;
+        }
+      }
+    }
+
+    tbody {
+      tr {
+        border-bottom: 1px solid #e2e8f0;
+        transition: all 0.2s;
+
+        &:hover {
+          background: rgba(102, 126, 234, 0.04);
+        }
+
+        &.empty-state {
+          &:hover {
+            background: transparent;
+          }
+
+          td {
+            padding: 60px 20px;
+            text-align: center;
+
+            .empty-icon {
+              font-size: 48px;
+              margin-bottom: 12px;
+              opacity: 0.5;
+            }
+
+            p {
+              color: #94a3b8;
+              font-size: 14px;
+              margin: 0;
+            }
+          }
+        }
+      }
+    }
+
+    td {
+      padding: 16px;
+      color: #1c1917;
+      font-size: 14px;
+
+      &.text-center {
+        text-align: center;
+      }
+
+      .col-id {
+        font-weight: 600;
+        color: #667eea;
+        font-family: 'Courier New', monospace;
+      }
+    }
   }
 }
 
-.card-header {
-  padding: 16px;
-  border-bottom: 1px solid #e7e5e4;
+/* Email Cell */
+.email-cell {
   display: flex;
-  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+
+  .email-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: rgba(234, 88, 12, 0.1);
+    border-radius: 8px;
+    color: #ea580c;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .email-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    .email-main {
+      font-weight: 600;
+      color: #1c1917;
+      word-break: break-all;
+    }
+
+    .email-reason {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+  }
+}
+
+/* Status Pill */
+.status-pill {
+  display: inline-flex;
   align-items: center;
-}
-
-.email-badge {
-  font-weight: 600;
-  font-size: 14px;
-  color: #1c1917;
-  word-break: break-all;
-}
-
-.status-badge {
+  gap: 6px;
   padding: 6px 12px;
   border-radius: 6px;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   white-space: nowrap;
 
-  &.pending {
-    background: #fef3c7;
-    color: #92400e;
+  .status-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
   }
 
-  &.review {
-    background: #bfdbfe;
+  &.status-pending {
+    background: rgba(251, 191, 36, 0.1);
+    color: #b45309;
+
+    .status-dot {
+      background: #fbbf24;
+    }
+  }
+
+  &.status-review {
+    background: rgba(59, 130, 246, 0.1);
     color: #1e40af;
+
+    .status-dot {
+      background: #3b82f6;
+    }
   }
 
-  &.resolved {
-    background: #d1fae5;
+  &.status-resolved {
+    background: rgba(16, 185, 129, 0.1);
     color: #065f46;
+
+    .status-dot {
+      background: #10b981;
+    }
   }
 
-  &.rejected {
-    background: #fee2e2;
-    color: #991b1b;
+  &.status-rejected {
+    background: rgba(239, 68, 68, 0.1);
+    color: #7f1d1d;
+
+    .status-dot {
+      background: #ef4444;
+    }
   }
 }
 
-.card-body {
-  padding: 16px;
-}
-
-.reason-preview {
+.date-text {
   color: #78716c;
   font-size: 13px;
-  line-height: 1.5;
-  margin: 0 0 12px;
 }
 
-.meta-info {
+/* Action Buttons */
+.actions {
   display: flex;
-  gap: 12px;
-  font-size: 12px;
-  color: #a8a29e;
-}
+  gap: 8px;
+  justify-content: center;
 
-.card-footer {
-  padding: 12px 16px;
-  border-top: 1px solid #e7e5e4;
-}
+  .btn-action {
+    width: 36px;
+    height: 36px;
+    border: 1px solid #e2e8f0;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
 
-.btn-detail {
-  width: 100%;
-  padding: 10px;
-  background: #ea580c;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
 
-  &:hover {
-    background: #c2410c;
+    &.view {
+      color: #667eea;
+
+      &:hover {
+        background: rgba(102, 126, 234, 0.1);
+        border-color: #667eea;
+      }
+    }
+
+    &.approve {
+      color: #10b981;
+
+      &:hover {
+        background: rgba(16, 185, 129, 0.1);
+        border-color: #10b981;
+      }
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   }
 }
 
@@ -466,210 +910,392 @@ onMounted(() => {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   padding: 20px;
+  animation: fadeIn 0.3s ease;
 }
 
-.modal-container {
+.modal-confirm,
+.modal-detail {
   background: white;
   border-radius: 16px;
-  padding: 32px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Confirmation Modal */
+.modal-confirm {
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+  padding: 40px 32px;
+
+  .confirm-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 24px;
+
+    .confirm-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      animation: bounce 0.6s ease infinite;
+    }
+
+    h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      font-weight: 800;
+      margin: 0;
+      color: #1c1917;
+    }
+  }
+
+  .confirm-message {
+    color: #78716c;
+    font-size: 15px;
+    line-height: 1.6;
+    margin: 0 0 32px;
+
+    strong {
+      color: #1c1917;
+      word-break: break-all;
+    }
+  }
+
+  .confirm-actions {
+    display: flex;
+    gap: 12px;
+
+    .btn-cancel-confirm,
+    .btn-confirm-unban {
+      flex: 1;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-cancel-confirm {
+      background: #e2e8f0;
+      color: #475569;
+
+      &:hover:not(:disabled) {
+        background: #cbd5e1;
+      }
+
+      &:disabled {
+        opacity: 0.5;
+      }
+    }
+
+    .btn-confirm-unban {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+
+      &:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(16, 185, 129, 0.4);
+      }
+
+      &:disabled {
+        opacity: 0.6;
+      }
+    }
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+/* Detail Modal */
+.modal-detail {
   max-width: 600px;
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-  position: relative;
-}
-
-.btn-close {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 40px;
-  height: 40px;
-  border: none;
-  background: #f5f5f5;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s;
-
-  &:hover {
-    background: #ea580c;
-    color: white;
-  }
-}
-
-.detail-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-
-  h2 {
-    font-size: 22px;
-    font-weight: 800;
-    margin: 0;
-    font-family: 'Playfair Display', serif;
-  }
-}
-
-.detail-content {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  margin-bottom: 24px;
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px;
+    border-bottom: 1px solid #e2e8f0;
+    flex-shrink: 0;
+
+    h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      font-weight: 800;
+      margin: 0;
+      color: #1c1917;
+    }
+
+    .btn-close-modal {
+      background: none;
+      border: none;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #94a3b8;
+      border-radius: 6px;
+      transition: all 0.3s;
+
+      &:hover {
+        background: #f1f5f9;
+        color: #ea580c;
+      }
+    }
+  }
+
+  .modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+
+    .detail-section {
+      margin-bottom: 24px;
+    }
+
+    .edit-section {
+      padding-top: 24px;
+      border-top: 1px solid #e2e8f0;
+      margin-top: 24px;
+    }
+  }
+
+  .modal-footer {
+    display: flex;
+    gap: 12px;
+    padding: 24px;
+    border-top: 1px solid #e2e8f0;
+    flex-shrink: 0;
+
+    button {
+      flex: 1;
+      min-height: 40px;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+
+      &:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+      }
+
+      &:disabled {
+        opacity: 0.6;
+      }
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+
+      &:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(16, 185, 129, 0.4);
+      }
+
+      &:disabled {
+        opacity: 0.6;
+      }
+    }
+
+    .btn-secondary {
+      background: #e2e8f0;
+      color: #475569;
+
+      &:hover {
+        background: #cbd5e1;
+      }
+    }
+  }
 }
 
+/* Detail Row */
 .detail-row {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  margin-bottom: 16px;
 
-  label {
+  .detail-label {
     font-weight: 600;
-    font-size: 14px;
-    color: #1c1917;
+    font-size: 13px;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 
-  p {
-    margin: 0;
-    color: #78716c;
+  .detail-value {
+    color: #1c1917;
     font-size: 14px;
     line-height: 1.6;
     word-break: break-word;
+    margin: 0;
+
+    &.reason-text {
+      white-space: pre-wrap;
+      background: #f1f5f9;
+      padding: 12px;
+      border-radius: 6px;
+    }
+
+    &.note-text {
+      background: #fef3c7;
+      padding: 12px;
+      border-radius: 6px;
+    }
+  }
+
+  .status-pill {
+    width: fit-content;
   }
 }
 
-.reason-text {
-  white-space: pre-wrap;
-}
-
-.status-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.status-select {
-  flex: 1;
-  padding: 10px 12px;
-  border: 1px solid #e7e5e4;
-  border-radius: 6px;
-  font-size: 14px;
-  font-family: 'Quicksand', sans-serif;
-
-  &:focus {
-    outline: none;
-    border-color: #ea580c;
-  }
-}
-
-.note-textarea {
+/* Form Inputs */
+.status-input,
+.note-input {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid #e7e5e4;
+  border: 1px solid #e2e8f0;
   border-radius: 6px;
-  font-family: 'Quicksand', sans-serif;
   font-size: 14px;
-  resize: vertical;
-  min-height: 100px;
+  font-family: inherit;
+  transition: all 0.3s;
 
   &:focus {
     outline: none;
-    border-color: #ea580c;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
   }
 }
 
-.detail-actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+.note-input {
+  resize: vertical;
+  min-height: 100px;
 }
 
-.btn-update,
-.btn-unban,
-.btn-cancel {
-  flex: 1;
-  min-width: 120px;
-  padding: 12px;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-  font-size: 14px;
+/* Animations */
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: all 0.3s ease;
 }
 
-.btn-update {
-  background: #3b82f6;
-  color: white;
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
 
-  &:hover:not(:disabled) {
-    background: #2563eb;
+  .modal-confirm,
+  .modal-detail {
+    transform: translateY(20px);
   }
 }
 
-.btn-unban {
-  background: #10b981;
-  color: white;
-
-  &:hover:not(:disabled) {
-    background: #059669;
-  }
+.list-enter-active,
+.list-leave-active {
+  transition: all 0.3s ease;
 }
 
-.btn-cancel {
-  background: #e7e5e4;
-  color: #1c1917;
-
-  &:hover {
-    background: #d6d3d1;
-  }
+.list-enter-from {
+  opacity: 0;
+  transform: translateX(-20px);
 }
 
-.btn-update:disabled,
-.btn-unban:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.list-leave-to {
+  opacity: 0;
+  transform: translateX(20px);
 }
 
-.modal-motion-enter-active {
-  animation: slideIn 0.3s ease;
-}
-
-.modal-motion-leave-active {
-  animation: slideIn 0.3s ease reverse;
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
+@keyframes spin {
   to {
-    opacity: 1;
-    transform: scale(1);
+    transform: rotate(360deg);
   }
 }
 
+/* Responsive */
 @media (max-width: 768px) {
-  .appeals-page {
-    padding: 20px 16px;
+  .page-container {
+    padding: 16px;
   }
 
-  .appeals-grid {
-    grid-template-columns: 1fr;
+  .page-header {
+    flex-direction: column;
+    gap: 16px;
   }
 
-  .modal-container {
-    padding: 24px 16px;
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .filter-bar {
+    flex-direction: column;
+
+    .tabs {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    .search-box {
+      width: 100%;
+    }
+  }
+
+  .modal-detail {
+    max-height: 100vh;
+  }
+
+  .actions {
+    flex-direction: column;
+
+    .btn-action {
+      width: 100%;
+    }
   }
 }
 </style>
