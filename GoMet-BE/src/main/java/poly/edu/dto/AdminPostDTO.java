@@ -1,7 +1,6 @@
 package poly.edu.dto;
 
 import lombok.Data;
-
 import java.time.LocalDateTime;
 
 @Data
@@ -22,4 +21,8 @@ public class AdminPostDTO {
     private String categoryName; // from Category
     private Integer categoryID;
     private LocalDateTime createdAt;
+
+    // 🔥 MỚI THÊM: Truyền lý do từ chối về Frontend cho User biết
+    private String rejectReason;
+    private LocalDateTime rejectedAt;
 }

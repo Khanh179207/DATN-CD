@@ -5,6 +5,8 @@ import org.springframework.stereotype.Service;
 import poly.edu.dao.ModerationLogDAO;
 import poly.edu.entity.ModerationLog;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class ModerationLogService {
@@ -22,5 +24,9 @@ public class ModerationLogService {
                 .reason(reason)
                 .build();
         moderationLogDAO.save(log);
+    }
+    // Thêm hàm này để lấy toàn bộ Log (Sắp xếp mới nhất lên đầu)
+    public List<ModerationLog> getAllLogs() {
+        return moderationLogDAO.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"));
     }
 }

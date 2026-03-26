@@ -96,4 +96,11 @@ public class Post {
     @OneToMany(mappedBy = "targetPost")
     @JsonIgnore
     private List<Ticket> tickets;
+
+    // 🔥 MỚI THÊM: Phục vụ kiểm duyệt bài viết
+    @Column(name = "RejectReason", columnDefinition = "NVARCHAR(MAX)")
+    private String rejectReason;
+
+    @Column(name = "RejectedAt")
+    private java.time.LocalDateTime rejectedAt;
 }

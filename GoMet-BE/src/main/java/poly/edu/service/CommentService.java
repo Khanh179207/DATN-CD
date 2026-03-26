@@ -12,14 +12,15 @@ public interface CommentService {
     // Thêm comment mới
     CommentDTO saveNewComment(CommentDTO req);
 
-    // Admin xóa bình luận (Khóa mõm: isActive = -1)
-    void delete(Integer id);
+    // Sửa lại chữ ký 2 hàm này:
+    void delete(Integer id, Integer adminId, String adminName);
+    void restore(Integer id, Integer adminId, String adminName);
 
     // User tự xóa bình luận của mình (isActive = 0)
     void deleteByUser(Integer id, Integer userId);
 
-    // Admin khôi phục bình luận (isActive = 1)
-    void restore(Integer id);
+
+
 
     // Admin lấy tất cả bình luận
     List<AdminCommentDTO> findAll();

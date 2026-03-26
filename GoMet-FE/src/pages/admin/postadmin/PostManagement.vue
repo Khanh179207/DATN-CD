@@ -111,8 +111,8 @@
                   <button @click="approvePost(post.postID)" class="btn-action approve" title="Duyệt bài"><CheckCircle :size="16" /></button>
                 </template>
 
-                <template v-if="post._status === 'active'">
-                  <button @click="deactivatePost(post.postID)" class="btn-action ban" title="Gỡ bài"><Ban :size="16" /></button>
+                <template v-if="post._status === 'active' || post._status === 'pending'">
+                  <button @click="askRejectAction(post)" class="btn-action ban" title="Từ chối/Gỡ bài"><Ban :size="16" /></button>
                 </template>
 
                 <template v-if="post._status === 'deactivated'">
@@ -187,6 +187,22 @@
               </div>
             </div>
 
+            <div v-if="selectedPost._status === 'deactivated' && selectedPost.rejectReason" class="p-detail-ban-reason">
+              <div class="ban-header">
+                <AlertTriangle :size="16" /> Thông tin gỡ/từ chối bài viết
+              </div>
+              <div class="ban-info-grid">
+                <div class="ban-info-item">
+                  <span class="info-lbl">Lý do vi phạm:</span>
+                  <span class="info-val reason-text">{{ selectedPost.rejectReason }}</span>
+                </div>
+                <div v-if="selectedPost.rejectedAt" class="ban-info-item">
+                  <span class="info-lbl">Thời gian xử lý:</span>
+                  <span class="info-val time-text">{{ formatDate(selectedPost.rejectedAt) }}</span>
+                </div>
+              </div>
+            </div>
+
             <div class="modal-action-zone" v-if="selectedPost._status === 'pending'">
               <div class="alert-ribbon">
                 <AlertCircle :size="18" /> Bài viết đang chờ duyệt. Bạn quyết định sao?
@@ -195,13 +211,13 @@
                 <button @click="approvePost(selectedPost.postID); closeDetail()" class="btn-lux-primary">
                   <CheckCircle :size="18" /> Duyệt bài ngay
                 </button>
-                <button @click="deactivatePost(selectedPost.postID); closeDetail()" class="btn-lux-secondary">
+                <button @click="askRejectAction(selectedPost); closeDetail()" class="btn-lux-secondary">
                   <Ban :size="18" /> Từ chối & Gỡ
                 </button>
               </div>
             </div>
 
-            <div class="modal-action-zone" v-if="selectedPost._status === 'deactivated'" style="background: #f0f9ff; border-color: #e0f2fe;">
+            <div class="modal-action-zone" v-if="selectedPost._status === 'deactivated'" style="background: #f0f9ff; border-color: #e0f2fe; margin-top: 24px;">
               <div class="alert-ribbon" style="color: #0369a1;">
                 <AlertCircle :size="18" /> Bài viết đã bị gỡ. Bạn có muốn khôi phục lại không?
               </div>
@@ -223,6 +239,37 @@
       </div>
     </Transition>
 
+    <Transition name="fade-scale">
+      <div v-if="rejectModal.show" class="modal-overlay-lux" @click.self="rejectModal.show = false">
+        <div class="reject-modal-card">
+          <div class="action-icon">
+            <Ban :size="28" />
+          </div>
+          <h3>Từ chối / Gỡ bài viết?</h3>
+          <p>Xác nhận gỡ bài viết <strong>"{{ rejectModal.title }}"</strong> khỏi hệ thống?</p>
+          
+          <div class="reason-input-group">
+            <label for="rejectReason">Lý do từ chối (bắt buộc):</label>
+            <textarea 
+              id="rejectReason" 
+              v-model="rejectModal.reason" 
+              placeholder="Ví dụ: Hình ảnh mờ, vi phạm tiêu chuẩn cộng đồng..." 
+              rows="3" 
+              class="reason-textarea"
+            ></textarea>
+            <span v-if="rejectModal.showError" class="error-msg">Bạn phải nhập lý do vi phạm!</span>
+          </div>
+
+          <div class="action-btns">
+            <button class="btn-cancel" @click="rejectModal.show = false">Hủy bỏ</button>
+            <button class="btn-confirm btn-danger" @click="confirmRejectAction">
+              Xác nhận Gỡ
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
     <transition name="toast-anim">
       <div v-if="toast.show" :class="['toast-lux', toast.type]">
         <CheckCircle v-if="toast.type === 'success'" :size="20" />
@@ -238,6 +285,9 @@
 import { ref, computed, onMounted } from 'vue'
 import { FileText, Search, Loader2, AlertTriangle, Eye, Trash2, Ban, CheckCircle, XCircle, AlertCircle, ShieldAlert, RotateCcw, ExternalLink } from 'lucide-vue-next'
 import api from '@/services/api'
+import { useAuthStore } from '@/stores/auth' // 🔥 IMPORT STORE
+
+const authStore = useAuthStore() // Khởi tạo AuthStore
 
 // --- STATE ---
 const posts = ref([])
@@ -248,6 +298,9 @@ const sortOption = ref('newest')
 const currentTab = ref('all')
 const showModal = ref(false)
 const selectedPost = ref({})
+
+// 🔥 State cho Popup Từ chối
+const rejectModal = ref({ show: false, postId: null, title: '', reason: '', showError: false })
 
 const tabs = [
   { key: 'all', label: 'Tất cả' },
@@ -268,7 +321,7 @@ const getStatusLabel = (status) => {
   return map[status] || status
 }
 
-// --- LOGIC VAI TRÒ (VÉT CẠN CÁC TRƯỜNG HỢP BACKEND CÓ THỂ TRẢ VỀ) ---
+// --- LOGIC VAI TRÒ ---
 const isPostAdmin = (p) => {
   if (!p) return false;
   const r = String(p.role || p.accountRole || p.authorRole || '').toLowerCase();
@@ -292,20 +345,7 @@ const fetchPosts = async () => {
   error.value = ''
   try {
     const res = await api.get('/api/admin/posts')
-    
-    // 🔥 BƯỚC 1: In thử data bài viết đầu tiên ra F12 (Console) để xem Backend thiếu biến gì
-    if (res.data && res.data.length > 0) {
-      console.log("👀 Dữ liệu API Backend trả về cho 1 bài viết:", res.data[0]);
-    }
-
-    posts.value = res.data.map((p, index) => {
-      // 🔥 BƯỚC 2: GIẢ LẬP GIAO DIỆN (Test thử xem UI hoạt động chưa)
-      // Bỏ comment 2 dòng dưới đây để ép bài 1 thành Admin, bài 2 thành Premium
-      // if (index === 0) p.isAdmin = true;
-      // if (index === 1) p.isPremium = true;
-      
-      return { ...p, _status: getStatus(p) }
-    })
+    posts.value = res.data.map(p => ({ ...p, _status: getStatus(p) }))
   } catch (e) {
     error.value = 'Không thể tải dữ liệu: ' + (e.response?.data?.message || e.message)
   } finally {
@@ -344,36 +384,66 @@ const filteredPosts = computed(() => {
 })
 
 // --- ACTIONS API ---
+
+// 1. DUYỆT BÀI (CÓ GỬI PAYLOAD ADMIN INFO)
 const approvePost = async (id) => {
   try {
-    await api.put(`/api/admin/posts/approve/${id}`)
+    const payload = {
+      adminId: authStore.user?.accountID || authStore.user?.id || 0,
+      adminName: authStore.user?.username || authStore.user?.fullName || 'Admin'
+    };
+    await api.put(`/api/admin/posts/approve/${id}`, payload)
+    
     const p = posts.value.find(p => p.postID === id)
-    if (p) { p.isApproved = 1; p.isActive = 1; p._status = 'active' }
+    if (p) { p.isApproved = 1; p.isActive = 1; p._status = 'active'; p.rejectReason = null; }
     showToast('Đã duyệt bài viết thành công!')
   } catch (e) { showToast('Lỗi: ' + (e.response?.data?.message || e.message), 'error') }
 }
 
-const deactivatePost = async (id) => {
-  if (!confirm('Bạn có chắc muốn gỡ bài viết này khỏi trang chủ?')) return
-  try {
-    await api.put(`/api/admin/posts/deactive/${id}`)
-    const p = posts.value.find(p => p.postID === id)
-    if (p) { p.isActive = 0; p._status = 'deactivated' }
-    showToast('Đã gỡ bài viết khỏi hệ thống.')
-  } catch (e) { showToast('Lỗi: ' + (e.response?.data?.message || e.message), 'error') }
+// 2. TỪ CHỐI / GỠ BÀI (MỞ POPUP)
+const askRejectAction = (post) => {
+  rejectModal.value = { show: true, postId: post.postID, title: post.title, reason: '', showError: false }
 }
 
+// 3. XÁC NHẬN GỠ BÀI (CÓ GỬI PAYLOAD LÝ DO & ADMIN INFO)
+const confirmRejectAction = async () => {
+  if (!rejectModal.value.reason.trim()) {
+    rejectModal.value.showError = true;
+    return;
+  }
+  
+  try {
+    const payload = {
+      adminId: authStore.user?.accountID || authStore.user?.id || 0,
+      adminName: authStore.user?.username || authStore.user?.fullName || 'Admin',
+      reason: rejectModal.value.reason.trim()
+    };
+    
+    await api.put(`/api/admin/posts/${rejectModal.value.postId}/reject`, payload);
+    
+    const p = posts.value.find(p => p.postID === rejectModal.value.postId)
+    if (p) { 
+      p.isApproved = -1; 
+      p.isActive = 0; 
+      p._status = 'deactivated';
+      p.rejectReason = payload.reason;
+      p.rejectedAt = new Date().toISOString(); 
+    }
+    
+    rejectModal.value.show = false;
+    showToast('Đã gỡ bài viết thành công!')
+  } catch (e) { 
+    showToast('Lỗi: ' + (e.response?.data?.message || e.message), 'error') 
+  }
+}
+
+// 4. KHÔI PHỤC BÀI (Dùng lại hàm Approve)
 const reactivatePost = async (id) => {
   if (!confirm('Bạn có chắc muốn khôi phục bài viết này lên trang chủ?')) return
-  try {
-    // Sử dụng lại API approve để duyệt lại bài
-    await api.put(`/api/admin/posts/approve/${id}`)
-    const p = posts.value.find(p => p.postID === id)
-    if (p) { p.isApproved = 1; p.isActive = 1; p._status = 'active' }
-    showToast('Đã khôi phục bài viết thành công!')
-  } catch (e) { showToast('Lỗi: ' + (e.response?.data?.message || e.message), 'error') }
+  await approvePost(id);
 }
 
+// 5. XÓA BÀI
 const deletePost = async (id) => {
   if (!confirm('Hành động này sẽ XÓA VĨNH VIỄN bài viết khỏi Database. Tiếp tục?')) return
   try {
@@ -384,18 +454,15 @@ const deletePost = async (id) => {
   } catch (e) { showToast('Lỗi: ' + (e.response?.data?.message || e.message), 'error') }
 }
 
-// --- MODAL & TOAST ---
+// --- MODAL CHI TIẾT ---
 const openDetail = async (post) => { 
-  // 1. Gán ngay dữ liệu cơ bản để hiển thị Modal không bị giật lag
   selectedPost.value = { ...post }
   showModal.value = true 
-
-  // 2. Truy vấn API chi tiết để lấy chính xác số lượng Like, View, Rating
   try {
     const res = await api.get(`/api/posts/${post.postID}`)
     if (res.data) {
-      // Đè dữ liệu chi tiết lên trên dữ liệu cơ bản hiện tại
-      selectedPost.value = { ...selectedPost.value, ...res.data }
+      // API PostDetail ở public thường không có rejectReason, nên ta ưu tiên giữ lại rejectReason từ API admin nếu có
+      selectedPost.value = { ...selectedPost.value, ...res.data, rejectReason: selectedPost.value.rejectReason, rejectedAt: selectedPost.value.rejectedAt }
     }
   } catch (err) {
     console.warn('Không thể tải dữ liệu thống kê chi tiết:', err)
@@ -403,6 +470,7 @@ const openDetail = async (post) => {
 }
 const closeDetail = () => { showModal.value = false }
 
+// --- TOAST ---
 const toast = ref({ show: false, msg: '', type: 'success' })
 const showToast = (msg, type = 'success') => {
   toast.value = { show: true, msg, type }
@@ -571,6 +639,47 @@ const showToast = (msg, type = 'success') => {
   background: #eff6ff; color: #2563eb; border-color: #bfdbfe; 
   transform: translateY(-2px); box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
 }
+
+/* 🔥 THIẾT KẾ CHO KHUNG HIỂN THỊ LÝ DO VI PHẠM */
+.p-detail-ban-reason { 
+  margin-bottom: 24px; 
+  background: #fff5f5; 
+  border-radius: 12px; 
+  border: 1px solid #fecaca; 
+  overflow: hidden;
+}
+.ban-header { 
+  background: #fef2f2; 
+  padding: 12px 16px; 
+  color: #dc2626; 
+  font-weight: 700; 
+  font-size: 0.9rem; 
+  display: flex; 
+  align-items: center; 
+  gap: 8px; 
+  border-bottom: 1px solid #fee2e2;
+}
+.ban-info-grid { padding: 16px; display: flex; flex-direction: column; gap: 12px; text-align: left; }
+.ban-info-item { display: flex; flex-direction: column; gap: 6px; }
+.info-lbl { font-size: 0.8rem; color: #991b1b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+.info-val { font-size: 0.95rem; color: #7f1d1d; line-height: 1.4; }
+.reason-text { font-style: italic; background: #fff; padding: 10px 14px; border-radius: 8px; border: 1px dashed #fca5a5; }
+.time-text { font-weight: 600; color: #991b1b; font-size: 0.9rem; }
+
+/* 🔥 THIẾT KẾ POPUP TỪ CHỐI BÀI VIẾT */
+.reject-modal-card { background: white; padding: 28px; border-radius: 16px; width: 380px; max-width: 95vw; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.15); }
+.action-icon { width: 56px; height: 56px; border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; background: #fef2f2; color: #dc2626; }
+.reject-modal-card h3 { font-size: 1.2rem; color: #0f172a; margin: 0 0 8px; font-weight: 700; }
+.reject-modal-card p { color: #64748b; font-size: 0.95rem; margin: 0 0 24px; }
+.reason-input-group { text-align: left; margin-bottom: 20px; }
+.reason-input-group label { display: block; font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 6px; }
+.reason-textarea { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; font-family: inherit; font-size: 0.9rem; resize: none; background: #f8fafc; transition: 0.2s; }
+.reason-textarea:focus { border-color: #ef4444; background: white; box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1); }
+.error-msg { display: block; color: #dc2626; font-size: 0.8rem; font-weight: 500; margin-top: 4px; }
+.action-btns { display: flex; gap: 12px; }
+.btn-cancel, .btn-confirm { flex: 1; padding: 10px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; font-size: 0.95rem; }
+.btn-cancel { background: #f1f5f9; color: #475569; }
+.btn-danger { background: #ef4444; color: white; }
 
 /* --- TOAST & EMPTY STATES --- */
 .empty-state-lux { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; color: #94a3b8; font-weight: 500; }
