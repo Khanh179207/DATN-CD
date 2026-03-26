@@ -23,7 +23,8 @@ import java.util.stream.Collectors;
 public class TicketServiceImpl implements TicketService {
 
     private final TicketDAO ticketDAO;
-    // 🔥 Giữ lại cả AccountDAO, PostDAO (của sếp) và SimpMessagingTemplate (của develop)
+    // 🔥 Giữ lại cả AccountDAO, PostDAO (của sếp) và SimpMessagingTemplate (của
+    // develop)
     private final AccountDAO accountDAO;
     private final PostDAO postDAO;
     private final SimpMessagingTemplate messagingTemplate;
@@ -48,7 +49,8 @@ public class TicketServiceImpl implements TicketService {
                     .ifPresent(ticket::setAccount);
         }
 
-        // 🔥 Logic của sếp: Tìm và gán bài viết bị báo cáo (Sử dụng targetPostId từ DTO)
+        // 🔥 Logic của sếp: Tìm và gán bài viết bị báo cáo (Sử dụng targetPostId từ
+        // DTO)
         if (dto.getTargetPostId() != null) {
             postDAO.findById(dto.getTargetPostId())
                     .ifPresent(ticket::setTargetPost);
@@ -122,7 +124,7 @@ public class TicketServiceImpl implements TicketService {
                 }
 
                 notificationService.createNotification(title, content, type, ticket.getAccount().getAccountID(), null,
-                        link);
+                        null, link);
             } catch (Exception e) {
                 System.err.println("Failed to send ticket status notification: " + e.getMessage());
             }

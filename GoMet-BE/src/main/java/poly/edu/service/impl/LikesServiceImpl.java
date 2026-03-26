@@ -1,12 +1,15 @@
 package poly.edu.service.impl;
 
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import poly.edu.dao.*;
 import poly.edu.dto.LikesDTO;
 import poly.edu.entity.*;
 import poly.edu.service.LikesService;
+import poly.edu.service.NotificationService;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,7 +22,7 @@ public class LikesServiceImpl implements LikesService {
     private final LikesDAO likesDAO;
     private final PostDAO postDAO;
     private final AccountDAO accountDAO;
-    private final NotificationDAO notificationDAO; // Đảm bảo sếp đã có DAO này nhé
+    private final NotificationService notificationService;
 
     @Override
     @Transactional
@@ -27,18 +30,32 @@ public class LikesServiceImpl implements LikesService {
         Optional<Likes> existingLike = likesDAO.findByAccount_AccountIDAndPost_PostID(accountId, postId);
 
         if (existingLike.isPresent()) {
-            // Đã like -> Xóa (Hủy like). SQL Trigger sẽ tự động trừ LikeCount của Post.
+            // UNLIKE
             likesDAO.delete(existingLike.get());
             return false;
         } else {
-            // Chưa like -> Thêm mới. SQL Trigger sẽ tự động cộng LikeCount của Post.
+            // LIKE
+            Account actor = accountDAO.findById(accountId)
+                    .orElseThrow(() -> new RuntimeException("Lỗi: Không tìm thấy Account"));
+
+            Post post = postDAO.findById(postId)
+                    .orElseThrow(() -> new RuntimeException("Lỗi: Không tìm thấy Post"));
+
             Likes newLike = new Likes();
-            newLike.setAccount(accountDAO.findById(accountId).orElseThrow(() -> new RuntimeException("Lỗi: Không tìm thấy Account")));
-            newLike.setPost(postDAO.findById(postId).orElseThrow(() -> new RuntimeException("Lỗi: Không tìm thấy Post")));
+            newLike.setAccount(actor);
+            newLike.setPost(post);
             likesDAO.save(newLike);
 
-            // Gửi thông báo cho chủ bài viết
-//            createNotification(accountId, postId);
+            Integer ownerId = post.getAccount().getAccountID();
+
+            // ❗ Không gửi cho chính mình
+            if (!ownerId.equals(accountId)) {
+                notificationService.notifyLike(
+                        actor.getUsername(),
+                        ownerId,
+                        postId);
+            }
+
             return true;
         }
     }
@@ -53,8 +70,7 @@ public class LikesServiceImpl implements LikesService {
                         like.getAccount().getUsername(),
                         like.getAccount().getAvatar(),
                         like.getPost().getPostID(),
-                        like.getCreatedAt()
-                ))
+                        like.getCreatedAt()))
                 .collect(Collectors.toList());
     }
 
@@ -63,23 +79,4 @@ public class LikesServiceImpl implements LikesService {
         return likesDAO.existsByAccount_AccountIDAndPost_PostID(accountId, postId);
     }
 
-    // Hàm phụ trợ tạo thông báo
-    private void createNotification(Integer likerId, Integer postId) {
-        Post post = postDAO.findById(postId).orElseThrow();
-        Account liker = accountDAO.findById(likerId).orElseThrow();
-        Account author = post.getAccount();
-
-        // Không gửi thông báo nếu mình tự like bài của mình
-        if (!likerId.equals(author.getAccountID())) {
-            Notification notice = new Notification();
-            notice.setTitle("Lượt tương tác mới");
-            notice.setContent(liker.getUsername() + " đã thích bài viết: " + post.getTitle());
-            notice.setType("LIKE");
-            notice.setAccount(author);
-            notice.setPost(post);
-            notice.setIsRead(0);
-            // Sếp nhớ đảm bảo Entity Notification có đủ các trường này
-            notificationDAO.save(notice);
-        }
-    }
 }

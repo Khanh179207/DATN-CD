@@ -5,7 +5,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dto.LikesDTO;
 import poly.edu.service.LikesService;
-
 import java.util.List;
 
 @RestController
@@ -23,6 +22,7 @@ public class LikesController {
             @RequestParam Integer accountId,
             @RequestParam Integer postId) {
         boolean isLiked = likesService.toggleLike(accountId, postId);
+
         return ResponseEntity.ok(isLiked);
     }
 

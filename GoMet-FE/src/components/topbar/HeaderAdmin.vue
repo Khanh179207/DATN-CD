@@ -46,15 +46,16 @@
             <div class="z-body custom-scroll" v-if="notifications.length > 0">
               <div v-for="notification in notifications" :key="notification.notificationID" class="z-card"
                 :class="{ unread: notification.isRead === 0 }" @click="handleNotificationClick(notification)">
-                <div class="card-icon" :class="notification.type">
+                <img v-if="notification.avatar" class="card-avatar" :src="notification.avatar"
+                  :alt="notification.username" />
+                <div v-else class="card-avatar-placeholder" :class="notification.type">
                   {{ notification.type === 'alert' ? '!' : notification.type === 'post' ? '📝' : '🔔' }}
                 </div>
                 <div class="card-desc">
                   <div class="title-row">
-                    <p>{{ notification.title }}</p>
+                    <p><b>{{ notification.username }}</b> {{ notification.content }}</p>
                     <span v-if="notification.isRead === 0" class="badge-new">MỚI</span>
                   </div>
-                  <span class="sub-txt">{{ notification.content }}</span>
                   <span class="time-txt">{{ timeAgo(notification.createdAt) }}</span>
                 </div>
               </div>
@@ -196,17 +197,20 @@ const loadNotifications = async () => {
 
   try {
     const data = await getNotifications(auth.currentUser.accountID)
+    console.log('Notification API:', data);
     notifications.value = data.map(n => ({
       notificationID: n.notificationID,
       title: n.title,
       content: n.content,
+      username: n.username,
+      avatar: n.avatarUrl,
       type: n.type || 'admin',
       isRead: n.isRead === 1 ? 1 : 0,
       createdAt: n.createdAt,
       link: getLinkForNotificationType(n)
     }))
+    console.log('✅ Loaded admin notifications:', notifications.value);
     updatePageTitle()
-    console.log('✅ Loaded admin notifications:', notifications.value)
   } catch (error) {
     console.error('❌ Failed to load notifications:', error)
   }
@@ -223,7 +227,7 @@ const handleRealtimeAlert = (event) => {
     title: alertData.title || 'System Alert',
     content: alertData.content || alertData.message || '',
     type: alertData.type || 'alert',
-    isRead: 0, 
+    isRead: 0,
     createdAt: alertData.createdAt || new Date().toISOString(),
     link: getLinkForNotificationType(alertData)
   }
@@ -234,6 +238,7 @@ const handleRealtimeAlert = (event) => {
       notifications.value.unshift(newNotification)
       playNotificationSound()
       updatePageTitle()
+      showBrowserNotification(newNotification)
       console.log('🚨 Real-time admin alert received:', newNotification)
     }
   } else {
@@ -252,7 +257,7 @@ const handleRealtimeAdminNotification = (event) => {
     title: notificationData.title || 'Notification',
     content: notificationData.content || '',
     type: notificationData.type || 'notification',
-    isRead: 0, 
+    isRead: 0,
     createdAt: notificationData.createdAt || new Date().toISOString(),
     link: getLinkForNotificationType(notificationData)
   }
@@ -263,6 +268,7 @@ const handleRealtimeAdminNotification = (event) => {
       notifications.value.unshift(newNotification)
       playNotificationSound()
       updatePageTitle()
+      showBrowserNotification(newNotification)
       console.log('📬 Real-time admin notification received:', newNotification)
     }
   } else {
@@ -354,6 +360,22 @@ const playNotificationSound = () => {
   }
 }
 
+const requestNotificationPermission = () => {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+};
+
+const showBrowserNotification = (notification) => {
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification(notification.title, {
+      body: notification.content,
+      icon: notification.avatar ||
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(notification.title)}&background=EA580C&color=fff`
+    });
+  }
+};
+
 /**
  * Format time ago (relative time display)
  */
@@ -374,6 +396,7 @@ onMounted(async () => {
   await loadNotifications()
   startRealtimeSystem()
   updatePageTitle()
+  requestNotificationPermission()
 })
 
 onUnmounted(() => {
@@ -773,6 +796,40 @@ const vClickOutside = {
 .card-icon.success {
   background: rgba(16, 185, 129, 0.1);
   color: #10b981;
+}
+
+.card-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--z-btn-bg);
+  border: 2px solid var(--z-panel-border);
+}
+
+.card-avatar-placeholder {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 18px;
+  flex-shrink: 0;
+  background: rgba(234, 88, 12, 0.1);
+  color: #ea580c;
+}
+
+.card-avatar-placeholder.alert {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.card-avatar-placeholder.post {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
 }
 
 .card-desc {

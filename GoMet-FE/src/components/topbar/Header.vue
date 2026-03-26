@@ -114,7 +114,8 @@
                 <div v-for="n in notifications" :key="n.id" class="list-item noti-item" :class="{ unread: !n.isRead }"
                   @click="handleNotiClick(n)">
                   <div class="avatar-wrap">
-                    <img :src="n.avatar">
+                    <img :src="n.avatar || 'https://ui-avatars.com/api/?name=User&background=EA580C&color=fff'"
+                      alt="User avatar">
                     <div class="noti-type-icon" :class="n.type">
                       <svg v-if="n.type === 'like'" width="10" height="10" viewBox="0 0 24 24" fill="white"
                         stroke="white">
@@ -128,7 +129,7 @@
                     </div>
                   </div>
                   <div class="item-info">
-                    <p class="noti-text"><b>{{ n.user }}</b> {{ n.action }}</p>
+                    <p class="noti-text"><b>{{ n.username }}</b> {{ n.content }}</p>
                     <span class="time">{{ n.time }}</span>
                   </div>
                   <div v-if="!n.isRead" class="unread-dot"></div>
@@ -214,14 +215,16 @@ const increaseBadge = () => {
 const addNotificationToDropdown = (notification) => {
   const newNotification = {
     id: notification.notificationId,
-    user: notification.title,
-    action: notification.content,
+    title: notification.title,
+    content: notification.content,
+    username: notification.username,
+    avatar: notification.avatarUrl,
     time: notification.createdAt ? new Date(notification.createdAt).toLocaleDateString() : new Date().toLocaleDateString(),
     isRead: notification.isRead === 1,
     type: notification.type || 'like',
-    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(notification.title)}&background=EA580C&color=fff`,
     link: notification.link
   };
+  console.log('New notification added:', newNotification);
   notifications.value.unshift(newNotification);
 };
 
@@ -264,13 +267,19 @@ const loadNotifications = async () => {
   if (!authStore.user?.accountID) return
   try {
     const data = await getNotifications(authStore.user.accountID)
+    console.log("Notification API:", data);
     notifications.value = data.map(n => ({
-      id: n.notificationID, user: n.title, action: n.content,
+      id: n.notificationID,
+      title: n.title,
+      content: n.content,
+      username: n.username,
+      avatar: n.avatarUrl,
       time: n.createdAt ? new Date(n.createdAt).toLocaleDateString() : '',
-      isRead: n.isRead === 1, type: n.type || 'like',
-      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(n.title)}&background=EA580C&color=fff`,
+      isRead: n.isRead === 1,
+      type: n.type || 'like',
       link: n.link
     }))
+    console.log("Mapped notifications:", notifications.value);
   } catch (err) { }
 }
 

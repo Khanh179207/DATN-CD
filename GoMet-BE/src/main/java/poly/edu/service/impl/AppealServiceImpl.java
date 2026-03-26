@@ -56,9 +56,9 @@ public class AppealServiceImpl implements AppealService {
                         "Người dùng " + email + " đã nộp khiếu nại: " + reason,
                         "appeal",
                         admin.getAccountID(),
-                        null,
-                        "/admin/appeals"
-                );
+                        null, // actorId - null for system notification
+                        null, // postId
+                        "/admin/appeals");
             }
         } catch (Exception e) {
             // Log error but don't fail the appeal creation

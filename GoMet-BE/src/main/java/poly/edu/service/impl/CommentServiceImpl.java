@@ -14,7 +14,6 @@ import poly.edu.entity.Comment;
 import poly.edu.entity.Post;
 import poly.edu.service.CommentService;
 import poly.edu.service.NotificationService;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -40,7 +39,8 @@ public class CommentServiceImpl implements CommentService {
 
                     // Chỉ check like cho những comment đang hoạt động (isActive = 1)
                     if (currentAccountID != null && Integer.valueOf(1).equals(c.getIsActive())) {
-                        boolean liked = commentLikeDAO.findByAccountAndComment(currentAccountID, c.getCommentID()).isPresent();
+                        boolean liked = commentLikeDAO.findByAccountAndComment(currentAccountID, c.getCommentID())
+                                .isPresent();
                         dto.setIsLiked(liked);
                     } else {
                         dto.setIsLiked(false);
@@ -80,7 +80,8 @@ public class CommentServiceImpl implements CommentService {
             post = parentComment.getPost();
         }
 
-        if (post == null) throw new RuntimeException("Không tìm thấy bài viết");
+        if (post == null)
+            throw new RuntimeException("Không tìm thấy bài viết");
 
         // 🔥 CHỐT CHẶN BẢO MẬT: CHỐNG SPAM RATING (Mỗi bài chỉ rate 1 lần) 🔥
         if (finalRating != null && finalRating > 0) {
@@ -109,8 +110,7 @@ public class CommentServiceImpl implements CommentService {
                     account.getUsername(),
                     post.getAccount().getAccountID(),
                     post.getPostID(),
-                    saved.getCommentID()
-            );
+                    saved.getCommentID());
         }
 
         return toDTO(saved);
@@ -200,7 +200,8 @@ public class CommentServiceImpl implements CommentService {
 
         for (Comment c : ratedComments) {
             int star = c.getRating();
-            if (star >= 1 && star <= 5) distribution[star - 1]++;
+            if (star >= 1 && star <= 5)
+                distribution[star - 1]++;
         }
 
         Map<String, Object> stats = new HashMap<>();

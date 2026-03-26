@@ -9,7 +9,6 @@ import poly.edu.dao.FollowDAO;
 import poly.edu.entity.Account;
 import poly.edu.entity.Follow;
 import poly.edu.service.NotificationService;
-
 import java.time.LocalDate;
 import java.util.Map;
 import java.util.Optional;
@@ -30,7 +29,8 @@ public class FollowController {
         if (followerID.equals(followeeID)) {
             return ResponseEntity.badRequest().body(Map.of("message", "Không thể tự follow"));
         }
-        Optional<Follow> existing = followDAO.findByFollower_AccountIDAndFollowee_AccountIDAndStatus(followerID, followeeID, 1);
+        Optional<Follow> existing = followDAO.findByFollower_AccountIDAndFollowee_AccountIDAndStatus(followerID,
+                followeeID, 1);
         if (existing.isPresent()) {
             return ResponseEntity.ok(Map.of("message", "Đã follow trước đó"));
         }
@@ -70,7 +70,8 @@ public class FollowController {
     public ResponseEntity<?> checkFollow(
             @RequestParam Integer followerID,
             @RequestParam Integer followeeID) {
-        boolean isFollowing = followDAO.findByFollower_AccountIDAndFollowee_AccountIDAndStatus(followerID, followeeID, 1).isPresent();
+        boolean isFollowing = followDAO
+                .findByFollower_AccountIDAndFollowee_AccountIDAndStatus(followerID, followeeID, 1).isPresent();
         return ResponseEntity.ok(Map.of("isFollowing", isFollowing));
     }
 }

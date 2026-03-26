@@ -168,6 +168,7 @@ class WebSocketService {
      * Handle incoming notification
      */
     handleNotification(notificationDTO) {
+        this.playNotificationSound();
         // Emit custom event for components to listen to
         const event = new CustomEvent('realtime-notification', {
             detail: notificationDTO
@@ -179,6 +180,7 @@ class WebSocketService {
      * Handle incoming admin notification (user-specific)
      */
     handleAdminNotification(notificationDTO) {
+        this.playNotificationSound();
         // Emit custom event for admin components to listen to
         const event = new CustomEvent('admin-notification', {
             detail: notificationDTO
@@ -186,15 +188,17 @@ class WebSocketService {
         window.dispatchEvent(event);
     }
 
-    /**
-     * Handle incoming admin alert (broadcast to all admins)
-     */
-    handleAdminAlert(alertData) {
-        // Emit custom event for admin components to listen to
-        const event = new CustomEvent('admin-alert', {
-            detail: alertData
-        });
-        window.dispatchEvent(event);
+
+    playNotificationSound() {
+        try {
+            const audio = new Audio('/sounds/notification.mp3');
+            audio.volume = 0.5;
+            audio.play().catch(err => {
+                console.warn('Autoplay bị chặn:', err);
+            });
+        } catch (error) {
+            console.error('Lỗi phát âm thanh:', error);
+        }
     }
 
     /**

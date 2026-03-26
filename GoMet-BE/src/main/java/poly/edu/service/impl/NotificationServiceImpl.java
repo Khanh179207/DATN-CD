@@ -25,12 +25,21 @@ public class NotificationServiceImpl implements NotificationService {
     private final SimpMessagingTemplate messagingTemplate;
 
     @Override
-    public Notification createNotification(String title, String content, String type, Integer accountId,
-            Integer postId, String link) {
-        // Get the account entity
-        Optional<Account> accountOpt = accountDAO.findById(accountId);
-        if (accountOpt.isEmpty()) {
-            throw new RuntimeException("Account not found with ID: " + accountId);
+    public Notification createNotification(String title, String content, String type, Integer receiverId,
+            Integer actorId, Integer postId, String link) {
+        // Get the receiver (person receiving the notification)
+        Optional<Account> receiverOpt = accountDAO.findById(receiverId);
+        if (receiverOpt.isEmpty()) {
+            throw new RuntimeException("Receiver not found with ID: " + receiverId);
+        }
+
+        // Get the actor (person who triggered the action)
+        Account actor = null;
+        if (actorId != null) {
+            Optional<Account> actorOpt = accountDAO.findById(actorId);
+            if (actorOpt.isPresent()) {
+                actor = actorOpt.get();
+            }
         }
 
         // Get the post entity if postId is provided
@@ -48,7 +57,8 @@ public class NotificationServiceImpl implements NotificationService {
                 .title(title)
                 .content(content)
                 .type(type)
-                .account(accountOpt.get())
+                .account(receiverOpt.get())
+                .actor(actor)
                 .post(post)
                 .isRead(0) // Default to unread
                 .createdAt(LocalDateTime.now())
@@ -58,115 +68,183 @@ public class NotificationServiceImpl implements NotificationService {
         Notification savedNotification = notificationDAO.save(notification);
 
         // Send real-time notification via WebSocket
-        sendRealtimeNotification(accountId, convertToDTO(savedNotification));
+        sendRealtimeNotification(receiverId, convertToDTO(savedNotification));
 
         return savedNotification;
     }
 
     @Override
     public void notifyFollow(String followerUsername, Integer followedAccountId) {
-        String title = "New Follower";
-        String content = followerUsername + " started following you.";
-        String type = "FOLLOW";
-        String link = "/profile/" + followedAccountId; // Link to the followed user's profile
+        // Get actor by username
+        Optional<Account> followerOpt = accountDAO.findByUsername(followerUsername);
+        if (followerOpt.isEmpty()) {
+            throw new RuntimeException("Follower not found with username: " + followerUsername);
+        }
+        Integer followerId = followerOpt.get().getAccountID();
 
-        createNotification(title, content, type, followedAccountId, null, link);
+        String title = "Người theo dõi mới";
+        String content = " đã bắt đầu theo dõi bạn.";
+        String type = "FOLLOW";
+        String link = "/profile/" + followerId; // Link to the follower user's profile
+
+        createNotification(title, content, type, followedAccountId, followerId, null, link);
+    }
+
+    @Override
+    public void notifyLike(String likerUsername, Integer postOwnerId, Integer postId) {
+        System.out.println("=== notifyLike CALLED ===");
+        System.out.println("likerUsername: " + likerUsername);
+        System.out.println("postOwnerId: " + postOwnerId);
+        System.out.println("postId: " + postId);
+        // Lấy actor (người like)
+        Optional<Account> likerOpt = accountDAO.findByUsername(likerUsername);
+        if (likerOpt.isEmpty()) {
+            throw new RuntimeException("Liker not found with username: " + likerUsername);
+        }
+        Integer likerId = likerOpt.get().getAccountID();
+
+        String title = "Lượt thích mới";
+        String content = " đã thích bài viết của bạn.";
+        String type = "LIKE";
+        String link = "/post/" + postId;
+
+        createNotification(title, content, type, postOwnerId, likerId, postId, link);
     }
 
     @Override
     public void notifyComment(String commenterUsername, Integer postOwnerId, Integer postId, Integer commentId) {
-        // Don't create notification if commenter is the post owner
-        // This check should be done by the caller, but we'll add it here as well
-        // For now, assuming the caller handles this
+        // Get actor by username
+        Optional<Account> commenterOpt = accountDAO.findByUsername(commenterUsername);
+        if (commenterOpt.isEmpty()) {
+            throw new RuntimeException("Commenter not found with username: " + commenterUsername);
+        }
+        Integer commenterId = commenterOpt.get().getAccountID();
 
-        String title = "New Comment";
-        String content = commenterUsername + " commented on your post.";
+        String title = "Bình luận mới";
+        String content = " đã bình luận bài viết của bạn.";
         String type = "COMMENT";
         String link = commentId != null ? "/post/" + postId + "#comment-" + commentId : "/post/" + postId;
 
-        createNotification(title, content, type, postOwnerId, postId, link);
+        createNotification(title, content, type, postOwnerId, commenterId, postId, link);
     }
 
     @Override
     public void notifyRating(String raterUsername, Integer postOwnerId, Integer postId) {
-        // Don't create notification if rater is the post owner
-        // This check should be done by the caller, but we'll add it here as well
-        // For now, assuming the caller handles this
+        // Get actor by username
+        Optional<Account> raterOpt = accountDAO.findByUsername(raterUsername);
+        if (raterOpt.isEmpty()) {
+            throw new RuntimeException("Rater not found with username: " + raterUsername);
+        }
+        Integer raterId = raterOpt.get().getAccountID();
 
-        String title = "New Rating";
-        String content = raterUsername + " rated your post.";
+        String title = "Đánh giá mới";
+        String content = " đã đánh giá bài viết của bạn.";
         String type = "RATING";
         String link = "/post/" + postId; // Link to the post
 
-        createNotification(title, content, type, postOwnerId, postId, link);
+        createNotification(title, content, type, postOwnerId, raterId, postId, link);
     }
 
     @Override
     public void notifyEventVote(String voterUsername, Integer postOwnerId, Integer postId) {
-        // Don't create notification if voter is the post owner
-        // This check should be done by the caller, but we'll add it here as well
-        // For now, assuming the caller handles this
+        // Get actor by username
+        Optional<Account> voterOpt = accountDAO.findByUsername(voterUsername);
+        if (voterOpt.isEmpty()) {
+            throw new RuntimeException("Voter not found with username: " + voterUsername);
+        }
+        Integer voterId = voterOpt.get().getAccountID();
 
-        String title = "New Vote";
-        String content = voterUsername + " voted for your post in the event.";
+        String title = "Lượt bình chọn mới";
+        String content = " đã bình chọn cho bài viết của bạn trong sự kiện.";
         String type = "EVENT_VOTE";
         String link = "/post/" + postId; // Link to the post
 
-        createNotification(title, content, type, postOwnerId, postId, link);
+        createNotification(title, content, type, postOwnerId, voterId, postId, link);
     }
 
     @Override
     public void notifyAdminTicket(String userUsername, Integer ticketId) {
+        // Get actor by username
+        Optional<Account> userOpt = accountDAO.findByUsername(userUsername);
+        if (userOpt.isEmpty()) {
+            throw new RuntimeException("User not found with username: " + userUsername);
+        }
+        Integer userId = userOpt.get().getAccountID();
+
         // Notify all admin accounts
         List<Account> admins = accountDAO.findByIsAdmin(1);
         for (Account admin : admins) {
-            String title = "New Support Ticket";
-            String content = userUsername + " submitted a support ticket.";
+            String title = "Ticket hỗ trợ mới";
+            String content = " đã gửi 1 ticket hỗ trợ.";
             String type = "TICKET";
             String link = "/admin/tickets"; // Link to admin tickets page
-            Notification notification = createNotification(title, content, type, admin.getAccountID(), null, link);
-            sendAdminAlert(notification);
+            Notification notification = createNotification(title, content, type, admin.getAccountID(), userId, null,
+                    link);
         }
     }
 
     @Override
     public void notifyAdminFeedback(String userUsername, Integer feedbackId) {
+        // Get actor by username
+        Optional<Account> userOpt = accountDAO.findByUsername(userUsername);
+        if (userOpt.isEmpty()) {
+            throw new RuntimeException("User not found with username: " + userUsername);
+        }
+        Integer userId = userOpt.get().getAccountID();
+
         // Notify all admin accounts
         List<Account> admins = accountDAO.findByIsAdmin(1);
         for (Account admin : admins) {
-            String title = "New Feedback";
-            String content = userUsername + " submitted feedback.";
+            String title = "Phản hồi mới";
+            String content = " đã gửi phản hồi.";
             String type = "FEEDBACK";
             String link = "/admin/feedback"; // Link to admin feedback page
-            Notification notification = createNotification(title, content, type, admin.getAccountID(), null, link);
+            Notification notification = createNotification(title, content, type, admin.getAccountID(), userId, null,
+                    link);
             sendAdminAlert(notification);
         }
     }
 
     @Override
     public void notifyAdminReport(String userUsername, Integer reportId) {
+        // Get actor by username
+        Optional<Account> userOpt = accountDAO.findByUsername(userUsername);
+        if (userOpt.isEmpty()) {
+            throw new RuntimeException("User not found with username: " + userUsername);
+        }
+        Integer userId = userOpt.get().getAccountID();
+
         // Notify all admin accounts
         List<Account> admins = accountDAO.findByIsAdmin(1);
         for (Account admin : admins) {
-            String title = "New Report";
-            String content = userUsername + " submitted a report.";
+            String title = "Báo cáo mới";
+            String content = " đã gửi một báo cáo.";
             String type = "REPORT";
             String link = "/admin/reports"; // Link to admin reports page
-            Notification notification = createNotification(title, content, type, admin.getAccountID(), null, link);
+            Notification notification = createNotification(title, content, type, admin.getAccountID(), userId, null,
+                    link);
             sendAdminAlert(notification);
         }
     }
 
     @Override
     public void notifyAdminPostPendingApproval(String userUsername, Integer postId) {
+        // Get actor by username
+        Optional<Account> userOpt = accountDAO.findByUsername(userUsername);
+        if (userOpt.isEmpty()) {
+            throw new RuntimeException("User not found with username: " + userUsername);
+        }
+        Integer userId = userOpt.get().getAccountID();
+
         // Notify all admin accounts
         List<Account> admins = accountDAO.findByIsAdmin(1);
         for (Account admin : admins) {
-            String title = "Post Pending Approval";
-            String content = userUsername + " created a new post that requires approval.";
+            String title = "Bài viết chờ duyệt";
+            String content = " đã tạo một bài viết mới cần được duyệt.";
             String type = "POST_PENDING_APPROVAL";
             String link = "/admin/posts/pending"; // Link to admin pending posts page
-            Notification notification = createNotification(title, content, type, admin.getAccountID(), postId, link);
+            Notification notification = createNotification(title, content, type, admin.getAccountID(), userId, postId,
+                    link);
             sendAdminAlert(notification);
         }
     }
@@ -182,12 +260,13 @@ public class NotificationServiceImpl implements NotificationService {
         Post post = postOpt.get();
         Account postOwner = post.getAccount();
 
-        String title = "Post approved";
-        String content = "Your post has been approved by the admin.";
+        String title = "Bài viết được duyệt";
+        String content = "Bài viết của bạn đã được admin duyệt.";
         String type = "POST_APPROVED";
         String link = "/post/" + postId; // Link to the approved post
 
-        createNotification(title, content, type, postOwner.getAccountID(), postId, link);
+        // No actor for admin approval - actor will be null
+        createNotification(title, content, type, postOwner.getAccountID(), null, postId, link);
     }
 
     @Override
@@ -201,14 +280,15 @@ public class NotificationServiceImpl implements NotificationService {
         Post post = postOpt.get();
         Account postOwner = post.getAccount();
 
-        String title = "Post rejected";
+        String title = "Bài viết bị từ chối";
         String content = reason != null && !reason.trim().isEmpty()
-                ? "Your post was rejected by the admin. Reason: " + reason
-                : "Your post was rejected by the admin.";
+                ? "Bài viết của bạn đã bị admin từ chối. Lý do: " + reason
+                : "Bài viết của bạn đã bị admin từ chối.";
         String type = "POST_REJECTED";
         String link = "/post/" + postId; // Link to the rejected post
 
-        createNotification(title, content, type, postOwner.getAccountID(), postId, link);
+        // No actor for admin rejection - actor will be null
+        createNotification(title, content, type, postOwner.getAccountID(), null, postId, link);
     }
 
     @Override
@@ -222,12 +302,13 @@ public class NotificationServiceImpl implements NotificationService {
         Post post = postOpt.get();
         Account postOwner = post.getAccount();
 
-        String title = "Post disabled";
-        String content = "Your post has been disabled by admin.";
+        String title = "Bài viết bị vô hiệu hóa";
+        String content = "Bài viết của bạn đã bị admin vô hiệu hóa.";
         String type = "POST_DISABLED";
         String link = "/post/" + postId; // Link to the disabled post
 
-        createNotification(title, content, type, postOwner.getAccountID(), postId, link);
+        // No actor for admin disable - actor will be null
+        createNotification(title, content, type, postOwner.getAccountID(), null, postId, link);
     }
 
     /**
@@ -285,6 +366,17 @@ public class NotificationServiceImpl implements NotificationService {
      * @return The notification DTO
      */
     private NotificationDTO convertToDTO(Notification notification) {
+        // Use actor (person who triggered action) instead of account (receiver)
+        Account actor = notification.getActor();
+        Account receiver = notification.getAccount();
+
+        String username = actor != null ? actor.getUsername() : "Unknown";
+        String avatarUrl = actor != null ? actor.getAvatar() : null;
+
+        System.out.println("Actor: " + (actor != null ? actor.getUsername() : "null"));
+        System.out.println("Receiver: " + (receiver != null ? receiver.getUsername() : "null"));
+        System.out.println("DTO: username=" + username + ", avatarUrl=" + avatarUrl);
+
         return NotificationDTO.builder()
                 .notificationID(notification.getNotificationID())
                 .title(notification.getTitle())
@@ -294,6 +386,8 @@ public class NotificationServiceImpl implements NotificationService {
                 .link(notification.getLink())
                 .createdAt(notification.getCreatedAt())
                 .isRead(notification.getIsRead())
+                .username(username)
+                .avatarUrl(avatarUrl)
                 .build();
     }
 }

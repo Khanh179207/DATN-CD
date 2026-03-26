@@ -50,6 +50,8 @@ public class NotificationController {
                     map.put("createdAt", n.getCreatedAt().toString());
                     map.put("postID", n.getPost() != null ? n.getPost().getPostID() : 0);
                     map.put("link", n.getLink()); // Can be null
+                    map.put("username", n.getActor() != null ? n.getActor().getUsername() : "Hệ thống");
+                    map.put("avatarUrl", n.getActor() != null ? n.getActor().getAvatar() : null);
                     return map;
                 })
                 .collect(Collectors.toList());
