@@ -12,7 +12,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/admin/posts")
 @RequiredArgsConstructor
-@CrossOrigin
+@CrossOrigin("*")
 public class AdminPostController {
 
     private final AdminPostService adminpostService;
@@ -29,19 +29,44 @@ public class AdminPostController {
         return ResponseEntity.ok(adminpostService.findByApproved(status));
     }
 
-    // Duyệt bài
+    // 🔥 DUYỆT BÀI (Hứng Payload chứa thông tin Admin)
     @PutMapping("/approve/{id}")
-    public ResponseEntity<?> approve(@PathVariable Integer id) {
-        adminpostService.approvePost(id);
-        return ResponseEntity.ok(Map.of("message", "Post approved"));
+    public ResponseEntity<?> approve(@PathVariable Integer id, @RequestBody(required = false) Map<String, Object> payload) {
+        try {
+            Integer adminId = 0;
+            String adminName = "Hệ Thống";
+
+            if (payload != null) {
+                adminId = Integer.valueOf(payload.getOrDefault("adminId", 0).toString());
+                adminName = (String) payload.getOrDefault("adminName", "Admin Ẩn Danh");
+            }
+
+            adminpostService.approvePost(id, adminId, adminName);
+            return ResponseEntity.ok(Map.of("message", "Đã duyệt bài viết thành công!"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Lỗi: " + e.getMessage()));
+        }
     }
 
-    // Từ chối bài
+    // 🔥 TỪ CHỐI / ẨN BÀI (Hứng Payload chứa Lý do và thông tin Admin)
     @PutMapping("/{id}/reject")
-    public ResponseEntity<?> reject(@PathVariable Integer id, @RequestBody Map<String, String> body) {
-        String reason = body.get("reason");
-        adminpostService.rejectPost(id, reason);
-        return ResponseEntity.ok(Map.of("message", "Post rejected"));
+    public ResponseEntity<?> reject(@PathVariable Integer id, @RequestBody(required = false) Map<String, Object> payload) {
+        try {
+            Integer adminId = 0;
+            String adminName = "Hệ Thống";
+            String reason = "Vi phạm tiêu chuẩn cộng đồng";
+
+            if (payload != null) {
+                adminId = Integer.valueOf(payload.getOrDefault("adminId", 0).toString());
+                adminName = (String) payload.getOrDefault("adminName", "Admin Ẩn Danh");
+                reason = (String) payload.getOrDefault("reason", reason);
+            }
+
+            adminpostService.rejectPost(id, adminId, adminName, reason);
+            return ResponseEntity.ok(Map.of("message", "Đã từ chối bài viết thành công!"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Lỗi: " + e.getMessage()));
+        }
     }
 
     // Deactive bài
@@ -51,7 +76,6 @@ public class AdminPostController {
         return ResponseEntity.ok(Map.of("message", "Post deactivated"));
     }
 
-    // Xóa bài
     // Xóa bài (Đã đổi thành Xóa Mềm bên trong Service)
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Integer id) {

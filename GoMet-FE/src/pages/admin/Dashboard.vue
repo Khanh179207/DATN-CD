@@ -161,10 +161,12 @@ import {
   Activity, RefreshCcw, FileSignature, Check, X, Flag, ArrowRight,
   Headset, User, MessageSquare, ExternalLink, UserPlus, CalendarCheck, Zap, Loader2
 } from 'lucide-vue-next'
+import { useAuthStore } from '@/stores/auth'
 
 const stats = reactive({ pendingPosts: 0, pendingAppeals: 0, openTickets: 0 })
 const data = reactive({ posts: [], appeals: [], tickets: [], events: [], users: [], comments: [], notifications: [] })
 const loading = ref(true)
+const authStore = useAuthStore()
 
 // Hàm helper dịch Status Khiếu nại (Appeals)
 const getAppealStatusClass = (status) => {
@@ -309,21 +311,37 @@ const fetchAll = async () => {
 
 const approvePost = async (id) => {
   try {
-    await api.put(`/api/admin/posts/approve/${id}`)
+    const payload = {
+      adminId: authStore.user?.accountID || authStore.user?.id || 0,
+      adminName: authStore.user?.username || authStore.user?.fullName || 'Admin'
+    };
+    await api.put(`/api/admin/posts/approve/${id}`, payload)
     data.posts = data.posts.filter(p => p.id !== id)
     stats.pendingPosts = Math.max(0, stats.pendingPosts - 1)
     toast.success('Đã duyệt bài viết')
-  } catch (e) { toast.error('Lỗi duyệt bài') }
+  } catch (e) { toast.error('Lỗi duyệt bài: ' + (e.response?.data?.message || e.message)) }
 }
 
 const rejectPost = async (id) => {
-  if(!confirm('Xác nhận từ chối bài viết này?')) return;
+  const reason = prompt('Vui lòng nhập lý do từ chối bài viết (bắt buộc):');
+  if (reason === null) return; // Nhấn Hủy
+  if (!reason.trim()) {
+    toast.error('Bạn phải nhập lý do từ chối!');
+    return;
+  }
+  
   try {
-    await api.put(`/api/admin/posts/deactive/${id}`)
+    const payload = {
+      adminId: authStore.user?.accountID || authStore.user?.id || 0,
+      adminName: authStore.user?.username || authStore.user?.fullName || 'Admin',
+      reason: reason.trim()
+    };
+    
+    await api.put(`/api/admin/posts/${id}/reject`, payload)
     data.posts = data.posts.filter(p => p.id !== id)
     stats.pendingPosts = Math.max(0, stats.pendingPosts - 1)
     toast.info('Đã từ chối bài viết')
-  } catch (e) { toast.error('Lỗi từ chối') }
+  } catch (e) { toast.error('Lỗi từ chối: ' + (e.response?.data?.message || e.message)) }
 }
 
 onMounted(fetchAll)

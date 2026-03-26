@@ -39,7 +39,7 @@
       <div class="nav-engine-fixed">
         
         <div class="nav-section anim-stagger" style="--d: 0.1s">
-          <label class="section-tag" v-if="!isCollapsed">Tổng quan</label>
+          <label class="section-tag" v-if="!isCollapsed">TỔNG QUAN</label>
           <div class="section-divider" v-else></div>
 
           <router-link to="/admin/dashboard" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Dashboard' : ''">
@@ -51,35 +51,20 @@
                 <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
               </svg>
             </div>
-            <span class="link-text" v-if="!isCollapsed">Dashboard</span>
+            <span class="link-text" v-if="!isCollapsed">Bảng điều khiển</span>
           </router-link>
 
-          <router-link to="/admin/statistics" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Thống kê hệ thống' : ''">
+          <router-link to="/admin/statistics" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Thống kê' : ''">
             <div class="icon-orb">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <path d="M12 20V10"></path><path d="M18 20V4"></path><path d="M6 20v-4"></path>
               </svg>
             </div>
-            <span class="link-text" v-if="!isCollapsed">Thống kê hệ thống</span>
+            <span class="link-text" v-if="!isCollapsed">Thống kê</span>
           </router-link>
         </div>
 
         <div class="nav-section anim-stagger" style="--d: 0.2s">
-          <label class="section-tag" v-if="!isCollapsed">Cộng đồng</label>
-          <div class="section-divider" v-else></div>
-
-          <router-link to="/admin/users" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Quản lý Hội Viên' : ''">
-            <div class="icon-orb">
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <circle cx="9" cy="7" r="4"></circle>
-              </svg>
-            </div>
-            <span class="link-text" v-if="!isCollapsed">Quản lý Hội Viên</span>
-          </router-link>
-        </div>
-
-        <div class="nav-section anim-stagger" style="--d: 0.3s">
           <label class="section-tag" v-if="!isCollapsed">Nội dung</label>
           <div class="section-divider" v-else></div>
 
@@ -104,84 +89,130 @@
             <span class="link-text" v-if="!isCollapsed">Quản lý Bài viết</span>
           </router-link>
 
-          <router-link to="/admin/comments" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Kiểm duyệt Tương Tác' : ''">
+          <router-link to="/admin/comments" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Quản lý Bình luận' : ''">
             <div class="icon-orb">
               <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7"></path>
               </svg>
             </div>
-            <span class="link-text" v-if="!isCollapsed">Quản lý bình luận</span>
-          </router-link>
-        </div>
-
-        <div class="nav-section anim-stagger" style="--d: 0.4s">
-          <label class="section-tag" v-if="!isCollapsed">Hệ thống</label>
-          <div class="section-divider" v-else></div>
-
-          <router-link to="/admin/appeals" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Khiếu nại ban nhầm' : ''">
-            <div class="icon-orb">
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2m1 15h-2v-2h2v2m0-4h-2V7h2v6z"></path>
-              </svg>
-            </div>
-            <span class="link-text" v-if="!isCollapsed">Khiếu nại ban nhầm</span>
+            <span class="link-text" v-if="!isCollapsed">Quản lý Bình luận</span>
           </router-link>
 
-          <router-link to="/admin/tickets" class="nav-link-lux warning-vibe" active-class="active" :title="isCollapsed ? 'Trung tâm Phản hồi (5)' : ''">
-            <div class="icon-orb">
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-              </svg>
-            </div>
-            <span class="link-text" v-if="!isCollapsed">Trung tâm Phản hồi</span>
-            <span class="count-badge" v-if="!isCollapsed">5</span>
-            <span class="count-badge-dot" v-else></span>
-          </router-link>
-
-          <router-link to="/admin/notifications" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Thông Báo Chung' : ''">
-            <div class="icon-orb">
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-              </svg>
-            </div>
-            <span class="link-text" v-if="!isCollapsed">Thông Báo Chung</span>
-            <div class="lux-alert-dot"></div>
-          </router-link>
-        </div>
-
-        <div class="nav-section anim-stagger" style="--d: 0.5s">
-          <label class="section-tag" v-if="!isCollapsed">Chiến dịch</label>
-          <div class="section-divider" v-else></div>
-
-          <router-link to="/admin/events" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Quản lý Sự Kiện' : ''">
+          <router-link to="/admin/events" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Quản lý Sự kiện' : ''">
             <div class="icon-orb">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                 <line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line>
               </svg>
             </div>
-            <span class="link-text" v-if="!isCollapsed">Quản lý Sự Kiện</span>
+            <span class="link-text" v-if="!isCollapsed">Quản lý Sự kiện</span>
           </router-link>
 
-          <router-link to="/admin/transactions" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Doanh thu & Hóa đơn' : ''">
+          <router-link to="/admin/achievements" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Quản lý Thành tích' : ''">
+            <div class="icon-orb">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="12" cy="8" r="7"></circle>
+                <polyline points="8.21 13.89 7 22 12 17 17 22 15.79 13.88"></polyline>
+              </svg>
+            </div>
+            <span class="link-text" v-if="!isCollapsed">Quản lý Thành tích</span>
+          </router-link>
+        </div>
+
+        <div class="nav-section anim-stagger" style="--d: 0.3s">
+          <label class="section-tag" v-if="!isCollapsed">CỘNG ĐỒNG</label>
+          <div class="section-divider" v-else></div>
+
+          <router-link to="/admin/users" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Quản lý Người dùng' : ''">
+            <div class="icon-orb">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+              </svg>
+            </div>
+            <span class="link-text" v-if="!isCollapsed">Quản lý Người dùng</span>
+          </router-link>
+
+          <router-link to="/admin/tickets" class="nav-link-lux warning-vibe" active-class="active" :title="isCollapsed ? 'Hỗ trợ & Phản hồi (5)' : ''">
+            <div class="icon-orb">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+            </div>
+            <span class="link-text" v-if="!isCollapsed">Hỗ trợ & Phản hồi</span>
+            <span class="count-badge" v-if="!isCollapsed">5</span>
+            <span class="count-badge-dot" v-else></span>
+          </router-link>
+
+          <router-link to="/admin/appeals" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Xử lý Khiếu nại' : ''">
+            <div class="icon-orb">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2m1 15h-2v-2h2v2m0-4h-2V7h2v6z"></path>
+              </svg>
+            </div>
+            <span class="link-text" v-if="!isCollapsed">Xử lý Khiếu nại</span>
+          </router-link>
+        </div>
+
+        <div class="nav-section anim-stagger" style="--d: 0.4s">
+          <label class="section-tag" v-if="!isCollapsed">HỆ THỐNG & BẢO MẬT</label>
+          <div class="section-divider" v-else></div>
+
+          <router-link to="/admin/transactions" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Quản lý Giao dịch' : ''">
             <div class="icon-orb">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
                 <line x1="1" y1="10" x2="23" y2="10"></line>
               </svg>
             </div>
-            <span class="link-text" v-if="!isCollapsed">Doanh thu & Hóa đơn</span>
+            <span class="link-text" v-if="!isCollapsed">Quản lý Giao dịch</span>
+          </router-link>
+
+          <router-link to="/admin/notifications" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Thông báo Hệ thống' : ''">
+            <div class="icon-orb">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              </svg>
+            </div>
+            <span class="link-text" v-if="!isCollapsed">Thông báo Hệ thống</span>
+            <div class="lux-alert-dot"></div>
+          </router-link>
+
+          <router-link to="/admin/blacklist" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Bộ lọc Từ khóa' : ''">
+            <div class="icon-orb">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                <line x1="2" y1="2" x2="22" y2="22"></line>
+              </svg>
+            </div>
+            <span class="link-text" v-if="!isCollapsed">Bộ lọc Từ khóa</span>
+          </router-link>
+
+          <router-link to="/admin/system-logs" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Nhật ký Hệ thống' : ''">
+            <div class="icon-orb">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+            </div>
+            <span class="link-text" v-if="!isCollapsed">Nhật ký Hệ thống</span>
           </router-link>
         </div>
-      </div> </nav> <div class="sidebar-footer">
-      <button class="btn-exit-admin" @click="$router.push('/home')" :title="isCollapsed ? 'Về Trang Khách' : ''">
+      </div> 
+    </nav> 
+    
+    <div class="sidebar-footer">
+      <button class="btn-exit-admin" @click="$router.push('/home')" :title="isCollapsed ? 'Về Trang Chủ' : ''">
         <div class="btn-content">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
             <polyline points="16 17 21 12 16 7"></polyline>
             <line x1="21" y1="12" x2="9" y2="12"></line>
           </svg>
-          <span v-if="!isCollapsed">VỀ TRANG KHÁCH</span>
+          <span v-if="!isCollapsed">VỀ TRANG CHỦ</span>
         </div>
         <div class="btn-shine"></div>
       </button>

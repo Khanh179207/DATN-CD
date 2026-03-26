@@ -54,16 +54,7 @@ public class Account {
     @Builder.Default
     private Integer isActive = 1;
 
-    @Column(name = "BannedBy")
-    private Integer bannedBy;
-
-    // 🔥 MỚI THÊM: Hứng tên và email thẳng từ SQL
-    @Column(name = "BannedByName")
-    private String bannedByName;
-
-    @Column(name = "BannedByEmail")
-    private String bannedByEmail;
-
+    // 🔥 CHỈ GIỮ LẠI 2 CỘT NÀY ĐỂ BÁO LỖI CHO USER LÚC ĐĂNG NHẬP
     @Column(name = "BanReason", columnDefinition = "NVARCHAR(MAX)")
     private String banReason;
 

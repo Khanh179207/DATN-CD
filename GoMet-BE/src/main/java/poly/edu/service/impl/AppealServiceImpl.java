@@ -113,8 +113,9 @@ public class AppealServiceImpl implements AppealService {
         Account account = accountDAO.findByEmail(appeal.getEmail())
                 .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại"));
 
-        // 🔥 Use AccountService.unban() to properly unban the account
-        accountService.unban(account.getAccountID());
+        // 🔥 Gọi hàm unban 3 tham số.
+        // Vì đây là mở khóa tự động qua đơn Appeal, sếp có thể hardcode số 0 và "Hệ Thống"
+        accountService.unban(account.getAccountID(), 0, "Hệ Thống (Đơn Khiếu Nại)");
 
         // Update appeal status to Resolved
         appeal.setStatus("Resolved");
@@ -123,7 +124,6 @@ public class AppealServiceImpl implements AppealService {
 
         return true;
     }
-
     @Override
     public Optional<AppealDTO> getAppealStatusByEmail(String email) {
         return appealDAO.findByEmail(email)

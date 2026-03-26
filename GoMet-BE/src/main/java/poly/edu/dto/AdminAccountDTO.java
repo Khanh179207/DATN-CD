@@ -17,11 +17,8 @@ public class AdminAccountDTO {
     private String  role;
 
     // Lưu vết admin khóa
-    private Integer bannedBy;
     private String  banReason;
     private String  bannedAt;
-    private String  bannedByName;
-    private String  bannedByEmail;
 
     // 🔥 3 BIẾN MỚI THÊM VÀO ĐỂ HIỂN THỊ THỐNG KÊ
     private Integer postCount;
