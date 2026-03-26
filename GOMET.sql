@@ -287,22 +287,23 @@ GO
 	-- ==========================================
 
 	-- 🔥 ĐÃ THÊM CỘT POST_ID VÀO BẢNG NOTIFICATION
-	CREATE TABLE Notification (
-		NotificationID INT IDENTITY(1,1) PRIMARY KEY,
-		Title NVARCHAR(255) NOT NULL,
-		Content NVARCHAR(MAX) NOT NULL,
-		Type NVARCHAR(100) NOT NULL,
-		AccountID INT NOT NULL,
-		Link NVARCHAR(500) NULL,
-		PostID INT NULL, 
-		isRead INT DEFAULT 0,
-		ReadAt DATETIME,
-		CreatedAt DATETIME DEFAULT GETDATE(),
+CREATE TABLE Notification (
+	NotificationID INT IDENTITY(1,1) PRIMARY KEY,
+	Title NVARCHAR(255) NOT NULL,
+	Content NVARCHAR(MAX) NOT NULL,
+	Type NVARCHAR(100) NOT NULL,
+	AccountID INT NOT NULL,
+	ActorID INT NULL, 
+	Link NVARCHAR(500) NULL,
+	PostID INT NULL, 
+	isRead INT DEFAULT 0,
+	ReadAt DATETIME,
+	CreatedAt DATETIME DEFAULT GETDATE(),
 
-		CONSTRAINT FK_Notification_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
-		CONSTRAINT FK_Notification_Post FOREIGN KEY (PostID) REFERENCES Post(PostID)
-	);
-	GO
+	CONSTRAINT FK_Notification_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
+	CONSTRAINT FK_Notification_Actor FOREIGN KEY (ActorID) REFERENCES Account(AccountID),
+	CONSTRAINT FK_Notification_Post FOREIGN KEY (PostID) REFERENCES Post(PostID)
+);
 
 	CREATE TABLE History (
 		HistoryID INT IDENTITY(1,1) PRIMARY KEY,
@@ -432,7 +433,17 @@ CREATE TABLE SystemConfig (
 );
 GO
 
-
+CREATE TABLE ModerationLog (
+    LogID INT IDENTITY(1,1) PRIMARY KEY,
+    TargetID INT NOT NULL,
+    TargetType NVARCHAR(50) NOT NULL,
+    Action NVARCHAR(50) NOT NULL,
+    AdminID INT NOT NULL,
+    AdminName NVARCHAR(255),
+    Reason NVARCHAR(500),
+    CreatedAt DATETIME DEFAULT GETDATE()
+);
+GO
 	-- ==========================================
 	-- 6. TRIGGERS TỰ ĐỘNG CẬP NHẬT
 	-- ==========================================
@@ -625,3 +636,9 @@ GO
 	SELECT * FROM Comment;
 
 	SELECT * FROM Follow;
+
+	SELECT * FROM Paymenttransaction;
+
+	SELECT * FROM Appeals;
+	
+	SELECT * FROM ModerationLog;
