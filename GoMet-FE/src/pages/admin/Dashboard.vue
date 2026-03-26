@@ -35,7 +35,7 @@
             </div>
             <div class="item-actions">
               <button @click="approvePost(post.id)" class="btn-act check" title="Duyệt bài"><Check :size="16" /></button>
-              <button @click="rejectPost(post.id)" class="btn-act cross" title="Từ chối"><X :size="16" /></button>
+              <button @click="askRejectPost(post)" class="btn-act cross" title="Từ chối"><X :size="16" /></button>
             </div>
           </div>
         </div>
@@ -150,6 +150,38 @@
       </div>
 
     </div>
+
+    <!-- Modal Từ chối bài viết -->
+    <Transition name="modal-fade">
+      <div v-if="rejectModal.show" class="modal-overlay" @click.self="rejectModal.show = false">
+        <div class="action-modal">
+          <div class="action-icon bg-red-light text-red">
+            <Ban :size="28" />
+          </div>
+          <h3>Từ chối bài viết?</h3>
+          <p>Xác nhận từ chối bài viết <strong>"{{ rejectModal.title }}"</strong>?</p>
+          
+          <div class="reason-input-group">
+            <label for="rejectReason">Lý do từ chối (bắt buộc):</label>
+            <textarea 
+              id="rejectReason" 
+              v-model="rejectModal.reason" 
+              placeholder="Vui lòng nhập lý do từ chối..." 
+              rows="3" 
+              class="reason-textarea"
+            ></textarea>
+            <span v-if="rejectModal.showError" class="error-msg">Bạn phải nhập lý do!</span>
+          </div>
+
+          <div class="action-btns">
+            <button class="btn-cancel" @click="rejectModal.show = false">Hủy bỏ</button>
+            <button class="btn-confirm btn-danger" @click="confirmRejectPost">
+              Xác nhận
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -159,7 +191,7 @@ import api from '@/services/api'
 import { toast } from '@/composables/useToast'
 import {
   Activity, RefreshCcw, FileSignature, Check, X, Flag, ArrowRight,
-  Headset, User, MessageSquare, ExternalLink, UserPlus, CalendarCheck, Zap, Loader2
+  Headset, User, MessageSquare, ExternalLink, UserPlus, CalendarCheck, Zap, Loader2, Ban
 } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 
@@ -167,6 +199,8 @@ const stats = reactive({ pendingPosts: 0, pendingAppeals: 0, openTickets: 0 })
 const data = reactive({ posts: [], appeals: [], tickets: [], events: [], users: [], comments: [], notifications: [] })
 const loading = ref(true)
 const authStore = useAuthStore()
+
+const rejectModal = ref({ show: false, postId: null, title: '', reason: '', showError: false })
 
 // Hàm helper dịch Status Khiếu nại (Appeals)
 const getAppealStatusClass = (status) => {
@@ -322,25 +356,28 @@ const approvePost = async (id) => {
   } catch (e) { toast.error('Lỗi duyệt bài: ' + (e.response?.data?.message || e.message)) }
 }
 
-const rejectPost = async (id) => {
-  const reason = prompt('Vui lòng nhập lý do từ chối bài viết (bắt buộc):');
-  if (reason === null) return; // Nhấn Hủy
-  if (!reason.trim()) {
-    toast.error('Bạn phải nhập lý do từ chối!');
+const askRejectPost = (post) => {
+  rejectModal.value = { show: true, postId: post.id, title: post.title, reason: '', showError: false }
+}
+
+const confirmRejectPost = async () => {
+  if (!rejectModal.value.reason.trim()) {
+    rejectModal.value.showError = true;
     return;
   }
-  
+
   try {
     const payload = {
       adminId: authStore.user?.accountID || authStore.user?.id || 0,
       adminName: authStore.user?.username || authStore.user?.fullName || 'Admin',
-      reason: reason.trim()
+      reason: rejectModal.value.reason.trim()
     };
     
-    await api.put(`/api/admin/posts/${id}/reject`, payload)
-    data.posts = data.posts.filter(p => p.id !== id)
+    await api.put(`/api/admin/posts/${rejectModal.value.postId}/reject`, payload)
+    data.posts = data.posts.filter(p => p.id !== rejectModal.value.postId)
     stats.pendingPosts = Math.max(0, stats.pendingPosts - 1)
     toast.info('Đã từ chối bài viết')
+    rejectModal.value.show = false
   } catch (e) { toast.error('Lỗi từ chối: ' + (e.response?.data?.message || e.message)) }
 }
 
@@ -508,6 +545,30 @@ onMounted(fetchAll)
 .animate-stagger { opacity: 0; animation: slideUpFade 0.5s ease-out forwards; animation-delay: calc(var(--i) * 0.08s); }
 @keyframes fadeDown { from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes slideUpFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Modal Từ chối */
+.modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.6); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(2px); }
+.action-modal { background: white; padding: 28px; border-radius: 16px; width: 380px; max-width: 95vw; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.15); }
+.action-icon { width: 56px; height: 56px; border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; }
+.bg-red-light { background: #fef2f2; } .text-red { color: #dc2626; }
+.action-modal h3 { font-size: 1.2rem; color: #0f172a; margin: 0 0 8px; font-weight: 700; }
+.action-modal p { color: #64748b; font-size: 0.95rem; margin: 0 0 24px; }
+
+.reason-input-group { text-align: left; margin-bottom: 20px; }
+.reason-input-group label { display: block; font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 6px; }
+.reason-textarea { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; font-family: inherit; font-size: 0.9rem; resize: none; background: #f8fafc; transition: 0.2s; }
+.reason-textarea:focus { border-color: #ef4444; background: white; box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1); }
+.error-msg { display: block; color: #dc2626; font-size: 0.8rem; font-weight: 500; margin-top: 4px; }
+
+.action-btns { display: flex; gap: 12px; }
+.btn-cancel, .btn-confirm { flex: 1; padding: 10px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; font-size: 0.95rem; transition: 0.2s; }
+.btn-cancel { background: #f1f5f9; color: #475569; }
+.btn-danger { background: #ef4444; color: white; }
+.btn-danger:hover { background: #dc2626; }
+.btn-cancel:hover { background: #e2e8f0; }
+
+.modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.3s, transform 0.3s; }
+.modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; transform: scale(0.95); }
 
 /* Responsive */
 @media (max-width: 1200px) { .bento-grid { grid-template-columns: repeat(2, 1fr); } .col-span-2 { grid-column: span 2; } }
