@@ -22,20 +22,23 @@ api.interceptors.request.use(config => {
 })
 
 // Interceptor cho Response: Xử lý thành công & lỗi toàn cục
+// Interceptor cho Response: Xử lý thành công & lỗi toàn cục
 api.interceptors.response.use(
   res => {
-    // Log thành công để sếp dễ theo dõi (Theo bản của team)
+    // Log thành công
     console.log('[API Success]:', res.config?.url, res.status);
     return res
   },
   err => {
     const status = err.response?.status;
-    const message = err.response?.data?.message;
+    const data = err.response?.data || {}; // 🔥 Bắt nguyên cục data của Backend
+    const message = data.message;
 
-    // Log chi tiết lỗi để sếp bắt bệnh (Cực kỳ hữu ích từ bản của team)
+    // Log chi tiết lỗi (Cực kỳ hữu ích)
     console.error('[API Error Details]:', {
       status,
       message,
+      fullData: data, // Sếp F12 lên sẽ thấy trọn bộ data ở đây
       url: err.config?.url,
       method: err.config?.method
     });
@@ -43,20 +46,29 @@ api.interceptors.response.use(
     // logic CHỐT CỦA SẾP: Chỉ ép Logout nếu Token hết hạn (401) hoặc Bị Ban (403 + ACCOUNT_BANNED)
     if (status === 401 || (status === 403 && message === 'ACCOUNT_BANNED')) {
       const user = JSON.parse(localStorage.getItem('user') || 'null')
-      if (user?.token) {
+      
+      // Dù có token cũ hay không, nếu đã bị BAN thì cứ bắn Event cho chắc cốp
+      if (user?.token || message === 'ACCOUNT_BANNED') {
         localStorage.removeItem('user')
         
         const isBanned = message === 'ACCOUNT_BANNED';
 
+        // 🔥 NHỒI FULL DỮ LIỆU KHÓA VÀO EVENT ĐỂ THẰNG STORE NÓ HỨNG ĐƯỢC
         window.dispatchEvent(new CustomEvent('auth:force-logout', {
-          detail: { isBanned: isBanned }
+          detail: { 
+            isBanned: isBanned,
+            banReason: data.banReason,
+            bannedByName: data.bannedByName,
+            bannedByEmail: data.bannedByEmail,
+            bannedAt: data.bannedAt
+          }
         }))
       }
     }
     
-    // Trả lỗi về để các Component (như PostDetail hay Search) tự xử lý logic riêng
+    // Trả lỗi về để các Component tự xử lý
     return Promise.reject(err)
   }
 )
 
-export default api
+export default api;

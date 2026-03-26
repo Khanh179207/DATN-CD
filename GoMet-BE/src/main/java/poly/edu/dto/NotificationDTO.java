@@ -20,4 +20,6 @@ public class NotificationDTO {
     private String link;
     private LocalDateTime createdAt;
     private Integer isRead;
+    private String username;
+    private String avatarUrl;
 }

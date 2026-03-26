@@ -15,7 +15,8 @@ import poly.edu.service.GoogleAuthService;
 import poly.edu.service.OtpStore;
 import poly.edu.service.PasswordResetService;
 
-import java.time.LocalDateTime; // ĐÃ ĐỔI TỪ LocalDate SANG LocalDateTime
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
@@ -31,15 +32,23 @@ public class AuthController {
     private final OtpStore             otpStore;
     private final PasswordResetService passwordResetService;
     private final BCryptPasswordEncoder passwordEncoder;
-
-    // VŨ KHÍ MỚI: Inject GoogleAuthService
     private final GoogleAuthService    googleAuthService;
+
+    // ==========================================
+    // 🔥 HELPER: TẠO RESPONSE KHI BỊ KHÓA (CLEAN CODE)
+    // ==========================================
+    private Map<String, Object> buildBannedResponse(Account acc) {
+        Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("message", "ACCOUNT_BANNED");
+        errorResponse.put("banReason", acc.getBanReason()); // Chỉ trả về lý do
+        errorResponse.put("bannedAt", acc.getBannedAt() != null ? acc.getBannedAt().toString() : null); // Và thời gian
+        return errorResponse;
+    }
 
     // ─── GOOGLE LOGIN & REGISTER ──────────────────────────────────────────────
     @PostMapping("/google")
     public ResponseEntity<?> googleLogin(@RequestBody Map<String, String> request) {
         try {
-            // FIX LỖI: Đổi "idToken" thành "token" để khớp với data từ Frontend gửi xuống
             String idTokenString = request.get("token");
 
             if (idTokenString == null || idTokenString.isBlank()) {
@@ -58,13 +67,19 @@ public class AuthController {
             Account acc;
 
             if (opt.isPresent()) {
-                // TÌNH HUỐNG 1: ĐÃ CÓ TÀI KHOẢN -> ĐĂNG NHẬP
                 acc = opt.get();
-                // 🔥 CHỐT CHẶN 1 (Google Login): CẤM USER BỊ BAN ĐĂNG NHẬP BẰNG GOOGLE
-                if (acc.getIsActive() == 0) {
-                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                            .body(Map.of("message", "ACCOUNT_BANNED"));
+                // 🔥 CHỐT CHẶN 1: CẤM USER BỊ BAN ĐĂNG NHẬP BẰNG GOOGLE
+                if (acc.getIsActive() != null && acc.getIsActive() == 0) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(buildBannedResponse(acc));
                 }
+
+                // 3. Tạo Token phiên đăng nhập (NẾU KHÔNG BỊ BAN)
+                String newToken = UUID.randomUUID().toString();
+                acc.setToken(newToken);
+                accountDAO.save(acc);
+
+                return ResponseEntity.ok(buildResponse(acc));
+
             } else {
                 // TÌNH HUỐNG 2: CHƯA CÓ TÀI KHOẢN -> TỰ ĐỘNG ĐĂNG KÝ
                 String finalUsername = name.replaceAll("\\s+", ""); // Xóa khoảng trắng
@@ -84,18 +99,12 @@ public class AuthController {
                         .isPremium(0)
                         .isActive(1)
                         .createdAt(LocalDateTime.now())
+                        .token(UUID.randomUUID().toString()) // Tạo token luôn lúc đăng ký
                         .build();
-                // 🔥 THÊM DÒNG NÀY (Hồi nãy sếp thiếu) ĐỂ LƯU USER MỚI
+
                 acc = accountDAO.save(acc);
+                return ResponseEntity.ok(buildResponse(acc));
             }
-
-            // 3. Tạo Token phiên đăng nhập
-            String newToken = UUID.randomUUID().toString();
-            acc.setToken(newToken);
-            accountDAO.save(acc);
-
-            // 4. Trả về Frontend
-            return ResponseEntity.ok(buildResponse(acc));
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -115,8 +124,6 @@ public class AuthController {
 
         Account acc = opt.get();
 
-        // BCrypt-aware password check with plain-text fallback for legacy accounts.
-        // After a password reset the hash starts with "$2a$"; legacy accounts are plain text.
         boolean passwordOk;
         if (acc.getPassword().startsWith("$2a$") || acc.getPassword().startsWith("$2b$")) {
             passwordOk = passwordEncoder.matches(req.getPassword(), acc.getPassword());
@@ -128,9 +135,10 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("message", "Incorrect password"));
         }
-        if (acc.getIsActive() == 0) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "ACCOUNT_BANNED"));
+
+        // 🔥 CHỐT CHẶN 2: TÀI KHOẢN BỊ BAN KHI ĐĂNG NHẬP BÌNH THƯỜNG
+        if (acc.getIsActive() != null && acc.getIsActive() == 0) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(buildBannedResponse(acc));
         }
 
         String newToken = UUID.randomUUID().toString();
@@ -186,7 +194,6 @@ public class AuthController {
         Account acc = Account.builder()
                 .username(pending.username())
                 .email(req.getEmail())
-                // Sếp lưu ý: Nếu muốn an toàn, sếp nên dùng passwordEncoder.encode(pending.password()) ở đây nhé!
                 .password(pending.password())
                 .avatar("")
                 .token(token)
@@ -194,7 +201,7 @@ public class AuthController {
                 .isAdmin(0)
                 .isPremium(0)
                 .isActive(1)
-                .createdAt(LocalDateTime.now()) // ĐÃ SỬA THÀNH LocalDateTime.now()
+                .createdAt(LocalDateTime.now())
                 .build();
 
         accountDAO.save(acc);
@@ -248,7 +255,7 @@ public class AuthController {
         }
     }
 
-    // ─── ME ───────────────────────────────────────────────────────────────────
+    // ─── ME (Lấy thông tin User hiện tại) ─────────────────────────────────────
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
@@ -269,15 +276,14 @@ public class AuthController {
 
         Account acc = opt.get();
 
-        // 🔥 LƯỚI TRỜI LỒNG LỘNG: Check xem Account này có đang bị BAN không
-        if (acc.getIsActive() == 0) {
-            // Ném lỗi 403 Forbidden ra cho Frontend bắt và Đá Văng
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "ACCOUNT_BANNED"));
+        // 🔥 CHỐT CHẶN 3: LƯỚI TRỜI LỒNG LỘNG KHI CHECK ME (Chặn các User bị ban đột ngột lúc đang xài app)
+        if (acc.getIsActive() != null && acc.getIsActive() == 0) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(buildBannedResponse(acc));
         }
 
         return ResponseEntity.ok(buildResponse(acc));
     }
+
     // ─── HELPERS ─────────────────────────────────────────────────────────────
     private AuthResponseDTO buildResponse(Account acc) {
         AuthResponseDTO res = new AuthResponseDTO();

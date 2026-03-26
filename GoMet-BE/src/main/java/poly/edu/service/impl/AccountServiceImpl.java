@@ -6,8 +6,8 @@ import poly.edu.dao.AccountDAO;
 import poly.edu.dto.AdminAccountDTO;
 import poly.edu.entity.Account;
 import poly.edu.service.AccountService;
+import poly.edu.service.ModerationLogService;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,8 +18,14 @@ public class AccountServiceImpl implements AccountService {
 
     private final AccountDAO accountDAO;
 
+    // 🔥 INJECT THÊM SERVICE NHẬT KÝ KIỂM DUYỆT VÀO ĐÂY
+    private final ModerationLogService moderationLogService;
+
+    // 1. SỬA HÀM toDTO
     private AdminAccountDTO toDTO(Account acc) {
         AdminAccountDTO dto = new AdminAccountDTO();
+
+        // Map dữ liệu cơ bản
         dto.setAccountID(acc.getAccountID());
         dto.setUsername(acc.getUsername());
         dto.setEmail(acc.getEmail());
@@ -29,8 +35,33 @@ public class AccountServiceImpl implements AccountService {
         dto.setIsActive(acc.getIsActive());
         dto.setPoint(acc.getPoint());
         dto.setCreatedAt(acc.getCreatedAt() != null ? acc.getCreatedAt().toString() : null);
-        // Derive role string for FE convenience
         dto.setRole(acc.getIsAdmin() != null && acc.getIsAdmin() == 1 ? "ADMIN" : "USER");
+
+        // 🔥 CHỈ MAP NHỮNG CỘT CẦN THIẾT (Đã xóa các cột Admin dư thừa)
+        dto.setBanReason(acc.getBanReason());
+        dto.setBannedAt(acc.getBannedAt() != null ? acc.getBannedAt().toString() : null);
+
+        // ========================================================
+        // 🔥 LOGIC ĐẾM SỐ BÀI, FOLLOW VÀ TỔNG LIKE 🔥
+        // ========================================================
+
+        // 1. Đếm số bài viết
+        int posts = acc.getPosts() != null ? acc.getPosts().size() : 0;
+        dto.setPostCount(posts);
+
+        // 2. Đếm số người theo dõi (Followers)
+        int followers = acc.getFollowers() != null ? acc.getFollowers().size() : 0;
+        dto.setFollowerCount(followers);
+
+        // 3. Tính tổng số lượt thích từ TẤT CẢ bài viết của user này
+        int likes = 0;
+        if (acc.getPosts() != null) {
+            likes = acc.getPosts().stream()
+                    .mapToInt(p -> p.getLikeCount() != null ? p.getLikeCount() : 0)
+                    .sum();
+        }
+        dto.setTotalLikes(likes);
+
         return dto;
     }
 
@@ -51,7 +82,6 @@ public class AccountServiceImpl implements AccountService {
     public AdminAccountDTO save(AdminAccountDTO dto) {
         Account acc;
         if (dto.getAccountID() != null) {
-            // UPDATE: Load existing entity so we never overwrite password / token / point
             acc = accountDAO.findById(dto.getAccountID()).orElseThrow();
             if (dto.getUsername() != null)  acc.setUsername(dto.getUsername());
             if (dto.getEmail()    != null)  acc.setEmail(dto.getEmail());
@@ -59,13 +89,11 @@ public class AccountServiceImpl implements AccountService {
             if (dto.getIsPremium()!= null)  acc.setIsPremium(dto.getIsPremium());
             if (dto.getIsActive() != null)  acc.setIsActive(dto.getIsActive());
             if (dto.getIsAdmin()  != null)  acc.setIsAdmin(dto.getIsAdmin());
-            // Role string shortcut: "ADMIN" -> isAdmin=1, "USER" -> isAdmin=0
             if (dto.getRole() != null) {
                 acc.setIsAdmin("ADMIN".equalsIgnoreCase(dto.getRole()) ? 1 : 0);
             }
             acc.setUpdatedAt(LocalDateTime.now());
         } else {
-            // CREATE: build from scratch
             acc = Account.builder()
                     .username(dto.getUsername())
                     .email(dto.getEmail())
@@ -82,20 +110,36 @@ public class AccountServiceImpl implements AccountService {
         return toDTO(accountDAO.save(acc));
     }
 
+    // 🔥 LOGIC KHÓA TÀI KHOẢN (ĐÃ TÍCH HỢP GHI LOG & CLEAN CODE)
     @Override
-    public void ban(Integer id) {
+    public void ban(Integer id, Integer adminId, String adminName, String adminEmail, String reason) {
         Account acc = accountDAO.findById(id).orElseThrow();
-        acc.setIsActive(0);
+        acc.setIsActive(0); // Lưu ý: 0 là khóa (khớp với query Thống kê)
+
+        // Chỉ cập nhật lý do và thời gian khóa trên Entity Account
+        acc.setBanReason(reason);
+        acc.setBannedAt(LocalDateTime.now());
         acc.setUpdatedAt(LocalDateTime.now());
         accountDAO.save(acc);
+
+        // 📝 GHI VÀO NHẬT KÝ KIỂM DUYỆT (Tên Admin nằm ở đây nè)
+        moderationLogService.logAction(id, "ACCOUNT", "BAN", adminId, adminName, reason);
     }
 
+    // 🔥 LOGIC MỞ KHÓA TÀI KHOẢN (ĐÃ FIX: Lưu đúng tên Admin & CLEAN CODE)
     @Override
-    public void unban(Integer id) {
+    public void unban(Integer id, Integer adminId, String adminName) {
         Account acc = accountDAO.findById(id).orElseThrow();
         acc.setIsActive(1);
+
+        // Rửa sạch lý do và thời gian khóa
+        acc.setBanReason(null);
+        acc.setBannedAt(null);
         acc.setUpdatedAt(LocalDateTime.now());
         accountDAO.save(acc);
+
+        // 📝 GHI VÀO NHẬT KÝ KIỂM DUYỆT (Đã truyền chuẩn tên Admin)
+        moderationLogService.logAction(id, "ACCOUNT", "UNBAN", adminId, adminName, "Đã ân xá, gỡ lệnh cấm");
     }
 
     @Override

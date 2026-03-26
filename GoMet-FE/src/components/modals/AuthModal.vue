@@ -61,16 +61,36 @@
                     <a href="#" class="forgot-link" @click.prevent="switchView('forgot-password')">{{ $t('auth.forgot', 'Quên mật khẩu?') }}</a>
                   </div>
 
-                  <div v-if="loginError" :class="['auth-error-msg', { 'auth-error-banned': isBannedError }]">
-                    <span v-if="isBannedError">🔒 </span>{{ loginError }}
-                  </div>
+                  <!-- BANNED ALERT BOX LUXURY -->
+                  <transition name="fade-slide" mode="out-in">
+                    <div v-if="isBannedError" key="banned-box" class="banned-alert-box stagger-item" style="--delay: 0.45s">
+                      <button type="button" class="btn-close-alert" @click="closeBannedAlert" title="Đóng">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                      </button>
+                      <div class="banned-header">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                        <h4>TÀI KHOẢN BỊ KHÓA</h4>
+                      </div>
+                      <div class="banned-body">
+                        <template v-if="bannedDetails">
+                          <div class="b-row" v-if="bannedDetails.time"><span class="b-lbl">Thời gian:</span> <span class="b-val">{{ bannedDetails.time }}</span></div>
+                          <div class="b-row"><span class="b-lbl">Lý do khóa:</span> <span class="b-val reason-text">{{ bannedDetails.reason }}</span></div>
+                        </template>
+                        <template v-else>
+                          <p class="banned-msg">{{ loginError }}</p>
+                        </template>
+                      </div>
+                      <div class="banned-footer">
+                        <button type="button" class="btn-appeal-lux" @click="openAppealAction">
+                          Phát hiện nhầm lẫn? <span>Gửi khiếu nại ngay</span>
+                        </button>
+                      </div>
+                    </div>
 
-                  <div v-if="loginError && wrongPasswordCount >= 3" class="appeal-hint">
-                    <button type="button" class="btn-appeal-link" @click="showAppealModal = true">
-                      Bạn nghĩ mình bị ban nhầm? → Nộp khiếu nại
-                    </button>
-                  </div>
-
+                    <div v-else-if="loginError" key="error-box" class="auth-error-msg stagger-item" style="--delay: 0.45s">
+                      {{ loginError }}
+                    </div>
+                  </transition>
                   <button class="btn-submit-art stagger-item" style="--delay: 0.5s">
                     <span>{{ $t('auth.sign_in_btn', 'Đăng Nhập Ngay') }}</span>
                   </button>
@@ -123,12 +143,12 @@
                     </div>
                   </div>
 
-                  <div class="input-group-checkbox stagger-item" style="--delay: 0.45s">
-                    <label class="checkbox-container">
+                  <div class="form-actions stagger-item" style="--delay: 0.45s; justify-content: flex-start; margin-top: 10px; margin-bottom: 20px;">
+                    <label class="remember-me" style="font-size: 0.85rem; width: 100%; white-space: normal; display: flex; align-items: flex-start;">
                       <input type="checkbox" v-model="regForm.agreeTerms" required>
-                      <span class="checkmark"></span>
-                      <span class="label-text">
-                        Tôi đồng ý với <router-link to="/terms-and-policy" @click="$emit('close')">Điều khoản</router-link> và <router-link to="/terms-and-policy" @click="$emit('close')">Chính sách bảo mật</router-link>
+                      <span class="checkmark" style="margin-top: 2px;"></span>
+                      <span style="margin-left: 28px; line-height: 1.5; color: #64748b;">
+                        Tôi đồng ý với <router-link to="/terms-and-policy" @click="$emit('close')" style="color: #ea580c; text-decoration: none; font-weight: 700;">Điều khoản</router-link> và <router-link to="/terms-and-policy" @click="$emit('close')" style="color: #ea580c; text-decoration: none; font-weight: 700;">Chính sách bảo mật</router-link>
                       </span>
                     </label>
                   </div>
@@ -224,7 +244,7 @@
 
   <!-- Appeal Modal Teleport -->
   <Teleport to="body">
-    <AppealModal v-if="showAppealModal" @close="showAppealModal = false" />
+    <AppealModal v-if="showAppealModal" @close="handleAppealClose" />
   </Teleport>
 </template>
 
@@ -262,6 +282,7 @@ const loginError = ref('')
 const regError = ref('')
 const otpError = ref('')
 const wrongPasswordCount = ref(0) // Counter cho lần nhập sai mật khẩu
+const bannedDetails = ref(null) // Lưu trữ đối tượng thông tin ban
 
 // 🌟 ĐÃ CẬP NHẬT regForm ĐỂ THÊM agreeTerms 🌟
 const regForm = reactive({ 
@@ -289,6 +310,7 @@ const switchView = (name) => {
   regError.value = ''
   otpError.value = ''
   forgotError.value = ''
+  bannedDetails.value = null
   // ❌ KHÔNG reset wrongPasswordCount ở đây - nó phải persist khi user back to login
   // wrongPasswordCount.value = 0
   if (name !== 'forgot-password') {
@@ -297,32 +319,58 @@ const switchView = (name) => {
   }
 }
 
-const isBannedError = computed(() => loginError.value === 'Tài khoản của bạn đã bị khóa bởi quản trị viên.')
+const openAppealAction = () => {
+  isOpen.value = false // Ẩn giao diện AuthModal hiện tại mượt mà
+  showAppealModal.value = true // Gọi AppealModal xuất hiện
+}
+
+const handleAppealClose = () => {
+  showAppealModal.value = false
+  emit('close') // Đóng Modal khiếu nại xong thì phát lệnh cho component cha đóng hẳn AuthModal
+}
+
+const isBannedError = computed(() => loginError.value && loginError.value.includes('Tài khoản của bạn đã bị khóa'))
 
 const handleLogin = async () => {
   loginError.value = ''
   try {
     const role = await authStore.login(email.value, password.value)
     toast.success(t('toast.login_ok', 'Đăng nhập thành công!'))
-    wrongPasswordCount.value = 0 // Reset counter khi đăng nhập thành công
+    wrongPasswordCount.value = 0 
     emit('close')
     router.push(role === 'admin' ? '/admin' : '/home')
   } catch (err) {
-    // 🔥 Bắt mọi kiểu dữ liệu ném ra
-    const errorMessage = err.message || err.response?.data?.message || String(err)
+    // 🔥 Lấy data trực tiếp từ cục lỗi Axios gốc
+    const errData = err.response?.data || {}
+    const errorMessage = errData.message || err.message || String(err)
     const errorString = errorMessage.toUpperCase()
 
-    console.log('[Login Error]', { errorMessage, errorString })
+    console.log('[Login Error]', { errorMessage, errorString, errData })
 
     if (errorString.includes('ACCOUNT_BANNED')) {
-      // Set đúng câu này để cái computed isBannedError (hiện icon ổ khóa 🔒) hoạt động
-      loginError.value = 'Tài khoản của bạn đã bị khóa bởi quản trị viên.' 
-      toast.error('🚨 TÀI KHOẢN BỊ KHÓA: Bạn đã bị cấm vĩnh viễn do vi phạm tiêu chuẩn cộng đồng GOMET!', { timeout: 8000 })
-    } else if (errorString.includes('INCORRECT') || errorString.includes('PASSWORD')) {
-      // Tăng counter lần nhập sai mật khẩu
+      // 1. Rút trích thông tin khóa từ Backend
+      const banReason = errData.banReason || errData.reason || 'Vi phạm tiêu chuẩn cộng đồng GOMET';
+      const bannedBy = errData.bannedByName || errData.bannedBy || 'Quản trị viên hệ thống';
+      let timeStr = '';
+      let rawTimeStr = '';
+      
+      if (errData.bannedAt) {
+         const d = new Date(errData.bannedAt);
+         rawTimeStr = `${d.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})} ngày ${d.toLocaleDateString('vi-VN')}`;
+         timeStr = ` vào lúc ${rawTimeStr}`;
+      }
+
+      // 2. NHỒI DATA VÀO BIẾN ĐỂ VẼ BOX LUXURY LÊN
+      bannedDetails.value = { reason: banReason, by: bannedBy, time: rawTimeStr };
+      loginError.value = `Tài khoản của bạn đã bị khóa${timeStr}. Lý do: ${banReason}`;
+      
+      // 3. Hiện toast bổ trợ
+      toast.error(`🚨 TÀI KHOẢN BỊ KHÓA: Đăng nhập thất bại do vi phạm!`, { timeout: 8000 })
+      
+      
+    } else if (errorString.includes('INCORRECT') || errorString.includes('PASSWORD') || errorString.includes('CREDENTIALS')) {
       wrongPasswordCount.value++
       loginError.value = 'Mật khẩu không đúng'
-      console.log('[Wrong Password]', { count: wrongPasswordCount.value, shouldShow: wrongPasswordCount.value >= 3 })
       toast.error(`${loginError.value} (${wrongPasswordCount.value}/3)`)
     } else {
       loginError.value = errorMessage || t('auth.error_login', 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.')
@@ -348,9 +396,20 @@ const handleGoogleCallback = async (response) => {
     // 🔥 CHẶN ĐỨNG LỖI TỪ GOOGLE
     const errorString = String(err.response?.data?.message || err.message || err).toUpperCase()
 
-    if (errorString.includes('ACCOUNT_BANNED')) {
-      loginError.value = 'Tài khoản của bạn đã bị khóa bởi quản trị viên.'
-      toast.error('🚨 TÀI KHOẢN BỊ KHÓA: Bạn không thể đăng nhập bằng Google vì tài khoản này đã bị Ban!', { timeout: 8000 })
+    if (errorString.includes('ACCOUNT_BANNED') || errorString.includes('BANNED')) {
+      const banReason = err.response?.data?.banReason || err.response?.data?.reason || 'Vi phạm tiêu chuẩn cộng đồng';
+      const bannedBy = err.response?.data?.bannedByName || err.response?.data?.bannedBy || 'Quản trị viên';
+      let timeStr = '';
+      let rawTimeStr = '';
+      if (err.response?.data?.bannedAt) {
+         const d = new Date(err.response.data.bannedAt);
+         rawTimeStr = `${d.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})} ngày ${d.toLocaleDateString('vi-VN')}`;
+         timeStr = ` vào lúc ${rawTimeStr}`;
+      }
+      
+      bannedDetails.value = { reason: banReason, by: bannedBy, time: rawTimeStr };
+      loginError.value = `Tài khoản của bạn đã bị khóa${timeStr}. Lý do: ${banReason}.`
+      toast.error(`🚨 TÀI KHOẢN BỊ KHÓA: Bạn không thể đăng nhập bằng Google vì ${loginError.value}`, { timeout: 8000 })
     } else {
       loginError.value = err.response?.data?.message || err.message || 'Lỗi đăng nhập bằng Google. Vui lòng thử lại.'
       toast.error(loginError.value)
@@ -431,16 +490,27 @@ const handleForgotPassword = async () => {
   }
 }
 
+const handleBannedPrompt = (e) => {
+  isOpen.value = true
+  currentView.value = 'login'
+  loginError.value = e.detail?.msg || 'Tài khoản của bạn đã bị khóa.'
+  if (e.detail?.details) {
+    bannedDetails.value = e.detail.details
+  }
+}
+
 onMounted(() => {
   isOpen.value = true
   document.body.style.overflow = 'hidden'
   nextTick(() => { overlayRef.value?.focus() })
+  window.addEventListener('auth:banned-login-prompt', handleBannedPrompt)
 })
 
 onUnmounted(() => {
   document.body.style.overflow = ''
   // Reset counter khi modal đóng
   wrongPasswordCount.value = 0
+  window.removeEventListener('auth:banned-login-prompt', handleBannedPrompt)
 })
 </script>
 

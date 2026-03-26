@@ -11,22 +11,22 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/comments")
+@RequestMapping("/api/comments") // ĐƯỜNG DẪN CỦA USER BÌNH THƯỜNG
 @RequiredArgsConstructor
 @CrossOrigin("*")
 public class CommentController {
 
     private final CommentService commentService;
 
+    // Lấy danh sách bình luận trong chi tiết bài viết
     @GetMapping("/post/{postID}")
     public ResponseEntity<List<CommentDTO>> getByPost(
             @PathVariable Integer postID,
-            @RequestParam(required = false) Integer currentAccountID) { // Nhận ID từ Query Param
-
-        // Gọi Service và truyền cả 2 ID vào
+            @RequestParam(required = false) Integer currentAccountID) {
         return ResponseEntity.ok(commentService.getCommentsByPost(postID, currentAccountID));
     }
 
+    // User thêm bình luận
     @PostMapping
     public ResponseEntity<?> addComment(@RequestBody CommentDTO req) {
         try {
@@ -37,13 +37,16 @@ public class CommentController {
         }
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteComment(@PathVariable Integer id) {
+    // Người dùng TỰ XÓA bình luận của chính mình (isActive = 0)
+    @DeleteMapping("/user/{id}")
+    public ResponseEntity<?> deleteCommentByUser(
+            @PathVariable Integer id,
+            @RequestParam Integer currentAccountID) {
         try {
-            commentService.delete(id);
-            return ResponseEntity.ok(Map.of("message", "Đã xóa bình luận"));
+            commentService.deleteByUser(id, currentAccountID);
+            return ResponseEntity.ok(Map.of("message", "Đã xóa bình luận của bạn"));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
 }

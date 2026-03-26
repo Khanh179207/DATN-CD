@@ -61,4 +61,7 @@ public class Comment {
     @OneToMany(mappedBy = "parentComment", cascade = CascadeType.ALL)
     @Builder.Default
     private List<Comment> replies = new ArrayList<>();
+
+    @Column(name = "IsActive")
+    private Integer isActive = 1; // 1: Hoạt động, 0: Đã ẩn
 }

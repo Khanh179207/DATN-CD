@@ -37,8 +37,11 @@ import TicketManagement from '@/pages/admin/ticketadmin/TicketManagement.vue'
 import EventManagement from '@/pages/admin/eventadmin/EventManagement.vue'
 import PostEventManagement from '@/pages/admin/eventadmin/PostEventManagement.vue'
 import AppealManagement from '@/pages/admin/AppealManagement.vue'
-// 🔥 IMPORT TRANG BLACKLIST MỚI TẠO Ở ĐÂY
 import BlacklistManagement from '@/pages/admin/BlacklistManagement.vue'
+
+// 🔥 IMPORT TRANG QUẢN LÝ GIAO DỊCH VÀ NHẬT KÝ HỆ THỐNG Ở ĐÂY
+import TransactionManagement from '@/pages/admin/TransactionManagement.vue'
+import SystemLogs from '@/pages/admin/SystemLogs.vue' // <--- ĐÃ THÊM DÒNG NÀY
 
 const routes = [
   // 1. LANDING PAGE
@@ -162,8 +165,9 @@ const routes = [
       { path: 'tickets', name: 'AdminTickets', component: TicketManagement },
       { path: 'events/:id/posts', name: 'AdminPostEventManagement', component: PostEventManagement },
       { path: 'appeals', name: 'AdminAppeals', component: AppealManagement },
-      // 🔥 ĐĂNG KÝ TRANG TỪ KHÓA CẤM VÀO ĐÂY
-      { path: 'blacklist', name: 'AdminBlacklist', component: BlacklistManagement }
+      { path: 'blacklist', name: 'AdminBlacklist', component: BlacklistManagement },
+      { path: 'transactions', name: 'AdminTransactions', component: TransactionManagement },
+      { path: 'system-logs', name: 'AdminSystemLogs', component: SystemLogs } // <--- Đã sửa lại path cho chuẩn URL (thường dùng chữ thường phân cách gạch ngang)
     ]
   },
 
@@ -217,7 +221,7 @@ router.beforeEach((to, from, next) => {
   const isAdmin = isLoggedIn && (
     String(user?.isAdmin) === "true" || 
     String(user?.isAdmin) === "1" || 
-    user?.role === 'admin'
+    user?.role === 'ADMIN' // Đổi chỗ này thành ADMIN viết hoa cho chuẩn với code sếp đang dùng
   )
 
   // 1. Admin-only routes: must be logged in AND be an admin

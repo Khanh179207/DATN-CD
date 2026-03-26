@@ -17,7 +17,7 @@ public class Account {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "AccountID") // 🔥 Chốt PascalCase để không lệch pha với SQL
+    @Column(name = "AccountID")
     private Integer accountID;
 
     @Column(name = "Username", nullable = false)
@@ -54,6 +54,13 @@ public class Account {
     @Builder.Default
     private Integer isActive = 1;
 
+    // 🔥 CHỈ GIỮ LẠI 2 CỘT NÀY ĐỂ BÁO LỖI CHO USER LÚC ĐĂNG NHẬP
+    @Column(name = "BanReason", columnDefinition = "NVARCHAR(MAX)")
+    private String banReason;
+
+    @Column(name = "BannedAt")
+    private LocalDateTime bannedAt;
+
     @Column(name = "CreatedAt", nullable = false)
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -73,8 +80,6 @@ public class Account {
     @JsonIgnore
     @OneToMany(mappedBy = "account")
     private List<Comment> comments;
-
-    // ❌ ĐÃ XÓA HOÀN TOÀN BẢNG RATING Ở ĐÂY ❌
 
     @JsonIgnore
     @OneToMany(mappedBy = "account")

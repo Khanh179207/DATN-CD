@@ -194,6 +194,7 @@ public class PostController {
         dto.setPostID(p.getPostID());
         dto.setTitle(p.getTitle());
         dto.setDescription(p.getDescription());
+        dto.setIngredients(p.getIngredients());
         dto.setMedia(p.getMedia());
         dto.setVideo(p.getVideo());
         dto.setLevel(p.getLevel());

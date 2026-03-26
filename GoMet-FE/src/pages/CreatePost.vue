@@ -208,6 +208,7 @@ import { getCategories } from '@/services/categoryService'
 import { createPost } from '@/services/postService'
 import { uploadMedia } from '@/services/uploadService'
 import api from '@/services/api'
+import axios from 'axios'
 import { toast } from '@/composables/useToast'
 
 const route = useRoute()
@@ -297,15 +298,42 @@ const addStep = () => post.value.steps.push({ id: Date.now(), desc: '', image: n
 const removeStep = (idx) => { if (post.value.steps.length > 1) post.value.steps.splice(idx, 1) }
 const levelToInt = (lv) => ({ 'Easy': 1, 'Medium': 2, 'Hard': 3 }[lv] ?? 2)
 
+// --- KIỂM TRA TỪ KHÓA CẤM (GỌI BACKEND ĐỂ BẢO MẬT) ---
+const checkContentPolicy = async (text) => {
+  if (!text) return false;
+  try {
+    // Chỉ gửi text lên Backend để hỏi, Frontend không hề biết blacklist là gì
+    const res = await axios.post('http://localhost:8080/api/blacklist/check', { content: text });
+    return res.data.hasBadWord; // Backend sẽ trả về true nếu vi phạm, false nếu an toàn
+  } catch (error) {
+    console.warn("Lỗi server khi kiểm duyệt, cho phép qua để Backend lớp 2 tự chặn:", error);
+    return false;
+  }
+};
+
 // ==========================================
 // ĐĂNG BÀI NỀN (BACKGROUND PUBLISH)
 // ==========================================
-const handlePublish = () => {
+const handlePublish = async () => {
   if (!post.value.title.trim()) return toast.warn('Vui lòng nhập tên món ăn!')
   if (!coverImageFile.value && !post.value.image) return toast.warn('Vui lòng thêm ảnh bìa cho bài viết!')
 
   const accID = currentUser.value.accountID || currentUser.value.id || currentUser.value.accountId;
   if (!accID) return toast.error('Lỗi phiên đăng nhập!');
+
+  // Kiểm tra từ khóa cấm ở Frontend trước khi cho đăng
+  const fullText = [
+    post.value.title,
+    post.value.description,
+    post.value.ingredients.map(i => i.name).join(' '),
+    post.value.steps.map(s => s.desc).join(' ')
+  ].join(' ');
+
+  const isViolating = await checkContentPolicy(fullText);
+  if (isViolating) {
+    toast.error('Bài viết vi phạm tiêu chuẩn cộng đồng!');
+    return;
+  }
 
   // 1. Gói dữ liệu
   const payloadData = {
@@ -361,8 +389,8 @@ const handlePublish = () => {
       }
 
     } catch (err) {
-       // Thông báo lỗi chung chung để người dùng không biết chính xác lỗi gì (spam, blacklist...)
-       toast.error('❌ Bài viết không hợp lệ hoặc thao tác quá nhanh. Vui lòng thử lại sau!');
+       const msg = err.response?.data?.message || '❌ Bài viết không hợp lệ hoặc thao tác quá nhanh. Vui lòng thử lại sau!';
+       toast.error(msg);
     }
   })();
 }

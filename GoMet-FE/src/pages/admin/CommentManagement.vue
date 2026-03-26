@@ -1,86 +1,191 @@
 <template>
-  <div class="page-container">
-    <div class="page-header">
-      <div>
-        <h2 class="title">Comment Management</h2>
-        <p class="sub-text">{{ totalCount }} comments total</p>
+  <div class="page-container animate-enter">
+    
+    <div class="page-header anim-fade-down">
+      <div class="header-content">
+        <div class="title-wrapper">
+          <div class="icon-box">
+            <i class="fa-solid fa-comments"></i>
+          </div>
+          <div>
+            <h2 class="title">Quản lý bình luận</h2>
+            <p class="subtitle">Quản lý bình luận và hình ảnh từ cộng đồng</p>
+          </div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="search-box-lux">
+          <i class="fa-solid fa-search search-icon"></i>
+          <input v-model="searchQuery" type="text" placeholder="Tìm theo nội dung, tên..." />
+          <button v-if="searchQuery" @click="searchQuery = ''" class="clear-search">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <router-link to="/admin/blacklist" class="btn-open-blacklist">
+          <i class="fa-solid fa-shield-halved"></i> <span>Bộ lọc Từ khóa</span>
+        </router-link>
+        <button class="btn-refresh" @click="loadComments" :disabled="loading">
+          <i class="fa-solid fa-rotate-right" :class="{ 'fa-spin': loading }"></i> <span>Làm mới</span>
+        </button>
       </div>
     </div>
 
-    <!-- Toolbar -->
-    <div class="toolbar">
-      <div class="search-wrap">
-        <svg class="s-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input v-model="searchQuery" @input="onSearch" placeholder="Search comments, users..." />
+    <div class="stats-grid anim-fade-up">
+      <div class="stat-card">
+        <div class="stat-icon bg-blue-light"><i class="fa-solid fa-comments text-blue"></i></div>
+        <div class="stat-info">
+          <span class="stat-value">{{ comments.length }}</span>
+          <span class="stat-label">Tổng số bình luận</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon bg-emerald-light"><i class="fa-solid fa-calendar-day text-emerald"></i></div>
+        <div class="stat-info">
+          <span class="stat-value">{{ todayCommentsCount }}</span>
+          <span class="stat-label">Bình luận hôm nay</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon bg-orange-light"><i class="fa-solid fa-images text-orange"></i></div>
+        <div class="stat-info">
+          <span class="stat-value">{{ attachmentsCount }}</span>
+          <span class="stat-label">Bình luận có ảnh</span>
+        </div>
       </div>
     </div>
 
-    <!-- Loading -->
-    <div v-if="loading" class="skel-wrap">
-      <div class="skel-row" v-for="n in 8" :key="n">
+    <div v-if="loading" class="skel-wrap table-lux-wrapper">
+      <div class="skel-row" v-for="n in 5" :key="n">
         <div class="skel-avatar"></div>
         <div class="skel-lines"><div class="skel-line"></div><div class="skel-line short"></div></div>
       </div>
     </div>
 
-    <!-- Error -->
-    <div v-else-if="error" class="error-banner"><AlertTriangle :size="15" /> {{ error }} <button @click="loadComments">Retry</button></div>
+    <div v-else-if="error" class="error-banner">
+      <div class="error-content">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span>{{ error }}</span>
+      </div>
+      <button class="btn-retry" @click="loadComments">Thử lại</button>
+    </div>
 
-    <!-- Table -->
-    <div v-else class="table-wrapper">
-      <table class="data-table">
+    <div v-else class="table-lux-wrapper anim-fade-up" style="--delay: 0.2s">
+      <table class="data-table-lux">
         <thead>
           <tr>
-            <th>#</th>
-            <th>User</th>
-            <th>Comment</th>
-            <th>Post</th>
-            <th>Date</th>
-            <th>Actions</th>
+            <th width="5%">#</th>
+            <th width="20%">NGƯỜI DÙNG</th>
+            <th width="35%">NỘI DUNG</th>
+            <th width="10%">BÀI VIẾT</th>
+            <th width="15%">THỜI GIAN</th>
+            <th width="15%" class="text-right">THAO TÁC</th>
           </tr>
         </thead>
-        <tbody>
-          <tr v-for="(cmt, i) in filteredComments" :key="cmt.commentID">
+        <TransitionGroup tag="tbody" name="list-anim">
+          <tr v-for="(cmt, i) in filteredComments" :key="cmt.commentID" class="table-row-lux" :class="{ 'row-hidden': cmt.isActive !== 1 }">
             <td class="idx">{{ i + 1 }}</td>
             <td>
               <div class="user-cell">
-                <img :src="cmt.authorAvatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(cmt.authorName || 'U') + '&background=EA580C&color=fff'" class="user-avatar">
-                <span class="user-name">{{ cmt.authorName || '—' }}</span>
+                <img :src="cmt.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(cmt.authorName || 'U')}&background=f8fafc&color=0f172a`" 
+                     @error="$event.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(cmt.authorName || 'U')}&background=f8fafc&color=0f172a`"
+                     class="user-avatar">
+                <div class="u-info">
+                  <span class="user-name">{{ cmt.authorName || 'Ẩn danh' }}</span>
+                  <span class="user-id" v-if="cmt.authorID">ID: {{ cmt.authorID }}</span>
+                </div>
               </div>
             </td>
             <td class="content-cell">
-              <span class="comment-text">{{ cmt.content }}</span>
+              <div v-if="cmt.isActive === -1" class="badge-hidden admin-banned">
+                <i class="fa-solid fa-shield-halved"></i> Đã khóa (Vi phạm)
+              </div>
+              
+              <div v-if="cmt.isActive === 0" class="badge-hidden user-deleted">
+                <i class="fa-solid fa-user-xmark"></i> Người dùng tự xóa
+              </div>
+              
+              <div v-if="cmt.parentCommentID" class="badge-reply">
+                <i class="fa-solid fa-reply"></i> Trả lời #{{ cmt.parentCommentID }}
+              </div>
+              
+              <span class="comment-text">
+                {{ cmt.content || (cmt.hasAttachments ? '[Có hình ảnh đính kèm]' : '') }}
+              </span>
+              
+              <div v-if="cmt.hasAttachments" class="badge-img">
+                <i class="fa-solid fa-image"></i> Đính kèm ảnh
+              </div>
             </td>
             <td>
-              <a class="post-link" :href="`/post/${cmt.postID}`" target="_blank">#{{ cmt.postID }}</a>
+              <a class="post-link" :href="`/post/${cmt.postID}#comment-${cmt.commentID}`" target="_blank" title="Xem bình luận tại bài viết">
+                <i class="fa-solid fa-link"></i> Post #{{ cmt.postID }}
+              </a>
             </td>
-            <td class="date-cell">{{ formatDate(cmt.createdAt) }}</td>
+            <td class="date-cell">{{ formatDate(cmt.createdAt, true) }}</td>
             <td>
-              <button class="btn-delete" @click="deleteComment(cmt.commentID)" title="Delete comment">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                Delete
-              </button>
+              <div class="actions">
+                <a :href="`/post/${cmt.postID}#comment-${cmt.commentID}`" target="_blank" class="btn-action view" title="Xem tại bài viết" style="text-decoration: none;">
+                  <i class="fa-solid fa-eye"></i>
+                </a>
+
+                <button v-if="cmt.isActive === 1" class="btn-action delete" 
+                        @click="handleDelete(cmt.commentID)" title="Khóa/Ẩn bình luận">
+                  <i class="fa-solid fa-ban"></i>
+                </button>
+                
+                <button v-else class="btn-action restore" 
+                        @click="handleRestore(cmt.commentID)" title="Khôi phục bình luận">
+                  <i class="fa-solid fa-rotate-left"></i>
+                </button>
+              </div>
             </td>
           </tr>
-        </tbody>
+
+          <tr v-if="filteredComments.length === 0">
+            <td colspan="6" class="empty-state">
+              <div class="empty-icon"><i class="fa-regular fa-comment-dots"></i></div>
+              <p>Không tìm thấy bình luận nào khớp với tìm kiếm.</p>
+            </td>
+          </tr>
+        </TransitionGroup>
       </table>
-      <div v-if="filteredComments.length === 0" class="empty-state">No comments found.</div>
     </div>
+
+    <Transition name="modal-fade">
+      <div v-if="fullImageModal.show" class="lightbox-overlay" @click="fullImageModal.show = false">
+        <button class="btn-close-lightbox"><i class="fa-solid fa-xmark"></i></button>
+        <img :src="fullImageModal.url" class="lightbox-img" @click.stop>
+      </div>
+    </Transition>
+
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { AlertTriangle } from 'lucide-vue-next'
 import api from '@/services/api.js'
+import { useAuthStore } from '@/stores/auth'
+
+const authStore = useAuthStore()
 
 const comments = ref([])
 const loading = ref(true)
 const error = ref(null)
 const searchQuery = ref('')
 
-const totalCount = computed(() => comments.value.length)
+const fullImageModal = ref({ show: false, url: '' })
 
+// --- THỐNG KÊ ---
+const todayCommentsCount = computed(() => {
+  const today = new Date().toDateString()
+  return comments.value.filter(c => {
+    if (!c.createdAt) return false
+    return new Date(c.createdAt).toDateString() === today
+  }).length
+})
+const attachmentsCount = computed(() => comments.value.filter(c => c.hasAttachments).length)
+
+// --- TÌM KIẾM ---
 const filteredComments = computed(() => {
   const q = searchQuery.value.toLowerCase().trim()
   if (!q) return comments.value
@@ -90,6 +195,7 @@ const filteredComments = computed(() => {
   )
 })
 
+// --- API ACTIONS: LOAD DỮ LIỆU ---
 const loadComments = async () => {
   loading.value = true
   error.value = null
@@ -97,79 +203,186 @@ const loadComments = async () => {
     const res = await api.get('/api/admin/comments')
     comments.value = res.data
   } catch (e) {
-    error.value = e.response?.data?.message || 'Failed to load comments'
+    console.error('Lỗi khi tải bình luận:', e)
+    error.value = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại đường truyền hoặc quyền truy cập.'
   } finally {
     loading.value = false
   }
 }
 
-onMounted(loadComments)
-
-let searchTimer = null
-const onSearch = () => {
-  clearTimeout(searchTimer)
-  searchTimer = setTimeout(() => {}, 300)
-}
-
-const deleteComment = async (id) => {
-  if (!confirm('Delete this comment permanently?')) return
+// --- API ACTIONS: ADMIN KHÓA BÌNH LUẬN (-1) ---
+const handleDelete = async (id) => {
+  if (!confirm('Xác nhận KHÓA bình luận này vì vi phạm tiêu chuẩn cộng đồng?')) return
   try {
-    await api.delete(`/api/admin/comments/${id}`)
-    comments.value = comments.value.filter(c => c.commentID !== id)
+    const payload = {
+      adminId: authStore.user?.accountID || authStore.user?.id || 0,
+      adminName: authStore.user?.username || authStore.user?.fullName || 'Admin'
+    }
+    // Gọi API xóa mềm bên Backend (Sẽ cập nhật isActive = -1)
+    await api.delete(`/api/admin/comments/${id}`, { data: payload })
+    
+    // Cập nhật lại UI không cần reload trang
+    const target = comments.value.find(c => c.commentID === id)
+    if (target) target.isActive = -1
   } catch (e) {
-    alert(e.response?.data?.message || 'Delete failed')
+    alert(e.response?.data?.message || 'Khóa thất bại. Vui lòng thử lại!')
   }
 }
 
-const formatDate = (dateStr) => {
-  if (!dateStr) return '—'
-  return new Date(dateStr).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+// --- API ACTIONS: KHÔI PHỤC BÌNH LUẬN (1) ---
+const handleRestore = async (id) => {
+  if (!confirm('Xác nhận KHÔI PHỤC lại bình luận này cho hiển thị công khai?')) return
+  try {
+    const payload = {
+      adminId: authStore.user?.accountID || authStore.user?.id || 0,
+      adminName: authStore.user?.username || authStore.user?.fullName || 'Admin'
+    }
+    // Gọi API khôi phục bên Backend (Sẽ cập nhật isActive = 1)
+    await api.put(`/api/admin/comments/${id}/restore`, payload)
+    
+    // Cập nhật lại UI không cần reload trang
+    const target = comments.value.find(c => c.commentID === id)
+    if (target) target.isActive = 1
+  } catch (e) {
+    alert('Khôi phục thất bại. Vui lòng thử lại!')
+  }
 }
+
+// --- XỬ LÝ MODAL ẢNH ---
+const viewFullImage = (url) => {
+  fullImageModal.value = { show: true, url }
+}
+
+// --- FORMATTER ---
+const formatDate = (dateStr, includeTime = true) => {
+  if (!dateStr) return '—'
+  const d = new Date(dateStr)
+  const options = { day: '2-digit', month: '2-digit', year: 'numeric' }
+  const date = d.toLocaleDateString('vi-VN', options)
+  
+  if (includeTime) {
+    const time = d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+    return `${time} - ${date}`
+  }
+  return date
+}
+
+onMounted(loadComments)
 </script>
 
 <style scoped>
-.page-container { padding: 30px 40px; font-family: 'Manrope', sans-serif; background: #FFF7ED; min-height: 100vh; }
-.page-header { margin-bottom: 24px; }
-.title { font-size: 1.8rem; font-weight: 800; color: #0F172A; margin: 0; }
-.sub-text { color: #EA580C; font-size: 0.9rem; font-weight: 600; margin: 4px 0 0; }
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&display=swap');
 
-.toolbar { margin-bottom: 20px; }
-.search-wrap { position: relative; max-width: 400px; }
-.s-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94A3B8; }
-.search-wrap input { width: 100%; padding: 11px 11px 11px 40px; border: 1.5px solid #E2E8F0; border-radius: 12px; background: white; font-size: 0.95rem; box-sizing: border-box; transition: 0.2s; }
-.search-wrap input:focus { outline: none; border-color: #EA580C; box-shadow: 0 0 0 3px rgba(234,88,12,0.1); }
+.page-container { padding: 32px 40px; font-family: 'Inter', sans-serif; background-color: #f8fafc; min-height: 100vh; color: #0f172a; }
 
-/* Skeleton */
-.skel-wrap { display: flex; flex-direction: column; gap: 8px; }
-.skel-row { display: flex; gap: 12px; align-items: center; background: white; padding: 14px 16px; border-radius: 12px; }
-.skel-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; flex-shrink: 0; }
-.skel-lines { flex: 1; display: flex; flex-direction: column; gap: 8px; }
-.skel-line { height: 12px; background: linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 6px; }
-.skel-line.short { width: 40%; }
+/* ── HEADER VIPRO ── */
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+.header-content { display: flex; align-items: center; }
+.title-wrapper { display: flex; align-items: center; gap: 16px; }
+.icon-box { width: 52px; height: 52px; border-radius: 14px; background: linear-gradient(135deg, #ea580c, #f59e0b); color: white; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 20px -5px rgba(234, 88, 12, 0.4); font-size: 1.5rem; }
+.title { font-family: 'Playfair Display', serif; font-size: 2.2rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px; }
+.subtitle { color: #64748b; margin: 4px 0 0; font-size: 1rem; font-weight: 500; }
+
+.header-actions { display: flex; align-items: center; gap: 16px; }
+
+.search-box-lux { display: flex; align-items: center; background: white; padding: 12px 20px; border-radius: 100px; border: 1px solid #e2e8f0; width: 320px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); transition: 0.3s; position: relative; }
+.search-box-lux:focus-within { border-color: #ea580c; box-shadow: 0 4px 20px rgba(234,88,12,0.1); }
+.search-icon { color: #94a3b8; }
+.search-box-lux input { border: none; outline: none; margin-left: 12px; width: 100%; font-family: inherit; font-size: 0.95rem; color: #0f172a; background: transparent; }
+.clear-search { background: none; border: none; color: #94a3b8; cursor: pointer; display: flex; align-items: center; }
+
+.btn-open-blacklist { display: flex; align-items: center; gap: 8px; background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; padding: 12px 20px; border-radius: 100px; font-weight: 700; text-decoration: none; transition: 0.3s; font-size: 0.95rem; }
+.btn-open-blacklist:hover { background: #dc2626; color: white; box-shadow: 0 8px 20px -5px rgba(220, 38, 38, 0.4); }
+
+.btn-refresh { background: white; border: 1px solid #e2e8f0; padding: 12px 20px; border-radius: 100px; font-weight: 700; font-size: 0.95rem; color: #475569; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+.btn-refresh:hover:not(:disabled) { background: #f8fafc; color: #0f172a; border-color: #cbd5e1; }
+
+/* ── THỐNG KÊ ── */
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 24px; }
+.stat-card { background: white; padding: 20px 24px; border-radius: 20px; display: flex; align-items: center; gap: 20px; border: 1px solid rgba(0,0,0,0.03); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05); transition: 0.3s; }
+.stat-card:hover { transform: translateY(-3px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.06); }
+.stat-icon { width: 54px; height: 54px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+.bg-blue-light { background: #eff6ff; color: #3b82f6; } 
+.bg-emerald-light { background: #d1fae5; color: #10b981; } 
+.bg-orange-light { background: #ffedd5; color: #f97316; } 
+.stat-info { display: flex; flex-direction: column; }
+.stat-value { font-size: 1.6rem; font-weight: 800; color: #0f172a; line-height: 1.2; }
+.stat-label { font-size: 0.85rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-top: 4px; }
+
+/* ── BẢNG DỮ LIỆU LUXURY ── */
+.table-lux-wrapper { background: white; border-radius: 20px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.03); overflow: hidden; }
+.data-table-lux { width: 100%; border-collapse: separate; border-spacing: 0; }
+.data-table-lux th { text-align: left; padding: 18px 24px; background: #f8fafc; color: #64748b; font-weight: 700; font-size: 0.8rem; letter-spacing: 1px; border-bottom: 1px solid #e2e8f0; }
+.data-table-lux td { padding: 16px 24px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+.table-row-lux { transition: 0.2s; } .table-row-lux:hover { background: #fafafa; }
+
+.idx { color: #94a3b8; font-weight: 700; font-size: 0.9rem; }
+.user-cell { display: flex; align-items: center; gap: 12px; }
+.user-avatar { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+.u-info { display: flex; flex-direction: column; }
+.user-name { font-weight: 600; color: #1e293b; font-size: 0.95rem; }
+.user-id { font-size: 0.8rem; color: #94a3b8; font-family: 'JetBrains Mono', monospace; }
+
+.content-cell { max-width: 350px; }
+.comment-text { color: #334155; font-size: 0.95rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5; margin-bottom: 6px; }
+.badge-reply { display: inline-block; background: #eff6ff; color: #3b82f6; padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; margin-bottom: 6px; }
+.badge-img { display: inline-block; background: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; }
+
+.post-link { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 8px; background: #fff7ed; color: #ea580c; font-weight: 700; font-size: 0.85rem; text-decoration: none; transition: 0.2s; }
+.post-link:hover { background: #ffedd5; }
+
+.date-cell { color: #475569; font-size: 0.9rem; font-weight: 500; font-family: 'JetBrains Mono', monospace; }
+
+.actions { display: flex; justify-content: flex-end; gap: 8px; }
+.btn-action { width: 36px; height: 36px; border-radius: 10px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; background: white; font-size: 1rem; }
+.btn-action.view { background: #f1f5f9; color: #475569; } .btn-action.view:hover { background: #e2e8f0; color: #0f172a; }
+.btn-action.delete { background: #ffedd5; color: #ea580c; } .btn-action.delete:hover { background: #ea580c; color: white; }
+
+/* ── TRẠNG THÁI XÓA MỀM (MỚI) ── */
+.row-hidden { opacity: 0.65; background-color: #f8fafc !important; }
+.row-hidden .user-avatar { filter: grayscale(1); }
+.row-hidden .comment-text { color: #94a3b8; }
+
+.badge-hidden { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; margin-bottom: 8px; text-transform: uppercase; }
+.admin-banned { background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; }
+.user-deleted { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; }
+
+.btn-action.restore { background: #e0f2fe; color: #0284c7; }
+.btn-action.restore:hover { background: #0284c7; color: white; }
+
+/* LIGHTBOX XEM ẢNH TO */
+.lightbox-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; justify-content: center; align-items: center; cursor: zoom-out; }
+.lightbox-img { max-width: 90vw; max-height: 90vh; border-radius: 8px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+.btn-close-lightbox { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.1); color: white; border: none; width: 44px; height: 44px; border-radius: 50%; font-size: 1.5rem; cursor: pointer; transition: 0.2s; }
+.btn-close-lightbox:hover { background: rgba(255,255,255,0.3); }
+
+/* ── SKELETON & ANIMATIONS ── */
+.skel-wrap { padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+.skel-row { display: flex; gap: 16px; align-items: center; }
+.skel-avatar { width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+.skel-lines { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+.skel-line { height: 12px; background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 6px; }
+.skel-line.short { width: 30%; }
 @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-.error-banner { background: #FEF2F2; border: 1px solid #FECACA; border-radius: 12px; padding: 16px; color: #DC2626; font-weight: 600; display: flex; gap: 12px; align-items: center; }
-.error-banner button { background: #DC2626; color: white; border: none; padding: 6px 14px; border-radius: 8px; cursor: pointer; font-weight: 700; }
+.error-banner { background: #fef2f2; border: 1px solid #fecaca; padding: 16px 24px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.error-content { display: flex; align-items: center; gap: 12px; color: #dc2626; font-weight: 600; }
+.btn-retry { background: white; border: 1px solid #fca5a5; color: #dc2626; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 700; transition: 0.2s; }
+.btn-retry:hover { background: #dc2626; color: white; }
 
-.table-wrapper { background: white; border-radius: 16px; border: 1px solid #F1F5F9; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.03); }
-.data-table { width: 100%; border-collapse: collapse; }
-.data-table th { padding: 14px 16px; background: #F8FAFC; color: #64748B; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; text-align: left; border-bottom: 1px solid #F1F5F9; }
-.data-table td { padding: 14px 16px; border-bottom: 1px solid #F8FAFC; vertical-align: middle; }
-.data-table tr:last-child td { border-bottom: none; }
-.data-table tr:hover td { background: #FFFBF7; }
+.empty-state { text-align: center; padding: 60px; color: #64748b; }
+.empty-icon { font-size: 3rem; color: #cbd5e1; margin-bottom: 12px; }
 
-.idx { color: #CBD5E1; font-size: 0.85rem; font-weight: 600; }
-.user-cell { display: flex; align-items: center; gap: 10px; }
-.user-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
-.user-name { font-weight: 700; color: #334155; font-size: 0.9rem; }
-.content-cell { max-width: 300px; }
-.comment-text { color: #475569; font-size: 0.9rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.post-link { color: #EA580C; font-weight: 700; text-decoration: none; font-size: 0.85rem; }
-.post-link:hover { text-decoration: underline; }
-.date-cell { color: #94A3B8; font-size: 0.82rem; white-space: nowrap; }
+/* ANIMATIONS */
+.anim-fade-down { animation: fadeDown 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+.anim-fade-up { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: var(--delay, 0s); }
+@keyframes fadeDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-.btn-delete { display: flex; align-items: center; gap: 6px; background: #FEF2F2; color: #EF4444; border: 1px solid #FECACA; padding: 7px 14px; border-radius: 8px; cursor: pointer; font-size: 0.82rem; font-weight: 700; transition: 0.2s; }
-.btn-delete:hover { background: #EF4444; color: white; border-color: #EF4444; }
-
-.empty-state { text-align: center; padding: 60px; color: #94A3B8; }
+.animate-enter { animation: fadeUp 0.5s ease-out; }
+.modal-fade-enter-active, .modal-fade-leave-active { transition: all 0.2s; }
+.modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; transform: scale(0.95); }
+.list-anim-enter-active, .list-anim-leave-active { transition: all 0.4s ease; }
+.list-anim-enter-from, .list-anim-leave-to { opacity: 0; transform: translateX(-20px); }
 </style>

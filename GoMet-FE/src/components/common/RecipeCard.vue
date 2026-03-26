@@ -67,25 +67,39 @@
           <span class="author-name">{{ post.author?.name || 'Gomet Chef' }}</span>
         </div>
 
-        <div class="stats-like-group">
-          <button 
-            class="btn-icon-like" 
-            @click.stop="toggleLike" 
-            :class="{ 'is-liked': isLiked, 'animating': isLikeAnimating }"
-            :disabled="isLikeLoading"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" :fill="isLiked ? 'currentColor' : 'none'" :stroke="isLiked ? 'none' : 'currentColor'" stroke-width="2">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-            </svg>
-          </button>
+        <div class="card-stats-wrapper">
           
-          <span 
-            class="like-count-text" 
-            @click.stop="openLikesModal" 
-            title="Xem ai đã thích"
-          >
-            {{ formatNumber(localLikeCount) }}
-          </span>
+          <div class="stats-view-group" title="Lượt xem">
+            <span class="icon-view">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </span>
+            <span class="view-count-text">{{ formatNumber(post.views || post.viewCount || 0) }}</span>
+          </div>
+
+          <div class="stats-like-group">
+            <button 
+              class="btn-icon-like" 
+              @click.stop="toggleLike" 
+              :class="{ 'is-liked': isLiked, 'animating': isLikeAnimating }"
+              :disabled="isLikeLoading"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" :fill="isLiked ? 'currentColor' : 'none'" :stroke="isLiked ? 'none' : 'currentColor'" stroke-width="2">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+              </svg>
+            </button>
+            
+            <span 
+              class="like-count-text" 
+              @click.stop="openLikesModal" 
+              title="Xem ai đã thích"
+            >
+              {{ formatNumber(localLikeCount) }}
+            </span>
+          </div>
+
         </div>
       </div>
     </div>
@@ -141,7 +155,6 @@ const authStore = useAuthStore()
 const displayRating = computed(() => props.post.rating || props.post.avgRating || 0)
 const displayReviewCount = computed(() => props.post.reviews || props.post.ratingCount || 0)
 
-// --- HÀM TÍNH THỜI GIAN ĐĂNG BÀI (Time Ago) ---
 // --- HÀM TÍNH THỜI GIAN ĐĂNG BÀI (Time Ago - Đã Fix Lỗi Date) ---
 const formattedTimeAgo = computed(() => {
   let dateStr = props.post.createdAt || props.post.date || props.post.savedDate;
@@ -347,7 +360,43 @@ const toggleSave = async () => {
   border-radius: 100px;
 }
 
-/* --- UI LIKE GROUP --- */
+/* --- UI STATS (VIEW & LIKE) --- */
+.card-stats-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Khoảng cách giữa nút View và nút Like */
+}
+
+/* Style cho Lượt xem */
+.stats-view-group {
+  display: flex;
+  align-items: center;
+  background: #f8fafc;
+  border-radius: 20px;
+  padding: 6px 12px; /* Padding đều cho đẹp */
+  border: 1px solid transparent;
+  transition: all 0.2s;
+  color: #94a3b8;
+
+  &:hover {
+    background: #f1f5f9;
+  }
+
+  .icon-view {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .view-count-text {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #475569;
+    margin-left: 6px;
+  }
+}
+
+/* Style cho Lượt thích (Giữ nguyên) */
 .stats-like-group {
   display: flex;
   align-items: center;

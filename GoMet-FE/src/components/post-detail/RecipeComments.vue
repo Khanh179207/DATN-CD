@@ -45,7 +45,7 @@
     </template>
 
     <template v-else>
-      <div class="review-item-luxury fade-in" :class="{ 'is-child': isChild }">
+      <div class="review-item-luxury fade-in" :class="{ 'is-child': isChild }" :id="'comment-' + commentData.id">
         
         <div class="review-header">
           <div class="avatar-wrapper">

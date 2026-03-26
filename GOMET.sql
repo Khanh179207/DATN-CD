@@ -22,24 +22,27 @@ GO
 	-- 1. NHÓM BẢNG CHA (MASTER TABLES)
 	-- ==========================================
 
-	CREATE TABLE Account (
-		AccountID INT IDENTITY(1,1) PRIMARY KEY,
-		Username NVARCHAR(100) NOT NULL,
-		Email NVARCHAR(255) NOT NULL,
-		Password NVARCHAR(255) NOT NULL,
-		Avatar NVARCHAR(255),
-		Token NVARCHAR(255) NULL, 
-		Bio NVARCHAR(MAX) NULL,
-		Point INT DEFAULT 0,
-		isAdmin INT DEFAULT 0,
-		isPremium INT DEFAULT 0,
-		isActive INT DEFAULT 1,
-		CreatedAt DATETIME DEFAULT GETDATE(),
-		UpdatedAt DATETIME,
-		DeletedAt DATETIME
+CREATE TABLE Account (
+    AccountID INT IDENTITY(1,1) PRIMARY KEY,
+    Username NVARCHAR(100) NOT NULL,
+    Email NVARCHAR(255) NOT NULL,
+    Password NVARCHAR(255) NOT NULL,
+    Avatar NVARCHAR(255),
+    Token NVARCHAR(255) NULL, 
+    Bio NVARCHAR(MAX) NULL,
+    Point INT DEFAULT 0,
+    isAdmin INT DEFAULT 0,
+    isPremium INT DEFAULT 0,
+    isActive INT DEFAULT 1,
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    UpdatedAt DATETIME,
+    DeletedAt DATETIME,   
 	
-	);
-	GO
+ -- MỚI THÊM: Lưu thẳng Email Admin (hứng từ Frontend)
+    BanReason NVARCHAR(MAX) NULL,      -- Lưu lý do khóa (Admin tự gõ vào)
+    BannedAt DATETIME NULL             -- Đổi dấu chấm phẩy (;) thành bình thường
+);                                     -- Bổ sung dấu đóng ngoặc tròn và chấm phẩy ở đây
+GO
 
 -- Sửa lại bảng Category cho khớp với các bảng khác của sếp
 CREATE TABLE Category (
@@ -86,29 +89,33 @@ GO
 	-- 2. NHÓM BẢNG CHÍNH (POSTS & SỰ KIỆN)
 	-- ==========================================
 
-	CREATE TABLE Post (
-		PostID INT IDENTITY(1,1) PRIMARY KEY,
-		AccountID INT NOT NULL,
-		CategoryID INT NOT NULL,
-		EventID INT NULL, -- TRẢ LẠI EM NÓ Ở ĐÂY
-		Title NVARCHAR(255) NOT NULL,
-		Description NVARCHAR(MAX) NOT NULL,
-		Ingredients NVARCHAR(MAX) NOT NULL,
-		Media NVARCHAR(255),
-		Video NVARCHAR(255),
-		Level INT DEFAULT 1,
-		CookingTime INT DEFAULT 30,
-		Views INT DEFAULT 0,
-		LikeCount INT DEFAULT 0,
-		isActive INT DEFAULT 1,
-		isApproved INT DEFAULT 0,
-		CreatedAt DATETIME DEFAULT GETDATE(),
+CREATE TABLE Post (
+    PostID INT IDENTITY(1,1) PRIMARY KEY,
+    AccountID INT NOT NULL,
+    CategoryID INT NOT NULL,
+    EventID INT NULL, 
+    Title NVARCHAR(255) NOT NULL,
+    Description NVARCHAR(MAX) NOT NULL,
+    Ingredients NVARCHAR(MAX) NOT NULL,
+    Media NVARCHAR(255),
+    Video NVARCHAR(255),
+    Level INT DEFAULT 1,
+    CookingTime INT DEFAULT 30,
+    Views INT DEFAULT 0,
+    LikeCount INT DEFAULT 0,
+    isActive INT DEFAULT 1,
+    isApproved INT DEFAULT 0,
+    CreatedAt DATETIME DEFAULT GETDATE(),
 
-		CONSTRAINT FK_Post_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
-		CONSTRAINT FK_Post_Category FOREIGN KEY (CategoryID) REFERENCES Category(CategoryID),
-		CONSTRAINT FK_Post_Event FOREIGN KEY (EventID) REFERENCES Event(EventID)
-	);
-	GO
+    -- 🔥 MỚI THÊM: Phục vụ kiểm duyệt bài viết
+    RejectReason NVARCHAR(MAX) NULL,   -- Lưu lý do từ chối/ẩn bài (để hiện cho User xem)
+    RejectedAt DATETIME NULL,          -- Lưu thời gian từ chối
+
+    CONSTRAINT FK_Post_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
+    CONSTRAINT FK_Post_Category FOREIGN KEY (CategoryID) REFERENCES Category(CategoryID),
+    CONSTRAINT FK_Post_Event FOREIGN KEY (EventID) REFERENCES Event(EventID)
+);
+GO
 
 	CREATE TABLE EventPosts (
 		EventPostID INT IDENTITY(1,1) PRIMARY KEY,
@@ -163,6 +170,8 @@ CREATE TABLE Comment (
     Likes INT DEFAULT 0,
     cmtid INT NULL,
     CreatedAt DATETIME DEFAULT GETDATE(),
+	 IsActive INT,
+
 
     CONSTRAINT FK_Comment_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
     CONSTRAINT FK_Comment_Post FOREIGN KEY (PostID) REFERENCES Post(PostID),
@@ -280,22 +289,23 @@ GO
 	-- ==========================================
 
 	-- 🔥 ĐÃ THÊM CỘT POST_ID VÀO BẢNG NOTIFICATION
-	CREATE TABLE Notification (
-		NotificationID INT IDENTITY(1,1) PRIMARY KEY,
-		Title NVARCHAR(255) NOT NULL,
-		Content NVARCHAR(MAX) NOT NULL,
-		Type NVARCHAR(100) NOT NULL,
-		AccountID INT NOT NULL,
-		Link NVARCHAR(500) NULL,
-		PostID INT NULL, 
-		isRead INT DEFAULT 0,
-		ReadAt DATETIME,
-		CreatedAt DATETIME DEFAULT GETDATE(),
+CREATE TABLE Notification (
+	NotificationID INT IDENTITY(1,1) PRIMARY KEY,
+	Title NVARCHAR(255) NOT NULL,
+	Content NVARCHAR(MAX) NOT NULL,
+	Type NVARCHAR(100) NOT NULL,
+	AccountID INT NOT NULL,
+	ActorID INT NULL, 
+	Link NVARCHAR(500) NULL,
+	PostID INT NULL, 
+	isRead INT DEFAULT 0,
+	ReadAt DATETIME,
+	CreatedAt DATETIME DEFAULT GETDATE(),
 
-		CONSTRAINT FK_Notification_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
-		CONSTRAINT FK_Notification_Post FOREIGN KEY (PostID) REFERENCES Post(PostID)
-	);
-	GO
+	CONSTRAINT FK_Notification_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
+	CONSTRAINT FK_Notification_Actor FOREIGN KEY (ActorID) REFERENCES Account(AccountID),
+	CONSTRAINT FK_Notification_Post FOREIGN KEY (PostID) REFERENCES Post(PostID)
+);
 
 	CREATE TABLE History (
 		HistoryID INT IDENTITY(1,1) PRIMARY KEY,
@@ -414,9 +424,28 @@ CREATE TABLE BlacklistWord (
     Word NVARCHAR(100) NOT NULL UNIQUE,
     CreatedAt DATETIME DEFAULT GETDATE()
 );
+GO	
+
+CREATE TABLE SystemConfig (
+    ConfigKey VARCHAR(50) PRIMARY KEY,  -- Mã cấu hình (Ví dụ: HERO_BANNER, PREMIUM_PRICE_1)
+    ConfigValue NVARCHAR(MAX) NOT NULL, -- Giá trị (Link ảnh, Số tiền, Đoạn text...)
+    ConfigGroup NVARCHAR(50),           -- Nhóm để dễ phân loại (GIAO_DIEN, GOI_CUOC, QUANG_CAO)
+    Description NVARCHAR(255),          -- Chú thích cho Admin dễ hiểu
+    UpdatedAt DATETIME DEFAULT GETDATE()
+);
 GO
 
-
+CREATE TABLE ModerationLog (
+    LogID INT IDENTITY(1,1) PRIMARY KEY,
+    TargetID INT NOT NULL,
+    TargetType NVARCHAR(50) NOT NULL,
+    Action NVARCHAR(50) NOT NULL,
+    AdminID INT NOT NULL,
+    AdminName NVARCHAR(255),
+    Reason NVARCHAR(500),
+    CreatedAt DATETIME DEFAULT GETDATE()
+);
+GO
 	-- ==========================================
 	-- 6. TRIGGERS TỰ ĐỘNG CẬP NHẬT
 	-- ==========================================
@@ -502,9 +531,9 @@ GO
 -- 4. BÀI VIẾT (Gồm bài đã duyệt, chưa duyệt và bài tham gia sự kiện)
 -- ==========================================================
 INSERT INTO Post (AccountID, CategoryID, EventID, Title, Description, Ingredients, Media, Level, CookingTime, Views, LikeCount, isActive, isApproved, CreatedAt) VALUES
-(2, 3, NULL, N'Steak Bò Mỹ Sốt Vang Đỏ', N'Món Âu sang trọng cho tối lãng mạn.', N'Bò Mỹ 300g, Rượu vang đỏ, Lá hương thảo, Bơ.', 'https://images.unsplash.com/photo-1546241072-48010ad28c2c', 3, 45, 1500, 120, 1, 1, DATEADD(HOUR, -2, GETDATE())),
-(3, 1, 1, N'Phở Bò Nam Định Chuẩn Vị', N'Nước dùng trong, ngọt thanh từ xương.', N'Bánh phở, Xương ống, Gừng, Quế, Hồi.', 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43', 2, 180, 850, 45, 1, 1, DATEADD(DAY, -1, GETDATE())),
-(4, 5, NULL, N'Bánh Tiramisu Không Cần Lò', N'Công thức siêu dễ cho người mới.', N'Bánh sâm panh, Cà phê, Mascarpone.', 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9', 1, 30, 320, 15, 1, 1, DATEADD(MINUTE, -30, GETDATE())),
+(2, 3, NULL, N'Steak Bò Mỹ Sốt Vang Đỏ', N'Món Âu sang trọng cho tối lãng mạn.', N'Bò Mỹ 300g, Rượu vang đỏ, Lá hương thảo, Bơ.', 'https://images.unsplash.com/photo-1546241072-48010ad28c2c', 3, 45, 1500, 0, 1, 1, DATEADD(HOUR, -2, GETDATE())),
+(3, 1, 1, N'Phở Bò Nam Định Chuẩn Vị', N'Nước dùng trong, ngọt thanh từ xương.', N'Bánh phở, Xương ống, Gừng, Quế, Hồi.', 'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43', 2, 180, 850, 0, 1, 1, DATEADD(DAY, -1, GETDATE())),
+(4, 5, NULL, N'Bánh Tiramisu Không Cần Lò', N'Công thức siêu dễ cho người mới.', N'Bánh sâm panh, Cà phê, Mascarpone.', 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9', 1, 30, 320, 0, 1, 1, DATEADD(MINUTE, -30, GETDATE())),
 (3, 4, 2, N'Gỏi Cuốn Chay Ngũ Sắc', N'Món chay thanh đạm, bắt mắt.', N'Bánh tráng, Bún, Đậu phụ, Rau thơm.', 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd', 1, 20, 210, 8, 1, 1, '2026-03-10'),
 (5, 1, NULL, N'Bún Chả Hà Nội', N'Đang chờ phê duyệt...', N'Thịt ba chỉ, bún, mắm.', 'https://images.unsplash.com/photo-1562967914-6c189891c92a', 2, 60, 5, 0, 1, 0, GETDATE());
 GO
@@ -608,4 +637,10 @@ GO
 
 	SELECT * FROM Comment;
 
+	SELECT * FROM Follow;
 
+	SELECT * FROM Paymenttransaction;
+
+	SELECT * FROM Appeals;
+	
+	SELECT * FROM ModerationLog;

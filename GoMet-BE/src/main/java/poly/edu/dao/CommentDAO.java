@@ -14,4 +14,12 @@ public interface CommentDAO extends JpaRepository<Comment, Integer> {
     // Thống kê số lượng từng loại sao (trả về list mảng Object [sao, số lượng])
     @Query("SELECT c.rating, COUNT(c) FROM Comment c WHERE c.post.postID = :postID AND c.rating IS NOT NULL GROUP BY c.rating")
     List<Object[]> countRatingByPostID(@Param("postID") Integer postID);
+    // Thêm hàm này vào CommentDAO
+    @Query("SELECT COUNT(c) FROM Comment c WHERE c.post.postID = :postId AND c.account.accountID = :accountId AND c.rating > 0 AND c.isActive = 1")
+    long countRatingsByUserAndPost(@Param("postId") Integer postId, @Param("accountId") Integer accountId);
+    // Đếm bình luận theo tháng
+    @Query(value = "SELECT MONTH(c.CreatedAt), COUNT(c.CommentID) " +
+            "FROM Comment c WHERE YEAR(c.CreatedAt) = :year " +
+            "GROUP BY MONTH(c.CreatedAt)", nativeQuery = true)
+    List<Object[]> countCommentsByMonth(@Param("year") int year);
 }

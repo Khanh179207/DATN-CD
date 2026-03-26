@@ -22,4 +22,8 @@ public interface AppealDAO extends JpaRepository<Appeal, Integer> {
 
     @Query("SELECT COUNT(a) FROM Appeal a WHERE a.email = :email AND a.createdAt > CURRENT_TIMESTAMP - 1 DAY")
     long countRecentAppeals(@Param("email") String email);
+
+    // Đếm Khiếu nại theo Trạng thái (Dùng cho Biểu đồ Appeals Chart)
+    @Query("SELECT a.status, COUNT(a) FROM Appeal a GROUP BY a.status")
+    List<Object[]> countAppealsByStatus();
 }

@@ -7,6 +7,7 @@ import poly.edu.entity.Appeal;
 import poly.edu.entity.Account;
 import poly.edu.service.AppealService;
 import poly.edu.service.NotificationService;
+import poly.edu.service.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +29,9 @@ public class AppealServiceImpl implements AppealService {
 
     @Autowired
     private NotificationService notificationService;
+
+    @Autowired
+    private AccountService accountService;
 
     @Override
     public AppealDTO createAppeal(String email, String reason, String ipAddress) {
@@ -52,9 +56,9 @@ public class AppealServiceImpl implements AppealService {
                         "Người dùng " + email + " đã nộp khiếu nại: " + reason,
                         "appeal",
                         admin.getAccountID(),
-                        null,
-                        "/admin/appeals"
-                );
+                        null, // actorId - null for system notification
+                        null, // postId
+                        "/admin/appeals");
             }
         } catch (Exception e) {
             // Log error but don't fail the appeal creation
@@ -106,25 +110,20 @@ public class AppealServiceImpl implements AppealService {
                 .orElseThrow(() -> new RuntimeException("Khiếu nại không tồn tại"));
 
         // Find account by email
-        Optional<Account> accountOpt = accountDAO.findByEmail(appeal.getEmail());
-        if (!accountOpt.isPresent()) {
-            throw new RuntimeException("Tài khoản không tồn tại");
-        }
+        Account account = accountDAO.findByEmail(appeal.getEmail())
+                .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại"));
 
-        Account account = accountOpt.get();
-        
-        // Unban account (assuming isBanned field exists)
-        // account.setIsBanned(0);
-        // accountDAO.save(account);
+        // 🔥 Gọi hàm unban 3 tham số.
+        // Vì đây là mở khóa tự động qua đơn Appeal, sếp có thể hardcode số 0 và "Hệ Thống"
+        accountService.unban(account.getAccountID(), 0, "Hệ Thống (Đơn Khiếu Nại)");
 
-        // Update appeal status
+        // Update appeal status to Resolved
         appeal.setStatus("Resolved");
         appeal.setUpdatedAt(LocalDateTime.now());
         appealDAO.save(appeal);
 
         return true;
     }
-
     @Override
     public Optional<AppealDTO> getAppealStatusByEmail(String email) {
         return appealDAO.findByEmail(email)
