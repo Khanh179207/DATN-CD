@@ -3,7 +3,7 @@ package poly.edu.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import poly.edu.dao.PaymentTransactionDAO;
-import poly.edu.dto.TransactionAdminDTO;
+import poly.edu.dto.AdminTransactionDTO;
 import poly.edu.entity.PaymentTransaction;
 import poly.edu.service.AdminTransactionService;
 
@@ -17,13 +17,13 @@ public class AdminTransactionServiceImpl implements AdminTransactionService {
     private final PaymentTransactionDAO paymentTransactionDAO;
 
     @Override
-    public List<TransactionAdminDTO> getAllTransactions() {
+    public List<AdminTransactionDTO> getAllTransactions() {
         List<PaymentTransaction> transactions = paymentTransactionDAO.findAllByOrderByCreatedAtDesc();
         return transactions.stream().map(this::convertToAdminDTO).collect(Collectors.toList());
     }
 
-    private TransactionAdminDTO convertToAdminDTO(PaymentTransaction txn) {
-        TransactionAdminDTO dto = new TransactionAdminDTO();
+    private AdminTransactionDTO convertToAdminDTO(PaymentTransaction txn) {
+        AdminTransactionDTO dto = new AdminTransactionDTO();
 
         dto.setTransactionID(txn.getTransactionID());
         dto.setOrderCode(txn.getOrderCode());

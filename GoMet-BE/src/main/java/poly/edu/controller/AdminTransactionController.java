@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import poly.edu.dto.TransactionAdminDTO;
+import poly.edu.dto.AdminTransactionDTO;
 import poly.edu.service.AdminTransactionService;
 
 import java.util.List;
@@ -20,9 +20,9 @@ public class AdminTransactionController {
     private final AdminTransactionService adminTransactionService;
 
     @GetMapping
-    public ResponseEntity<List<TransactionAdminDTO>> getAll() {
+    public ResponseEntity<List<AdminTransactionDTO>> getAll() {
         try {
-            List<TransactionAdminDTO> result = adminTransactionService.getAllTransactions();
+            List<AdminTransactionDTO> result = adminTransactionService.getAllTransactions();
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build(); // Lỗi server 500

@@ -6,6 +6,7 @@ import poly.edu.dao.AccountDAO;
 import poly.edu.dto.AdminAccountDTO;
 import poly.edu.entity.Account;
 import poly.edu.service.AccountService;
+import poly.edu.service.ModerationLogService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -16,6 +17,9 @@ import java.util.stream.Collectors;
 public class AccountServiceImpl implements AccountService {
 
     private final AccountDAO accountDAO;
+
+    // 🔥 INJECT THÊM SERVICE NHẬT KÝ KIỂM DUYỆT VÀO ĐÂY
+    private final ModerationLogService moderationLogService;
 
     // 1. SỬA HÀM toDTO
     private AdminAccountDTO toDTO(Account acc) {
@@ -109,32 +113,39 @@ public class AccountServiceImpl implements AccountService {
         return toDTO(accountDAO.save(acc));
     }
 
-    // 🔥 LOGIC KHÓA TÀI KHOẢN (GHI NHẬN LÝ DO & ADMIN)
+    // 🔥 LOGIC KHÓA TÀI KHOẢN (ĐÃ TÍCH HỢP GHI LOG)
     @Override
     public void ban(Integer id, Integer adminId, String adminName, String adminEmail, String reason) {
         Account acc = accountDAO.findById(id).orElseThrow();
-        acc.setIsActive(0);
+        acc.setIsActive(0); // Lưu ý: 0 là khóa (khớp với query Thống kê)
         acc.setBannedBy(adminId);
-        acc.setBannedByName(adminName);   // Lưu tên
-        acc.setBannedByEmail(adminEmail); // Lưu email
+        acc.setBannedByName(adminName);
+        acc.setBannedByEmail(adminEmail);
         acc.setBanReason(reason);
         acc.setBannedAt(LocalDateTime.now());
         acc.setUpdatedAt(LocalDateTime.now());
         accountDAO.save(acc);
+
+        // 📝 GHI VÀO NHẬT KÝ KIỂM DUYỆT
+        moderationLogService.logAction(id, "ACCOUNT", "BAN", adminId, adminName, reason);
     }
 
-    // 🔥 LOGIC MỞ KHÓA TÀI KHOẢN (XÓA DẤU VẾT KHÓA)
+    // 🔥 LOGIC MỞ KHÓA TÀI KHOẢN (ĐÃ TÍCH HỢP GHI LOG)
     @Override
     public void unban(Integer id) {
         Account acc = accountDAO.findById(id).orElseThrow();
         acc.setIsActive(1);
         acc.setBannedBy(null);
-        acc.setBannedByName(null);   // Rửa sạch
-        acc.setBannedByEmail(null);  // Rửa sạch
+        acc.setBannedByName(null);
+        acc.setBannedByEmail(null);
         acc.setBanReason(null);
         acc.setBannedAt(null);
         acc.setUpdatedAt(LocalDateTime.now());
         accountDAO.save(acc);
+
+        // 📝 GHI VÀO NHẬT KÝ KIỂM DUYỆT
+        // (Tạm thời truyền số 0 vì hàm unban hiện tại chưa nhận adminId từ Controller)
+        moderationLogService.logAction(id, "ACCOUNT", "UNBAN", 0, "Hệ Thống", "Đã ân xá, gỡ lệnh cấm");
     }
 
     @Override
@@ -143,6 +154,9 @@ public class AccountServiceImpl implements AccountService {
         acc.setIsActive(0);
         acc.setDeletedAt(LocalDateTime.now());
         accountDAO.save(acc);
+
+        // Có thể mở rộng ghi log Xóa mềm nếu sếp muốn
+        // moderationLogService.logAction(id, "ACCOUNT", "SOFT_DELETE", 0, "Hệ Thống", "Xóa mềm tài khoản");
     }
 
     @Override
