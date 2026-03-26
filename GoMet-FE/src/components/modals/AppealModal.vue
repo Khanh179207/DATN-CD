@@ -64,6 +64,14 @@
           <div class="form-actions">
             <button
               v-if="!submitSuccess"
+              type="button"
+              class="btn-cancel"
+              @click="$emit('close')"
+            >
+              Hủy
+            </button>
+            <button
+              v-if="!submitSuccess"
               type="submit"
               class="btn-submit"
               :disabled="isSubmitting || !formData.email.trim() || !formData.reason.trim()"
@@ -353,6 +361,28 @@ onMounted(() => {
   &:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+  }
+}
+
+.btn-cancel {
+  padding: 12px 28px;
+  border: 2px solid #e7e5e4;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: transparent;
+  color: #78716c;
+
+  &:hover {
+    background: #f5f5f5;
+    color: #1c1917;
+    border-color: #d6d3d1;
   }
 }
 
