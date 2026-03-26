@@ -164,6 +164,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import api from '@/services/api.js'
+import { useAuthStore } from '@/stores/auth'
+
+const authStore = useAuthStore()
 
 const comments = ref([])
 const loading = ref(true)
@@ -197,7 +200,7 @@ const loadComments = async () => {
   loading.value = true
   error.value = null
   try {
-    const res = await api.get('/api/comments/admin/all')
+    const res = await api.get('/api/admin/comments')
     comments.value = res.data
   } catch (e) {
     console.error('Lỗi khi tải bình luận:', e)
@@ -211,8 +214,12 @@ const loadComments = async () => {
 const handleDelete = async (id) => {
   if (!confirm('Xác nhận KHÓA bình luận này vì vi phạm tiêu chuẩn cộng đồng?')) return
   try {
+    const payload = {
+      adminId: authStore.user?.accountID || authStore.user?.id || 0,
+      adminName: authStore.user?.username || authStore.user?.fullName || 'Admin'
+    }
     // Gọi API xóa mềm bên Backend (Sẽ cập nhật isActive = -1)
-    await api.delete(`/api/comments/${id}`)
+    await api.delete(`/api/admin/comments/${id}`, { data: payload })
     
     // Cập nhật lại UI không cần reload trang
     const target = comments.value.find(c => c.commentID === id)
@@ -226,8 +233,12 @@ const handleDelete = async (id) => {
 const handleRestore = async (id) => {
   if (!confirm('Xác nhận KHÔI PHỤC lại bình luận này cho hiển thị công khai?')) return
   try {
+    const payload = {
+      adminId: authStore.user?.accountID || authStore.user?.id || 0,
+      adminName: authStore.user?.username || authStore.user?.fullName || 'Admin'
+    }
     // Gọi API khôi phục bên Backend (Sẽ cập nhật isActive = 1)
-    await api.put(`/api/comments/${id}/restore`)
+    await api.put(`/api/admin/comments/${id}/restore`, payload)
     
     // Cập nhật lại UI không cần reload trang
     const target = comments.value.find(c => c.commentID === id)

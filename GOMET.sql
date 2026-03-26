@@ -38,9 +38,7 @@ CREATE TABLE Account (
     UpdatedAt DATETIME,
     DeletedAt DATETIME,   
 	
-    BannedBy INT NULL,                 -- Lưu ID của Admin
-    BannedByName NVARCHAR(255) NULL,   -- MỚI THÊM: Lưu thẳng tên Admin (hứng từ Frontend)
-    BannedByEmail NVARCHAR(255) NULL,  -- MỚI THÊM: Lưu thẳng Email Admin (hứng từ Frontend)
+ -- MỚI THÊM: Lưu thẳng Email Admin (hứng từ Frontend)
     BanReason NVARCHAR(MAX) NULL,      -- Lưu lý do khóa (Admin tự gõ vào)
     BannedAt DATETIME NULL             -- Đổi dấu chấm phẩy (;) thành bình thường
 );                                     -- Bổ sung dấu đóng ngoặc tròn và chấm phẩy ở đây
@@ -91,29 +89,33 @@ GO
 	-- 2. NHÓM BẢNG CHÍNH (POSTS & SỰ KIỆN)
 	-- ==========================================
 
-	CREATE TABLE Post (
-		PostID INT IDENTITY(1,1) PRIMARY KEY,
-		AccountID INT NOT NULL,
-		CategoryID INT NOT NULL,
-		EventID INT NULL, -- TRẢ LẠI EM NÓ Ở ĐÂY
-		Title NVARCHAR(255) NOT NULL,
-		Description NVARCHAR(MAX) NOT NULL,
-		Ingredients NVARCHAR(MAX) NOT NULL,
-		Media NVARCHAR(255),
-		Video NVARCHAR(255),
-		Level INT DEFAULT 1,
-		CookingTime INT DEFAULT 30,
-		Views INT DEFAULT 0,
-		LikeCount INT DEFAULT 0,
-		isActive INT DEFAULT 1,
-		isApproved INT DEFAULT 0,
-		CreatedAt DATETIME DEFAULT GETDATE(),
+CREATE TABLE Post (
+    PostID INT IDENTITY(1,1) PRIMARY KEY,
+    AccountID INT NOT NULL,
+    CategoryID INT NOT NULL,
+    EventID INT NULL, 
+    Title NVARCHAR(255) NOT NULL,
+    Description NVARCHAR(MAX) NOT NULL,
+    Ingredients NVARCHAR(MAX) NOT NULL,
+    Media NVARCHAR(255),
+    Video NVARCHAR(255),
+    Level INT DEFAULT 1,
+    CookingTime INT DEFAULT 30,
+    Views INT DEFAULT 0,
+    LikeCount INT DEFAULT 0,
+    isActive INT DEFAULT 1,
+    isApproved INT DEFAULT 0,
+    CreatedAt DATETIME DEFAULT GETDATE(),
 
-		CONSTRAINT FK_Post_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
-		CONSTRAINT FK_Post_Category FOREIGN KEY (CategoryID) REFERENCES Category(CategoryID),
-		CONSTRAINT FK_Post_Event FOREIGN KEY (EventID) REFERENCES Event(EventID)
-	);
-	GO
+    -- 🔥 MỚI THÊM: Phục vụ kiểm duyệt bài viết
+    RejectReason NVARCHAR(MAX) NULL,   -- Lưu lý do từ chối/ẩn bài (để hiện cho User xem)
+    RejectedAt DATETIME NULL,          -- Lưu thời gian từ chối
+
+    CONSTRAINT FK_Post_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
+    CONSTRAINT FK_Post_Category FOREIGN KEY (CategoryID) REFERENCES Category(CategoryID),
+    CONSTRAINT FK_Post_Event FOREIGN KEY (EventID) REFERENCES Event(EventID)
+);
+GO
 
 	CREATE TABLE EventPosts (
 		EventPostID INT IDENTITY(1,1) PRIMARY KEY,

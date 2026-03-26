@@ -11,7 +11,7 @@ public interface AccountService {
 
     // 🔥 Yêu cầu truyền thêm người khóa và lý do
     void ban(Integer id, Integer adminId, String adminName, String adminEmail, String reason);
-    void unban(Integer id);
+    void unban(Integer id, Integer adminId, String adminName); // Sửa dòng này
     void delete(Integer id);
     void hardDelete(Integer id);
 }

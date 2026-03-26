@@ -58,12 +58,25 @@ public class AdminAccountController {
         }
     }
 
-    /** * 🔥 MỞ KHÓA TÀI KHOẢN
-     */
     @PatchMapping("/{id}/unban")
-    public ResponseEntity<?> unban(@PathVariable Integer id) {
-        accountService.unban(id);
-        return ResponseEntity.ok(Map.of("message", "Đã mở khóa tài khoản thành công!"));
+    public ResponseEntity<?> unban(@PathVariable Integer id, @RequestBody(required = false) Map<String, Object> payload) {
+        try {
+            // Khởi tạo giá trị mặc định nếu Frontend quên gửi data
+            Integer adminId = 0;
+            String adminName = "Hệ Thống";
+
+            // Nếu có data từ Frontend gửi lên thì lấy
+            if (payload != null) {
+                adminId = Integer.valueOf(payload.getOrDefault("adminId", 0).toString());
+                adminName = (String) payload.getOrDefault("adminName", "Admin Ẩn Danh");
+            }
+
+            // Truyền tên và ID Admin xuống Service
+            accountService.unban(id, adminId, adminName);
+            return ResponseEntity.ok(Map.of("message", "Đã mở khóa tài khoản thành công!"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Lỗi: " + e.getMessage()));
+        }
     }
 
     @DeleteMapping("/{id}")

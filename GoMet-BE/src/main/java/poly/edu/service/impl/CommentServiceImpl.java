@@ -13,6 +13,7 @@ import poly.edu.entity.Account;
 import poly.edu.entity.Comment;
 import poly.edu.entity.Post;
 import poly.edu.service.CommentService;
+import poly.edu.service.ModerationLogService; // 🔥 IMPORT MỚI
 import poly.edu.service.NotificationService;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -30,6 +31,9 @@ public class CommentServiceImpl implements CommentService {
     private final AccountDAO accountDAO;
     private final CommentLikeDAO commentLikeDAO;
     private final NotificationService notificationService;
+
+    // 🔥 INJECT THÊM MÁY NGHE LÉN
+    private final ModerationLogService moderationLogService;
 
     @Override
     public List<CommentDTO> getCommentsByPost(Integer postID, Integer currentAccountID) {
@@ -116,15 +120,23 @@ public class CommentServiceImpl implements CommentService {
         return toDTO(saved);
     }
 
+    // 🔥 ADMIN XÓA BÌNH LUẬN (-1) VÀ GHI LOG
     @Override
     @Transactional
-    public void delete(Integer id) {
-        // 🔥 ADMIN XÓA (-1)
+    public void delete(Integer id, Integer adminId, String adminName) {
         Comment comment = commentDAO.findById(id)
                 .orElseThrow(() -> new RuntimeException("Bình luận không tồn tại"));
 
         comment.setIsActive(-1);
         commentDAO.save(comment);
+
+        // Tự động cắt 50 ký tự đầu tiên của bình luận để làm lý do ghi Log
+        String content = comment.getContent() != null ? comment.getContent() : "[Chỉ có hình ảnh/Đánh giá]";
+        if (content.length() > 50) content = content.substring(0, 50) + "...";
+        String autoReason = "Xóa bình luận vi phạm: '" + content + "'";
+
+        // Ghi thẳng vào Sổ Nam Tào
+        moderationLogService.logAction(id, "COMMENT", "DELETE", adminId, adminName, autoReason);
     }
 
     @Override
@@ -139,15 +151,18 @@ public class CommentServiceImpl implements CommentService {
         commentDAO.save(comment);
     }
 
+    // 🔥 ADMIN KHÔI PHỤC BÌNH LUẬN (1) VÀ GHI LOG
     @Override
     @Transactional
-    public void restore(Integer id) {
-        // 🔥 ADMIN KHÔI PHỤC (1)
+    public void restore(Integer id, Integer adminId, String adminName) {
         Comment comment = commentDAO.findById(id)
                 .orElseThrow(() -> new RuntimeException("Bình luận không tồn tại"));
 
         comment.setIsActive(1);
         commentDAO.save(comment);
+
+        // Ghi thẳng vào Sổ Nam Tào
+        moderationLogService.logAction(id, "COMMENT", "RESTORE", adminId, adminName, "Khôi phục bình luận bị xóa nhầm");
     }
 
     @Override

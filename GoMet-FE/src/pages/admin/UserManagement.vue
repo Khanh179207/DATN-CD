@@ -4,7 +4,7 @@
     <div class="page-header">
       <div class="title-group">
         <h2 class="title">Quản lý Hội viên</h2>
-        <p class="subtitle">Giám sát, phân quyền và quản lý tài khoản người dùng</p>
+        <p class="subtitle">Giám sát và quản lý trạng thái tài khoản người dùng</p>
       </div>
       <div class="header-actions">
         <button class="btn-refresh" @click="fetchUsers" :disabled="isLoading">
@@ -71,11 +71,11 @@
         <thead>
           <tr>
             <th width="8%">ID</th>
-            <th width="32%">NGƯỜI DÙNG</th>
+            <th width="35%">NGƯỜI DÙNG</th>
             <th width="15%">VAI TRÒ</th>
             <th width="15%">TRẠNG THÁI</th>
             <th width="12%" class="text-center">ĐIỂM</th>
-            <th width="18%" class="text-center">THAO TÁC</th>
+            <th width="15%" class="text-center">THAO TÁC</th>
           </tr>
         </thead>
         <TransitionGroup tag="tbody" name="list">
@@ -97,13 +97,10 @@
               </div>
             </td>
             <td>
-              <div class="role-selector-wrapper">
-                <select v-model="user.role" @change="updateUserRole(user)" 
-                        class="role-select" :class="user.role === 'ADMIN' ? 'select-admin' : 'select-user'">
-                  <option value="USER">User</option>
-                  <option value="ADMIN">Admin</option>
-                </select>
-              </div>
+              <span class="role-badge" :class="user.role === 'ADMIN' ? 'role-admin' : 'role-user'">
+                <i :class="user.role === 'ADMIN' ? 'fa-solid fa-shield-halved' : 'fa-regular fa-user'"></i>
+                {{ user.role === 'ADMIN' ? 'Quản trị viên' : 'Thành viên' }}
+              </span>
             </td>
             <td>
               <div class="status-pill" :class="user.isActive ? 'active' : 'banned'">
@@ -209,13 +206,6 @@
                     <div class="ban-info-item">
                       <span class="info-lbl">Lý do khóa:</span>
                       <span class="info-val reason-text">{{ detailModal.user.banReason || 'Không có lý do cụ thể (hoặc chưa cập nhật)' }}</span>
-                    </div>
-                    <div v-if="detailModal.user.bannedByName || detailModal.user.bannedByEmail || detailModal.user.bannedBy" class="ban-info-item">
-                      <span class="info-lbl">Người thực hiện:</span>
-                      <div class="info-val admin-info">
-                        <span class="admin-name"><i class="fa-solid fa-shield-halved"></i> {{ detailModal.user.bannedByName || detailModal.user.bannedBy || 'Admin' }}</span>
-                        <span v-if="detailModal.user.bannedByEmail" class="admin-email">{{ detailModal.user.bannedByEmail }}</span>
-                      </div>
                     </div>
                     <div v-if="detailModal.user.bannedAt" class="ban-info-item">
                        <span class="info-lbl">Thời gian khóa:</span>
@@ -355,15 +345,7 @@ const fetchUsers = async () => {
   }
 }
 
-const updateUserRole = async (user) => {
-  try {
-    await api.put(`/admin/accounts/${user.accountID}`, { role: user.role, isAdmin: user.role === 'ADMIN' ? 1 : 0 })
-    toast.success(`Đã cập nhật quyền cho ${user.username}`)
-  } catch (err) {
-    toast.error('Cập nhật quyền thất bại!')
-    fetchUsers() 
-  }
-}
+// ĐÃ XÓA HÀM updateUserRole() VÌ KHÔNG CHO PHÉP ĐỔI QUYỀN TRÊN GIAO DIỆN NỮA
 
 const askBanAction = (user) => {
   if (user.role === 'ADMIN') {
@@ -382,27 +364,28 @@ const confirmBanAction = async () => {
   }
 
   try {
+    const payload = {
+      adminId: authStore.user?.accountID || authStore.user?.id || 0,
+      adminName: authStore.user?.username || authStore.user?.fullName || 'Admin',
+      reason: action === 'ban' ? reason.trim() : ''
+    };
+
     if (action === 'ban') {
-      // 🔥 BẮN ĐỦ THÔNG TIN SANG BACKEND NHƯ ĐÃ THIẾT KẾ
-      await api.patch(`/admin/accounts/${accountID}/ban`, {
-        adminId: authStore.user?.accountID || authStore.user?.id || 0,
-        adminName: authStore.user?.username || authStore.user?.fullName || 'Admin',
-        adminEmail: authStore.user?.email || 'Không có email', // THÊM DÒNG NÀY ĐỂ ĐỒNG BỘ
-        reason: reason.trim()
-      });
+      await api.patch(`/admin/accounts/${accountID}/ban`, payload);
       userRef.isActive = false;
     } else {
-      await api.patch(`/admin/accounts/${accountID}/unban`);
+      await api.patch(`/admin/accounts/${accountID}/unban`, payload);
       userRef.isActive = true;
     }
     
     banModal.value.show = false;
     toast.success('Cập nhật trạng thái thành công!')
-    fetchUsers() // Lấy lại danh sách để cập nhật dữ liệu người khóa
+    fetchUsers() 
   } catch (err) {
     toast.error(`Thao tác thất bại! ${err.response?.data?.message || ''}`)
   }
 }
+
 const deleteUser = async (user) => {
   if (user.role === 'ADMIN') {
     toast.error('Không thể xóa Quản trị viên!');
@@ -418,7 +401,6 @@ const deleteUser = async (user) => {
   }
 }
 
-// 🔥 NÂNG CẤP HÀM OPENDETAIL: Lấy chuẩn DTO từ Backend trả về
 const openDetail = async (user) => {
   detailModal.value = { show: true, loading: true, user: null }
   try {
@@ -431,7 +413,6 @@ const openDetail = async (user) => {
       isPremium: u.isPremium === 1 || u.isPremium === true
     }
   } catch {
-    // Nếu API lỗi, lấy tạm data cũ truyền vào
     detailModal.value.user = { ...user }
   } finally {
     detailModal.value.loading = false
@@ -505,9 +486,10 @@ onMounted(fetchUsers)
 .sub-name { font-size: 0.8rem; color: #64748b; }
 .text-admin { background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-.role-select { appearance: none; padding: 4px 12px; border-radius: 6px; font-weight: 600; font-size: 0.8rem; cursor: pointer; border: 1px solid transparent; text-align: center; }
-.select-admin { background: #eff6ff; color: #2563eb; border-color: #bfdbfe; } 
-.select-user { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
+/* CSS MỚI CHO BADGE ROLE (THAY VÌ DROPDOWN) */
+.role-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px; }
+.role-admin { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+.role-user { background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; }
 
 .status-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
 .status-dot { width: 6px; height: 6px; border-radius: 50%; }
@@ -584,19 +566,6 @@ onMounted(fetchUsers)
 .info-lbl { font-size: 0.75rem; color: #991b1b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
 .info-val { font-size: 0.9rem; color: #7f1d1d; line-height: 1.4; }
 .reason-text { font-style: italic; background: #fff; padding: 8px 10px; border-radius: 6px; border: 1px dashed #fca5a5; }
-.admin-info { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.admin-name { 
-  font-weight: 700; 
-  color: #b91c1c; 
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: #fee2e2;
-  padding: 4px 12px;
-  border-radius: 100px;
-  font-size: 0.85rem;
-}
-.admin-email { font-weight: 500; color: #991b1b; font-size: 0.8rem; opacity: 0.9; }
 .time-text { font-weight: 600; color: #991b1b; font-size: 0.85rem; }
 
 .btn-full-profile {

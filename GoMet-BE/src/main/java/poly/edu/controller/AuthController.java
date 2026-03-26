@@ -35,15 +35,13 @@ public class AuthController {
     private final GoogleAuthService    googleAuthService;
 
     // ==========================================
-    // 🔥 HELPER: TẠO RESPONSE KHI BỊ KHÓA
+    // 🔥 HELPER: TẠO RESPONSE KHI BỊ KHÓA (CLEAN CODE)
     // ==========================================
     private Map<String, Object> buildBannedResponse(Account acc) {
         Map<String, Object> errorResponse = new HashMap<>();
         errorResponse.put("message", "ACCOUNT_BANNED");
-        errorResponse.put("banReason", acc.getBanReason());
-        errorResponse.put("bannedByName", acc.getBannedByName());
-        errorResponse.put("bannedByEmail", acc.getBannedByEmail());
-        errorResponse.put("bannedAt", acc.getBannedAt() != null ? acc.getBannedAt().toString() : null);
+        errorResponse.put("banReason", acc.getBanReason()); // Chỉ trả về lý do
+        errorResponse.put("bannedAt", acc.getBannedAt() != null ? acc.getBannedAt().toString() : null); // Và thời gian
         return errorResponse;
     }
 
@@ -70,10 +68,18 @@ public class AuthController {
 
             if (opt.isPresent()) {
                 acc = opt.get();
-                // 🔥 CHỐT CHẶN 1: CẤM USER BỊ BAN ĐĂNG NHẬP BẰNG GOOGLE (Trả đủ thông tin)
+                // 🔥 CHỐT CHẶN 1: CẤM USER BỊ BAN ĐĂNG NHẬP BẰNG GOOGLE
                 if (acc.getIsActive() != null && acc.getIsActive() == 0) {
                     return ResponseEntity.status(HttpStatus.FORBIDDEN).body(buildBannedResponse(acc));
                 }
+
+                // 3. Tạo Token phiên đăng nhập (NẾU KHÔNG BỊ BAN)
+                String newToken = UUID.randomUUID().toString();
+                acc.setToken(newToken);
+                accountDAO.save(acc);
+
+                return ResponseEntity.ok(buildResponse(acc));
+
             } else {
                 // TÌNH HUỐNG 2: CHƯA CÓ TÀI KHOẢN -> TỰ ĐỘNG ĐĂNG KÝ
                 String finalUsername = name.replaceAll("\\s+", ""); // Xóa khoảng trắng
@@ -93,18 +99,12 @@ public class AuthController {
                         .isPremium(0)
                         .isActive(1)
                         .createdAt(LocalDateTime.now())
+                        .token(UUID.randomUUID().toString()) // Tạo token luôn lúc đăng ký
                         .build();
 
                 acc = accountDAO.save(acc);
+                return ResponseEntity.ok(buildResponse(acc));
             }
-
-            // 3. Tạo Token phiên đăng nhập
-            String newToken = UUID.randomUUID().toString();
-            acc.setToken(newToken);
-            accountDAO.save(acc);
-
-            // 4. Trả về Frontend
-            return ResponseEntity.ok(buildResponse(acc));
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -136,7 +136,7 @@ public class AuthController {
                     .body(Map.of("message", "Incorrect password"));
         }
 
-        // 🔥 CHỐT CHẶN 2: TÀI KHOẢN BỊ BAN KHI ĐĂNG NHẬP BÌNH THƯỜNG (Trả đủ thông tin)
+        // 🔥 CHỐT CHẶN 2: TÀI KHOẢN BỊ BAN KHI ĐĂNG NHẬP BÌNH THƯỜNG
         if (acc.getIsActive() != null && acc.getIsActive() == 0) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(buildBannedResponse(acc));
         }
@@ -255,7 +255,7 @@ public class AuthController {
         }
     }
 
-    // ─── ME ───────────────────────────────────────────────────────────────────
+    // ─── ME (Lấy thông tin User hiện tại) ─────────────────────────────────────
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
@@ -276,7 +276,7 @@ public class AuthController {
 
         Account acc = opt.get();
 
-        // 🔥 CHỐT CHẶN 3: LƯỚI TRỜI LỒNG LỘNG KHI CHECK ME (Đá văng kèm đủ thông tin)
+        // 🔥 CHỐT CHẶN 3: LƯỚI TRỜI LỒNG LỘNG KHI CHECK ME (Chặn các User bị ban đột ngột lúc đang xài app)
         if (acc.getIsActive() != null && acc.getIsActive() == 0) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(buildBannedResponse(acc));
         }

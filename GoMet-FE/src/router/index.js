@@ -39,8 +39,9 @@ import PostEventManagement from '@/pages/admin/eventadmin/PostEventManagement.vu
 import AppealManagement from '@/pages/admin/AppealManagement.vue'
 import BlacklistManagement from '@/pages/admin/BlacklistManagement.vue'
 
-// 🔥 IMPORT TRANG QUẢN LÝ GIAO DỊCH MỚI Ở ĐÂY
+// 🔥 IMPORT TRANG QUẢN LÝ GIAO DỊCH VÀ NHẬT KÝ HỆ THỐNG Ở ĐÂY
 import TransactionManagement from '@/pages/admin/TransactionManagement.vue'
+import SystemLogs from '@/pages/admin/SystemLogs.vue' // <--- ĐÃ THÊM DÒNG NÀY
 
 const routes = [
   // 1. LANDING PAGE
@@ -165,8 +166,8 @@ const routes = [
       { path: 'events/:id/posts', name: 'AdminPostEventManagement', component: PostEventManagement },
       { path: 'appeals', name: 'AdminAppeals', component: AppealManagement },
       { path: 'blacklist', name: 'AdminBlacklist', component: BlacklistManagement },
-      // 🔥 ĐĂNG KÝ TRANG GIAO DỊCH VÀO ĐÂY
-      { path: 'transactions', name: 'AdminTransactions', component: TransactionManagement }
+      { path: 'transactions', name: 'AdminTransactions', component: TransactionManagement },
+      { path: 'system-logs', name: 'AdminSystemLogs', component: SystemLogs } // <--- Đã sửa lại path cho chuẩn URL (thường dùng chữ thường phân cách gạch ngang)
     ]
   },
 
