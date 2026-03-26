@@ -625,3 +625,7 @@ GO
 	SELECT * FROM Comment;
 
 	SELECT * FROM Follow;
+
+	SELECT * FROM Paymenttransaction;
+
+	SELECT * FROM Appeals;

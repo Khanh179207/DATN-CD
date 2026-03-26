@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TransactionAdminDTO {
+public class AdminTransactionDTO {
     private Integer transactionID;  // ID gốc của bảng (Int)
     private String orderCode;       // Mã giao dịch (VD: GOMET9999)
     private Integer amount;         // Số tiền (Int)

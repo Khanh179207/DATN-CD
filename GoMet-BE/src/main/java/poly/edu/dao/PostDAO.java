@@ -22,19 +22,18 @@ public interface PostDAO extends JpaRepository<Post, Integer> {
 
     List<Post> findByCategory_CategoryIDAndIsApprovedAndIsActive(Integer categoryID, Integer isApproved, Integer isActive);
 
-    // Thêm dòng này vào trong interface PostDAO
     List<Post> findByAccount_AccountIDOrderByCreatedAtDesc(Integer accountId);
 
     @Query("SELECT p FROM Post p WHERE p.isApproved = 1 AND p.isActive = 1 " +
-           "AND (LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-           "OR LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-           "OR LOWER(p.ingredients) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+            "AND (LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "OR LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "OR LOWER(p.ingredients) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     List<Post> searchByKeyword(@Param("keyword") String keyword);
 
     @Query("SELECT p FROM Post p WHERE p.isApproved = 1 AND p.isActive = 1 " +
-           "AND p.category.categoryID = :categoryID " +
-           "AND (LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-           "OR LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+            "AND p.category.categoryID = :categoryID " +
+            "AND (LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "OR LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     List<Post> searchByKeywordAndCategory(@Param("keyword") String keyword, @Param("categoryID") Integer categoryID);
 
     @Query("SELECT p FROM Post p WHERE p.isApproved = 1 AND p.isActive = 1 ORDER BY p.createdAt DESC")
@@ -44,12 +43,47 @@ public interface PostDAO extends JpaRepository<Post, Integer> {
     List<Post> findMostViewed();
 
     @Query("SELECT p FROM Post p WHERE p.isApproved = 1 AND p.isActive = 1 " +
-           "AND p.postID <> :excludeId AND p.category.categoryID = :categoryID")
+            "AND p.postID <> :excludeId AND p.category.categoryID = :categoryID")
     List<Post> findRelated(@Param("categoryID") Integer categoryID, @Param("excludeId") Integer excludeId);
 
     @Query("SELECT COUNT(p) FROM Post p WHERE p.account.accountID = :accountID AND p.isApproved = 1 AND p.isActive = 1")
     long countByAccountId(@Param("accountID") Integer accountID);
+
     @Modifying
     @Query("UPDATE Post p SET p.isActive = 0 WHERE p.account.accountID = :accountId")
     void deactivateAllPostsByAccountId(@Param("accountId") Integer accountId);
+
+    // ==========================================
+    // THÊM CÁC HÀM CHO ADMIN STATS CONTROLLER
+    // ==========================================
+
+    // Đếm số lượng bài viết theo trạng thái duyệt và active
+// Đếm bài viết
+    long countByIsApprovedAndIsActive(Integer isApproved, Integer isActive);
+
+    // Tổng View toàn hệ thống
+    @Query("SELECT SUM(p.views) FROM Post p")
+    Long getTotalViews();
+
+    // Chart: Đếm bài viết theo tháng
+    @Query("SELECT MONTH(p.createdAt), COUNT(p) FROM Post p WHERE YEAR(p.createdAt) = :year GROUP BY MONTH(p.createdAt)")
+    List<Object[]> countPostsByMonth(@Param("year") int year);
+
+    // Top Ranking: Top 5 bài viết view cao nhất (Spring JPA tự cắt 5 dòng)
+    List<Post> findTop5ByIsActiveAndIsApprovedOrderByViewsDesc(Integer isActive, Integer isApproved);
+
+    // 1. Phân bổ danh mục
+    @Query(value = "SELECT c.categoryName, COUNT(p.PostID) " +
+            "FROM Post p JOIN Category c ON p.CategoryID = c.categoryID " +
+            "GROUP BY c.categoryName", nativeQuery = true)
+    List<Object[]> countPostsByCategory();
+
+    // 2. Tổng Like theo tháng
+    @Query(value = "SELECT MONTH(p.CreatedAt), SUM(p.LikeCount) " +
+            "FROM Post p WHERE YEAR(p.CreatedAt) = :year " +
+            "GROUP BY MONTH(p.CreatedAt)", nativeQuery = true)
+    List<Object[]> sumLikesByMonth(@Param("year") int year);
+    // Tính tổng lượt Like của toàn bộ bài viết (Dùng cho Admin Dashboard)
+    @Query("SELECT SUM(p.likeCount) FROM Post p")
+    Long getTotalLikes();
 }
