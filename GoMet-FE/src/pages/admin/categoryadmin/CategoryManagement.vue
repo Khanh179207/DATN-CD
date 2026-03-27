@@ -288,20 +288,39 @@ const saveData = async () => {
 }
 
 const deleteCat = async (cat) => {
-  if (cat.categoryID === 1) return toast.error('Danh mục Tổng hợp không thể xóa!')
-  if (cat.postCount > 0) return toast.error('Hãy chuyển hết bài viết trước khi xóa!')
+  // 1. Chặn xóa danh mục mặc định
+  if (cat.categoryID === 1) {
+    return toast.error('Không thể xóa Danh mục Mặc định (ID 1)!');
+  }
 
-  if (!window.confirm(`Xác nhận xóa vĩnh viễn: ${cat.categoryName}?`)) return
+  // 2. Tạo câu hỏi xác nhận tùy theo việc danh mục có bài viết hay không
+  let confirmMessage = `Bạn có chắc chắn muốn xóa danh mục "${cat.categoryName}" không?`;
+  
+  if (cat.postCount > 0) {
+    confirmMessage = `Danh mục "${cat.categoryName}" đang có ${cat.postCount} bài viết.\n\nNếu xóa, toàn bộ ${cat.postCount} bài viết này sẽ tự động được chuyển sang Danh mục Mặc định.\n\nBạn vẫn muốn tiếp tục xóa chứ?`;
+  }
+
+  if (!window.confirm(confirmMessage)) return;
 
   try {
-    await api.delete(`/api/admin/categories/${cat.categoryID}`)
-    categories.value = categories.value.filter(c => c.categoryID !== cat.categoryID)
-    toast.success('Đã xóa danh mục.')
+    // 3. Gọi API xóa (Backend đã lo việc chuyển bài viết)
+    await api.delete(`/api/admin/categories/${cat.categoryID}`);
+    
+    // 4. Cập nhật lại UI
+    categories.value = categories.value.filter(c => c.categoryID !== cat.categoryID);
+    
+    // Nếu có bài viết bị chuyển đi, ta nên load lại danh sách để Danh mục 1 cập nhật lại số lượng Post
+    if (cat.postCount > 0) {
+      await loadCategories(); 
+      toast.success(`Đã xóa danh mục. ${cat.postCount} bài viết đã được chuyển về Danh mục Mặc định.`);
+    } else {
+      toast.success('Đã xóa danh mục thành công.');
+    }
+
   } catch (e) {
-    toast.error('Lỗi khi xóa dữ liệu.')
+    toast.error(e.response?.data?.message || 'Lỗi khi xóa dữ liệu. Vui lòng kiểm tra lại!');
   }
 }
-
 onMounted(loadCategories)
 </script>
 

@@ -16,6 +16,8 @@ public interface AccountDAO extends JpaRepository<Account, Integer> {
 
     Optional<Account> findByEmail(String email);
 
+    Optional<Account> findByToken(String token);
+
     List<Account> findByIsAdmin(Integer isAdmin);
 
     List<Account> findByUsernameContainingIgnoreCase(String keyword);

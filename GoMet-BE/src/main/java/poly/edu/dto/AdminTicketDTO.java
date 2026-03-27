@@ -10,17 +10,21 @@ public class AdminTicketDTO {
     private String username;
     private String email;
 
-    private String ticketType; // Lỗi, Báo cáo, Góp ý
-    private Integer targetPostId; // Bài viết bị báo cáo (nếu có)
+    private String ticketType;
+    private Integer targetPostId;
 
     private String title;
     private String description;
     private String attachment;
 
-    private Integer status; // 0: Pending, 1: Processing, 2: Resolved, 3: Rejected
+    private Integer status;
 
     private LocalDateTime createdAt;
     private LocalDateTime resolvedAt;
-    // Trong file AdminTicketDTO.java
     private LocalDateTime processedAt;
+
+    // 🔥 MỚI THÊM: Để hiển thị "chính chủ" Admin xử lý (ID 7)
+    private Integer adminId;
+    private String adminName;
+    private String adminNote;
 }

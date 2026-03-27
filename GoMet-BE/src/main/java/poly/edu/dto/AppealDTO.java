@@ -5,85 +5,47 @@ import java.time.LocalDateTime;
 public class AppealDTO {
     private Integer appealID;
     private String email;
+    private Integer accountID;
     private String reason;
     private String status;
     private String note;
     private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-    private String ipAddress;
+    private LocalDateTime resolvedAt;
+
+    // 🔥 MỚI THÊM: Lưu thông tin Admin hiển thị lên phiếu
+    private Integer adminId;
+    private String adminName;
 
     public AppealDTO() {}
 
-    public AppealDTO(Integer appealID, String email, String reason, String status, LocalDateTime createdAt) {
-        this.appealID = appealID;
-        this.email = email;
-        this.reason = reason;
-        this.status = status;
-        this.createdAt = createdAt;
-    }
-
     // Getters & Setters
-    public Integer getAppealID() {
-        return appealID;
-    }
+    public Integer getAppealID() { return appealID; }
+    public void setAppealID(Integer appealID) { this.appealID = appealID; }
 
-    public void setAppealID(Integer appealID) {
-        this.appealID = appealID;
-    }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 
-    public String getEmail() {
-        return email;
-    }
+    public Integer getAccountID() { return accountID; }
+    public void setAccountID(Integer accountID) { this.accountID = accountID; }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
+    public String getReason() { return reason; }
+    public void setReason(String reason) { this.reason = reason; }
 
-    public String getReason() {
-        return reason;
-    }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
-    public void setReason(String reason) {
-        this.reason = reason;
-    }
+    public String getNote() { return note; }
+    public void setNote(String note) { this.note = note; }
 
-    public String getStatus() {
-        return status;
-    }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
-    public void setStatus(String status) {
-        this.status = status;
-    }
+    public LocalDateTime getResolvedAt() { return resolvedAt; }
+    public void setResolvedAt(LocalDateTime resolvedAt) { this.resolvedAt = resolvedAt; }
 
-    public String getNote() {
-        return note;
-    }
+    public Integer getAdminId() { return adminId; }
+    public void setAdminId(Integer adminId) { this.adminId = adminId; }
 
-    public void setNote(String note) {
-        this.note = note;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public String getIpAddress() {
-        return ipAddress;
-    }
-
-    public void setIpAddress(String ipAddress) {
-        this.ipAddress = ipAddress;
-    }
+    public String getAdminName() { return adminName; }
+    public void setAdminName(String adminName) { this.adminName = adminName; }
 }

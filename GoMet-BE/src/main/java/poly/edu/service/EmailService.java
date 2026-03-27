@@ -231,170 +231,112 @@ public class EmailService {
   /**
    * Send appeal decision email (Approved or Rejected) in Vietnamese.
    */
-  @Async
-  public void sendAppealDecisionEmail(String toEmail, String status) {
-    try {
-      MimeMessage msg = mailSender.createMimeMessage();
-      MimeMessageHelper helper = new MimeMessageHelper(msg, true, "UTF-8");
+    // ─── APPEAL DECISION EMAIL ─────────────────────────────────────────────────
 
-      helper.setFrom(fromAddress, "GoMet - Culinary Community");
-      helper.setTo(toEmail);
+    /**
+     * Send appeal decision email (Approved or Rejected) in Vietnamese.
+     * 🔥 ĐÃ THÊM THAM SỐ "note"
+     */
+    @Async
+    public void sendAppealDecisionEmail(String toEmail, String status, String note) {
+        try {
+            MimeMessage msg = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(msg, true, "UTF-8");
 
-      String subject;
-      String htmlContent;
+            helper.setFrom(fromAddress, "GoMet - Culinary Community");
+            helper.setTo(toEmail);
 
-      if ("Approved".equalsIgnoreCase(status)) {
-        subject = "Đơn khiếu nại đã được phê duyệt";
-        htmlContent = buildAppealApprovedHtml();
-      } else {
-        subject = "Đơn khiếu nại đã bị từ chối";
-        htmlContent = buildAppealRejectedHtml();
-      }
+            String subject;
+            String htmlContent;
 
-      helper.setSubject(subject);
-      helper.setText(htmlContent, true);
+            // Xử lý null cho note
+            String safeNote = (note != null && !note.trim().isEmpty()) ? note : "Không có ghi chú bổ sung.";
 
-      mailSender.send(msg);
+            if ("Approved".equalsIgnoreCase(status)) {
+                subject = "Tin vui: Tài khoản của bạn đã được Gỡ Ban";
+                htmlContent = buildAppealApprovedHtml(safeNote);
+            } else {
+                subject = "Phản hồi: Đơn khiếu nại tài khoản bị từ chối";
+                htmlContent = buildAppealRejectedHtml(safeNote);
+            }
 
-      System.out.println("=== SEND EMAIL ===");
-      System.out.println("TO: " + toEmail);
-      System.out.println("STATUS: " + status);
-      System.out.println("SUBJECT: " + subject);
-      System.out.println("==================");
+            helper.setSubject(subject);
+            helper.setText(htmlContent, true);
 
-    } catch (Exception e) {
-      System.err.println("=== EMAIL SEND FAILED ===");
-      System.err.println("TO: " + toEmail);
-      System.err.println("STATUS: " + status);
-      System.err.println("ERROR: " + e.getMessage());
-      System.err.println("=======================");
-      throw new RuntimeException("Failed to send appeal decision email: " + e.getMessage(), e);
+            mailSender.send(msg);
+
+            System.out.println("=== SEND APPEAL EMAIL ===");
+            System.out.println("TO: " + toEmail);
+            System.out.println("STATUS: " + status);
+            System.out.println("=========================");
+
+        } catch (Exception e) {
+            System.err.println("Error sending appeal email to " + toEmail + ": " + e.getMessage());
+        }
     }
-  }
 
-  private String buildAppealApprovedHtml() {
-    return """
+    private String buildAppealApprovedHtml(String note) {
+        return """
         <!DOCTYPE html>
         <html lang="vi">
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Đơn khiếu nại phê duyệt</title>
-        </head>
-        <body style="margin:0;padding:0;background:#F9F5F0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
-          <table width="100%%" cellpadding="0" cellspacing="0" style="background:#F9F5F0;padding:40px 0;">
-            <tr>
-              <td align="center">
-                <table width="520" cellpadding="0" cellspacing="0"
-                       style="background:#ffffff;border-radius:20px;overflow:hidden;
-                              box-shadow:0 8px 30px rgba(0,0,0,0.08);">
-                  <tr>
-                    <td style="background:#1C1917;padding:32px 40px;text-align:center;">
-                      <h1 style="margin:0;color:#EA580C;font-size:28px;letter-spacing:4px;font-weight:900;">GOMET.</h1>
-                      <p style="margin:8px 0 0;color:#A8A29E;font-size:13px;letter-spacing:1px;">CULINARY COMMUNITY</p>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding:40px 40px 20px;">
-                      <div style="text-align:center;margin-bottom:32px;">
-                        <div style="font-size:48px;margin-bottom:16px;">✅</div>
-                        <h2 style="margin:0;color:#16A34A;font-size:24px;font-weight:800;">
-                          Đơn khiếu nại đã được phê duyệt
-                        </h2>
-                      </div>
-                      <p style="color:#57534E;font-size:15px;line-height:1.6;margin:0 0 24px;">
-                        Xin chào,
-                      </p>
-                      <p style="color:#57534E;font-size:15px;line-height:1.6;margin:0 0 16px;">
-                        Đơn khiếu nại của bạn đã được phê duyệt.
-                      </p>
-                      <p style="color:#57534E;font-size:15px;line-height:1.6;margin:0 0 24px;">
-                        Tài khoản của bạn đã được mở lại. Bạn có thể đăng nhập và sử dụng GoMet bình thường.
-                      </p>
-                      <p style="color:#57534E;font-size:15px;line-height:1.6;margin:0 0 8px;">
-                        Trân trọng,
-                      </p>
-                      <p style="color:#78716C;font-size:14px;margin:0;">
-                        <strong>GoMet - Cộng Đồng Ẩm Thực</strong>
-                      </p>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="background:#F5F5F4;padding:20px 40px;text-align:center;border-top:1px solid #E7E5E4;">
-                      <p style="color:#A8A29E;font-size:12px;margin:0;">
-                        © 2026 GoMet Culinary Community · All rights reserved
-                      </p>
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-          </table>
-        </body>
-        </html>
-        """;
-  }
+        <head><meta charset="UTF-8"><title>Phê duyệt khiếu nại</title></head>
+        <body style="margin:0;padding:0;background:#F9F5F0;font-family:Arial,sans-serif;">
+          <table width="100%%" style="background:#F9F5F0;padding:40px 0;"><tr><td align="center">
+            <table width="520" style="background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,0.08);">
+              <tr><td style="background:#1C1917;padding:32px 40px;text-align:center;">
+                <h1 style="margin:0;color:#EA580C;font-size:28px;font-weight:900;">GOMET.</h1>
+              </td></tr>
+              <tr><td style="padding:40px;">
+                <div style="text-align:center;margin-bottom:24px;">
+                  <div style="font-size:48px;margin-bottom:16px;">✅</div>
+                  <h2 style="margin:0;color:#16A34A;font-size:22px;">Tài khoản đã được mở khóa!</h2>
+                </div>
+                <p style="color:#57534E;font-size:15px;line-height:1.6;">Xin chào,</p>
+                <p style="color:#57534E;font-size:15px;line-height:1.6;">Quản trị viên đã xem xét đơn khiếu nại của bạn và quyết định <strong>Gỡ Ban</strong> cho tài khoản này.</p>
+                
+                <div style="background:#F0FDF4;border-left:4px solid #16A34A;padding:16px;margin:20px 0;border-radius:0 8px 8px 0;">
+                  <p style="margin:0 0 5px;color:#166534;font-size:13px;font-weight:bold;text-transform:uppercase;">Lời nhắn từ Quản trị viên:</p>
+                  <p style="margin:0;color:#15803D;font-size:14px;font-style:italic;">"%s"</p>
+                </div>
 
-  private String buildAppealRejectedHtml() {
-    return """
+                <p style="color:#57534E;font-size:15px;line-height:1.6;">Bạn có thể đăng nhập và trải nghiệm GoMet ngay bây giờ. Hãy nhớ tuân thủ các quy tắc cộng đồng nhé!</p>
+              </td></tr>
+            </table>
+          </td></tr></table>
+        </body></html>
+        """.formatted(note);
+    }
+
+    private String buildAppealRejectedHtml(String note) {
+        return """
         <!DOCTYPE html>
         <html lang="vi">
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Đơn khiếu nại bị từ chối</title>
-        </head>
-        <body style="margin:0;padding:0;background:#F9F5F0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
-          <table width="100%%" cellpadding="0" cellspacing="0" style="background:#F9F5F0;padding:40px 0;">
-            <tr>
-              <td align="center">
-                <table width="520" cellpadding="0" cellspacing="0"
-                       style="background:#ffffff;border-radius:20px;overflow:hidden;
-                              box-shadow:0 8px 30px rgba(0,0,0,0.08);">
-                  <tr>
-                    <td style="background:#1C1917;padding:32px 40px;text-align:center;">
-                      <h1 style="margin:0;color:#EA580C;font-size:28px;letter-spacing:4px;font-weight:900;">GOMET.</h1>
-                      <p style="margin:8px 0 0;color:#A8A29E;font-size:13px;letter-spacing:1px;">CULINARY COMMUNITY</p>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding:40px 40px 20px;">
-                      <div style="text-align:center;margin-bottom:32px;">
-                        <div style="font-size:48px;margin-bottom:16px;">❌</div>
-                        <h2 style="margin:0;color:#DC2626;font-size:24px;font-weight:800;">
-                          Đơn khiếu nại đã bị từ chối
-                        </h2>
-                      </div>
-                      <p style="color:#57534E;font-size:15px;line-height:1.6;margin:0 0 24px;">
-                        Xin chào,
-                      </p>
-                      <p style="color:#57534E;font-size:15px;line-height:1.6;margin:0 0 16px;">
-                        Rất tiếc, đơn khiếu nại của bạn đã bị từ chối.
-                      </p>
-                      <p style="color:#57534E;font-size:15px;line-height:1.6;margin:0 0 24px;">
-                        Nếu bạn cần thêm thông tin hoặc muốn gửi khiếu nại mới, vui lòng liên hệ hỗ trợ qua email hoặc hệ thống chat của chúng tôi.
-                      </p>
-                      <p style="color:#57534E;font-size:15px;line-height:1.6;margin:0 0 8px;">
-                        Trân trọng,
-                      </p>
-                      <p style="color:#78716C;font-size:14px;margin:0;">
-                        <strong>GoMet - Cộng Đồng Ẩm Thực</strong>
-                      </p>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="background:#F5F5F4;padding:20px 40px;text-align:center;border-top:1px solid #E7E5E4;">
-                      <p style="color:#A8A29E;font-size:12px;margin:0;">
-                        © 2026 GoMet Culinary Community · All rights reserved
-                      </p>
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-          </table>
-        </body>
-        </html>
-        """;
-  }
+        <head><meta charset="UTF-8"><title>Từ chối khiếu nại</title></head>
+        <body style="margin:0;padding:0;background:#F9F5F0;font-family:Arial,sans-serif;">
+          <table width="100%%" style="background:#F9F5F0;padding:40px 0;"><tr><td align="center">
+            <table width="520" style="background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,0.08);">
+              <tr><td style="background:#1C1917;padding:32px 40px;text-align:center;">
+                <h1 style="margin:0;color:#EA580C;font-size:28px;font-weight:900;">GOMET.</h1>
+              </td></tr>
+              <tr><td style="padding:40px;">
+                <div style="text-align:center;margin-bottom:24px;">
+                  <div style="font-size:48px;margin-bottom:16px;">❌</div>
+                  <h2 style="margin:0;color:#DC2626;font-size:22px;">Đơn khiếu nại bị từ chối</h2>
+                </div>
+                <p style="color:#57534E;font-size:15px;line-height:1.6;">Xin chào,</p>
+                <p style="color:#57534E;font-size:15px;line-height:1.6;">Rất tiếc, sau khi xem xét kỹ lưỡng bằng chứng và lịch sử hoạt động, Quản trị viên quyết định <strong>Giữ nguyên hình phạt (Ban)</strong> đối với tài khoản của bạn.</p>
+                
+                <div style="background:#FEF2F2;border-left:4px solid #EF4444;padding:16px;margin:20px 0;border-radius:0 8px 8px 0;">
+                  <p style="margin:0 0 5px;color:#991B1B;font-size:13px;font-weight:bold;text-transform:uppercase;">Lý do từ chối:</p>
+                  <p style="margin:0;color:#7F1D1D;font-size:14px;font-style:italic;">"%s"</p>
+                </div>
+
+                <p style="color:#57534E;font-size:15px;line-height:1.6;">Quyết định này là quyết định cuối cùng. Cảm ơn bạn đã quan tâm tới cộng đồng GoMet.</p>
+              </td></tr>
+            </table>
+          </td></tr></table>
+        </body></html>
+        """.formatted(note);
+    }
 }
+

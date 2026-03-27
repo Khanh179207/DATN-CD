@@ -4,22 +4,22 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import poly.edu.dao.CategoryDAO;
+import poly.edu.dao.PostDAO; // 🔥 Import thêm PostDAO
 import poly.edu.dto.AdminCategoryDTO;
 import poly.edu.entity.Category;
 import poly.edu.service.CategoryService;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryDAO categoryDAO;
+    private final PostDAO postDAO; // 🔥 Cần có dòng này để gọi hàm movePosts
 
     /**
-     * 🔥 HÀM THẦN THÁNH: Lấy toàn bộ danh sách kèm postCount đã tối ưu
-     * Gọi trực tiếp hàm JPQL Constructor từ DAO
+     * 🔥 Lấy toàn bộ danh sách kèm postCount đã tối ưu
      */
     @Override
     public List<AdminCategoryDTO> findAllWithPostCount() {
@@ -37,7 +37,7 @@ public class CategoryServiceImpl implements CategoryService {
         return AdminCategoryDTO.builder()
                 .categoryID(c.getCategoryID())
                 .categoryName(c.getCategoryName())
-                .categoryImage(c.getCategoryImage()) // 🔥 Đồng bộ tên field mới
+                .categoryImage(c.getCategoryImage())
                 .isActive(c.getIsActive())
                 .postCount(c.getPosts() == null ? 0L : (long) c.getPosts().size())
                 .build();
@@ -52,48 +52,39 @@ public class CategoryServiceImpl implements CategoryService {
         Category cat;
 
         if (dto.getCategoryID() != null) {
-            // Update
             cat = categoryDAO.findById(dto.getCategoryID())
                     .orElseThrow(() -> new RuntimeException("Danh mục không tồn tại!"));
         } else {
-            // Create
             cat = new Category();
-            cat.setIsActive(1); // Mặc định tạo mới là Active
+            cat.setIsActive(1);
         }
 
         cat.setCategoryName(dto.getCategoryName());
-        cat.setCategoryImage(dto.getCategoryImage()); // 🔥 Nhận link ảnh Cloudinary từ Vue gửi lên
+        cat.setCategoryImage(dto.getCategoryImage());
 
-        // Nếu sếp có truyền trạng thái IsActive từ Dashboard Admin
         if (dto.getIsActive() != null) {
             cat.setIsActive(dto.getIsActive());
         }
 
         Category saved = categoryDAO.save(cat);
-
-        // Trả về DTO (Lưu ý: save mới postCount sẽ bằng 0)
         return findById(saved.getCategoryID());
     }
 
     /**
-     * 🚩 LOGIC XÓA BẢO MẬT: Chặn xóa danh mục mặc định
+     * 🚩 LOGIC XÓA BẢO MẬT MỚI: Tự động gom bài viết về Category 1
      */
     @Override
-    @Transactional
+    @Transactional // 🔥 BẮT BUỘC PHẢI CÓ ĐỂ NẾU LỖI SẼ ROLLBACK LẠI
     public void delete(Integer id) {
-        // 1. Bảo vệ ID 1 (Món Ngon Tổng Hợp)
+        // 1. Chặn đứng hành vi xóa danh mục gốc (Mặc định ID = 1)
         if (id == 1) {
-            throw new RuntimeException("Lỗi: Không được xóa danh mục mặc định của hệ thống!");
+            throw new RuntimeException("Không được phép xóa Danh mục Tổng hợp (ID = 1)!");
         }
 
-        Category cat = categoryDAO.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy danh mục!"));
+        // 2. Chuyển toàn bộ bài viết của danh mục này sang danh mục 1
+        postDAO.movePostsToDefaultCategory(id);
 
-        // 2. Kiểm tra nếu còn bài viết (Ràng buộc dữ liệu)
-        if (cat.getPosts() != null && !cat.getPosts().isEmpty()) {
-            throw new RuntimeException("Danh mục còn bài viết, hãy chuyển bài viết sang mục khác trước khi xóa!");
-        }
-
+        // 3. Sau khi đã "dọn sạch" bài viết, tiến hành xóa Danh mục an toàn
         categoryDAO.deleteById(id);
     }
 

@@ -1,6 +1,8 @@
 package poly.edu.controller;
 
+import poly.edu.dao.AccountDAO;
 import poly.edu.dto.AppealDTO;
+import poly.edu.entity.Account;
 import poly.edu.service.AppealService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -8,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -21,200 +22,84 @@ public class AppealController {
     @Autowired
     private AppealService appealService;
 
-    /**
-     * POST /api/appeals
-     * Create a new appeal (public endpoint)
-     */
+    @Autowired
+    private AccountDAO accountDAO;
+
     @PostMapping("/appeals")
-    public ResponseEntity<?> createAppeal(
-            @RequestBody Map<String, String> request,
-            HttpServletRequest httpRequest) {
+    public ResponseEntity<?> createAppeal(@RequestBody Map<String, String> request) {
         try {
             String email = request.get("email");
             String reason = request.get("reason");
-
-            if (email == null || email.trim().isEmpty() || 
-                reason == null || reason.trim().isEmpty()) {
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("success", false);
-                errorResponse.put("message", "Email và lý do không được bỏ trống");
-                return ResponseEntity.badRequest().body(errorResponse);
+            if (email == null || email.trim().isEmpty() || reason == null || reason.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Email và lý do không được bỏ trống"));
             }
-
-            // Get client IP
-            String ipAddress = getClientIp(httpRequest);
-
-            // Create appeal
-            AppealDTO appeal = appealService.createAppeal(
-                    email.trim(),
-                    reason.trim(),
-                    ipAddress
-            );
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "Khiếu nại đã được tạo thành công");
-            response.put("data", appeal);
-
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+            AppealDTO appeal = appealService.createAppeal(email.trim(), reason.trim());
+            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("success", true, "message", "Thành công", "data", appeal));
         } catch (RuntimeException e) {
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("success", false, "message", e.getMessage()));
         }
     }
 
-    /**
-     * GET /api/appeals/status
-     * Get appeal status by email (public endpoint - user tracking)
-     */
-    @GetMapping("/appeals/status")
-    public ResponseEntity<?> getAppealStatus(@RequestParam String email) {
-        try {
-            Optional<AppealDTO> appeal = appealService.getAppealStatusByEmail(email);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            
-            if (appeal.isPresent()) {
-                response.put("data", appeal.get());
-            } else {
-                response.put("data", null);
-                response.put("message", "Không tìm thấy khiếu nại cho email này");
-            }
-
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-        }
-    }
-
-    /**
-     * GET /api/admin/appeals
-     * Get all appeals (admin only)
-     */
     @GetMapping("/admin/appeals")
     public ResponseEntity<?> getAllAppeals() {
-        try {
-            List<AppealDTO> appeals = appealService.getAllAppeals();
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("data", appeals);
-            response.put("count", appeals.size());
-
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-        }
+        return ResponseEntity.ok(Map.of("success", true, "data", appealService.getAllAppeals()));
     }
 
-    /**
-     * GET /api/admin/appeals/{appealID}
-     * Get appeal by ID (admin only)
-     */
-    @GetMapping("/admin/appeals/{appealID}")
-    public ResponseEntity<?> getAppealById(@PathVariable Integer appealID) {
-        try {
-            Optional<AppealDTO> appeal = appealService.getAppealById(appealID);
-
-            if (!appeal.isPresent()) {
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("success", false);
-                errorResponse.put("message", "Khiếu nại không tồn tại");
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
-            }
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("data", appeal.get());
-
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-        }
-    }
-
-    /**
-     * PUT /api/admin/appeals/{appealID}
-     * Update appeal status and note (admin only)
-     */
     @PutMapping("/admin/appeals/{appealID}")
     public ResponseEntity<?> updateAppeal(
             @PathVariable Integer appealID,
-            @RequestBody Map<String, String> request) {
+            @RequestBody Map<String, String> request,
+            HttpServletRequest httpRequest) {
         try {
             String status = request.get("status");
             String note = request.get("note");
 
-            if (status == null || status.trim().isEmpty()) {
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("success", false);
-                errorResponse.put("message", "Trạng thái không được bỏ trống");
-                return ResponseEntity.badRequest().body(errorResponse);
-            }
+            // 🔥 Lấy Admin thực tế từ Token trong Database (Dựa theo AuthController)
+            Account admin = getAdminFromToken(httpRequest);
 
             AppealDTO updated = appealService.updateAppeal(
                     appealID,
                     status.trim(),
-                    note != null ? note.trim() : ""
+                    note != null ? note.trim() : "",
+                    admin.getAccountID(),
+                    admin.getUsername()
             );
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "Cập nhật khiếu nại thành công");
-            response.put("data", updated);
-
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(Map.of("success", true, "message", "Cập nhật thành công", "data", updated));
         } catch (RuntimeException e) {
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("success", false, "message", e.getMessage()));
         }
     }
 
-    /**
-     * POST /api/admin/appeals/{appealID}/unban
-     * Unban account by appeal (admin only)
-     */
     @PostMapping("/admin/appeals/{appealID}/unban")
-    public ResponseEntity<?> unbanAccount(@PathVariable Integer appealID) {
+    public ResponseEntity<?> unbanAccount(@PathVariable Integer appealID, HttpServletRequest httpRequest) {
         try {
-            boolean result = appealService.unbanAccountByAppeal(appealID);
+            // 🔥 Lấy Admin thực tế từ Token trong Database (Dựa theo AuthController)
+            Account admin = getAdminFromToken(httpRequest);
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "Tài khoản đã được gỡ ban thành công");
-            response.put("data", result);
+            boolean result = appealService.unbanAccountByAppeal(appealID, admin.getAccountID(), admin.getUsername());
 
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(Map.of("success", true, "message", "Gỡ ban thành công", "data", result));
         } catch (RuntimeException e) {
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("success", false);
-            errorResponse.put("message", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("success", false, "message", e.getMessage()));
         }
     }
 
     /**
-     * Helper method to get client IP address
+     * 🛠️ HÀM TRÍCH XUẤT ADMIN: Dò tìm Account có Token trùng với Header
+     * (Logic đồng bộ 100% với hàm /me trong AuthController của sếp)
      */
-    private String getClientIp(HttpServletRequest request) {
-        String xForwardedFor = request.getHeader("X-Forwarded-For");
-        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
-            return xForwardedFor.split(",")[0].trim();
+    private Account getAdminFromToken(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new RuntimeException("Lỗi Xác thực: Bạn chưa đăng nhập hoặc Token đã hết hạn!");
         }
-        return request.getRemoteAddr();
+
+        String token = authHeader.substring(7);
+
+        // Dùng Stream tìm kiếm Account có token tương ứng trong DB
+        return accountDAO.findByToken(token)
+                .orElseThrow(() -> new RuntimeException("Token không hợp lệ hoặc đã hết hạn!"));
     }
 }

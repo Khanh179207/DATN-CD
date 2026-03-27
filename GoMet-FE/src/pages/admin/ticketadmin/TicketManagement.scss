@@ -1,6 +1,6 @@
 // ==========================================
-// 🎨 GOMET ADMIN - TICKET MANAGEMENT (ULTRA LUXURY FULL-WIDTH)
-// Phiên bản thu gọn 10% - Tối ưu tỷ lệ không gian 2026
+// 🎨 GOMET ADMIN - TICKET MANAGEMENT 
+// Phiên bản thu gọn 10% - Tối ưu không gian 2026
 // ==========================================
 
 // --- 💎 HỆ THỐNG BIẾN CAO CẤP ---
@@ -15,41 +15,32 @@ $bg-light: #f8fafc;
 $border-soft: rgba(0, 0, 0, 0.05);
 $shadow-lux: 0 15px 40px rgba(15, 23, 42, 0.06);
 
-// 🔥 LAYOUT (GIẢM PADDING, MARGIN)
+// 🔥 LAYOUT CHÍNH
 .ticket-sovereign-wrapper {
   width: 100%; 
   max-width: 100%; 
   box-sizing: border-box;
-  padding: 25px 35px; /* Giảm 10% */
+  padding: 25px 35px; 
   overflow-x: hidden; 
-  
   font-family: 'Inter', -apple-system, sans-serif;
   color: $text-main;
   min-height: 100%; 
-  
   background: $bg-light;
   background-image: 
     radial-gradient(circle at 95% 5%, rgba(234, 88, 12, 0.05), transparent 40%),
     radial-gradient(circle at 5% 95%, rgba(59, 130, 246, 0.02), transparent 30%);
 
   .page-header-lux {
-    display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; /* Giảm 10% */
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; 
     
     .page-title { 
-      font-size: 2rem; /* Giảm từ 2.2rem */
-      font-weight: 950; 
-      margin: 0; 
-      letter-spacing: -1px; 
+      font-size: 2rem; font-weight: 950; margin: 0; letter-spacing: -1px; 
       background: linear-gradient(to right, #0f172a, #334155);
-      -webkit-background-clip: text; 
-      -webkit-text-fill-color: transparent;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
     
     .page-subtitle { 
-      color: $text-sub; 
-      margin: 6px 0 0; 
-      font-weight: 600; 
-      font-size: 0.95rem; /* Giảm từ 1.05rem */
+      color: $text-sub; margin: 6px 0 0; font-weight: 600; font-size: 0.95rem; 
     }
   }
 }
@@ -57,10 +48,9 @@ $shadow-lux: 0 15px 40px rgba(15, 23, 42, 0.06);
 // 🔥 BUTTONS
 .btn-refresh-lux {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  padding: 10px 24px; /* Giảm 10% */
-  background: $orange-gradient; border: none; border-radius: 14px;
+  padding: 10px 24px; background: $orange-gradient; border: none; border-radius: 14px;
   font-weight: 800; color: $white; cursor: pointer; white-space: nowrap; font-size: 0.85rem;
-  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.25); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.25); transition: all 0.3s ease;
   &:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(234, 88, 12, 0.45); }
   .spinning { animation: spin 1s linear infinite; }
   &:disabled { opacity: 0.6; cursor: not-allowed; }
@@ -70,10 +60,10 @@ $shadow-lux: 0 15px 40px rgba(15, 23, 42, 0.06);
 
 // 🔥 STATS GRID
 .stats-grid {
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 25px; margin-bottom: 40px; /* Giảm 10% */
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 25px; margin-bottom: 40px;
   .stat-card {
     background: $white; padding: 25px; border-radius: 24px; display: flex; align-items: center; gap: 15px;
-    border: 1px solid $border-soft; box-shadow: $shadow-lux; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    border: 1px solid $border-soft; box-shadow: $shadow-lux; transition: all 0.4s ease;
     position: relative; overflow: hidden;
     &::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background: transparent; transition: 0.3s; }
     &:hover { transform: translateY(-4px); box-shadow: 0 10px 30px rgba(0,0,0,0.05); border-color: $orange; &::after { background: $orange; } }
@@ -116,7 +106,6 @@ $shadow-lux: 0 15px 40px rgba(15, 23, 42, 0.06);
       &:focus-within { border-color: $orange; background: white; box-shadow: 0 0 0 4px rgba(234, 88, 12, 0.1); svg { color: $orange; } input { width: 220px; } }
     }
 
-    // COMBOBOX
     .select-lux {
       padding: 10px 15px; border-radius: 14px; border: 2px solid #f1f5f9; font-weight: 700; font-family: inherit; cursor: pointer; outline: none; background: #fafafa; transition: 0.3s; color: $text-main; font-size: 0.9rem;
       &:focus { border-color: $orange; background: $white; box-shadow: 0 0 0 4px rgba(234, 88, 12, 0.1); }
@@ -170,24 +159,18 @@ $shadow-lux: 0 15px 40px rgba(15, 23, 42, 0.06);
   p { color: $text-sub; font-size: 0.9rem; margin: 0 0 25px; font-weight: 500; }
 }
 
-.list-slide-enter-active, .list-slide-leave-active { transition: all 0.4s ease; }
-.list-slide-enter-from { opacity: 0; transform: translateX(-20px); }
-.list-slide-leave-to { opacity: 0; transform: translateX(20px); }
-
 // ==========================================
 // 🚀 TICKET DETAIL MODAL
 // ==========================================
-// Z-INDEX CAO NHẤT ĐỂ ĐÈ SIDEBAR
 .modal-glass-backdrop { 
   position: fixed; inset: 0; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(12px); 
   z-index: 999999; display: flex; align-items: center; justify-content: center; padding: 20px; 
 }
 
 .modal-lux-content { 
-  background: $white; width: 100%; max-width: 1000px; /* Giảm max-width */ border-radius: 24px; 
+  background: $white; width: 100%; max-width: 1000px; border-radius: 24px; 
   box-shadow: 0 30px 80px rgba(0,0,0,0.3); display: flex; flex-direction: column; 
-  max-height: 88vh; overflow: hidden; border: 1px solid rgba(255,255,255,0.2); 
-  margin: auto;
+  max-height: 88vh; overflow: hidden; border: 1px solid rgba(255,255,255,0.2); margin: auto;
 }
 
 .modal-header-lux { 
@@ -260,12 +243,6 @@ $shadow-lux: 0 15px 40px rgba(15, 23, 42, 0.06);
   } 
 }
 
-.type-info-card { 
-  background: white; border: 2px solid #f1f5f9; border-radius: 20px; padding: 20px; 
-  label { font-size: 0.7rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; } 
-  .type-display { display: inline-block; padding: 6px 15px; border-radius: 10px; font-weight: 900; margin-top: 8px; text-transform: uppercase; font-size: 0.8rem; &.bug { background: $orange-light; color: $orange; } &.report { background: #fef2f2; color: #ef4444; } &.feedback { background: #eff6ff; color: #3b82f6; } } 
-}
-
 .modal-footer-lux { 
   padding: 15px 35px; border-top: 1px solid #f1f5f9; background: #ffffff; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
   .main-actions { display: flex; gap: 10px; flex-wrap: wrap;} 
@@ -277,22 +254,191 @@ $shadow-lux: 0 15px 40px rgba(15, 23, 42, 0.06);
 .btn-resolve { background: #0f172a; color: white; box-shadow: 0 8px 20px rgba(15, 23, 42, 0.2); &:hover { transform: translateY(-2px); background: black; } } 
 .btn-close-modal { background: transparent; color: $text-sub; &:hover { background: #f1f5f9; color: $text-main;} }
 
-// ==========================================
-// 🚨 CONFIRM DIALOG
-// ==========================================
-.confirm-dialog-card { background: white; width: 100%; max-width: 380px; border-radius: 26px; padding: 35px 25px; text-align: center; box-shadow: 0 25px 60px rgba(0, 0, 0, 0.2); transform: scale(0.95); animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; } 
-.icon-danger-circle { width: 60px; height: 60px; background: #fff1f2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; border: 5px solid #fff5f5; } 
-.confirm-title { font-size: 1.3rem; font-weight: 950; color: #1e293b; margin-bottom: 8px; } 
-.confirm-desc { font-size: 0.9rem; color: #64748b; line-height: 1.5; margin-bottom: 25px; } 
-.confirm-actions { display: flex; gap: 10px; .btn-cancel-action { flex: 1; padding: 10px; border-radius: 10px; border: none; background: #f1f5f9; font-weight: 800; cursor: pointer; color: $text-main; font-size: 0.9rem;} .btn-danger-action { flex: 1; padding: 10px; border-radius: 10px; border: none; background: #ef4444; color: white; font-weight: 800; cursor: pointer; transition: 0.2s; font-size: 0.9rem; &:hover { transform: translateY(-2px); box-shadow: 0 8px 15px rgba(239, 68, 68, 0.3); } } }
+/* ==================================================
+   🔥 LUXURY ACTION MODAL (Từ chối / Gỡ bài / Ban)
+================================================== */
+.luxury-reject-form {
+  padding: 32px;
+  max-width: 440px !important;
+  text-align: center; 
+  border-radius: 20px;
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+  background: white;
+  transform: scale(0.95);
+  animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+
+  .form-header {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Đã fix lệch trái */
+    gap: 12px;
+    margin-bottom: 16px;
+
+    .icon-danger-circle {
+      width: 48px;
+      height: 48px;
+      background: #fef2f2;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      box-shadow: 0 0 0 4px #fff5f5;
+    }
+
+    .confirm-title {
+      font-family: 'Inter', -apple-system, sans-serif !important; /* Đã ép font hiện đại */
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin: 0;
+      letter-spacing: -0.5px;
+    }
+  }
+
+  .confirm-desc {
+    color: #475569;
+    font-size: 0.95rem;
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 32px; /* Dãn khoảng cách cho số ký tự */
+    position: relative;
+    text-align: left;
+
+    label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #1e293b;
+      .required { color: #ef4444; }
+    }
+
+    .note-input-lux {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-family: 'Inter', sans-serif;
+      color: #0f172a;
+      background-color: #f8fafc;
+      transition: all 0.2s ease;
+      resize: vertical;
+      min-height: 100px;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+
+      &:focus {
+        outline: none;
+        border-color: #ef4444;
+        background-color: #ffffff;
+        box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15);
+      }
+    }
+
+    .char-count {
+      position: absolute;
+      bottom: -22px; /* Không bị đè chữ */
+      right: 4px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #64748b;
+    }
+  }
+
+  .confirm-actions {
+    display: flex;
+    gap: 12px;
+
+    .btn-cancel-action, .btn-danger-action {
+      flex: 1;
+      padding: 12px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      transition: 0.2s;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-cancel-action {
+      background: #f1f5f9;
+      color: #475569;
+      &:hover { background: #e2e8f0; color: #0f172a; }
+    }
+
+    .btn-danger-action {
+      background: #ef4444;
+      color: white;
+      box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
+      &:hover:not(:disabled) { 
+        transform: translateY(-2px); 
+        box-shadow: 0 6px 15px rgba(239, 68, 68, 0.35); 
+      }
+      &:disabled { 
+        opacity: 0.5; 
+        cursor: not-allowed; 
+        transform: none; 
+      }
+    }
+  }
+}
+
+/* ==================================================
+   🔥 ACTION BAR STATES & THEMES
+================================================== */
+.action-warning {
+  background: #fffbeb;
+  border-left: 4px solid #f59e0b;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #b45309;
+  margin-bottom: 12px;
+}
+
+.btn-mod:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(100%);
+}
+
+.blue-theme {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  
+  .v-header {
+    background: #dbeafe;
+    color: #1e3a8a;
+    border-bottom: 1px solid #bfdbfe;
+    font-weight: 600;
+  }
+
+  .bug-desc {
+    color: #1e40af;
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+
+  .bug-checklist {
+    list-style-type: disc;
+    padding-left: 20px;
+    color: #3b82f6;
+    font-size: 13px;
+    li { margin-bottom: 4px; }
+  }
+}
 
 // --- 🎞️ ANIMATIONS ---
 @keyframes spin { to { transform: rotate(360deg); } }
-@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes popIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-.fade-glass-enter-active { animation: fadeIn 0.3s ease; .modal-lux-content, .confirm-dialog-card { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1); } }
+.fade-glass-enter-active { animation: fadeIn 0.3s ease; .modal-lux-content { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1); } }
 .fade-glass-leave-active { transition: opacity 0.2s ease; opacity: 0; }
 
 // --- 📱 RESPONSIVE ---
@@ -320,19 +466,15 @@ $shadow-lux: 0 15px 40px rgba(15, 23, 42, 0.06);
   .ticket-sovereign-wrapper { padding: 15px; }
   .page-header-lux { flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 25px;}
   .page-title { font-size: 1.8rem !important; } 
-  
   .stats-grid { grid-template-columns: 1fr; gap: 15px; margin-bottom: 25px;}
-  
   .filter-bar { padding: 12px 15px !important; flex-direction: column; align-items: stretch !important; gap: 12px;}
   .tabs-lux { overflow-x: auto; padding-bottom: 5px; -webkit-overflow-scrolling: touch; }
   .filter-right-actions { flex-direction: column; width: 100%; align-items: stretch !important; } 
   .search-box-lux, .select-lux { width: 100%; } 
   .search-box-lux input { width: 100% !important; } 
-  
   .data-engine-lux { border-radius: 18px; }
   .data-engine-lux .table-responsive { padding: 0 10px; }
   .lux-table { padding: 10px 10px 20px; min-width: 850px;} 
-
   .modal-lux-content { max-width: 100%; margin: 10px; max-height: 85vh; border-radius: 18px;}
   .modal-header-lux, .modal-footer-lux { padding: 12px 15px; }
   .modal-header-lux h3 { font-size: 1.2rem;}

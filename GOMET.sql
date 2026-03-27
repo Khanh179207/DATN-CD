@@ -400,24 +400,36 @@ CREATE TABLE Notification (
 		CreatedAt DATETIME DEFAULT GETDATE(),
 		ResolvedAt DATETIME NULL,
 		ProcessedAt DATETIME NULL,  
+		-- Thêm cột lưu thông tin Admin xử lý vào bảng Ticket
+		AdminID INT NULL,
+		AdminName NVARCHAR(255) NULL,
+		AdminNote NVARCHAR(MAX) NULL, -- Để Admin phản hồi Bug/Góp ý
+GO
     
 		CONSTRAINT FK_Ticket_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
 		CONSTRAINT FK_Ticket_Post FOREIGN KEY (TargetPostID) REFERENCES Post(PostID)
 	);
 	GO
 
-	CREATE TABLE dbo.Appeals (
-  		AppealID        INT IDENTITY(1,1) PRIMARY KEY,
-  		Email           NVARCHAR(254) NOT NULL,
-  		Reason          NVARCHAR(MAX) NOT NULL,
-  		Status          NVARCHAR(50) NOT NULL DEFAULT 'Pending', -- Pending, Resolved, Rejected
-  		CreatedAt       DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
-  		UpdatedAt       DATETIME2 NULL,
-  		CreatedByIP     NVARCHAR(45) NULL,
-  		Note            NVARCHAR(MAX) NULL
-	);
 
-	GO
+
+CREATE TABLE dbo.Appeals (
+    AppealID        INT IDENTITY(1,1) PRIMARY KEY,
+    Email           NVARCHAR(254) NOT NULL,    -- Email User nhập vào form
+    AccountID       INT NULL,                  -- Backend tự tìm qua Email và nhét ID vào đây
+    
+    Reason          NVARCHAR(MAX) NOT NULL,    -- Lý do User xin gỡ Ban
+    Status          NVARCHAR(50) NOT NULL DEFAULT 'Pending', -- 3 trạng thái: Pending, Resolved, Rejected
+    Note            NVARCHAR(MAX) NULL,        -- Lời nhắn của Admin từ chối/duyệt (Sẽ gửi thông báo cho user)
+    
+    CreatedAt       DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    ResolvedAt      DATETIME2 NULL,            -- Thời gian Admin đóng đơn (Đồng bộ với Ticket)
+	AdminID INT NULL,
+	AdminName NVARCHAR(255) NULL,
+    CONSTRAINT FK_Appeals_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID)
+);
+GO
+
 
 CREATE TABLE BlacklistWord (
     WordID INT IDENTITY(1,1) PRIMARY KEY,
