@@ -57,11 +57,19 @@
                   
                   <div class="rating-selector" v-if="!hasUserRated">
                     <span class="prompt-text">Bạn chấm món này mấy sao?</span>
-                    <div class="star-rating-input">
-                      <span v-for="star in 5" :key="star" @click="userRating = star" :class="{ active: star <= userRating }">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                      </span>
-                    </div>
+<div class="star-rating-input" @mouseleave="hoverRating = 0">
+  <span 
+    v-for="star in 5" 
+    :key="star" 
+    @click="userRating = star"
+    @mouseenter="hoverRating = star"
+    :class="{ active: star <= (hoverRating > 0 ? hoverRating : userRating) }"
+  >
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+    </svg>
+  </span>
+</div>
                   </div>
 
                   <div class="rating-selector locked" v-else>
@@ -178,6 +186,7 @@ const isCommentsLoading = ref(false)
 const commentInputRef = ref(null)
 const newComment = ref('')
 const userRating = ref(0)
+const hoverRating = ref(0)
 const selectedPhotos = ref([])
 const isUploading = ref(false)
 
@@ -584,8 +593,22 @@ const goToDetail = (id) => {
 
 .star-rating-input { 
   display: flex; gap: 6px; 
-  span { color: #e2e8f0; cursor: pointer; transition: 0.2s; 
-    &.active, &:hover { color: #f59e0b; filter: drop-shadow(0 2px 4px rgba(245, 158, 11, 0.3)); } 
+  
+  span { 
+    color: #e2e8f0; // Màu xám mặc định (sao chưa sáng)
+    cursor: pointer; 
+    transition: transform 0.2s ease, color 0.2s ease; 
+    
+    // 🔥 Chỉ dùng hover để phóng to, KHÔNG đổi màu ở đây
+    &:hover {
+      transform: scale(1.2);
+    }
+
+    // 🔥 Màu vàng sẽ do class .active này quyết định cho toàn bộ dải sao
+    &.active { 
+      color: #f59e0b; 
+      filter: drop-shadow(0 0 5px rgba(245, 158, 11, 0.4)); 
+    } 
   } 
 }
 .star-rating-locked { display: flex; gap: 6px; span { color: #f1f5f9; cursor: default; &.filled { color: #f59e0b; } } }
