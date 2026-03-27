@@ -1,7 +1,18 @@
 import api from './api'
+import { useAuthStore } from '@/stores/auth' // 🔥 IMPORT STORE LẤY TOKEN
+
+// 🔥 HELPER: Tự động trích xuất Token và gắn vào Header
+const getAuthConfig = () => {
+  const authStore = useAuthStore()
+  return {
+    headers: {
+      'Authorization': `Bearer ${authStore.token}`
+    }
+  }
+}
 
 /**
- * Create a new appeal for banned account
+ * Create a new appeal for banned account (PUBLIC)
  * @param {Object} appealData { email, reason }
  * @returns {Promise<Object>}
  */
@@ -31,17 +42,18 @@ export const createAppeal = async (appealData) => {
 }
 
 /**
- * Get appeal by ID
+ * Get appeal by ID (ADMIN ONLY)
  * @param {number} appealID
  * @returns {Promise<Object>}
  */
 export const getAppealById = async (appealID) => {
-  const response = await api.get(`/api/appeals/${appealID}`)
+  // 🔥 Đã thêm /admin vào URL cho khớp BE và gắn Token
+  const response = await api.get(`/api/admin/appeals/${appealID}`, getAuthConfig())
   return response.data
 }
 
 /**
- * Get all appeals (admin only)
+ * Get all appeals (ADMIN ONLY)
  * @param {Object} params { page, limit, status, email }
  * @returns {Promise<Object>}
  */
@@ -53,7 +65,13 @@ export const getAppeals = async (params = {}) => {
   })
 
   try {
-    const response = await api.get('/api/admin/appeals', { params })
+    // 🔥 Gộp params và Token header vào chung 1 object config
+    const config = {
+      params,
+      ...getAuthConfig()
+    }
+    const response = await api.get('/api/admin/appeals', config)
+    
     console.log('[AppealService] Appeals fetched successfully:', {
       status: response.status,
       count: response.data?.length || response.data?.appeals?.length || 0,
@@ -72,28 +90,30 @@ export const getAppeals = async (params = {}) => {
 }
 
 /**
- * Update appeal status (admin only)
+ * Update appeal status (ADMIN ONLY)
  * @param {number} appealID
  * @param {Object} updateData { status, note }
  * @returns {Promise<Object>}
  */
 export const updateAppeal = async (appealID, updateData) => {
-  const response = await api.put(`/api/admin/appeals/${appealID}`, updateData)
+  // 🔥 Gắn Token vào tham số thứ 3
+  const response = await api.put(`/api/admin/appeals/${appealID}`, updateData, getAuthConfig())
   return response.data
 }
 
 /**
- * Unban account by appeal (admin only)
+ * Unban account by appeal (ADMIN ONLY)
  * @param {number} appealID
  * @returns {Promise<Object>}
  */
 export const unbanAccountByAppeal = async (appealID) => {
-  const response = await api.post(`/api/admin/appeals/${appealID}/unban`, {})
+  // 🔥 Gắn Token vào tham số thứ 3 (tham số thứ 2 là body rỗng {})
+  const response = await api.post(`/api/admin/appeals/${appealID}/unban`, {}, getAuthConfig())
   return response.data
 }
 
 /**
- * Get appeal tracking status (user-facing)
+ * Get appeal tracking status (PUBLIC - USER FACING)
  * @param {string} appealEmail
  * @returns {Promise<Object>}
  */

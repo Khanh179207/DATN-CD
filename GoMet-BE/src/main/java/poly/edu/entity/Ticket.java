@@ -16,12 +16,12 @@ public class Ticket {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "TicketID") // Đảm bảo khớp PascalCase với SQL
+    @Column(name = "TicketID")
     private Integer ticketID;
 
     @ManyToOne
     @JoinColumn(name = "AccountID")
-    @JsonIgnore // 🔥 ĐÃ MỞ LẠI PHONG ẤN: Chặn vòng lặp JSON vô tận
+    @JsonIgnore
     private Account account;
 
     @Column(name = "TicketType", nullable = false, length = 50)
@@ -29,11 +29,10 @@ public class Ticket {
 
     @ManyToOne
     @JoinColumn(name = "TargetPostID")
-    @JsonIgnore // 🔥 ĐÃ MỞ LẠI PHONG ẤN: Ngăn Jackson mò sang bảng Post và Rating
+    @JsonIgnore
     private Post targetPost;
 
-    // 🔥 HELPER: Tạo "cổng phụ" để FE gọi .username và .targetPostID dễ dàng
-    @Transient // Không lưu xuống DB, chỉ dùng để trả dữ liệu về cho FE
+    @Transient
     public String getUsername() {
         return account != null ? account.getUsername() : "Người dùng ẩn";
     }
@@ -52,9 +51,11 @@ public class Ticket {
     @Column(name = "Attachment", length = 500)
     private String attachment;
 
+    @Builder.Default // 🔥 Thêm cái này để hết Warning màu vàng lúc build sếp nhé
     @Column(name = "Status", nullable = false)
     private Integer status = 0;
 
+    @Builder.Default
     @Column(name = "CreatedAt", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -63,4 +64,17 @@ public class Ticket {
 
     @Column(name = "ResolvedAt")
     private LocalDateTime resolvedAt;
+
+    // =============================================================
+    // 🔥 MỚI THÊM: ĐỒNG BỘ VỚI SQL ĐỂ LƯU THÔNG TIN ADMIN XỬ LÝ
+    // =============================================================
+
+    @Column(name = "AdminID")
+    private Integer adminId;
+
+    @Column(name = "AdminName")
+    private String adminName;
+
+    @Column(name = "AdminNote", columnDefinition = "NVARCHAR(MAX)")
+    private String adminNote;
 }

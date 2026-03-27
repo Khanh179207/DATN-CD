@@ -86,4 +86,11 @@ public interface PostDAO extends JpaRepository<Post, Integer> {
     // Tính tổng lượt Like của toàn bộ bài viết (Dùng cho Admin Dashboard)
     @Query("SELECT SUM(p.likeCount) FROM Post p")
     Long getTotalLikes();
+
+    // ==========================================
+    // HÀM CHUYỂN BÀI VIẾT KHI XÓA DANH MỤC
+    // ==========================================
+    @Modifying
+    @Query("UPDATE Post p SET p.category.categoryID = 1 WHERE p.category.categoryID = :oldCatId")
+    int movePostsToDefaultCategory(@Param("oldCatId") Integer oldCatId);
 }
