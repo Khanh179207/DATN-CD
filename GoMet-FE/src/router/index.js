@@ -69,25 +69,25 @@ const routes = [
     children: [
       { path: 'home', name: 'Home', component: HomeView },
       { path: 'search', name: 'Search', component: SearchPage },
-      
+
       // 🔒 KHÓA: Xem chi tiết bài viết phải đăng nhập
-      { 
-        path: 'post/:id', 
-        name: 'PostDetail', 
-        component: PostDetail, 
+      {
+        path: 'post/:id',
+        name: 'PostDetail',
+        component: PostDetail,
         props: true,
-        meta: { requiresAuth: true } 
+        meta: { requiresAuth: true }
       },
 
       // ✅ Events Routes
       { path: 'events', name: 'Events', component: EventList }, // Danh sách sự kiện thì cho xem thoải mái
-      
+
       // 🔒 KHÓA: Xem chi tiết sự kiện phải đăng nhập
-      { 
-        path: 'events/:id', 
-        name: 'EventDetail', 
+      {
+        path: 'events/:id',
+        name: 'EventDetail',
         component: EventDetail,
-        meta: { requiresAuth: true } 
+        meta: { requiresAuth: true }
       },
 
       {
@@ -213,14 +213,14 @@ router.beforeEach((to, from, next) => {
   const isLoggedIn = !!user?.token
 
   const isPremium = isLoggedIn && (
-    String(user?.isPremium) === "true" || 
-    String(user?.isPremium) === "1" || 
+    String(user?.isPremium) === "true" ||
+    String(user?.isPremium) === "1" ||
     user?.role === 'premium'
   )
-  
+
   const isAdmin = isLoggedIn && (
-    String(user?.isAdmin) === "true" || 
-    String(user?.isAdmin) === "1" || 
+    String(user?.isAdmin) === "true" ||
+    String(user?.isAdmin) === "1" ||
     user?.role === 'ADMIN' // Đổi chỗ này thành ADMIN viết hoa cho chuẩn với code sếp đang dùng
   )
 
@@ -240,7 +240,7 @@ router.beforeEach((to, from, next) => {
   if (to.matched.some(r => r.meta?.requiresAuth)) {
     if (!isLoggedIn) {
       toast.error('Vui lòng đăng nhập để xem chi tiết')
-      return next({ path: '/home', query: { login: '1' } }) 
+      return next({ path: '/home', query: { login: '1' } })
     }
   }
 
@@ -251,7 +251,7 @@ router.beforeEach((to, from, next) => {
       return next({ path: '/home', query: { login: '1' } })
     }
 
-    if (!isPremium && !isAdmin) { 
+    if (!isPremium && !isAdmin) {
       toast.warn('Tính năng này chỉ dành cho Premium users')
       return next({ path: '/home' })
     }

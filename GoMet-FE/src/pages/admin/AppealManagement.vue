@@ -1,6 +1,6 @@
 <template>
   <div class="page-container animate-enter">
-    
+
     <div class="page-header">
       <div class="title-group">
         <h2 class="title">Khiếu nại ban nhầm</h2>
@@ -47,20 +47,19 @@
         </div>
         <div class="stat-info">
           <span class="stat-value">{{ getRejectedCount }}</span>
-          <span class="stat-label">Từ chối</span>
+          <span class="stat-label">Đã Từ chối</span>
         </div>
       </div>
     </div>
 
     <div class="filter-bar">
       <div class="tabs">
-        <button v-for="tab in statusTabs" :key="tab.value" 
-                :class="['filter-tab', filterStatus === tab.value ? 'active' : '']"
-                @click="filterStatus = tab.value">
+        <button v-for="tab in statusTabs" :key="tab.value"
+          :class="['filter-tab', filterStatus === tab.value ? 'active' : '']" @click="filterStatus = tab.value">
           {{ tab.label }}
         </button>
       </div>
-      
+
       <div class="search-box">
         <i class="fa-solid fa-search search-icon"></i>
         <input v-model="searchEmail" type="email" placeholder="Tìm kiếm theo email..." class="search-input" />
@@ -70,6 +69,7 @@
       </div>
     </div>
 
+    <!-- DATA TABLE -->
     <div class="table-wrapper">
       <div v-if="loading" class="loading-state">
         <div class="spinner-modern"></div>
@@ -111,13 +111,15 @@
                 <button @click="openDetail(appeal)" class="btn-action view" title="Xem chi tiết">
                   <i class="fa-solid fa-eye"></i>
                 </button>
-                
-                <button v-if="appeal.status !== 'Resolved'" @click="handleUnban" class="btn-action approve" title="Gỡ ban & Phê duyệt">
+
+                <button v-if="appeal.status === 'Pending'" @click="openAction('APPROVE', appeal)"
+                  class="btn-action approve" title="Phê duyệt">
                   <i class="fa-solid fa-check"></i>
                 </button>
 
-                <button @click="closeDetail" class="btn-action" v-if="selectedAppeal?.appealID === appeal.appealID" title="Đóng">
-                  <i class="fa-solid fa-xmark"></i>
+                <button v-if="appeal.status === 'Pending'" @click="openAction('REJECT', appeal)"
+                  class="btn-action reject" title="Từ chối đơn">
+                  <i class="fa-solid fa-ban"></i>
                 </button>
               </div>
             </td>
@@ -133,33 +135,73 @@
       </table>
     </div>
 
-    <!-- Confirmation Modal for Unban -->
+    <!-- CONFIRM APPROVE MODAL -->
     <transition name="modal-fade">
-      <div v-if="showConfirmUnban" class="modal-overlay" @click="cancelUnban">
+      <div v-if="showConfirmApprove" class="modal-overlay" @click="showConfirmApprove = false">
         <div class="modal-confirm" @click.stop>
           <div class="confirm-header">
-            <div class="confirm-icon">⚠️</div>
-            <h3>Xác nhận gỡ ban</h3>
+            <div class="confirm-icon">✅</div>
+            <h3>Xác nhận phê duyệt</h3>
           </div>
+
           <p class="confirm-message">
-            Bạn chắc chắn muốn gỡ ban cho tài khoản <strong>{{ selectedAppeal?.email }}</strong>?
+            Bạn chắc chắn muốn phê duyệt đơn của <br>
+            <strong>{{ selectedAppeal?.email }}</strong>? <br>
+            Tài khoản sẽ được mở lại.
           </p>
+
           <div class="confirm-actions">
-            <button class="btn-cancel-confirm" @click="cancelUnban" :disabled="isUnbanning">
+            <button class="btn-cancel-confirm" @click="showConfirmApprove = false">
               Hủy
             </button>
-            <button class="btn-confirm-unban" @click="confirmUnban" :disabled="isUnbanning">
-              <span v-if="isUnbanning"><i class="fa-solid fa-spinner fa-spin"></i> Đang gỡ ban...</span>
-              <span v-else><i class="fa-solid fa-check"></i> Xác nhận gỡ ban</span>
+
+            <button class="btn-confirm-approve" @click="confirmApprove" :disabled="isUpdating">
+              {{ isUpdating ? 'Đang xử lý...' : 'Xác nhận phê duyệt' }}
             </button>
           </div>
         </div>
       </div>
     </transition>
 
-    <!-- Detail Modal -->
+    <!-- CONFIRM REJECT MODAL -->
     <transition name="modal-fade">
-      <div v-if="selectedAppeal && !showConfirmUnban" class="modal-overlay" @click="closeDetail">
+      <div v-if="showConfirmReject" class="modal-overlay" @click="showConfirmReject = false">
+        <div class="modal-confirm" @click.stop>
+          <div class="confirm-header">
+            <div class="confirm-icon">❌</div>
+            <h3>Xác nhận từ chối</h3>
+          </div>
+
+          <p class="confirm-message">
+            Bạn chắc chắn muốn từ chối đơn của
+            <strong>{{ selectedAppeal?.email }}</strong>?
+          </p>
+
+          <div class="edit-section">
+            <div class="detail-row">
+              <label class="detail-label">Ghi chú từ chối</label>
+              <textarea v-model="updateNote" class="note-input" placeholder="Thêm ghi chú admin (tùy chọn)..."
+                rows="3"></textarea>
+            </div>
+          </div>
+
+          <div class="confirm-actions">
+            <button class="btn-cancel-confirm" @click="showConfirmReject = false">
+              Hủy
+            </button>
+
+            <button class="btn-confirm-reject" @click="confirmReject" :disabled="isUpdating">
+              {{ isUpdating ? 'Đang xử lý...' : 'Xác nhận từ chối' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- DETAIL MODAL -->
+    <transition name="modal-fade">
+      <div v-if="selectedAppeal && !showConfirmApprove && !showConfirmReject" class="modal-overlay"
+        @click="closeDetail">
         <div class="modal-detail" @click.stop>
           <div class="modal-header">
             <h3>Chi tiết khiếu nại</h3>
@@ -197,41 +239,27 @@
                 <p class="detail-value">{{ formatDateTime(selectedAppeal.createdAt) }}</p>
               </div>
 
-              <div v-if="selectedAppeal.note" class="detail-row">
-                <label class="detail-label">Ghi chú Admin</label>
-                <p class="detail-value note-text">{{ selectedAppeal.note }}</p>
-              </div>
             </div>
 
-            <div v-if="selectedAppeal.status !== 'Resolved'" class="edit-section">
+            <div v-if="selectedAppeal.status === 'Pending'" class="edit-section">
               <div class="detail-row">
-                <label class="detail-label">Cập nhật trạng thái</label>
-                <select v-model="updateStatus" class="status-input">
-                  <option value="Pending">Chờ xử lý</option>
-                  <option value="Review">Đang xem xét</option>
-                  <option value="Rejected">Từ chối</option>
-                </select>
-              </div>
-
-              <div class="detail-row">
-                <label class="detail-label">Ghi chú</label>
-                <textarea
-                  v-model="updateNote"
-                  class="note-input"
-                  placeholder="Thêm ghi chú admin..."
-                  rows="4"
-                ></textarea>
+                <label class="detail-label">Ghi chú mới</label>
+                <textarea v-model="updateNote" class="note-input" placeholder="Thêm ghi chú admin (tùy chọn)..."
+                  rows="4"></textarea>
               </div>
             </div>
           </div>
 
           <div class="modal-footer">
-            <button v-if="selectedAppeal.status !== 'Resolved'" class="btn-primary" @click="handleUpdate" :disabled="isUpdating">
-              <i class="fa-solid fa-save"></i> {{ isUpdating ? 'Đang cập nhật...' : 'Cập nhật' }}
+            <button v-if="selectedAppeal.status === 'Pending'" class="btn-danger" @click="openAction('REJECT')"
+              :disabled="isUpdating">
+              <i class="fa-solid fa-ban"></i>
+              {{ isUpdating ? 'Đang xử lý...' : 'Từ chối' }}
             </button>
 
-            <button v-if="selectedAppeal.status !== 'Resolved'" class="btn-success" @click="handleUnban" :disabled="isUnbanning">
-              <i class="fa-solid fa-check"></i> {{ isUnbanning ? 'Đang gỡ ban...' : 'Gỡ ban & Phê duyệt' }}
+            <button v-if="selectedAppeal.status === 'Pending'" class="btn-success" @click="openAction('APPROVE')"
+              :disabled="isUpdating">
+              <i class="fa-solid fa-check"></i> {{ isUpdating ? 'Đang xử lý...' : 'Phê duyệt' }}
             </button>
 
             <button class="btn-secondary" @click="closeDetail">
@@ -249,25 +277,32 @@ import { ref, computed, onMounted } from 'vue'
 import { toast } from '@/composables/useToast'
 import { getAppeals, updateAppeal, unbanAccountByAppeal } from '@/services/appealService'
 
+// ─────────────────────────────────────────────────────────────────
+// STATE MANAGEMENT
+// ─────────────────────────────────────────────────────────────────
+
 const appeals = ref([])
 const selectedAppeal = ref(null)
 const loading = ref(false)
 const isUpdating = ref(false)
-const isUnbanning = ref(false)
-const showConfirmUnban = ref(false)
 
 const searchEmail = ref('')
 const filterStatus = ref('')
-const updateStatus = ref('Pending')
 const updateNote = ref('')
+
+const showConfirmApprove = ref(false)
+const showConfirmReject = ref(false)
 
 const statusTabs = [
   { value: '', label: 'Tất cả' },
   { value: 'Pending', label: 'Chờ xử lý' },
-  { value: 'Review', label: 'Đang xem xét' },
   { value: 'Resolved', label: 'Đã giải quyết' },
-  { value: 'Rejected', label: 'Từ chối' }
+  { value: 'Rejected', label: 'Đã Từ chối' }
 ]
+
+// ─────────────────────────────────────────────────────────────────
+// COMPUTED PROPERTIES
+// ─────────────────────────────────────────────────────────────────
 
 const getPendingCount = computed(() => appeals.value.filter(a => a.status === 'Pending').length)
 const getResolvedCount = computed(() => appeals.value.filter(a => a.status === 'Resolved').length)
@@ -281,119 +316,150 @@ const filteredAppeals = computed(() => {
   })
 })
 
+// ─────────────────────────────────────────────────────────────────
+// DATA LOADING
+// ─────────────────────────────────────────────────────────────────
+
 const loadAppeals = async () => {
   loading.value = true
-  console.log('[AppealManagement] Loading appeals...', {
-    timestamp: new Date().toISOString()
-  })
+  console.log('[AppealManagement] Loading appeals...')
 
   try {
     const data = await getAppeals()
-    console.log('[AppealManagement] Appeals loaded successfully:', {
-      rawData: data,
-      dataType: typeof data,
-      isArray: Array.isArray(data),
-      length: Array.isArray(data) ? data.length : data?.data?.length || 0
-    })
-    
     appeals.value = Array.isArray(data) ? data : (data.data || data.appeals || [])
-    console.log('[AppealManagement] Appeals set to:', {
-      count: appeals.value.length,
-      appeals: appeals.value
-    })
+    console.log('[AppealManagement] Appeals loaded:', appeals.value.length)
   } catch (error) {
-    console.error('[AppealManagement] Error loading appeals:', {
-      status: error.response?.status,
-      message: error.response?.data?.message,
-      statusText: error.response?.statusText,
-      url: error.config?.url,
-      fullError: error.message
-    })
+    console.error('[AppealManagement] Error loading appeals:', error.message)
     toast.error('Lỗi khi tải khiếu nại')
   } finally {
     loading.value = false
   }
 }
 
-const openDetail = (appeal) => {
-  selectedAppeal.value = { ...appeal }
-  updateStatus.value = appeal.status
-  updateNote.value = appeal.note || ''
+// ─────────────────────────────────────────────────────────────────
+// SINGLE ENTRY POINT FOR ACTIONS
+// ─────────────────────────────────────────────────────────────────
+
+/**
+ * Single function to handle both approve and reject actions.
+ * Flow: Click button → set selectedAppeal → decide based on type → open modal
+ */
+const openAction = (type, appeal = null) => {
+  // If appeal passed from table → set it
+  if (appeal) {
+    selectedAppeal.value = appeal
+    updateNote.value = appeal.note || ''
+  }
+
+  // If no selectedAppeal → return (safety check)
+  if (!selectedAppeal.value) return
+
+  // Open appropriate modal based on type
+  if (type === 'APPROVE') {
+    updateNote.value = selectedAppeal.value.note || 'Đã được gỡ ban'
+    showConfirmApprove.value = true
+  } else if (type === 'REJECT') {
+    updateNote.value = selectedAppeal.value.note || 'Đơn bị từ chối'
+    showConfirmReject.value = true
+  }
 }
 
-const closeDetail = () => {
-  selectedAppeal.value = null
-}
+// ─────────────────────────────────────────────────────────────────
+// CONFIRM ACTIONS
+// ─────────────────────────────────────────────────────────────────
 
-const handleUpdate = async () => {
+/**
+ * Confirm approve: Call unbanAccountByAppeal, reload, close modals
+ */
+const confirmApprove = async () => {
   if (!selectedAppeal.value) return
 
   isUpdating.value = true
   try {
-    await updateAppeal(selectedAppeal.value.appealID, {
-      status: updateStatus.value,
-      note: updateNote.value
-    })
+    await unbanAccountByAppeal(selectedAppeal.value.appealID)
+    toast.success('Đơn khiếu nại đã được phê duyệt. Email thông báo đã gửi.')
 
-    toast.success('Cập nhật thành công')
-
-    // Reload appeals
+    // Reload and close
     await loadAppeals()
-    closeDetail()
+    resetState()
   } catch (error) {
-    toast.error(error.response?.data?.message || 'Lỗi khi cập nhật')
+    toast.error(error.response?.data?.message || 'Lỗi khi phê duyệt')
   } finally {
     isUpdating.value = false
   }
 }
 
-const handleUnban = async () => {
-  if (!selectedAppeal.value) return
-  showConfirmUnban.value = true
-}
-
-const confirmUnban = async () => {
+/**
+ * Confirm reject: Call updateAppeal with Rejected status, reload, close modals
+ */
+const confirmReject = async () => {
   if (!selectedAppeal.value) return
 
-  isUnbanning.value = true
+  isUpdating.value = true
   try {
-    await unbanAccountByAppeal(selectedAppeal.value.appealID)
-    toast.success('Tài khoản đã được gỡ ban thành công')
+    await updateAppeal(selectedAppeal.value.appealID, {
+      status: 'Rejected',
+      note: updateNote.value || 'Đơn bị từ chối'
+    })
+    toast.success('Đơn khiếu nại đã bị từ chối. Email thông báo đã gửi.')
 
-    // Reload appeals
+    // Reload and close
     await loadAppeals()
-    closeDetail()
-    showConfirmUnban.value = false
+    resetState()
   } catch (error) {
-    toast.error(error.response?.data?.message || 'Lỗi khi gỡ ban')
+    toast.error(error.response?.data?.message || 'Lỗi khi từ chối')
   } finally {
-    isUnbanning.value = false
+    isUpdating.value = false
   }
 }
 
-const cancelUnban = () => {
-  if (!isUnbanning.value) {
-    showConfirmUnban.value = false
-  }
+// ─────────────────────────────────────────────────────────────────
+// DETAIL MODAL MANAGEMENT
+// ─────────────────────────────────────────────────────────────────
+
+const openDetail = (appeal) => {
+  selectedAppeal.value = { ...appeal }
+  updateNote.value = appeal.note || ''
 }
 
-const getStatusLabel = (status) => {
+const closeDetail = () => {
+  resetState()
+}
+
+/**
+ * Reset all modal and state variables
+ */
+const resetState = () => {
+  selectedAppeal.value = null
+  showConfirmApprove.value = false
+  showConfirmReject.value = false
+  updateNote.value = ''
+}
+
+// ─────────────────────────────────────────────────────────────────
+// UTILITY FUNCTIONS
+// ─────────────────────────────────────────────────────────────────
+
+const getStatusLabel = status => {
   const labels = {
     Pending: '⏳ Chờ xử lý',
-    Review: '👀 Đang xem xét',
-    Resolved: '✅ Đã giải quyết',
-    Rejected: '❌ Từ chối'
+    Resolved: '✅ Đã phê duyệt',
+    Rejected: '❌ Đã từ chối'
   }
   return labels[status] || status
 }
 
-const formatDate = (date) => {
+const formatDate = date => {
   return new Date(date).toLocaleDateString('vi-VN')
 }
 
-const formatDateTime = (date) => {
+const formatDateTime = date => {
   return new Date(date).toLocaleString('vi-VN')
 }
+
+// ─────────────────────────────────────────────────────────────────
+// LIFECYCLE
+// ─────────────────────────────────────────────────────────────────
 
 onMounted(() => {
   loadAppeals()
@@ -409,8 +475,13 @@ onMounted(() => {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .animate-enter {
@@ -422,13 +493,14 @@ onMounted(() => {
     opacity: 0;
     transform: translateY(-20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-/* Page Header */
+/* PAGE HEADER */
 .page-header {
   display: flex;
   justify-content: space-between;
@@ -482,7 +554,7 @@ onMounted(() => {
   }
 }
 
-/* Stats Grid */
+/* STATS GRID */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -567,7 +639,7 @@ onMounted(() => {
   }
 }
 
-/* Filter Bar */
+/* FILTER BAR */
 .filter-bar {
   display: flex;
   gap: 16px;
@@ -657,7 +729,7 @@ onMounted(() => {
   }
 }
 
-/* Table Styles */
+/* TABLE */
 .table-wrapper {
   background: white;
   border: 1px solid #e2e8f0;
@@ -759,7 +831,7 @@ onMounted(() => {
   }
 }
 
-/* Email Cell */
+/* EMAIL CELL */
 .email-cell {
   display: flex;
   gap: 12px;
@@ -796,7 +868,7 @@ onMounted(() => {
   }
 }
 
-/* Status Pill */
+/* STATUS PILL */
 .status-pill {
   display: inline-flex;
   align-items: center;
@@ -820,15 +892,6 @@ onMounted(() => {
 
     .status-dot {
       background: #fbbf24;
-    }
-  }
-
-  &.status-review {
-    background: rgba(59, 130, 246, 0.1);
-    color: #1e40af;
-
-    .status-dot {
-      background: #3b82f6;
     }
   }
 
@@ -856,7 +919,7 @@ onMounted(() => {
   font-size: 13px;
 }
 
-/* Action Buttons */
+/* ACTION BUTTONS */
 .actions {
   display: flex;
   gap: 8px;
@@ -898,6 +961,15 @@ onMounted(() => {
       }
     }
 
+    &.reject {
+      color: #ef4444;
+
+      &:hover {
+        background: rgba(239, 68, 68, 0.1);
+        border-color: #ef4444;
+      }
+    }
+
     &:disabled {
       opacity: 0.5;
       cursor: not-allowed;
@@ -905,7 +977,7 @@ onMounted(() => {
   }
 }
 
-/* Modal Styles */
+/* MODALS */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -932,13 +1004,14 @@ onMounted(() => {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-/* Confirmation Modal */
+/* CONFIRM MODAL */
 .modal-confirm {
   max-width: 400px;
   width: 100%;
@@ -978,12 +1051,17 @@ onMounted(() => {
     }
   }
 
+  .edit-section {
+    padding: 0 0 24px 0;
+    margin: 0 0 24px 0;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
   .confirm-actions {
     display: flex;
     gap: 12px;
 
-    .btn-cancel-confirm,
-    .btn-confirm-unban {
+    button {
       flex: 1;
       padding: 12px 16px;
       border: none;
@@ -1011,7 +1089,7 @@ onMounted(() => {
       }
     }
 
-    .btn-confirm-unban {
+    .btn-confirm-approve {
       background: linear-gradient(135deg, #10b981 0%, #059669 100%);
       color: white;
 
@@ -1024,19 +1102,36 @@ onMounted(() => {
         opacity: 0.6;
       }
     }
+
+    .btn-confirm-reject {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: white;
+
+      &:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(239, 68, 68, 0.4);
+      }
+
+      &:disabled {
+        opacity: 0.6;
+      }
+    }
   }
 }
 
 @keyframes bounce {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-8px);
   }
 }
 
-/* Detail Modal */
+/* DETAIL MODAL */
 .modal-detail {
   max-width: 600px;
   width: 100%;
@@ -1118,20 +1213,6 @@ onMounted(() => {
       gap: 8px;
     }
 
-    .btn-primary {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-
-      &:hover:not(:disabled) {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
-      }
-
-      &:disabled {
-        opacity: 0.6;
-      }
-    }
-
     .btn-success {
       background: linear-gradient(135deg, #10b981 0%, #059669 100%);
       color: white;
@@ -1139,6 +1220,20 @@ onMounted(() => {
       &:hover:not(:disabled) {
         transform: translateY(-2px);
         box-shadow: 0 8px 16px rgba(16, 185, 129, 0.4);
+      }
+
+      &:disabled {
+        opacity: 0.6;
+      }
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: white;
+
+      &:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(239, 68, 68, 0.4);
       }
 
       &:disabled {
@@ -1157,7 +1252,7 @@ onMounted(() => {
   }
 }
 
-/* Detail Row */
+/* DETAIL ROW */
 .detail-row {
   display: flex;
   flex-direction: column;
@@ -1198,8 +1293,7 @@ onMounted(() => {
   }
 }
 
-/* Form Inputs */
-.status-input,
+/* FORM INPUTS */
 .note-input {
   width: 100%;
   padding: 10px 12px;
@@ -1208,6 +1302,8 @@ onMounted(() => {
   font-size: 14px;
   font-family: inherit;
   transition: all 0.3s;
+  resize: vertical;
+  min-height: 80px;
 
   &:focus {
     outline: none;
@@ -1216,12 +1312,7 @@ onMounted(() => {
   }
 }
 
-.note-input {
-  resize: vertical;
-  min-height: 100px;
-}
-
-/* Animations */
+/* ANIMATIONS */
 .modal-fade-enter-active,
 .modal-fade-leave-active {
   transition: all 0.3s ease;
@@ -1258,7 +1349,7 @@ onMounted(() => {
   }
 }
 
-/* Responsive */
+/* RESPONSIVE */
 @media (max-width: 768px) {
   .page-container {
     padding: 16px;

@@ -8,6 +8,7 @@ import poly.edu.entity.Account;
 import poly.edu.service.AppealService;
 import poly.edu.service.NotificationService;
 import poly.edu.service.AccountService;
+import poly.edu.service.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +34,9 @@ public class AppealServiceImpl implements AppealService {
     @Autowired
     private AccountService accountService;
 
+    @Autowired
+    private EmailService emailService;
+
     @Override
     public AppealDTO createAppeal(String email, String reason, String ipAddress) {
         // Check rate limiting
@@ -57,8 +61,7 @@ public class AppealServiceImpl implements AppealService {
                         "appeal",
                         admin.getAccountID(),
                         null,
-                        "/admin/appeals"
-                );
+                        "/admin/appeals");
             }
         } catch (Exception e) {
             // Log error but don't fail the appeal creation
@@ -101,6 +104,18 @@ public class AppealServiceImpl implements AppealService {
         appeal.setUpdatedAt(LocalDateTime.now());
 
         Appeal updated = appealDAO.save(appeal);
+
+        // Send email notification based on status
+        try {
+            if ("Approved".equalsIgnoreCase(status) || "Rejected".equalsIgnoreCase(status)) {
+                emailService.sendAppealDecisionEmail(appeal.getEmail(), status);
+            }
+        } catch (Exception e) {
+            // Log error but don't fail the appeal update
+            System.err.println("Error sending appeal decision email: " + e.getMessage());
+            e.printStackTrace();
+        }
+
         return convertToDTO(updated);
     }
 
@@ -114,7 +129,8 @@ public class AppealServiceImpl implements AppealService {
                 .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại"));
 
         // 🔥 Gọi hàm unban 3 tham số.
-        // Vì đây là mở khóa tự động qua đơn Appeal, sếp có thể hardcode số 0 và "Hệ Thống"
+        // Vì đây là mở khóa tự động qua đơn Appeal, sếp có thể hardcode số 0 và "Hệ
+        // Thống"
         accountService.unban(account.getAccountID(), 0, "Hệ Thống (Đơn Khiếu Nại)");
 
         // Update appeal status to Resolved
@@ -122,8 +138,18 @@ public class AppealServiceImpl implements AppealService {
         appeal.setUpdatedAt(LocalDateTime.now());
         appealDAO.save(appeal);
 
+        // Send approval email
+        try {
+            emailService.sendAppealDecisionEmail(appeal.getEmail(), "Approved");
+        } catch (Exception e) {
+            // Log error but don't fail the unban operation
+            System.err.println("Error sending approval email: " + e.getMessage());
+            e.printStackTrace();
+        }
+
         return true;
     }
+
     @Override
     public Optional<AppealDTO> getAppealStatusByEmail(String email) {
         return appealDAO.findByEmail(email)

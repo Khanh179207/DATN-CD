@@ -410,7 +410,7 @@ CREATE TABLE Notification (
   		AppealID        INT IDENTITY(1,1) PRIMARY KEY,
   		Email           NVARCHAR(254) NOT NULL,
   		Reason          NVARCHAR(MAX) NOT NULL,
-  		Status          NVARCHAR(50) NOT NULL DEFAULT 'Pending', -- Pending, Review, Resolved, Rejected
+  		Status          NVARCHAR(50) NOT NULL DEFAULT 'Pending', -- Pending, Resolved, Rejected
   		CreatedAt       DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
   		UpdatedAt       DATETIME2 NULL,
   		CreatedByIP     NVARCHAR(45) NULL,
