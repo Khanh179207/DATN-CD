@@ -29,10 +29,17 @@ export const checkFavorite = (accountID, postID) =>
 
 
 export const checkFollow = (followerID, followeeID) =>
-  api.get('/api/follows/check', { params: { followerID, followeeID } }).then(r => r.data)
+  api.get('/api/follows/check', { params: { followerID, followeeID } })
+     .then(res => res.data?.isFollowing ?? false)
 
 export const follow = (followerID, followeeID) =>
   api.post('/api/follows', null, { params: { followerID, followeeID } })
+     .then(res => res.data)
 
 export const unfollow = (followerID, followeeID) =>
   api.delete('/api/follows', { params: { followerID, followeeID } })
+     .then(res => res.data)
+
+export const getMyFollows = (followerID) =>
+  api.get('/api/follows/my-follows', { params: { followerID } })
+     .then(res => res.data)

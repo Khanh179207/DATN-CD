@@ -206,10 +206,11 @@ GO
 		FolloweeID INT NOT NULL,
 		Status INT DEFAULT 0,
 		FollowedAt DATETIME DEFAULT GETDATE(),
-		UnFollowedAt DATETIME,
 
 		CONSTRAINT FK_Follow_Follower FOREIGN KEY (FollowerID) REFERENCES Account(AccountID),
 		CONSTRAINT FK_Follow_Followee FOREIGN KEY (FolloweeID) REFERENCES Account(AccountID)
+		-- RÀNG BUỘC MỚI: Đảm bảo một cặp (Follower, Followee) chỉ xuất hiện 1 lần duy nhất
+        CONSTRAINT UQ_Follower_Followee UNIQUE (FollowerID, FolloweeID)
 	);
 	GO
 
@@ -404,7 +405,6 @@ CREATE TABLE Notification (
 		AdminID INT NULL,
 		AdminName NVARCHAR(255) NULL,
 		AdminNote NVARCHAR(MAX) NULL, -- Để Admin phản hồi Bug/Góp ý
-GO
     
 		CONSTRAINT FK_Ticket_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
 		CONSTRAINT FK_Ticket_Post FOREIGN KEY (TargetPostID) REFERENCES Post(PostID)

@@ -21,6 +21,7 @@ public class PublicPostDTO {
     private Integer authorID;
     private String authorName;
     private String authorAvatar;
+    private Boolean isPremium;
 
     // Category
     private Integer categoryID;
