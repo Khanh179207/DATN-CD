@@ -382,6 +382,9 @@ async function fetchPostsRaw() {
         _level: dto.level || dto.Level || normPost.level,
         _cookingTime: dto.cookingTime || dto.CookingTime || normPost.cookingTime || 0,
         _categoryID: dto.categoryID || dto.CategoryID || normPost.categoryID,
+        // ĐỒNG BỘ CÁC TRƯỜNG DỮ LIỆU ĐỂ CARD HIỂN THỊ ĐẸP NHƯ TRANG CHỦ
+        authorID: dto.authorID || dto.accountID || normPost.authorID, 
+        isPremium: dto.isPremium || dto.IsPremium || normPost.isPremium || false, 
         createdAt: dto.createdAt || dto.CreatedAt || dto.date || dto.Date || new Date().toISOString(), 
         likes: dto.likes ?? dto.Likes ?? dto.likeCount ?? dto.favoriteCount ?? 0,
         _videoUrl: dto.videoUrl || dto.VideoUrl || dto.video || dto.Video || normPost.video || null,
