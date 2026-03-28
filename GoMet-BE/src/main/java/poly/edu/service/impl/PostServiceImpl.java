@@ -7,15 +7,14 @@ import poly.edu.dao.AccountDAO;
 import poly.edu.dao.CategoryDAO;
 import poly.edu.dao.PostDAO;
 import poly.edu.dao.CookingStepsDAO;
-import poly.edu.dao.BlacklistWordDAO;
 import poly.edu.dto.PostDTO;
 import poly.edu.dto.StepRequestDTO;
 import poly.edu.entity.Account;
 import poly.edu.entity.Category;
 import poly.edu.entity.Post;
 import poly.edu.entity.CookingSteps;
-import poly.edu.entity.BlacklistWord;
 import poly.edu.service.PostService;
+import poly.edu.service.BlacklistService; // 🔥 Đã Import Service xịn
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -30,7 +29,7 @@ public class PostServiceImpl implements PostService {
     private final CategoryDAO categoryDAO;
     private final AccountDAO accountDAO;
     private final CookingStepsDAO cookingStepsDAO;
-    private final BlacklistWordDAO blacklistWordDAO;
+    private final BlacklistService blacklistService; // 🔥 Đã thay BlacklistWordDAO bằng Service
 
     @Override
     public List<PostDTO> getPostsByAccountId(Integer accountId) {
@@ -53,29 +52,39 @@ public class PostServiceImpl implements PostService {
         Account acc = accountDAO.findById(postDTO.getAccountID())
                 .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại!"));
 
-        // 🛡️ TẦNG 1: RATE LIMITING (CHỐNG SPAM)
+        // 🛡️ TẦNG 1: RATE LIMITING (CHỐNG SPAM) - 🔥 Đã sửa tính bằng GIÂY
         // Quy tắc: Chỉ chặn User thường và Premium. Admin được đăng liên tục.
         if (acc.getIsAdmin() != 1) {
             List<Post> lastPosts = postDAO.findByAccount_AccountIDOrderByCreatedAtDesc(acc.getAccountID());
             if (!lastPosts.isEmpty() && lastPosts.get(0).getCreatedAt() != null) {
-                long minutes = Duration.between(lastPosts.get(0).getCreatedAt(), LocalDateTime.now()).toMinutes();
-                if (minutes < 3) {
-                    throw new RuntimeException("Hệ thống chống Spam: Sếp đăng bài quá nhanh! Vui lòng đợi " + (3 - minutes) + " phút nữa.");
+                long seconds = Duration.between(lastPosts.get(0).getCreatedAt(), LocalDateTime.now()).getSeconds();
+                if (seconds < 180) { // 180 giây = 3 phút
+                    long waitTime = 180 - seconds;
+                    throw new RuntimeException("Hệ thống chống Spam: Sếp đăng bài quá nhanh! Vui lòng đợi " + waitTime + " giây nữa.");
                 }
             }
         }
 
-        // 🛡️ TẦNG 2: BỘ LỌC TỪ KHÓA (BLACKLIST)
-        String contentToCheck = (postDTO.getTitle() + " " + postDTO.getDescription() + " " + postDTO.getIngredients()).toLowerCase();
-        List<BlacklistWord> badWords = blacklistWordDAO.findAll();
-        for (BlacklistWord bw : badWords) {
-            if (contentToCheck.contains(bw.getWord().toLowerCase())) {
-                throw new RuntimeException("Vi phạm tiêu chuẩn: Nội dung chứa từ khóa bị cấm (" + bw.getWord() + ").");
+        // 🛡️ TẦNG 2: BỘ LỌC TỪ KHÓA (BLACKLIST) - 🔥 Đã tối ưu tốc độ bằng RAM Cache
+        StringBuilder contentToCheck = new StringBuilder();
+        contentToCheck.append(postDTO.getTitle()).append(" ")
+                .append(postDTO.getDescription()).append(" ")
+                .append(postDTO.getIngredients());
+
+        // Cẩn thận gom luôn cả các bước nấu ăn vào để check 1 thể
+        if (postDTO.getSteps() != null) {
+            for (StepRequestDTO step : postDTO.getSteps()) {
+                contentToCheck.append(" ").append(step.getDesc());
             }
         }
 
+        // Gọi thẳng hàm siêu tốc từ Service
+        if (blacklistService.containsBadWord(contentToCheck.toString())) {
+            throw new RuntimeException("Vi phạm tiêu chuẩn: Nội dung bài viết chứa từ khóa bị cấm.");
+        }
+
         // 🛡️ TẦNG 3: ĐẶC QUYỀN DUYỆT BÀI
-        // Quy tắc: Admin và Premium được duyệt thẳng.
+        // Quy tắc: Admin và Premium được duyệt thẳng. (Giữ nguyên 100% của sếp)
         int autoApprove = (acc.getIsAdmin() == 1 || acc.getIsPremium() == 1) ? 1 : 0;
 
         // BẮT ĐẦU LƯU

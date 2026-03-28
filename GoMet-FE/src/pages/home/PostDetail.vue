@@ -57,19 +57,19 @@
                   
                   <div class="rating-selector" v-if="!hasUserRated">
                     <span class="prompt-text">Bạn chấm món này mấy sao?</span>
-<div class="star-rating-input" @mouseleave="hoverRating = 0">
-  <span 
-    v-for="star in 5" 
-    :key="star" 
-    @click="userRating = star"
-    @mouseenter="hoverRating = star"
-    :class="{ active: star <= (hoverRating > 0 ? hoverRating : userRating) }"
-  >
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-    </svg>
-  </span>
-</div>
+                    <div class="star-rating-input" @mouseleave="hoverRating = 0">
+                      <span 
+                        v-for="star in 5" 
+                        :key="star" 
+                        @click="userRating = star"
+                        @mouseenter="hoverRating = star"
+                        :class="{ active: star <= (hoverRating > 0 ? hoverRating : userRating) }"
+                      >
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                      </span>
+                    </div>
                   </div>
 
                   <div class="rating-selector locked" v-else>
@@ -350,11 +350,12 @@ async function loadPost(id) {
 const checkContentPolicy = async (text) => {
   if (!text) return false;
   try {
-    const res = await axios.post('http://localhost:8080/api/admin/blacklist/check', { content: text });
+    // 🔥 Sửa lại đường dẫn này: Bỏ chữ 'admin' đi
+    const res = await axios.post('http://localhost:8080/api/blacklist/check', { content: text });
     return res.data.hasBadWord; 
   } catch (error) {
     console.warn("Lỗi kiểm duyệt nội dung:", error);
-    return false;
+    return false; // Nếu BE sập thì tạm cho qua (hoặc sếp có thể return true để chặn luôn)
   }
 };
 
@@ -372,12 +373,11 @@ const submitComment = async () => {
   
   isUploading.value = true
 
-  // Kiểm tra từ khóa cấm ở Frontend
+  // 🔥 TÍNH NĂNG CHUYỂN ĐỔI BAD WORD
   const isViolating = await checkContentPolicy(content);
   if (isViolating) {
-    toast.error('Bình luận vi phạm tiêu chuẩn cộng đồng!');
-    isUploading.value = false;
-    return;
+    content = "chỉ cần bạn đăng bài, ngon hay dở không quan trong!";
+    toast.info("Bình luận của bạn đã được hệ thống tự động làm sạch!");
   }
 
   try {
@@ -410,11 +410,11 @@ const handleSubmitReply = async ({ parentId, content }) => {
   if (!textContent || !textContent.trim()) return
   if (!authStore.isAuthenticated) { toast.warn('Vui lòng đăng nhập!'); return }
 
-  // Kiểm tra từ khóa cấm cho các Phản hồi (Reply)
+  // 🔥 TÍNH NĂNG CHUYỂN ĐỔI BAD WORD CHO REPLY
   const isViolating = await checkContentPolicy(textContent);
   if (isViolating) {
-    toast.error('Nội dung vi phạm tiêu chuẩn cộng đồng!');
-    return;
+    textContent = "chỉ cần bạn đăng bài, ngon hay dở không quan trong!";
+    toast.info("Nội dung của bạn đã được hệ thống tự động làm sạch!");
   }
 
   try {
