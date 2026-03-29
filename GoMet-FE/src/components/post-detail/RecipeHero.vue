@@ -49,7 +49,7 @@
             </div>
             <div class="stat-info">
               <span class="s-label">ĐÁNH GIÁ</span>
-              <span class="s-val">{{ post.avgRating > 0 ? Number(post.avgRating).toFixed(1) : 'Mới' }} ({{ post.ratingCount || 0 }})</span>
+              <span class="s-val">{{ displayAvgRating }} ({{ displayRatingCount }})</span>
             </div>
           </div>
         </div>
@@ -157,7 +157,17 @@ import { addFavorite, removeFavorite, checkFavorite } from '@/services/socialSer
 import { togglePostLike, checkPostLiked } from '@/services/likeService' 
 import FeedbackModal from '@/components/modals/FeedbackModal.vue'
 
-const props = defineProps({ post: { type: Object, required: true } })
+const props = defineProps({ 
+  post: { type: Object, required: true },
+  displayAvgRating: {
+    type: [String, Number],
+    default: 'Mới'
+  },
+  displayRatingCount: {
+    type: Number,
+    default: 0
+  }
+})
 const router = useRouter()
 const authStore = useAuthStore()
 

@@ -19,7 +19,6 @@ import ComparePage from '@/pages/compare/ComparePage.vue'
 
 // 🚀 NEW PREMIUM FEATURES RECENTLY ADDED
 import Leaderboard from '@/pages/Leaderboard.vue'
-// Note: If the two files below haven't been created yet, create empty placeholder files in the pages folder to avoid import errors
 import Suggestions from '@/pages/suggestions/SuggestionsPage.vue'
 import MealPlan from '@/pages/mealplan/MealPlanPage.vue'
 import TermsAndPolicy from '@/pages/terms/TermsAndPolicy.vue'
@@ -38,10 +37,11 @@ import EventManagement from '@/pages/admin/eventadmin/EventManagement.vue'
 import PostEventManagement from '@/pages/admin/eventadmin/PostEventManagement.vue'
 import AppealManagement from '@/pages/admin/AppealManagement.vue'
 import BlacklistManagement from '@/pages/admin/BlacklistManagement.vue'
-
-// 🔥 IMPORT TRANG QUẢN LÝ GIAO DỊCH VÀ NHẬT KÝ HỆ THỐNG Ở ĐÂY
 import TransactionManagement from '@/pages/admin/TransactionManagement.vue'
-import SystemLogs from '@/pages/admin/SystemLogs.vue' // <--- ĐÃ THÊM DÒNG NÀY
+
+// 🔥 IMPORT CÁC TRANG HỆ THỐNG
+import SystemLogs from '@/pages/admin/SystemLogs.vue' 
+import SystemSettings from '@/pages/admin/SystemSettings.vue' // <--- THÊM TRANG VẬN HÀNH HỆ THỐNG VÀO ĐÂY
 
 const routes = [
   // 1. LANDING PAGE
@@ -80,7 +80,7 @@ const routes = [
       },
 
       // ✅ Events Routes
-      { path: 'events', name: 'Events', component: EventList }, // Danh sách sự kiện thì cho xem thoải mái
+      { path: 'events', name: 'Events', component: EventList }, 
 
       // 🔒 KHÓA: Xem chi tiết sự kiện phải đăng nhập
       {
@@ -102,19 +102,19 @@ const routes = [
         path: 'profile',
         name: 'Profile',
         component: ProfilePage,
-        meta: { requiresAuth: true } // Em khóa luôn trang cá nhân lại cho hợp logic
+        meta: { requiresAuth: true } 
       },
       {
         path: 'profile/:id',
         name: 'ProfileById',
         component: ProfilePage,
-        meta: { requiresAuth: true } // Khóa luôn xem trang cá nhân người khác
+        meta: { requiresAuth: true } 
       },
       {
         path: 'storage',
         name: 'Storage',
         component: () => import('@/pages/storage/StoragePage.vue'),
-        meta: { requiresAuth: true } // Khóa luôn Kho lưu trữ
+        meta: { requiresAuth: true } 
       },
 
       // ✅ Compare Routes
@@ -167,7 +167,8 @@ const routes = [
       { path: 'appeals', name: 'AdminAppeals', component: AppealManagement },
       { path: 'blacklist', name: 'AdminBlacklist', component: BlacklistManagement },
       { path: 'transactions', name: 'AdminTransactions', component: TransactionManagement },
-      { path: 'system-logs', name: 'AdminSystemLogs', component: SystemLogs } // <--- Đã sửa lại path cho chuẩn URL (thường dùng chữ thường phân cách gạch ngang)
+      { path: 'system-logs', name: 'AdminSystemLogs', component: SystemLogs },
+      { path: 'system-settings', name: 'AdminSystemSettings', component: SystemSettings } // <--- KHAI BÁO TRANG VẬN HÀNH HỆ THỐNG Ở ĐÂY
     ]
   },
 
@@ -221,7 +222,7 @@ router.beforeEach((to, from, next) => {
   const isAdmin = isLoggedIn && (
     String(user?.isAdmin) === "true" ||
     String(user?.isAdmin) === "1" ||
-    user?.role === 'ADMIN' // Đổi chỗ này thành ADMIN viết hoa cho chuẩn với code sếp đang dùng
+    user?.role === 'ADMIN' 
   )
 
   // 1. Admin-only routes: must be logged in AND be an admin

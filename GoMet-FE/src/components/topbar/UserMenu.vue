@@ -15,7 +15,7 @@
 
     <div v-show="isOpen && authStore.user" class="luxury-compact-dropdown" ref="dropdownPanel">
       
-      <div class="user-header-luxury" :class="{ 'header-premium': isPremiumUser, 'header-admin': isAdminUser }">
+      <div class="user-header-luxury" :class="{ 'header-premium': isPremiumUser, 'header-admin': isAdminUser, 'header-holiday': isHolidayEventActive && !isPremiumUser && !isAdminUser }">
         <div class="header-visual-effect"></div> 
         <div class="header-info-content">
           <div class="header-avt-mini-wrap" :class="{ 'vip-border': isPremiumUser }">
@@ -25,7 +25,7 @@
 
           <div class="header-text-data">
             <div class="user-name-luxury">
-              {{ authStore.user?.name || authStore.user?.username }}
+              <span class="name-truncate">{{ authStore.user?.name || authStore.user?.username }}</span>
               <svg v-if="isPremiumUser" class="vip-verify" viewBox="0 0 24 24" fill="#FCD34D">
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14l-5-4.87 6.91-1.01L12 2z"/>
               </svg>
@@ -35,10 +35,10 @@
             
             <!-- START: Daily View Limit -->
             <div v-if="!isPremiumUser && !isAdminUser" class="daily-view-limit-info">
-              <span class="limit-label">Lượt xem hôm nay:</span>
-              <span class="limit-count">{{ remainingViews }}/3</span>
-              <!-- Nút Reset dành cho Demo -->
-              <button @click.stop="authStore.resetViews" class="btn-reset-views-demo" title="Reset (Demo)">
+              <span class="limit-label">{{ isHolidayEventActive ? 'Sự kiện :' : 'Lượt xem hôm nay:' }}</span>
+              <span class="limit-count" :class="{ 'text-pink': isHolidayEventActive }">{{ isHolidayEventActive ? 'truy cập thả ga' : `${remainingViews}/3` }}</span>
+              
+              <button v-if="!isHolidayEventActive" @click.stop="authStore.resetViews" class="btn-reset-views-demo" title="Reset (Demo)">
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
               </button>
             </div>
@@ -110,7 +110,7 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { toast } from '@/composables/useToast' // 👈 Thêm import toast
@@ -124,7 +124,7 @@ const router = useRouter()
 const isOpen = ref(false)
 
 /* START: Daily View Limit */
-const { remainingViews } = usePostViewLimit()
+const { remainingViews, isHolidayEventActive, checkGlobalHolidayStatus } = usePostViewLimit()
 /* END: Daily View Limit */
 
 const dropdownPanel = ref(null)
@@ -132,6 +132,11 @@ const avatarCircle = ref(null)
 
 // --- EMITS ---
 const emit = defineEmits(['open-premium', 'open-support', 'switch-account'])
+
+// Lấy trạng thái cấu hình hệ thống ngay khi User Menu được render
+onMounted(() => {
+  checkGlobalHolidayStatus()
+})
 
 // --- GSAP ANIMATIONS ---
 const handleToggle = async () => {
@@ -217,7 +222,7 @@ const handleLogout = async () => {
 // --- DROPDOWN Luxury Panel ---
 .luxury-compact-dropdown {
   position: absolute; top: calc(100% + 12px); right: 0;
-  width: 260px; background: rgba(255, 255, 255, 0.98);
+  width: 280px; max-width: calc(100vw - 32px); background: rgba(255, 255, 255, 0.98);
   backdrop-filter: blur(15px); border-radius: 20px;
   border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.18);
   z-index: 1000; overflow: hidden;
@@ -242,13 +247,20 @@ const handleLogout = async () => {
   }
 
   .header-text-data {
+    flex: 1;
+    min-width: 0; /* Ngăn chặn overflow để text-overflow: ellipsis hoạt động */
+
     .user-name-luxury { 
       font-weight: 800; font-size: 15px; color: #0f172a; 
       display: flex; align-items: center; gap: 4px;
-      .vip-verify { width: 14px; height: 14px; }
+      .name-truncate {
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      .vip-verify { width: 14px; height: 14px; flex-shrink: 0; }
     }
-    .user-email-pro { font-size: 11px; color: #64748b; margin-top: 1px; word-break: break-all; font-weight: 500; }
-    .user-id-badge { font-size: 9px; color: #94a3b8; font-weight: 700; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    .user-email-pro { font-size: 11px; color: #64748b; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+    .user-id-badge { font-size: 9px; color: #94a3b8; font-weight: 700; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     
     /* START: Daily View Limit Styles */
     .daily-view-limit-info {
@@ -260,9 +272,12 @@ const handleLogout = async () => {
       align-items: center;
       gap: 6px;
       border: 1px solid rgba(234, 88, 12, 0.2);
+      max-width: 100%;
+      overflow: hidden;
       
-      .limit-label { font-size: 10px; color: #64748b; font-weight: 600; }
-      .limit-count { font-size: 11px; color: #EA580C; font-weight: 800; }
+      .limit-label { font-size: 10px; color: #64748b; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .limit-count { font-size: 11px; color: #EA580C; font-weight: 800; white-space: nowrap; flex-shrink: 0; }
+      .limit-count.text-pink { color: #db2777; font-size: 12px; }
       
       .btn-reset-views-demo {
         background: none; border: none; padding: 2px; margin-left: 4px;
@@ -290,6 +305,15 @@ const handleLogout = async () => {
     .user-name-luxury { color: #f8fafc !important; }
     .user-email-pro { color: #94a3b8 !important; }
     .user-id-badge { color: #4338ca !important; }
+  }
+
+  /* 🔥 HIGHLIGHT KHI CÓ SỰ KIỆN MIỄN PHÍ (HOLIDAY MODE) */
+  &.header-holiday {
+    background: linear-gradient(135deg, #fdf2f8 0%, #fff1f2 100%);
+    border-bottom: 2px solid #fbcfe8;
+    .header-visual-effect { background-image: radial-gradient(#f9a8d4 1px, transparent 1px); background-size: 10px 10px; opacity: 0.3; }
+    .user-name-luxury { color: #be185d !important; text-shadow: 0 0 10px rgba(219, 39, 119, 0.2); }
+    .daily-view-limit-info { background: white; border-color: #fbcfe8; box-shadow: 0 4px 10px rgba(219, 39, 119, 0.1); }
   }
 }
 

@@ -267,6 +267,7 @@ const fetchExpiryDate = async () => {
 // 🔥 THEO DÕI KHI MỞ MODAL ĐỂ ĐIỀU HƯỚNG VÀ LẤY DỮ LIỆU
 watch(() => props.isOpen, (newVal) => {
   if (newVal) {
+    fetchDynamicPricing(); // 🔥 Gọi API cập nhật bảng giá mỗi khi bật Modal lên
     if (isPremiumUser.value) {
       paymentStep.value = 'manage';
       fetchExpiryDate(); // Lấy ngày thật khi mở bảng quản lý
@@ -326,21 +327,43 @@ onUnmounted(() => {
 })
 
 const selectedPlan = ref('yearly')
-const plans = [
+// 🔥 Chuyển danh sách plans thành biến ref để có thể cập nhật giá động
+const plans = ref([
   { id: 'test', name: 'Gói Test 10s', desc: 'Dành cho Dev test luồng', price: 1000, unit: '10 giây', tag: 'DEV MODE' },
-  { id: 'monthly', name: 'Gói Tháng', desc: 'Trải nghiệm linh hoạt', price: 25000, unit: 'tháng' },
-  { id: 'yearly', name: 'Gói Năm', desc: 'Sử dụng bền vững', price: 100000, unit: 'năm', tag: 'TIẾTKIỆM' },
-  { id: 'lifetime', name: 'Trọn Đời', desc: 'Mua 1 lần, dùng mãi mãi', price: 1000000, tag: 'BEST VALUE' }
-]
+  { id: 'monthly', name: 'Gói 1 Tháng', desc: 'Trải nghiệm linh hoạt', price: 49000, unit: 'tháng' },
+  { id: 'yearly', name: 'Gói 1 Năm', desc: 'Sử dụng bền vững', price: 399000, unit: 'năm', tag: 'TIẾT KIỆM' },
+  { id: 'lifetime', name: 'Gói Vĩnh Viễn', desc: 'Mua 1 lần dùng mãi mãi', price: 999000, unit: 'vĩnh viễn', tag: 'PREMIUM VIP' },
+])
 
-const activePlanData = computed(() => plans.find(p => p.id === selectedPlan.value))
+// 🔥 HÀM FETCH BẢNG GIÁ TỪ HỆ THỐNG
+const fetchDynamicPricing = async () => {
+  try {
+    const res = await api.get('/api/system-config')
+    const configs = Array.isArray(res.data) ? res.data : (res.data?.data || [])
+
+    const getPrice = (key, defaultPrice) => {
+      const item = configs.find(c => (c.configKey || c.ConfigKey) === key)
+      return item && !isNaN(item.configValue || item.ConfigValue) ? Number(item.configValue || item.ConfigValue) : defaultPrice
+    }
+
+    // Cập nhật giá động vào biến plans tương ứng với index
+    plans.value[1].price = getPrice('PREMIUM_PRICE_1_MONTH', 49000);
+    plans.value[2].price = getPrice('PREMIUM_PRICE_12_MONTHS', 399000);
+    plans.value[3].price = getPrice('PREMIUM_PRICE_LIFETIME', 999000);
+  } catch (error) {
+    console.warn("Lấy bảng giá động thất bại, dùng giá mặc định.", error);
+  }
+}
+
+const activePlanData = computed(() => plans.value.find(p => p.id === selectedPlan.value))
 const formatPrice = (price) => price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
 
 const getPlanTypeInt = (id) => {
   if (id === 'test') return 0;
   if (id === 'monthly') return 1;
   if (id === 'yearly') return 2;
-  return 3;
+  if (id === 'lifetime') return 3;
+  return 2;
 }
 
 const features = [

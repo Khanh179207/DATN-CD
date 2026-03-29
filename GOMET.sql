@@ -1,3 +1,4 @@
+
 -- Bước 1: Trở về database master (Bắt buộc)
 	USE master;
 	GO
@@ -10,7 +11,6 @@ BEGIN
     DROP DATABASE DATN_CD;
 END
 GO
-
 	
 	-- Bước 3: Khởi tạo lại Database
 	CREATE DATABASE DATN_CD;
@@ -200,18 +200,26 @@ GO
 	);
 	GO
 
-	CREATE TABLE Follow (
+CREATE TABLE Follow (
 		FollowID INT IDENTITY(1,1) PRIMARY KEY,
 		FollowerID INT NOT NULL,
 		FolloweeID INT NOT NULL,
 		Status INT DEFAULT 0,
 		FollowedAt DATETIME DEFAULT GETDATE(),
-		UnFollowedAt DATETIME,
 
 		CONSTRAINT FK_Follow_Follower FOREIGN KEY (FollowerID) REFERENCES Account(AccountID),
+<<<<<<< HEAD
+		CONSTRAINT FK_Follow_Followee FOREIGN KEY (FolloweeID) REFERENCES Account(AccountID),
+		-- RÀNG BUỘC MỚI: Đảm bảo một cặp (Follower, Followee) chỉ xuất hiện 1 lần duy nhất
+        CONSTRAINT UQ_Follower_Followee UNIQUE (FollowerID, FolloweeID)
+	)
+=======
 		CONSTRAINT FK_Follow_Followee FOREIGN KEY (FolloweeID) REFERENCES Account(AccountID)
+		-- RÀNG BUỘC MỚI: Đảm bảo một cặp (Follower, Followee) chỉ xuất hiện 1 lần duy nhất
+        CONSTRAINT UQ_Follower_Followee UNIQUE (FollowerID, FolloweeID)
 	);
 	GO
+>>>>>>> 5331a3591171cbc42bf9ddb16625bca68f4348ae
 
 	-- ==========================================
 	-- 4. NHÓM CHỨC NĂNG NGƯỜI DÙNG & TIỆN ÍCH
@@ -404,7 +412,10 @@ CREATE TABLE Notification (
 		AdminID INT NULL,
 		AdminName NVARCHAR(255) NULL,
 		AdminNote NVARCHAR(MAX) NULL, -- Để Admin phản hồi Bug/Góp ý
-GO
+<<<<<<< HEAD
+
+=======
+>>>>>>> 5331a3591171cbc42bf9ddb16625bca68f4348ae
     
 		CONSTRAINT FK_Ticket_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
 		CONSTRAINT FK_Ticket_Post FOREIGN KEY (TargetPostID) REFERENCES Post(PostID)
@@ -492,20 +503,9 @@ GO
 	END;
 	GO
 
-	-- ==========================================
-	-- 7. DỮ LIỆU MẪU (MOCK DATA) ĐÃ CẬP NHẬT
-	-- ==========================================
 
--- ==========================================================
--- BỘ DỮ LIỆU MẪU ĐỒ SỘ CHO DỰ ÁN GOMET KITCHEN (DATN_CD)
--- Thiết kế: Dành cho Review dự án (Demo Ready)
--- ==========================================================
 
-USE DATN_CD;
-GO
 
--- Xóa dữ liệu cũ để tránh trùng lặp nếu chạy lại (Tùy chọn)
--- DELETE FROM Ticket; DELETE FROM Message; DELETE FROM Conversation; ...
 
 -- 1. DỮ LIỆU TÀI KHOẢN (Đa dạng phân quyền)
 -- ==========================================================
@@ -575,7 +575,7 @@ GO
 INSERT INTO Likes (AccountID, PostID) VALUES (1, 1), (3, 1), (4, 1), (5, 1), (2, 2);
 INSERT INTO CommentLike (AccountID, CommentID) VALUES (1, 1), (2, 1);
 INSERT INTO Favorite (AccountID, PostID) VALUES (3, 1), (4, 2), (3, 3);
-INSERT INTO Follow (FollowerID, FolloweeID, Status) VALUES (3, 2, 1), (4, 2, 1), (5, 3, 1);
+
 
 -- Bài tham gia sự kiện
 INSERT INTO EventPosts (EventID, PostID, VoteCount) VALUES (1, 2, 15), (2, 4, 10);
@@ -633,6 +633,29 @@ GO
 
 
 
+INSERT INTO SystemConfig (ConfigKey, ConfigValue, ConfigGroup, Description, UpdatedAt)
+VALUES 
+-- Bài viết nổi bật
+('HERO_POST_1', '9', 'SYSTEM', N'ID bài viết nổi bật vị trí 1', GETDATE()),
+('HERO_POST_2', '12', 'SYSTEM', N'ID bài viết nổi bật vị trí 2', GETDATE()),
+('HERO_POST_3', '1', 'SYSTEM', N'ID bài viết nổi bật vị trí 3', GETDATE()),
+
+-- Bảng giá Premium
+('PREMIUM_PRICE_1_MONTH', '50000', 'PRICING', N'Giá gói Premium 1 Tháng', GETDATE()),
+('PREMIUM_PRICE_12_MONTHS', '500000', 'PRICING', N'Giá gói Premium 1 Năm', GETDATE()),
+('PREMIUM_PRICE_LIFETIME', '999000', 'PRICING', N'Giá gói Premium Vĩnh Viễn', GETDATE()),
+
+-- Vận hành & Sự kiện (Hybrid)
+('FREE_ACCESS_EVENT', 'FALSE', 'SYSTEM', N'Nút gạt cưỡng bức: TRUE để mở khóa MIỄN PHÍ ngay lập tức', GETDATE()),
+('HOLIDAY_START', '2026-04-30T00:00', 'SYSTEM', N'Thời gian bắt đầu tự động mở khóa (YYYY-MM-DDTHH:mm)', GETDATE()),
+('HOLIDAY_END', '2026-05-01T23:59', 'SYSTEM', N'Thời gian kết thúc tự động mở khóa (YYYY-MM-DDTHH:mm)', GETDATE()),
+
+-- Quảng cáo Popup
+('ADS_BANNER_IMG', 'https://res.cloudinary.com/drblrjxan/image/upload/v1/system/ads_default.jpg', 'ADS', N'Link ảnh Banner quảng cáo Popup', GETDATE()),
+('ADS_TARGET_URL', 'https://gomet.id.vn/premium-info', 'ADS', N'Đường dẫn khi User click vào ảnh quảng cáo', GETDATE());
+GO
+
+SELECT * FROM SystemConfig ORDER BY ConfigGroup;
 	SELECT * FROM Post;
 
 	SELECT * FROM Cookingsteps;
@@ -656,3 +679,8 @@ GO
 	SELECT * FROM Appeals;
 	
 	SELECT * FROM ModerationLog;
+<<<<<<< HEAD
+
+	SELECT * FROM SystemConfig;
+=======
+>>>>>>> 5331a3591171cbc42bf9ddb16625bca68f4348ae

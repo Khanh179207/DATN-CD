@@ -206,6 +206,7 @@ public class PostController {
             dto.setAuthorID(p.getAccount().getAccountID());
             dto.setAuthorName(p.getAccount().getUsername());
             dto.setAuthorAvatar(p.getAccount().getAvatar());
+            dto.setIsPremium(p.getAccount().getIsPremium() == 1);
         }
         if (p.getCategory() != null) {
             dto.setCategoryID(p.getCategory().getCategoryID());

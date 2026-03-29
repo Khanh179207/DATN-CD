@@ -26,7 +26,11 @@
     <template v-else>
       <div class="post-content-wrapper fade-in">
         
-        <RecipeHero :post="post" />
+        <RecipeHero 
+          :post="post"
+          :display-avg-rating="displayAvgRating"
+          :display-rating-count="displayRatingCount"
+        />
         <RecipeInformation :post="post" />
         
         <div class="author-full-width-section">
@@ -147,7 +151,6 @@
 <script setup>
 import { ref, watch, onMounted, computed, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import axios from 'axios'
 import { toast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
 
@@ -160,6 +163,7 @@ import RecipeComments from '@/components/post-detail/RecipeComments.vue'
 import RelatedSuggestions from '@/components/post-detail/RelatedSuggestions.vue'
 
 // --- IMPORT SERVICES ---
+import api from '@/services/api'
 import { getPostById, getRelatedPosts, normalizePost } from '@/services/postService'
 import { uploadMedia } from '@/services/uploadService'
 import { recordHistory } from '@/services/interactionService'
@@ -183,6 +187,7 @@ const relatedPosts = ref([])
 // --- STATE QUẢN LÝ COMMENTS & FORM ---
 const rawCommentsList = ref([])
 const isCommentsLoading = ref(false)
+const hasFetchedComments = ref(false)
 const commentInputRef = ref(null)
 const newComment = ref('')
 const userRating = ref(0)
@@ -202,11 +207,31 @@ const currentUserReview = computed(() => {
 const hasUserRated = computed(() => !!currentUserReview.value);
 const ratedComments = computed(() => rawCommentsList.value.filter(c => c.rating > 0))
 
+// --- TÌM ĐẾN DÒNG 207 VÀ THAY THẾ CỤM COMPUTED RATING BẰNG ĐOẠN NÀY ---
 const avgRating = computed(() => {
   if (!ratedComments.value.length) return 0
   const sum = ratedComments.value.reduce((acc, curr) => acc + curr.rating, 0)
   return (sum / ratedComments.value.length).toFixed(1)
 })
+
+const liveAvgRating = computed(() => {
+  if (hasFetchedComments.value && totalRatings.value > 0) {
+    return avgRating.value;
+  }
+  // Fallback lấy dữ liệu từ DB nếu chưa load xong hoặc danh sách bình luận (có rating) trống
+  return post.value?.avgRating > 0 ? Number(post.value.avgRating).toFixed(1) : 'Mới';
+})
+
+const liveRatingCount = computed(() => {
+  if (hasFetchedComments.value && totalRatings.value > 0) {
+    return totalRatings.value;
+  }
+  return post.value?.ratingCount || 0;
+})
+
+// Bí danh để giữ nguyên cấu trúc hiển thị của Template hiện tại
+const displayAvgRating = computed(() => liveAvgRating.value)
+const displayRatingCount = computed(() => liveRatingCount.value)
 
 const totalRatings = computed(() => ratedComments.value.length)
 
@@ -254,13 +279,14 @@ const fetchComments = async (postId) => {
   isCommentsLoading.value = true
   try {
     const uid = authStore.user?.accountID || authStore.user?.id || '';
-    const { data } = await axios.get(`http://localhost:8080/api/comments/post/${postId}`, { params: { currentAccountID: uid } });
+    const { data } = await api.get(`/api/comments/post/${postId}`, { params: { currentAccountID: uid } });
     rawCommentsList.value = Array.isArray(data) ? data : []
   } catch (err) {
     console.error('Lỗi tải bình luận:', err)
     rawCommentsList.value = []
   } finally {
     isCommentsLoading.value = false
+    hasFetchedComments.value = true
 
     // Cuộn đến và làm nổi bật bình luận nếu có hash trên URL
     const targetHash = route.hash || window.location.hash;
@@ -323,6 +349,7 @@ async function loadPost(id) {
       ratingCount: dto.ratingCount || 0,
       favoriteCount: dto.favoriteCount || 0,
       views: dto.views || 0,
+      isPremium: dto.isPremium || dto.IsPremium || false, // 🔥 THÊM CỜ PREMIUM CHO BÀI VIẾT CHÍNH
       steps: (dto.steps || []).map(s => ({
         stepNumber: s.stepNumber,
         desc: s.content || '',
@@ -332,7 +359,17 @@ async function loadPost(id) {
     }
 
     const related = await getRelatedPosts(id, 4)
-    relatedPosts.value = related.map(normalizePost)
+    
+    // 🔥 SỬA CHỖ NÀY: Giữ lại cờ isPremium cho các bài viết gợi ý (Sidebar)
+    relatedPosts.value = related.map(dto => {
+      const normPost = normalizePost(dto) || {};
+      return {
+        ...normPost,
+        authorID: dto.authorID || dto.accountID || normPost.authorID,
+        isPremium: dto.isPremium || dto.IsPremium || normPost.isPremium || false, // <--- Quan trọng nhất ở đây
+        likes: dto.likes ?? dto.Likes ?? dto.likeCount ?? dto.favoriteCount ?? 0
+      };
+    });
 
     await fetchComments(id)
 
@@ -350,15 +387,14 @@ async function loadPost(id) {
 const checkContentPolicy = async (text) => {
   if (!text) return false;
   try {
-    // 🔥 Sửa lại đường dẫn này: Bỏ chữ 'admin' đi
-    const res = await axios.post('http://localhost:8080/api/blacklist/check', { content: text });
+    // 🔥 Giữ code của sếp: Dùng 'api' thay vì hardcode localhost của ông bạn
+    const res = await api.post('/api/blacklist/check', { content: text });
     return res.data.hasBadWord; 
   } catch (error) {
     console.warn("Lỗi kiểm duyệt nội dung:", error);
-    return false; // Nếu BE sập thì tạm cho qua (hoặc sếp có thể return true để chặn luôn)
+    return false; // Nếu BE sập thì tạm cho qua
   }
 };
-
 // --- LOGIC API ---
 const submitComment = async () => {
   let content = newComment.value.trim()
@@ -395,7 +431,7 @@ const submitComment = async () => {
       imageUrls: imageUrls
     };
 
-    await axios.post('http://localhost:8080/api/comments', payload);
+    await api.post('/api/comments', payload);
     clearForm(); 
     await fetchComments(postID); 
     toast.success('Đã gửi đánh giá thành công!');
@@ -422,7 +458,7 @@ const handleSubmitReply = async ({ parentId, content }) => {
       postID: post.value?.postID || post.value?.id, accountID: authStore.user.accountID || authStore.user.id,
       content: textContent.trim(), cmtid: parentId, rating: null, imageUrls: []
     };
-    await axios.post('http://localhost:8080/api/comments', payload);
+    await api.post('/api/comments', payload);
     await fetchComments(payload.postID); 
     toast.success('Đã gửi câu trả lời!');
   } catch (err) { 
@@ -433,28 +469,35 @@ const handleSubmitReply = async ({ parentId, content }) => {
 
 const handleDeleteComment = async (commentId) => {
   if (!authStore.isAuthenticated) { toast.warn('Vui lòng đăng nhập!'); return; }
+  
   try {
-    // Lấy ID của người dùng đang đăng nhập
     const userId = authStore.user.accountID || authStore.user.id;
+    // 🔥 Lấy tên thật của Admin từ AuthStore (sửa fullname thành fullName)
+    const adminName = authStore.user.username || authStore.user.fullName || 'Admin';
     const isAdmin = authStore.user.isAdmin || authStore.user.role === 'ADMIN' || authStore.user.role === 'admin';
     
-    // Tìm bình luận mục tiêu
     const targetComment = rawCommentsList.value.find(c => (c.commentID || c.id) === commentId);
     const isOwnComment = targetComment && (targetComment.accountID === userId || targetComment.userId === userId);
 
     if (isAdmin && !isOwnComment) {
-      // Admin xóa bình luận của người khác -> Gọi API Admin và ẩn nội dung
-      await axios.delete(`http://localhost:8080/api/comments/${commentId}`);
+      // ✅ ADMIN XÓA: Truyền đủ params để Backend ghi Log
+      await api.delete(`/api/comments/${commentId}`, {
+        params: {
+          adminId: userId,
+          adminName: adminName
+        }
+      });
+      
+      // Cập nhật nội dung ngay trên giao diện để sếp thấy kết quả luôn
       if (targetComment) {
-        targetComment.content = "Đã ẩn do vi phạm quy tắc cộng đồng";
-        targetComment.imageUrls = []; // Ẩn luôn hình ảnh vi phạm (nếu có)
+        targetComment.content = "[Bình luận này đã bị ẩn vì vi phạm chính sách của GoMet]";
+        targetComment.imageUrls = [];
+        targetComment.rating = 0; // Xóa rating của comment vi phạm khỏi tính toán
       }
       toast.success('Đã ẩn bình luận vi phạm!');
     } else {
-      // 🔥 Gọi API dành cho User tự xóa
-      await axios.delete(`http://localhost:8080/api/comments/user/${commentId}?currentAccountID=${userId}`);
-      
-      // Xóa khỏi giao diện
+      // ✅ USER TỰ XÓA
+      await api.delete(`/api/comments/user/${commentId}?currentAccountID=${userId}`);
       rawCommentsList.value = rawCommentsList.value.filter(c => (c.commentID || c.id) !== commentId);
       toast.success('Đã xóa bình luận!');
     }
@@ -479,7 +522,7 @@ const handleToggleLikeComment = async (comment) => {
   comment.isLiked = targetComment.isLiked; comment.likes = targetComment.likes;
 
   try {
-    await axios.post(`http://localhost:8080/api/comments/${commentID}/like`, { accountID: accountID });
+    await api.post(`/api/comments/${commentID}/like`, { accountID: accountID });
   } catch (err) {
     targetComment.isLiked = previousIsLiked; targetComment.likes = previousLikesCount;
     comment.isLiked = previousIsLiked; comment.likes = previousLikesCount;
