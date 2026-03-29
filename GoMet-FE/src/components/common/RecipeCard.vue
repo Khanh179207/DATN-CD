@@ -1,19 +1,20 @@
 <template>
   <div
+    v-if="post"
     class="recipe-card-wrapper"
     tabindex="0"
     role="article"
-    :aria-label="post.title"
-    :class="{ 'is-skeleton': loading }"
+    :aria-label="post?.title"
+    :class="{ 'is-skeleton': loading, 'is-premium-card': post?.isPremium }"
     @click="goToDetail"
     @keydown.enter.prevent="goToDetail"
   >
     <div class="card-media">
-      <img :src="post.image" :alt="post.title" loading="lazy" class="main-img"
+      <img :src="post?.image" :alt="post?.title" loading="lazy" class="main-img"
            draggable="false" @contextmenu.prevent @dragstart.prevent>
       
       <div class="media-overlay"></div>
-      <span class="category-tag" v-if="post.category">{{ post.category }}</span>
+      <span class="category-tag" v-if="post?.category">{{ post?.category }}</span>
 
       <div class="quick-actions">
         <button class="btn-action" @click.stop="toggleSave" :title="isSaved ? $t('post.saved') : $t('post.unsaved')" :disabled="isSaving" :class="{ saving: isSaving }">
@@ -22,7 +23,7 @@
           </svg>
         </button>
 
-        <button class="btn-action btn-compare" :class="{ active: compareStore.isSelected(post.id) }" 
+        <button class="btn-action btn-compare" :class="{ active: compareStore.isSelected(post?.id) }" 
                 @click.stop="compareStore.toggleItem(post)" title="Compare">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M16 3h5v5"></path><path d="M4 20L21 3"></path><path d="M21 16v5h-5"></path><path d="M15 15l5 5"></path><path d="M4 4l5 5"></path>
@@ -56,50 +57,53 @@
         </div>
       </div>
 
-      <h3 class="card-title">{{ post.title }}</h3>
+      <h3 class="card-title">{{ post?.title }}</h3>
 
       <div class="card-footer">
         <div class="author-info">
           <div class="author-avt">
-            <img v-if="post.author && post.author.avatar" :src="post.author.avatar" alt="Author">
-            <div v-else class="avt-placeholder">{{ getInitials(post.author?.name) }}</div>
+            <img v-if="post?.author && post?.author?.avatar" :src="post?.author?.avatar" alt="Author">
+            <div v-else class="avt-placeholder">{{ getInitials(post?.author?.name) }}</div>
           </div>
-          <span class="author-name">{{ post.author?.name || 'Gomet Chef' }}</span>
+          
+          <div class="author-name-wrapper">
+            <span class="author-name">
+              {{ post?.author?.name || 'Gomet Chef' }}
+            </span>
+            <div class="beautiful-tooltip">
+              {{ post?.author?.name || 'Gomet Chef' }}
+            </div>
+          </div>
         </div>
 
         <div class="card-stats-wrapper">
-          
-          <div class="stats-view-group" title="Lượt xem">
-            <span class="icon-view">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                <circle cx="12" cy="12" r="3"></circle>
-              </svg>
-            </span>
-            <span class="view-count-text">{{ formatNumber(post.views || post.viewCount || 0) }}</span>
+          <div class="stats-group" title="Lượt xem">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="stat-icon">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            <span class="stat-text">{{ formatNumber(post?.views || post?.viewCount || 0) }}</span>
           </div>
 
-          <div class="stats-like-group">
+          <div class="stats-group like-action">
             <button 
               class="btn-icon-like" 
               @click.stop="toggleLike" 
               :class="{ 'is-liked': isLiked, 'animating': isLikeAnimating }"
               :disabled="isLikeLoading"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" :fill="isLiked ? 'currentColor' : 'none'" :stroke="isLiked ? 'none' : 'currentColor'" stroke-width="2">
+              <svg width="15" height="15" viewBox="0 0 24 24" :fill="isLiked ? 'currentColor' : 'none'" :stroke="isLiked ? 'none' : 'currentColor'" stroke-width="2.5">
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
               </svg>
             </button>
-            
             <span 
-              class="like-count-text" 
+              class="stat-text clickable" 
               @click.stop="openLikesModal" 
               title="Xem ai đã thích"
             >
               {{ formatNumber(localLikeCount) }}
             </span>
           </div>
-
         </div>
       </div>
     </div>
@@ -151,30 +155,24 @@ const router = useRouter()
 const compareStore = useCompareStore()
 const authStore = useAuthStore()
 
-// --- COMPACT DATA (Đồng bộ Rating Real) ---
+// --- COMPACT DATA ---
 const displayRating = computed(() => props.post.rating || props.post.avgRating || 0)
 const displayReviewCount = computed(() => props.post.reviews || props.post.ratingCount || 0)
 
-// --- HÀM TÍNH THỜI GIAN ĐĂNG BÀI (Time Ago - Đã Fix Lỗi Date) ---
+// --- HÀM TÍNH THỜI GIAN ĐĂNG BÀI ---
 const formattedTimeAgo = computed(() => {
   let dateStr = props.post.createdAt || props.post.date || props.post.savedDate;
   if (!dateStr) return 'Mới đây';
 
-  // FIX: Xử lý trường hợp Backend trả về mảng LocalDate [YYYY, MM, DD]
   if (Array.isArray(dateStr)) {
-    // Array tháng của Java là 1-12, js là 0-11 nên phải -1 ở tháng
     dateStr = new Date(dateStr[0], dateStr[1] - 1, dateStr[2], dateStr[3] || 0, dateStr[4] || 0);
   } else if (typeof dateStr === 'string' && dateStr.includes('-')) {
-    // FIX: Đảm bảo parse chuẩn ISO string
     dateStr = new Date(dateStr);
   } else if (typeof dateStr === 'number') {
-    // FIX: Trường hợp trả về Timestamp
     dateStr = new Date(dateStr);
   }
 
   const date = new Date(dateStr);
-  
-  // Kiểm tra xem parse có bị lỗi "Invalid Date" không
   if (isNaN(date.getTime())) return 'Mới đây';
 
   const now = new Date();
@@ -317,161 +315,6 @@ const toggleSave = async () => {
 </script>
 
 <style scoped lang="scss">
+/* Import toàn bộ giao diện từ file SCSS đã gộp */
 @import './RecipeCard.scss';
-
-/* --- UI META TOP (RATING & TIME AGO) --- */
-.meta-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
-.rating-box {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  background: #fff7ed;
-  color: #ea580c;
-  padding: 4px 10px;
-  border-radius: 100px;
-  font-weight: 800;
-  font-size: 0.85rem;
-
-  .star { display: flex; align-items: center; }
-  .count { color: #fdba74; font-size: 0.8rem; font-weight: 600; margin-left: 2px; }
-
-  &.is-new {
-    background: #f1f5f9;
-    color: #64748b;
-    .star { display: none; }
-  }
-}
-
-.time-badge {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #94a3b8;
-  background: #f8fafc;
-  padding: 4px 10px;
-  border-radius: 100px;
-}
-
-/* --- UI STATS (VIEW & LIKE) --- */
-.card-stats-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 8px; /* Khoảng cách giữa nút View và nút Like */
-}
-
-/* Style cho Lượt xem */
-.stats-view-group {
-  display: flex;
-  align-items: center;
-  background: #f8fafc;
-  border-radius: 20px;
-  padding: 6px 12px; /* Padding đều cho đẹp */
-  border: 1px solid transparent;
-  transition: all 0.2s;
-  color: #94a3b8;
-
-  &:hover {
-    background: #f1f5f9;
-  }
-
-  .icon-view {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .view-count-text {
-    font-size: 0.85rem;
-    font-weight: 800;
-    color: #475569;
-    margin-left: 6px;
-  }
-}
-
-/* Style cho Lượt thích (Giữ nguyên) */
-.stats-like-group {
-  display: flex;
-  align-items: center;
-  background: #f8fafc;
-  border-radius: 20px;
-  padding: 2px 10px 2px 2px;
-  border: 1px solid transparent;
-  transition: all 0.2s;
-
-  &:hover {
-    background: #f1f5f9;
-  }
-}
-
-.btn-icon-like {
-  background: none; border: none; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  width: 32px; height: 32px; border-radius: 50%;
-  color: #94a3b8; transition: all 0.2s;
-
-  &:hover:not(:disabled) { background: #fff; color: #ea580c; box-shadow: 0 2px 5px rgba(0,0,0,0.05);}
-  &.is-liked { color: #ea580c; }
-  &.animating svg { animation: heartPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-}
-
-.like-count-text {
-  font-size: 0.85rem; font-weight: 800; color: #475569;
-  margin-left: 5px; cursor: pointer;
-  &:hover { color: #0f172a; }
-}
-
-@keyframes heartPop {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.4); }
-  100% { transform: scale(1); }
-}
-
-/* --- POPUP LIKES --- */
-.likes-popup-overlay {
-  position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4);
-  backdrop-filter: blur(4px); z-index: 9999;
-  display: flex; align-items: center; justify-content: center;
-}
-
-.likes-popup-container {
-  background: white; width: 300px; max-height: 400px;
-  border-radius: 24px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-  display: flex; flex-direction: column; overflow: hidden;
-}
-
-.popup-header {
-  padding: 16px 20px; border-bottom: 1px solid #f1f5f9;
-  display: flex; justify-content: space-between; align-items: center;
-  span { font-weight: 800; font-size: 1rem; color: #0f172a; }
-  .btn-close-mini { background: #f1f5f9; border: none; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #64748b; cursor: pointer; font-size: 0.8rem; font-weight: bold; &:hover { background: #e2e8f0; color: #0f172a; } }
-}
-
-.popup-scroll-area {
-  flex: 1; overflow-y: auto; padding: 12px;
-  &::-webkit-scrollbar { width: 6px; }
-  &::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-}
-
-.liker-item-row {
-  display: flex; align-items: center; gap: 12px;
-  padding: 10px 12px; border-radius: 12px; transition: 0.2s;
-  &:hover { background: #f8fafc; }
-  
-  .liker-avt-mini { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-  .liker-name-mini { font-size: 0.9rem; font-weight: 700; color: #334155; }
-}
-
-.popup-state { padding: 30px; text-align: center; color: #94a3b8; font-size: 0.9rem; font-weight: 600; }
-
-/* Transitions */
-.pop-in-enter-active, .pop-in-leave-active { transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-.pop-in-enter-from, .pop-in-leave-to { opacity: 0; transform: scale(0.95) translateY(10px); }
 </style>

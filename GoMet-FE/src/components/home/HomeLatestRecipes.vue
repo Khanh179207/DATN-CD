@@ -53,56 +53,94 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue' // Thêm watch để theo dõi đăng nhập
 import { useRouter } from 'vue-router'
 import RecipeCard from '@/components/common/RecipeCard.vue'
 import { getLatestPosts, normalizePost } from '@/services/postService'
-import { getCategories } from '@/services/categoryService'
-import { useI18n } from 'vue-i18n'
-const { t } = useI18n()
+import { getMyFollows } from '@/services/socialService'
+import { useAuthStore } from '@/stores/auth' // Import store của bạn
 
 const router = useRouter()
-const activeTab = ref(null) // null = Tất cả (categoryID)
+const authStore = useAuthStore() // Khởi tạo store
+
+const activeTab = ref('discover') 
 const loading = ref(true)
 const posts = ref([])
-const categories = ref([])
+const myFollowedAccountIDs = ref([]) 
+
+// Lấy ID người dùng hiện tại từ store một cách an toàn
+const currentUserId = computed(() => {
+  return authStore.currentUser ? authStore.currentUser.accountID : null;
+})
 
 const tabs = computed(() => [
-  { id: null, name: t('common.category_all') },
-  ...categories.value.map(c => ({ id: c.categoryID, name: c.categoryName }))
+  { id: 'discover', name: 'Khám phá' },
+  { id: 'following', name: 'Người theo dõi' }
 ])
 
 const filteredPosts = computed(() => {
-  if (!activeTab.value) return posts.value
-  return posts.value.filter(p => p._categoryID === activeTab.value)
+  let result = [];
+
+  if (activeTab.value === 'discover') {
+    const allSorted = [...posts.value].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    const premiums = allSorted.filter(p => p.isPremium);
+    const normals = allSorted.filter(p => !p.isPremium);
+
+    const guaranteedPremiums = premiums.slice(0, 2);
+    const remainingPool = [...premiums.slice(2), ...normals].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    const neededSlots = 8 - guaranteedPremiums.length;
+    const additionalPosts = remainingPool.slice(0, neededSlots);
+
+    result = [...guaranteedPremiums, ...additionalPosts].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  } else if (activeTab.value === 'following') {
+    result = posts.value
+      .filter(p => myFollowedAccountIDs.value.includes(p.authorID)) 
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }
+
+  return result.slice(0, 8);
 })
 
 const goToDetail = (id) => router.push({ name: 'PostDetail', params: { id } })
 const goToSearch = () => router.push('/search')
 
-onMounted(async () => {
+// Tách riêng hàm tải dữ liệu để có thể gọi lại khi đăng nhập/đăng xuất
+const loadData = async () => {
+  loading.value = true;
   try {
-    const [rawPosts, rawCats] = await Promise.all([
-      getLatestPosts(16),
-      getCategories()
-    ])
-    categories.value = rawCats
+    const [rawPosts, realFollowedIds] = await Promise.all([
+      getLatestPosts(50),
+      currentUserId.value ? getMyFollows(currentUserId.value) : [] 
+    ]);
     
-    // 🔥 ĐỒNG BỘ FIX LỖI THỜI GIAN VÀ LƯỢT TIM Ở TRANG CHỦ
+    myFollowedAccountIDs.value = realFollowedIds || [];
+
     posts.value = rawPosts.map(dto => ({
       ...normalizePost(dto),
-      _categoryID: dto.categoryID,
+      authorID: dto.authorID, 
+      isPremium: dto.isPremium || dto.IsPremium || false, 
       createdAt: dto.createdAt || dto.date || new Date().toISOString(),
       likes: dto.likes ?? dto.likeCount ?? dto.favoriteCount ?? 0
     }))
-
-    // Debug thử xem nó đã có ngày chưa sếp nhé
-    console.log("Dữ liệu posts sau khi map:", posts.value[0]);
-
   } catch (err) {
     console.warn('HomeLatestRecipes: API error', err)
   } finally {
     loading.value = false
+  }
+}
+
+// Chạy lần đầu khi load trang
+onMounted(() => {
+  loadData();
+})
+
+// [TÙY CHỌN NÂNG CAO]: Tự động tải lại danh sách follow khi người dùng đăng nhập hoặc đăng xuất
+watch(currentUserId, (newId, oldId) => {
+  if (newId !== oldId) {
+    loadData();
   }
 })
 </script>
@@ -146,8 +184,11 @@ onMounted(async () => {
   border-color: #D6D3D1; background: #F5F5F4; transform: translateY(-2px); 
 }
 .tab-pill.active { 
-  background: #1C1917; color: white; border-color: #1C1917;
-  box-shadow: 0 4px 15px rgba(28, 25, 23, 0.3); transform: translateY(-2px);
+  background: #EA580C; /* Đổi nền thành màu cam */
+  color: white; 
+  border-color: #EA580C; /* Đổi viền thành màu cam */
+  box-shadow: 0 4px 15px rgba(234, 88, 12, 0.3); /* Đổi bóng đổ (shadow) sang tông cam nhạt */
+  transform: translateY(-2px);
 }
 
 .scroll-fade {

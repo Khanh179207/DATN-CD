@@ -349,6 +349,7 @@ async function loadPost(id) {
       ratingCount: dto.ratingCount || 0,
       favoriteCount: dto.favoriteCount || 0,
       views: dto.views || 0,
+      isPremium: dto.isPremium || dto.IsPremium || false, // 🔥 THÊM CỜ PREMIUM CHO BÀI VIẾT CHÍNH
       steps: (dto.steps || []).map(s => ({
         stepNumber: s.stepNumber,
         desc: s.content || '',
@@ -358,7 +359,17 @@ async function loadPost(id) {
     }
 
     const related = await getRelatedPosts(id, 4)
-    relatedPosts.value = related.map(normalizePost)
+    
+    // 🔥 SỬA CHỖ NÀY: Giữ lại cờ isPremium cho các bài viết gợi ý (Sidebar)
+    relatedPosts.value = related.map(dto => {
+      const normPost = normalizePost(dto) || {};
+      return {
+        ...normPost,
+        authorID: dto.authorID || dto.accountID || normPost.authorID,
+        isPremium: dto.isPremium || dto.IsPremium || normPost.isPremium || false, // <--- Quan trọng nhất ở đây
+        likes: dto.likes ?? dto.Likes ?? dto.likeCount ?? dto.favoriteCount ?? 0
+      };
+    });
 
     await fetchComments(id)
 
@@ -376,15 +387,14 @@ async function loadPost(id) {
 const checkContentPolicy = async (text) => {
   if (!text) return false;
   try {
-    // 🔥 Sửa lại đường dẫn này: Bỏ chữ 'admin' đi
+    // 🔥 Giữ code của sếp: Dùng 'api' thay vì hardcode localhost của ông bạn
     const res = await api.post('/api/blacklist/check', { content: text });
     return res.data.hasBadWord; 
   } catch (error) {
     console.warn("Lỗi kiểm duyệt nội dung:", error);
-    return false; // Nếu BE sập thì tạm cho qua (hoặc sếp có thể return true để chặn luôn)
+    return false; // Nếu BE sập thì tạm cho qua
   }
 };
-
 // --- LOGIC API ---
 const submitComment = async () => {
   let content = newComment.value.trim()
