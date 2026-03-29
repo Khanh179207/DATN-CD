@@ -412,10 +412,6 @@ CREATE TABLE Notification (
 		AdminID INT NULL,
 		AdminName NVARCHAR(255) NULL,
 		AdminNote NVARCHAR(MAX) NULL, -- Để Admin phản hồi Bug/Góp ý
-<<<<<<< HEAD
-
-=======
->>>>>>> 5331a3591171cbc42bf9ddb16625bca68f4348ae
     
 		CONSTRAINT FK_Ticket_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
 		CONSTRAINT FK_Ticket_Post FOREIGN KEY (TargetPostID) REFERENCES Post(PostID)
@@ -679,8 +675,3 @@ SELECT * FROM SystemConfig ORDER BY ConfigGroup;
 	SELECT * FROM Appeals;
 	
 	SELECT * FROM ModerationLog;
-<<<<<<< HEAD
-
-	SELECT * FROM SystemConfig;
-=======
->>>>>>> 5331a3591171cbc42bf9ddb16625bca68f4348ae

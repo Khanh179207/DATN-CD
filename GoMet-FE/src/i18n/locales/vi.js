@@ -391,7 +391,7 @@
     status_ongoing:'Đang diễn ra',
     status_ended:  '🏁 Đã kết thúc',
     participants:  'người tham gia',
-    tab_info:      'Thông tin & Quỳ tắc',
+    tab_info:      'Thông tin sự kiện',
     tab_entries:   'Bài dự thi',
     intro:         '📖 Giới thiệu',
     rules:         '📜 Quỳ tắc dự thi',

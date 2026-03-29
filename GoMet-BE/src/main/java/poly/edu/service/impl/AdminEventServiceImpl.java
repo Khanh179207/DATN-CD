@@ -36,7 +36,6 @@ public class AdminEventServiceImpl implements AdminEventService {
 
         dto.setBannerImage(e.getBannerImage());
         dto.setDescription(e.getDescription());
-        dto.setRules(e.getRules());
         dto.setReward(e.getReward());
         dto.setMaxVotes(e.getMaxVotes() != null ? e.getMaxVotes() : 3);
 
@@ -69,7 +68,6 @@ public class AdminEventServiceImpl implements AdminEventService {
         event.setEventName(dto.getEventName());
         event.setBannerImage(dto.getBannerImage());
         event.setDescription(dto.getDescription());
-        event.setRules(dto.getRules());
         event.setReward(dto.getReward());
         event.setMaxVotes(dto.getMaxVotes() != null ? dto.getMaxVotes() : 3);
         event.setWinner(dto.getWinner());

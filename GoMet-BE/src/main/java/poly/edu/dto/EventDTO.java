@@ -17,7 +17,6 @@ public class EventDTO {
     private LocalDateTime voteStartAt;
     private LocalDateTime voteEndAt;
     private String description;
-    private String rules;
     private String reward;
 
     // 🔥 THÊM 2 DÒNG NÀY VÀO LÀ CỨU CẢ THẾ GIỚI

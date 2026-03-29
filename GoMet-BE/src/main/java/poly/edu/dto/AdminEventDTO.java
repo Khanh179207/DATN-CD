@@ -15,7 +15,6 @@ public class AdminEventDTO {
     private Integer postCount;
     private Integer totalVotes;
     private String description;
-    private String rules;
     private String reward;
     private Integer maxVotes;
 
