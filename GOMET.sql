@@ -1,3 +1,4 @@
+
 -- Bước 1: Trở về database master (Bắt buộc)
 	USE master;
 	GO
@@ -10,7 +11,6 @@ BEGIN
     DROP DATABASE DATN_CD;
 END
 GO
-
 	
 	-- Bước 3: Khởi tạo lại Database
 	CREATE DATABASE DATN_CD;
@@ -208,7 +208,7 @@ CREATE TABLE Follow (
 		FollowedAt DATETIME DEFAULT GETDATE(),
 
 		CONSTRAINT FK_Follow_Follower FOREIGN KEY (FollowerID) REFERENCES Account(AccountID),
-		CONSTRAINT FK_Follow_Followee FOREIGN KEY (FolloweeID) REFERENCES Account(AccountID)
+		CONSTRAINT FK_Follow_Followee FOREIGN KEY (FolloweeID) REFERENCES Account(AccountID),
 		-- RÀNG BUỘC MỚI: Đảm bảo một cặp (Follower, Followee) chỉ xuất hiện 1 lần duy nhất
         CONSTRAINT UQ_Follower_Followee UNIQUE (FollowerID, FolloweeID)
 	)
@@ -492,20 +492,9 @@ GO
 	END;
 	GO
 
-	-- ==========================================
-	-- 7. DỮ LIỆU MẪU (MOCK DATA) ĐÃ CẬP NHẬT
-	-- ==========================================
 
--- ==========================================================
--- BỘ DỮ LIỆU MẪU ĐỒ SỘ CHO DỰ ÁN GOMET KITCHEN (DATN_CD)
--- Thiết kế: Dành cho Review dự án (Demo Ready)
--- ==========================================================
 
-USE DATN_CD;
-GO
 
--- Xóa dữ liệu cũ để tránh trùng lặp nếu chạy lại (Tùy chọn)
--- DELETE FROM Ticket; DELETE FROM Message; DELETE FROM Conversation; ...
 
 -- 1. DỮ LIỆU TÀI KHOẢN (Đa dạng phân quyền)
 -- ==========================================================
@@ -575,7 +564,7 @@ GO
 INSERT INTO Likes (AccountID, PostID) VALUES (1, 1), (3, 1), (4, 1), (5, 1), (2, 2);
 INSERT INTO CommentLike (AccountID, CommentID) VALUES (1, 1), (2, 1);
 INSERT INTO Favorite (AccountID, PostID) VALUES (3, 1), (4, 2), (3, 3);
-INSERT INTO Follow (FollowerID, FolloweeID, Status) VALUES (3, 2, 1), (4, 2, 1), (5, 3, 1);
+
 
 -- Bài tham gia sự kiện
 INSERT INTO EventPosts (EventID, PostID, VoteCount) VALUES (1, 2, 15), (2, 4, 10);
