@@ -316,7 +316,14 @@ const checkContentPolicy = async (text) => {
 // ==========================================
 const handlePublish = async () => {
   if (!post.value.title.trim()) return toast.warn('Vui lòng nhập tên món ăn!')
+  if (!post.value.description.trim()) return toast.warn('Vui lòng nhập mô tả cho món ăn!')
   if (!coverImageFile.value && !post.value.image) return toast.warn('Vui lòng thêm ảnh bìa cho bài viết!')
+
+  const validIngredients = post.value.ingredients.filter(i => i.name.trim() !== '')
+  if (validIngredients.length === 0) return toast.warn('Vui lòng nhập ít nhất 1 nguyên liệu!')
+
+  const validSteps = post.value.steps.filter(s => s.desc.trim() !== '')
+  if (validSteps.length === 0) return toast.warn('Vui lòng nhập ít nhất 1 bước chế biến!')
 
   const accID = currentUser.value.accountID || currentUser.value.id || currentUser.value.accountId;
   if (!accID) return toast.error('Lỗi phiên đăng nhập!');

@@ -4,7 +4,6 @@
     <Teleport to="body">
       <AdPopup 
         :isVisible="showAdPopup"
-        :imageUrl="currentAdImage"
         @close="showAdPopup = false"
       />
     </Teleport>
@@ -91,22 +90,12 @@ import AdPopup from '@/components/modals/AdPopup.vue'
 import HomeHero from '@/components/home/HomeHero.vue'
 import HomeCategorySection from '@/components/home/HomeCategorySection.vue'
 import HomeLatestRecipes from '@/components/home/HomeLatestRecipes.vue'
-import imgAd1 from '@/assets/images/ads/ad1.jpg'
-import imgAd2 from '@/assets/images/ads/ad2.jpg'
-import imgAd3 from '@/assets/images/ads/ad3.jpg'
+
+// Đã dọn dẹp sạch sẽ mớ tàn dư import ảnh cứng
 
 const router = useRouter()
 const showAdPopup = ref(false)
-const currentAdImage = ref('')
-const adImages = [imgAd1, imgAd2, imgAd3]
 const scrollY = ref(0) 
-
-const pickRandomAd = () => {
-  if (adImages.length > 0) {
-    const randomIndex = Math.floor(Math.random() * adImages.length)
-    currentAdImage.value = adImages[randomIndex]
-  }
-}
 
 const goToDetail = (id) => {
   router.push({ name: 'PostDetail', params: { id: id } })
@@ -147,7 +136,7 @@ const setupIntersectionObserver = () => {
 }
 
 onMounted(() => {
-  pickRandomAd()
+  // Chờ 2 giây hiện popup. Việc lấy ảnh và hiển thị cứ để thằng AdPopup tự lo.
   setTimeout(() => { showAdPopup.value = true }, 2000)
 
   const scrollContainer = document.getElementById('main-scroll-container')

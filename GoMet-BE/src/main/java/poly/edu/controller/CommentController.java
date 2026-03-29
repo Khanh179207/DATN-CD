@@ -11,14 +11,13 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/comments") // ĐƯỜNG DẪN CỦA USER BÌNH THƯỜNG
+@RequestMapping("/api/comments")
 @RequiredArgsConstructor
 @CrossOrigin("*")
 public class CommentController {
 
     private final CommentService commentService;
 
-    // Lấy danh sách bình luận trong chi tiết bài viết
     @GetMapping("/post/{postID}")
     public ResponseEntity<List<CommentDTO>> getByPost(
             @PathVariable Integer postID,
@@ -26,7 +25,6 @@ public class CommentController {
         return ResponseEntity.ok(commentService.getCommentsByPost(postID, currentAccountID));
     }
 
-    // User thêm bình luận
     @PostMapping
     public ResponseEntity<?> addComment(@RequestBody CommentDTO req) {
         try {
@@ -37,7 +35,7 @@ public class CommentController {
         }
     }
 
-    // Người dùng TỰ XÓA bình luận của chính mình (isActive = 0)
+    // API: User tự xóa bình luận của chính mình
     @DeleteMapping("/user/{id}")
     public ResponseEntity<?> deleteCommentByUser(
             @PathVariable Integer id,
@@ -45,6 +43,22 @@ public class CommentController {
         try {
             commentService.deleteByUser(id, currentAccountID);
             return ResponseEntity.ok(Map.of("message", "Đã xóa bình luận của bạn"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    // 🔥 THÊM API MỚI NÀY VÀO: DÀNH CHO ADMIN XÓA BÌNH LUẬN
+    // API Frontend gọi: DELETE /api/comments/27?adminId=1&adminName=NamAdmin
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteCommentByAdmin(
+            @PathVariable Integer id,
+            @RequestParam Integer adminId,
+            @RequestParam String adminName) {
+        try {
+            // Gọi vào hàm delete() xịn xò trong CommentServiceImpl của sếp
+            commentService.delete(id, adminId, adminName);
+            return ResponseEntity.ok(Map.of("message", "Admin đã xóa bình luận thành công"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }

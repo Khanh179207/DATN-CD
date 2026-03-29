@@ -200,18 +200,18 @@ GO
 	);
 	GO
 
-	CREATE TABLE Follow (
+CREATE TABLE Follow (
 		FollowID INT IDENTITY(1,1) PRIMARY KEY,
 		FollowerID INT NOT NULL,
 		FolloweeID INT NOT NULL,
 		Status INT DEFAULT 0,
 		FollowedAt DATETIME DEFAULT GETDATE(),
-		UnFollowedAt DATETIME,
 
 		CONSTRAINT FK_Follow_Follower FOREIGN KEY (FollowerID) REFERENCES Account(AccountID),
 		CONSTRAINT FK_Follow_Followee FOREIGN KEY (FolloweeID) REFERENCES Account(AccountID)
-	);
-	GO
+		-- RÀNG BUỘC MỚI: Đảm bảo một cặp (Follower, Followee) chỉ xuất hiện 1 lần duy nhất
+        CONSTRAINT UQ_Follower_Followee UNIQUE (FollowerID, FolloweeID)
+	)
 
 	-- ==========================================
 	-- 4. NHÓM CHỨC NĂNG NGƯỜI DÙNG & TIỆN ÍCH
@@ -404,7 +404,7 @@ CREATE TABLE Notification (
 		AdminID INT NULL,
 		AdminName NVARCHAR(255) NULL,
 		AdminNote NVARCHAR(MAX) NULL, -- Để Admin phản hồi Bug/Góp ý
-GO
+
     
 		CONSTRAINT FK_Ticket_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
 		CONSTRAINT FK_Ticket_Post FOREIGN KEY (TargetPostID) REFERENCES Post(PostID)
@@ -633,6 +633,29 @@ GO
 
 
 
+INSERT INTO SystemConfig (ConfigKey, ConfigValue, ConfigGroup, Description, UpdatedAt)
+VALUES 
+-- Bài viết nổi bật
+('HERO_POST_1', '9', 'SYSTEM', N'ID bài viết nổi bật vị trí 1', GETDATE()),
+('HERO_POST_2', '12', 'SYSTEM', N'ID bài viết nổi bật vị trí 2', GETDATE()),
+('HERO_POST_3', '1', 'SYSTEM', N'ID bài viết nổi bật vị trí 3', GETDATE()),
+
+-- Bảng giá Premium
+('PREMIUM_PRICE_1_MONTH', '50000', 'PRICING', N'Giá gói Premium 1 Tháng', GETDATE()),
+('PREMIUM_PRICE_12_MONTHS', '500000', 'PRICING', N'Giá gói Premium 1 Năm', GETDATE()),
+('PREMIUM_PRICE_LIFETIME', '999000', 'PRICING', N'Giá gói Premium Vĩnh Viễn', GETDATE()),
+
+-- Vận hành & Sự kiện (Hybrid)
+('FREE_ACCESS_EVENT', 'FALSE', 'SYSTEM', N'Nút gạt cưỡng bức: TRUE để mở khóa MIỄN PHÍ ngay lập tức', GETDATE()),
+('HOLIDAY_START', '2026-04-30T00:00', 'SYSTEM', N'Thời gian bắt đầu tự động mở khóa (YYYY-MM-DDTHH:mm)', GETDATE()),
+('HOLIDAY_END', '2026-05-01T23:59', 'SYSTEM', N'Thời gian kết thúc tự động mở khóa (YYYY-MM-DDTHH:mm)', GETDATE()),
+
+-- Quảng cáo Popup
+('ADS_BANNER_IMG', 'https://res.cloudinary.com/drblrjxan/image/upload/v1/system/ads_default.jpg', 'ADS', N'Link ảnh Banner quảng cáo Popup', GETDATE()),
+('ADS_TARGET_URL', 'https://gomet.id.vn/premium-info', 'ADS', N'Đường dẫn khi User click vào ảnh quảng cáo', GETDATE());
+GO
+
+SELECT * FROM SystemConfig ORDER BY ConfigGroup;
 	SELECT * FROM Post;
 
 	SELECT * FROM Cookingsteps;
@@ -656,3 +679,5 @@ GO
 	SELECT * FROM Appeals;
 	
 	SELECT * FROM ModerationLog;
+
+	SELECT * FROM SystemConfig;
