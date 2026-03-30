@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
   <div class="auth-page">
     <div class="bg-blob bg-blob-1"></div>
     <div class="bg-blob bg-blob-2"></div>
@@ -361,4 +361,4 @@ const goBack = () => {
   .card-title { font-size: 1.4rem; }
   .brand-name  { font-size: 1.5rem; }
 }
-</style>
+</style> -->
