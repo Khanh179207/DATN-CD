@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/achievements")
 @RequiredArgsConstructor
-@CrossOrigin
+
 public class AchievementController {
 
     private final AchievementDAO     achievementDAO;

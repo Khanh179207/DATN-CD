@@ -11,7 +11,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/admin/categories")
 @RequiredArgsConstructor
-@CrossOrigin("*")
+
 public class AdminCategoryController {
 
     private final CategoryService categoryService;

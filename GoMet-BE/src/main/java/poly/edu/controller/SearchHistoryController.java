@@ -11,7 +11,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/search-history")
 @RequiredArgsConstructor
-@CrossOrigin("*") // Cho phép Frontend (cổng 5173) gọi vào
+
 public class SearchHistoryController {
 
     private final SearchHistoryService searchHistoryService;

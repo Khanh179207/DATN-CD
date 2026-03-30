@@ -103,7 +103,6 @@ public class AccountServiceImpl implements AccountService {
                     .isActive(dto.getIsActive()  != null ? dto.getIsActive()  : 1)
                     .isAdmin(dto.getIsAdmin()    != null ? dto.getIsAdmin()   : 0)
                     .point(0)
-                    .token("NONE")
                     .createdAt(LocalDateTime.now())
                     .build();
         }

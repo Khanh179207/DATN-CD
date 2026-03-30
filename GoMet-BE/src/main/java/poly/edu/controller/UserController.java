@@ -18,7 +18,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
-@CrossOrigin
+
 public class UserController {
 
     private final BCryptPasswordEncoder passwordEncoder;

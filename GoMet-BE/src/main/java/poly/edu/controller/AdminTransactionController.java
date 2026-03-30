@@ -2,7 +2,6 @@ package poly.edu.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -14,7 +13,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/admin/transactions") // Link API này khớp 100% với Frontend em đưa nãy
 @RequiredArgsConstructor
-@CrossOrigin("*") // Mở cửa cho VueJS chui vào lấy data
+
 public class AdminTransactionController {
 
     private final AdminTransactionService adminTransactionService;

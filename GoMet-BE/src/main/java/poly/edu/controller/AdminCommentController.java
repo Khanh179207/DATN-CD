@@ -12,7 +12,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/admin/comments") // ĐƯỜNG DẪN RIÊNG CHO ADMIN
 @RequiredArgsConstructor
-@CrossOrigin("*")
+
 public class AdminCommentController {
 
     private final CommentService commentService;

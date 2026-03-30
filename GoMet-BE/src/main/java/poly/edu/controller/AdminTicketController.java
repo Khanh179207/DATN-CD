@@ -17,11 +17,12 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/admin/tickets")
 @RequiredArgsConstructor
-@CrossOrigin
+
 public class AdminTicketController {
 
     private final TicketService ticketService;
     private final AccountDAO accountDAO; // 🔥 Thêm DAO để tìm Admin
+    private final poly.edu.util.JwtUtils jwtUtils;
 
     @GetMapping
     public ResponseEntity<List<AdminTicketDTO>> getAllTickets() {
@@ -69,9 +70,7 @@ public class AdminTicketController {
         }
     }
 
-    /**
-     * 🛠️ HELPER: Bóc Token tìm Admin thực tế (Copy-paste từ AppealController)
-     */
+    // 🔥 HELPER MỚI DÙNG JWT
     private Account getAdminFromToken(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -79,8 +78,13 @@ public class AdminTicketController {
         }
         String token = authHeader.substring(7);
 
-        // Logic bốc User theo Token (Đồng bộ với AuthController)
-        return accountDAO.findByToken(token)
-                .orElseThrow(() -> new RuntimeException("Token không hợp lệ hoặc đã hết hạn!"));
+        if (!jwtUtils.validateJwtToken(token)) {
+            throw new RuntimeException("Token không hợp lệ hoặc đã hết hạn!");
+        }
+
+        String email = jwtUtils.getEmailFromJwtToken(token);
+
+        return accountDAO.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy dữ liệu Admin!"));
     }
 }

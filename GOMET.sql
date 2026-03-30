@@ -28,7 +28,6 @@ CREATE TABLE Account (
     Email NVARCHAR(255) NOT NULL,
     Password NVARCHAR(255) NOT NULL,
     Avatar NVARCHAR(255),
-    Token NVARCHAR(255) NULL, 
     Bio NVARCHAR(MAX) NULL,
     Point INT DEFAULT 0,
     isAdmin INT DEFAULT 0,
@@ -201,25 +200,18 @@ GO
 	GO
 
 CREATE TABLE Follow (
-		FollowID INT IDENTITY(1,1) PRIMARY KEY,
-		FollowerID INT NOT NULL,
-		FolloweeID INT NOT NULL,
-		Status INT DEFAULT 0,
-		FollowedAt DATETIME DEFAULT GETDATE(),
+    FollowID INT IDENTITY(1,1) PRIMARY KEY,
+    FollowerID INT NOT NULL,
+    FolloweeID INT NOT NULL,
+    Status INT DEFAULT 0,
+    FollowedAt DATETIME DEFAULT GETDATE(),
 
-		CONSTRAINT FK_Follow_Follower FOREIGN KEY (FollowerID) REFERENCES Account(AccountID),
-<<<<<<< HEAD
-		CONSTRAINT FK_Follow_Followee FOREIGN KEY (FolloweeID) REFERENCES Account(AccountID),
-		-- RÀNG BUỘC MỚI: Đảm bảo một cặp (Follower, Followee) chỉ xuất hiện 1 lần duy nhất
-        CONSTRAINT UQ_Follower_Followee UNIQUE (FollowerID, FolloweeID)
-	)
-=======
-		CONSTRAINT FK_Follow_Followee FOREIGN KEY (FolloweeID) REFERENCES Account(AccountID)
-		-- RÀNG BUỘC MỚI: Đảm bảo một cặp (Follower, Followee) chỉ xuất hiện 1 lần duy nhất
-        CONSTRAINT UQ_Follower_Followee UNIQUE (FollowerID, FolloweeID)
-	);
-	GO
->>>>>>> 5331a3591171cbc42bf9ddb16625bca68f4348ae
+    CONSTRAINT FK_Follow_Follower FOREIGN KEY (FollowerID) REFERENCES Account(AccountID),
+    CONSTRAINT FK_Follow_Followee FOREIGN KEY (FolloweeID) REFERENCES Account(AccountID),
+    -- RÀNG BUỘC: Đảm bảo một cặp (Follower, Followee) chỉ xuất hiện 1 lần duy nhất
+    CONSTRAINT UQ_Follower_Followee UNIQUE (FollowerID, FolloweeID)
+);
+GO
 
 	-- ==========================================
 	-- 4. NHÓM CHỨC NĂNG NGƯỜI DÙNG & TIỆN ÍCH
@@ -651,7 +643,7 @@ VALUES
 ('ADS_TARGET_URL', 'https://gomet.id.vn/premium-info', 'ADS', N'Đường dẫn khi User click vào ảnh quảng cáo', GETDATE());
 GO
 
-SELECT * FROM SystemConfig ORDER BY ConfigGroup;
+
 	SELECT * FROM Post;
 
 	SELECT * FROM Cookingsteps;

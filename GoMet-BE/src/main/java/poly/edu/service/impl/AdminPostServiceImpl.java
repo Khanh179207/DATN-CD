@@ -137,7 +137,6 @@ public class AdminPostServiceImpl implements AdminPostService {
         Account author = post.getAccount();
         if (author == null) throw new RuntimeException("Tác giả không tồn tại!");
         author.setIsActive(0);
-        author.setToken(null);
         accountDAO.save(author);
         postDAO.deactivateAllPostsByAccountId(author.getAccountID());
     }

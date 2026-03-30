@@ -11,7 +11,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-@CrossOrigin("*")
+
 @RestController
 @RequestMapping("/api/conversations")
 public class ConversationController {

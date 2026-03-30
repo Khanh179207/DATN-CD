@@ -13,7 +13,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/votes")
 @RequiredArgsConstructor
-@CrossOrigin("*")
+
 public class VoteController {
 
     private final VoteDAO voteDAO;

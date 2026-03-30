@@ -12,7 +12,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/admin/blacklist") // 🔥 Đường dẫn cũ của Frontend Admin
 @RequiredArgsConstructor
-@CrossOrigin("*")
+
 public class AdminBlacklistController {
 
     // 🔥 Bắt buộc dùng Service để nó tự động Refresh Cache trên RAM

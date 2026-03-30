@@ -15,11 +15,12 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/admin/moderation-logs")
 @RequiredArgsConstructor
-@CrossOrigin("*")
+
 public class ModerationLogController {
 
     private final ModerationLogService moderationLogService;
     private final AccountDAO accountDAO; // 🔥 Thêm AccountDAO để bốc Token tìm Admin
+    private final poly.edu.util.JwtUtils jwtUtils;
 
     @GetMapping
     public ResponseEntity<List<ModerationLog>> getAll() {
@@ -55,7 +56,6 @@ public class ModerationLogController {
         }
     }
 
-    // 🛠️ HÀM TRỢ GIÚP: BỐC ADMIN TỪ TOKEN
     private Account getAdminFromToken(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -63,7 +63,16 @@ public class ModerationLogController {
         }
         String token = authHeader.substring(7);
 
-        return accountDAO.findByToken(token)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy Admin với token này!"));
+        // 1. Kiểm tra JWT có hợp lệ không
+        if (!jwtUtils.validateJwtToken(token)) {
+            throw new RuntimeException("Token đã hết hạn hoặc bị giả mạo!");
+        }
+
+        // 2. Lấy Email từ Token
+        String email = jwtUtils.getEmailFromJwtToken(token);
+
+        // 3. Tìm Admin bằng Email
+        return accountDAO.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy Admin với email này!"));
     }
 }

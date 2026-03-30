@@ -12,7 +12,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/admin/posts")
 @RequiredArgsConstructor
-@CrossOrigin("*")
+
 public class AdminPostController {
 
     private final AdminPostService adminpostService;

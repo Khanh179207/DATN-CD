@@ -13,7 +13,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/system-config")
 @RequiredArgsConstructor
-@CrossOrigin("*")
+
 public class SystemConfigController {
 
     private final SystemConfigDAO systemConfigDAO;

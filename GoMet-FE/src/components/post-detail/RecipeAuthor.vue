@@ -61,7 +61,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useChatStore } from '@/stores/chat'
-import axios from 'axios'
+import api from '@/services/api'
 import { toast } from '@/composables/useToast'
 import { checkFollow, follow, unfollow, checkFavorite, addFavorite, removeFavorite } from '@/services/socialService'
 import { getUserStats } from '@/services/userService'
@@ -125,7 +125,7 @@ const handleContactChef = async () => {
   }
   
   try {
-    const res = await axios.post('http://localhost:8080/api/conversations/access', { user1Id: currentUserId, user2Id: chefId })
+    const res = await api.post('/api/conversations/access', { user1Id: currentUserId, user2Id: chefId })
     chatStore.openChat({ id: res.data.conversationID, name: props.post.author, avatar: props.post.authorAvatar, online: true })
     chatStore.isMessengerOpen = true
     toast.success(`Đang kết nối với ${props.post.author}...`)

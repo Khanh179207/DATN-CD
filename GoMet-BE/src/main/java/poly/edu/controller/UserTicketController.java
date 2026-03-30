@@ -11,7 +11,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/tickets")
 @RequiredArgsConstructor
-@CrossOrigin("*")
+
 public class UserTicketController {
 
     private final TicketService ticketService;

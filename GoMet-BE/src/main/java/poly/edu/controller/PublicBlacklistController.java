@@ -10,7 +10,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/blacklist") // 🔥 Đường dẫn Public không có chữ /admin
 @RequiredArgsConstructor
-@CrossOrigin("*")
+
 public class PublicBlacklistController {
 
     private final BlacklistService blacklistService;
