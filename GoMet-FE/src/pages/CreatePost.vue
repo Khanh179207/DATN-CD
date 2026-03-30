@@ -303,7 +303,7 @@ const checkContentPolicy = async (text) => {
   if (!text) return false;
   try {
     // Chỉ gửi text lên Backend để hỏi, Frontend không hề biết blacklist là gì
-    const res = await axios.post('http://localhost:8080/api/blacklist/check', { content: text });
+    const res = await api.post('/api/blacklist/check', { content: text });
     return res.data.hasBadWord; // Backend sẽ trả về true nếu vi phạm, false nếu an toàn
   } catch (error) {
     console.warn("Lỗi server khi kiểm duyệt, cho phép qua để Backend lớp 2 tự chặn:", error);

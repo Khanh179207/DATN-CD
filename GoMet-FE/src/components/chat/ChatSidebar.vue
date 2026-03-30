@@ -83,7 +83,7 @@
 import { ref, onMounted, computed, watch, onUnmounted } from 'vue'
 import { useChatStore } from '@/stores/chat'
 import { useAuthStore } from '@/stores/auth'
-import axios from 'axios'
+import api from '@/services/api'
 
 const chatStore = useChatStore()
 const authStore = useAuthStore()
@@ -109,7 +109,7 @@ const loadConversations = async () => {
   loading.value = true
   try {
     const userId = authStore.user?.accountID || 1;
-    const res = await axios.get(`http://localhost:8080/api/conversations/user/${userId}`);
+    const res = await api.get(`/api/conversations/user/${userId}`);
     
     console.log("Dữ liệu Chat nhận được:", res.data);
 

@@ -51,18 +51,6 @@
           
 <div v-if="currentTab === 'info'" class="info-layout">
   <div class="info-main">
-    <div class="card-box shadow-sm">
-      <h3>📖 Thể lệ & Giới thiệu</h3>
-      <p class="desc-text" style="white-space: pre-line;">{{ eventData.description }}</p>
-      
-      <h3 class="mt-8">⚖️ Quy định tham gia</h3>
-      <ul class="rules-list">
-        <li v-for="(rule, i) in eventData.rules" :key="i">
-          <span class="bullet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span> 
-          {{ rule }}
-        </li>
-      </ul>
-    </div>
 
    <div class="card-box prizes-section shadow-sm">
   <h3>🏆 Cơ cấu giải thưởng</h3>

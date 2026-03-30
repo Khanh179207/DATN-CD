@@ -13,7 +13,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/favorites")
-@CrossOrigin("*")
+
 public class FavoriteController {
 
     @Autowired

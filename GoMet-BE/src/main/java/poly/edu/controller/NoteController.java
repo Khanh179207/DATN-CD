@@ -8,7 +8,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/notes")
-@CrossOrigin("*")
+
 public class NoteController {
 
     @Autowired

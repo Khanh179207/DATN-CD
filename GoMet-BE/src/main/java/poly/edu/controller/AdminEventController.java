@@ -11,7 +11,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/admin/events")
 @RequiredArgsConstructor
-@CrossOrigin("*") // Mở khóa CORS hoàn toàn cho FE gọi
+
 public class AdminEventController {
 
     private final AdminEventService adminEventService;

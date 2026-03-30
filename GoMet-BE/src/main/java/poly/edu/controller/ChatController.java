@@ -20,7 +20,7 @@ import org.springframework.http.ResponseEntity;
 // ... các import giữ nguyên
 
 @RestController
-@CrossOrigin("*")
+
 public class ChatController {
 
     @Autowired private SimpMessagingTemplate messagingTemplate;

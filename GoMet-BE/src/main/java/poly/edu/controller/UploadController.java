@@ -13,7 +13,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/upload")
 @RequiredArgsConstructor
-@CrossOrigin("*")
+
 public class UploadController {
 
     private final CloudinaryService cloudinaryService;

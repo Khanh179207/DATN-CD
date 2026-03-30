@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/admin/stats")
 @RequiredArgsConstructor
-@CrossOrigin("*")
+
 public class AdminStatsController {
 
     private final AccountDAO accountDAO;

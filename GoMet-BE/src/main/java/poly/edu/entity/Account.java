@@ -35,9 +35,6 @@ public class Account {
     @Column(name = "Bio", columnDefinition = "NVARCHAR(MAX)")
     private String bio;
 
-    @Column(name = "Token", nullable = true)
-    private String token;
-
     @Column(name = "Point", nullable = false)
     @Builder.Default
     private Integer point = 0;

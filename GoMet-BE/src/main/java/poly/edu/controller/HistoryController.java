@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/history")
 @RequiredArgsConstructor
-@CrossOrigin("*") // Thêm CrossOrigin để tránh lỗi chặn từ trình duyệt sếp nhé
+
 public class HistoryController {
 
     private final HistoryDAO    historyDAO;

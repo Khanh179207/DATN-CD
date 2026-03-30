@@ -10,7 +10,7 @@ import poly.edu.service.CommentLikeService;
 
 @RestController
 @RequestMapping("/api/comments")
-@CrossOrigin("*")
+
 @RequiredArgsConstructor
 public class CommentLikeController {
 

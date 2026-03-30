@@ -85,7 +85,7 @@
 <script setup>
 import { ref, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
+import api from '@/services/api'
 import { chatWithAIChef } from '@/services/aiService'
 
 const router = useRouter();
@@ -126,7 +126,7 @@ const sendMsg = async () => {
     const coreKeyword = text.toLowerCase().replace(/(vậy|món|cho|mình|hỏi|về|cách|nấu|định|làm|tìm|kiếm|trên|web|có|gì)/g, '').trim();
 
     // 🚀 BƯỚC 2: Gọi DB nội bộ
-    const dbRes = await axios.get(`http://localhost:8080/api/posts/search-mini?q=${coreKeyword || text}`);
+    const dbRes = await api.get(`/api/posts/search-mini?q=${coreKeyword || text}`);
     
     // 🔥 BƯỚC 3: NẾU THẤY TRONG DB -> TRẢ LỜI CỰC NGẮN & DỪNG LUÔN
     if (dbRes.data && dbRes.data.length > 0) {
@@ -140,7 +140,7 @@ const sendMsg = async () => {
     }
 
     // ⛔ BƯỚC 4: NẾU KHÔNG THẤY -> MỚI NHỜ AI TƯ VẤN CHI TIẾT
-    const fallbackRes = await axios.get(`http://localhost:8080/api/posts/latest?limit=5`);
+    const fallbackRes = await api.get(`/api/posts/latest?limit=5`);
     const dbData = fallbackRes.data.map(p => ({ id: p.postID, title: p.title }));
     
     const reply = await chatWithAIChef(messages.value.slice(-6), text, dbData);

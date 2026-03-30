@@ -100,18 +100,20 @@
 
             <div class="form-grid">
                <div class="form-column">
-                 <h4 class="column-title">📜 Quy tắc & Phần thưởng</h4>
+                 <h4 class="column-title">📜 Quy tắc</h4>
                  <div class="form-group">
                     <label>Số phiếu Vote/User <span v-if="!isViewOnly" class="req">*</span></label>
                     <input v-model="form.maxVotes" type="number" min="1" :disabled="isViewOnly">
                  </div>
                  <div class="form-group">
-                    <label>Thể lệ chi tiết</label>
-                    <textarea v-model="form.rules" rows="4" :disabled="isViewOnly"></textarea>
-                 </div>
-                 <div class="form-group">
                     <label>Phần thưởng vinh danh</label>
-                    <input v-model="form.reward" type="text" :disabled="isViewOnly">
+                    <select v-model="form.reward" :disabled="isViewOnly">
+                      <option disabled value="">Chọn phần thưởng</option>
+                      <option value="Premium 1 tuần">Premium 1 tuần</option>
+                      <option value="Premium 1 tháng">Premium 1 tháng</option>
+                      <option value="Premium 3 tháng">Premium 3 tháng</option>
+                      <option value="Premium 1 năm">Premium 1 năm</option>
+                    </select>
                  </div>
                </div>
                <div class="form-column">

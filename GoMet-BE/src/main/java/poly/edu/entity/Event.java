@@ -44,9 +44,6 @@ public class Event {
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String description;
 
-    @Column(columnDefinition = "NVARCHAR(MAX)")
-    private String rules;
-
     @Column(name = "reward", length = 255, columnDefinition = "NVARCHAR(255)")
     private String reward;
 

@@ -12,7 +12,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/admin/accounts")
 @RequiredArgsConstructor
-@CrossOrigin
+
 public class AdminAccountController {
 
     private final AccountService accountService;

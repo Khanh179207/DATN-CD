@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import axios from 'axios'
+import api from '@/services/api' // 🔥 Import api đã cấu hình JWT (Tự động gắn Token)
 import { useAuthStore } from './auth'
 
 export const useShoppingStore = defineStore('shopping', () => {
@@ -11,7 +11,8 @@ export const useShoppingStore = defineStore('shopping', () => {
     if (!authStore.isAuthenticated) { items.value = []; return }
     try {
       const accountId = authStore.currentUser.accountID
-      const res = await axios.get(`http://localhost:8080/api/shopping/${accountId}`)
+      // 🔥 Dùng api.get và bỏ cái http://localhost:8080 đi
+      const res = await api.get(`/api/shopping/${accountId}`)
 
       items.value = res.data.map(item => ({
         id: item.shoppingId,
@@ -30,8 +31,8 @@ export const useShoppingStore = defineStore('shopping', () => {
       const accountId = authStore.currentUser.accountID
       const ingredientNames = newIngredients.map(i => i.name)
 
-      // Gửi POST ID xuống DB để lưu chuẩn hóa
-      await axios.post('http://localhost:8080/api/shopping/add', {
+      // 🔥 Dùng api.post
+      await api.post('/api/shopping/add', {
         accountId: accountId,
         postId: postId,
         ingredients: ingredientNames
@@ -45,7 +46,8 @@ export const useShoppingStore = defineStore('shopping', () => {
     const item = items.value[index]
     item.checked = !item.checked
     try {
-      await axios.put(`http://localhost:8080/api/shopping/toggle/${item.id}`)
+      // 🔥 Dùng api.put
+      await api.put(`/api/shopping/toggle/${item.id}`)
     } catch (error) {
       item.checked = !item.checked
       console.error('Lỗi cập nhật trạng thái:', error)
@@ -56,7 +58,8 @@ export const useShoppingStore = defineStore('shopping', () => {
     if (!authStore.isAuthenticated) return
     try {
       const accountId = authStore.currentUser.accountID
-      await axios.delete(`http://localhost:8080/api/shopping/remove-bought/${accountId}`)
+      // 🔥 Dùng api.delete
+      await api.delete(`/api/shopping/remove-bought/${accountId}`)
       await fetchCart()
     } catch (error) { console.error('Lỗi xóa món đã mua:', error) }
   }
@@ -65,7 +68,8 @@ export const useShoppingStore = defineStore('shopping', () => {
     if (!authStore.isAuthenticated) return
     try {
       const accountId = authStore.currentUser.accountID
-      await axios.delete(`http://localhost:8080/api/shopping/clear-all/${accountId}`)
+      // 🔥 Dùng api.delete
+      await api.delete(`/api/shopping/clear-all/${accountId}`)
       items.value = []
     } catch (error) { console.error('Lỗi làm sạch giỏ hàng:', error) }
   }

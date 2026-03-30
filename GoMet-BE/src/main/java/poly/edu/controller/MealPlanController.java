@@ -9,7 +9,7 @@ import poly.edu.service.MealPlanService;
 import java.time.LocalDate;
 import java.util.List;
 
-@CrossOrigin("*")
+
 @RestController
 @RequestMapping("/api/meal-plans")
 public class MealPlanController {

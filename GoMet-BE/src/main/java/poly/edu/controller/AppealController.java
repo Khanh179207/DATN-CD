@@ -16,7 +16,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "*", maxAge = 3600)
+
 public class AppealController {
 
     @Autowired
@@ -24,6 +24,9 @@ public class AppealController {
 
     @Autowired
     private AccountDAO accountDAO;
+
+    @Autowired
+    private poly.edu.util.JwtUtils jwtUtils;
 
     @PostMapping("/appeals")
     public ResponseEntity<?> createAppeal(@RequestBody Map<String, String> request) {
@@ -85,10 +88,7 @@ public class AppealController {
         }
     }
 
-    /**
-     * 🛠️ HÀM TRÍCH XUẤT ADMIN: Dò tìm Account có Token trùng với Header
-     * (Logic đồng bộ 100% với hàm /me trong AuthController của sếp)
-     */
+    // 🔥 HÀM TRÍCH XUẤT ADMIN MỚI DÙNG JWT
     private Account getAdminFromToken(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
 
@@ -98,8 +98,13 @@ public class AppealController {
 
         String token = authHeader.substring(7);
 
-        // Dùng Stream tìm kiếm Account có token tương ứng trong DB
-        return accountDAO.findByToken(token)
-                .orElseThrow(() -> new RuntimeException("Token không hợp lệ hoặc đã hết hạn!"));
+        if (!jwtUtils.validateJwtToken(token)) {
+            throw new RuntimeException("Token không hợp lệ hoặc đã bị chỉnh sửa!");
+        }
+
+        String email = jwtUtils.getEmailFromJwtToken(token);
+
+        return accountDAO.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại!"));
     }
 }

@@ -14,6 +14,7 @@ import poly.edu.service.EmailService;
 import poly.edu.service.GoogleAuthService;
 import poly.edu.service.OtpStore;
 import poly.edu.service.PasswordResetService;
+import poly.edu.util.JwtUtils; // 🔥 IMPORT CỖ MÁY IN TOKEN VÀO ĐÂY
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -33,6 +34,7 @@ public class AuthController {
     private final PasswordResetService passwordResetService;
     private final BCryptPasswordEncoder passwordEncoder;
     private final GoogleAuthService    googleAuthService;
+    private final JwtUtils             jwtUtils; // 🔥 NHÚNG JWT UTILS VÀO
 
     // ==========================================
     // 🔥 HELPER: TẠO RESPONSE KHI BỊ KHÓA (CLEAN CODE)
@@ -40,8 +42,8 @@ public class AuthController {
     private Map<String, Object> buildBannedResponse(Account acc) {
         Map<String, Object> errorResponse = new HashMap<>();
         errorResponse.put("message", "ACCOUNT_BANNED");
-        errorResponse.put("banReason", acc.getBanReason()); // Chỉ trả về lý do
-        errorResponse.put("bannedAt", acc.getBannedAt() != null ? acc.getBannedAt().toString() : null); // Và thời gian
+        errorResponse.put("banReason", acc.getBanReason());
+        errorResponse.put("bannedAt", acc.getBannedAt() != null ? acc.getBannedAt().toString() : null);
         return errorResponse;
     }
 
@@ -68,21 +70,20 @@ public class AuthController {
 
             if (opt.isPresent()) {
                 acc = opt.get();
-                // 🔥 CHỐT CHẶN 1: CẤM USER BỊ BAN ĐĂNG NHẬP BẰNG GOOGLE
+                // 🔥 CHỐT CHẶN 1: CẤM USER BỊ BAN ĐĂNG NHẬP
                 if (acc.getIsActive() != null && acc.getIsActive() == 0) {
                     return ResponseEntity.status(HttpStatus.FORBIDDEN).body(buildBannedResponse(acc));
                 }
 
-                // 3. Tạo Token phiên đăng nhập (NẾU KHÔNG BỊ BAN)
-                String newToken = UUID.randomUUID().toString();
-                acc.setToken(newToken);
-                accountDAO.save(acc);
+                // 🔥 TẠO JWT TOKEN THAY VÌ LƯU DB
+                String role = acc.getIsAdmin() == 1 ? "ADMIN" : "USER";
+                String jwtToken = jwtUtils.generateJwtToken(acc.getEmail(), acc.getAccountID(), role);
 
-                return ResponseEntity.ok(buildResponse(acc));
+                return ResponseEntity.ok(buildResponse(acc, jwtToken));
 
             } else {
                 // TÌNH HUỐNG 2: CHƯA CÓ TÀI KHOẢN -> TỰ ĐỘNG ĐĂNG KÝ
-                String finalUsername = name.replaceAll("\\s+", ""); // Xóa khoảng trắng
+                String finalUsername = name.replaceAll("\\s+", "");
                 if (accountDAO.findByUsername(finalUsername).isPresent()) {
                     finalUsername = finalUsername + "_" + new Random().nextInt(10000);
                 }
@@ -99,11 +100,14 @@ public class AuthController {
                         .isPremium(0)
                         .isActive(1)
                         .createdAt(LocalDateTime.now())
-                        .token(UUID.randomUUID().toString()) // Tạo token luôn lúc đăng ký
+                        // Đã xóa .token(...) đi
                         .build();
 
-                acc = accountDAO.save(acc);
-                return ResponseEntity.ok(buildResponse(acc));
+                acc = accountDAO.save(acc); // Lưu DB để lấy AccountID tự tăng
+
+                // Cấp Token sau khi đăng ký
+                String jwtToken = jwtUtils.generateJwtToken(acc.getEmail(), acc.getAccountID(), "USER");
+                return ResponseEntity.ok(buildResponse(acc, jwtToken));
             }
 
         } catch (Exception e) {
@@ -136,16 +140,16 @@ public class AuthController {
                     .body(Map.of("message", "Incorrect password"));
         }
 
-        // 🔥 CHỐT CHẶN 2: TÀI KHOẢN BỊ BAN KHI ĐĂNG NHẬP BÌNH THƯỜNG
+        // 🔥 CHỐT CHẶN 2: TÀI KHOẢN BỊ BAN
         if (acc.getIsActive() != null && acc.getIsActive() == 0) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(buildBannedResponse(acc));
         }
 
-        String newToken = UUID.randomUUID().toString();
-        acc.setToken(newToken);
-        accountDAO.save(acc);
+        // 🔥 TẠO JWT TOKEN MÀ KHÔNG CẦN CHẠM VÀO DATABASE NỮA
+        String role = acc.getIsAdmin() == 1 ? "ADMIN" : "USER";
+        String jwtToken = jwtUtils.generateJwtToken(acc.getEmail(), acc.getAccountID(), role);
 
-        return ResponseEntity.ok(buildResponse(acc));
+        return ResponseEntity.ok(buildResponse(acc, jwtToken));
     }
 
     // ─── REGISTRATION (OTP flow) ──────────────────────────────────────────────
@@ -190,24 +194,26 @@ public class AuthController {
                     .body(Map.of("message", "This email is already registered"));
         }
 
-        String token = UUID.randomUUID().toString();
         Account acc = Account.builder()
                 .username(pending.username())
                 .email(req.getEmail())
                 .password(pending.password())
                 .avatar("")
-                .token(token)
                 .point(0)
                 .isAdmin(0)
                 .isPremium(0)
                 .isActive(1)
                 .createdAt(LocalDateTime.now())
+                // Đã xóa cột token
                 .build();
 
-        accountDAO.save(acc);
+        acc = accountDAO.save(acc); // Lưu xuống để lấy ID
         otpStore.remove(req.getEmail());
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(buildResponse(acc));
+        // Cấp JWT
+        String jwtToken = jwtUtils.generateJwtToken(acc.getEmail(), acc.getAccountID(), "USER");
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(buildResponse(acc, jwtToken));
     }
 
     @PostMapping("/register")
@@ -266,26 +272,35 @@ public class AuthController {
 
         String token = authHeader.substring(7);
 
-        Optional<Account> opt = accountDAO.findAll().stream()
-                .filter(a -> token.equals(a.getToken()))
-                .findFirst();
+        // 🔥 THAY MÁU HOÀN TOÀN LOGIC TÌM KIẾM
+        // 1. Kiểm tra chữ ký JWT
+        if (!jwtUtils.validateJwtToken(token)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Invalid or expired token"));
+        }
+
+        // 2. Bóc email từ token ra (Tốc độ ánh sáng)
+        String email = jwtUtils.getEmailFromJwtToken(token);
+
+        // 3. Truy vấn thằng vào Database bằng Email (Đã đánh Index, tìm cực nhanh)
+        Optional<Account> opt = accountDAO.findByEmail(email);
 
         if (opt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Invalid token"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "User not found"));
         }
 
         Account acc = opt.get();
 
-        // 🔥 CHỐT CHẶN 3: LƯỚI TRỜI LỒNG LỘNG KHI CHECK ME (Chặn các User bị ban đột ngột lúc đang xài app)
+        // 🔥 CHỐT CHẶN 3: LƯỚI TRỜI LỒNG LỘNG KHI CHECK ME
         if (acc.getIsActive() != null && acc.getIsActive() == 0) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(buildBannedResponse(acc));
         }
 
-        return ResponseEntity.ok(buildResponse(acc));
+        return ResponseEntity.ok(buildResponse(acc, token));
     }
 
     // ─── HELPERS ─────────────────────────────────────────────────────────────
-    private AuthResponseDTO buildResponse(Account acc) {
+    // 🔥 Đã truyền thêm tham số jwtToken vào đây
+    private AuthResponseDTO buildResponse(Account acc, String jwtToken) {
         AuthResponseDTO res = new AuthResponseDTO();
         res.setAccountID(acc.getAccountID());
         res.setUsername(acc.getUsername());
@@ -293,7 +308,7 @@ public class AuthController {
         res.setAvatar(acc.getAvatar());
         res.setIsAdmin(acc.getIsAdmin());
         res.setIsPremium(acc.getIsPremium());
-        res.setToken(acc.getToken());
+        res.setToken(jwtToken); // Nhét JWT vào đây để trả về cho Frontend
         return res;
     }
 

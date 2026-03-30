@@ -6,13 +6,12 @@ import org.springframework.web.bind.annotation.*;
 import poly.edu.dao.EventDAO;
 import poly.edu.dao.EventPostsDAO;
 import poly.edu.dao.PostDAO;
-import poly.edu.dao.VoteDAO; // 🔥 ĐÃ THÊM IMPORT VOTE DAO
+import poly.edu.dao.VoteDAO;
 import poly.edu.dto.EventDTO;
 import poly.edu.entity.Event;
 import poly.edu.entity.EventPosts;
 import poly.edu.entity.Post;
 import poly.edu.service.EventService;
-
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -22,14 +21,14 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/events")
 @RequiredArgsConstructor
-@CrossOrigin("*")
+
 public class EventController {
 
     private final EventService eventService;
     private final EventPostsDAO eventPostsDAO;
     private final EventDAO eventDAO;
     private final PostDAO postDAO;
-    private final VoteDAO voteDAO; // 🔥 BỔ SUNG KHAI BÁO VOTE DAO ĐỂ CHECK VOTE
+    private final VoteDAO voteDAO;
 
     @GetMapping
     public ResponseEntity<List<EventDTO>> getAll() {
