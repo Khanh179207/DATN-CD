@@ -202,7 +202,7 @@ const filterTabs = [
   { label: 'Tất cả', value: 'ALL' },
   { label: 'Đã thu tiền', value: 'PAID' },
   { label: 'Đang chờ', value: 'PENDING' },
-  { label: 'Đã hủy', value: 'CANCELLED' }
+  { label: 'Đã hủy', value: 'FAILED' }
 ]
 
 const receiptModal = ref({ show: false, txn: null })
@@ -221,18 +221,18 @@ const formatDate = (dateString) => {
 
 // --- UI HELPERS ---
 const getStatusLabel = (status) => {
-  const map = { 'PAID': 'Thành công', 'PENDING': 'Chờ xử lý', 'CANCELLED': 'Thất bại' }
+  const map = { 'PAID': 'Thành công', 'PENDING': 'Chờ xử lý', 'FAILED': 'Thất bại' }
   return map[status] || status
 }
 
 const getStatusClass = (status) => {
-  const map = { 'PAID': 'active', 'PENDING': 'warning', 'CANCELLED': 'banned' }
+  const map = { 'PAID': 'active', 'PENDING': 'warning', 'FAILED': 'banned' }
   return map[status] || 'banned'
 }
 
 const getAmountColor = (status) => {
   if (status === 'PAID') return 'text-emerald font-bold'
-  if (status === 'CANCELLED') return 'text-gray-400 line-through'
+  if (status === 'FAILED') return 'text-gray-400 line-through'
   return 'text-gray-800 font-bold'
 }
 
@@ -243,7 +243,7 @@ const totalRevenue = computed(() => {
     .reduce((sum, t) => sum + (t.amount || 0), 0)
 })
 
-const failedCount = computed(() => transactions.value.filter(t => t.status === 'CANCELLED').length)
+const failedCount = computed(() => transactions.value.filter(t => t.status === 'FAILED').length)
 
 const filteredTransactions = computed(() => {
   let result = transactions.value

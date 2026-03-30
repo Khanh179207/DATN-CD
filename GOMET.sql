@@ -664,6 +664,8 @@ GO
 
 	SELECT * FROM Paymenttransaction;
 
+	SELECT * FROM Subscription;
+
 	SELECT * FROM Appeals;
 	
 	SELECT * FROM ModerationLog;

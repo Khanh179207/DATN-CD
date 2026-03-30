@@ -21,6 +21,7 @@ import ComparePage from '@/pages/compare/ComparePage.vue'
 import Leaderboard from '@/pages/Leaderboard.vue'
 import Suggestions from '@/pages/suggestions/SuggestionsPage.vue'
 import MealPlan from '@/pages/mealplan/MealPlanPage.vue'
+import PaymentSuccess from '@/pages/PaymentSuccess.vue'
 import TermsAndPolicy from '@/pages/terms/TermsAndPolicy.vue'
 
 // --- ADMIN PAGES ---
@@ -142,6 +143,12 @@ const routes = [
         name: 'MealPlan',
         component: MealPlan,
         meta: { requiresPremium: true, isDark: true }
+      },
+      {
+        path: 'payment-success',
+        name: 'PaymentSuccess',
+        component: PaymentSuccess,
+        meta: { requiresAuth: true } // Đánh dấu để guard bắt, nhưng sẽ có ngoại lệ bên dưới
       }
     ]
   },
@@ -212,18 +219,10 @@ router.beforeEach((to, from, next) => {
   const userStr = localStorage.getItem('user')
   const user = userStr ? JSON.parse(userStr) : null
   const isLoggedIn = !!user?.token
-
-  const isPremium = isLoggedIn && (
-    String(user?.isPremium) === "true" ||
-    String(user?.isPremium) === "1" ||
-    user?.role === 'premium'
-  )
-
-  const isAdmin = isLoggedIn && (
-    String(user?.isAdmin) === "true" ||
-    String(user?.isAdmin) === "1" ||
-    user?.role === 'ADMIN' 
-  )
+  
+  // Tối ưu hóa kiểm tra quyền, ưu tiên 'role' từ JWT
+  const isPremium = isLoggedIn && (user?.role === 'premium' || ['true', '1'].includes(String(user?.isPremium)));
+  const isAdmin = isLoggedIn && (user?.role === 'ADMIN' || ['true', '1'].includes(String(user?.isAdmin)));
 
   // 1. Admin-only routes: must be logged in AND be an admin
   if (to.matched.some(r => r.meta?.requiresAdmin)) {
@@ -239,6 +238,10 @@ router.beforeEach((to, from, next) => {
 
   // 2. Auth-required routes (Khóa các trang yêu cầu đăng nhập)
   if (to.matched.some(r => r.meta?.requiresAuth)) {
+    // Ngoại lệ: Cho phép truy cập trang kết quả thanh toán để cập nhật trạng thái user
+    if (to.name === 'PaymentSuccess') {
+      return next();
+    }
     if (!isLoggedIn) {
       toast.error('Vui lòng đăng nhập để xem chi tiết')
       return next({ path: '/home', query: { login: '1' } })
