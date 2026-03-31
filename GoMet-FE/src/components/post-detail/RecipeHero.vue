@@ -152,7 +152,7 @@ import { ref, onMounted, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { toast } from '@/composables/useToast'
-import axios from 'axios'
+import api from '@/services/api'
 import { addFavorite, removeFavorite, checkFavorite } from '@/services/socialService'
 import { togglePostLike, checkPostLiked } from '@/services/likeService' 
 import FeedbackModal from '@/components/modals/FeedbackModal.vue'
@@ -201,7 +201,13 @@ const formatNumber = (n) => n >= 1000 ? (n / 1000).toFixed(1) + 'k' : (n || 0)
 // --- ACTIONS ---
 const copyLink = () => { navigator.clipboard.writeText(window.location.href); toast.success("Đã sao chép liên kết!"); }
 const goToProfile = (id) => { showLikesModal.value = false; router.push(`/profile/${id}`); }
-const openReportModal = () => { if (!authStore.isAuthenticated) return toast.warn("Vui lòng đăng nhập!"); showReportModal.value = true; }
+const openReportModal = () => {
+  if (!authStore.isAuthenticated) {
+    window.dispatchEvent(new CustomEvent('ui:open-login'))
+    return
+  }
+  showReportModal.value = true
+}
 
 // --- API LẤY DANH SÁCH LIKE THẬT ---
 const fetchLikesList = async () => {
@@ -211,7 +217,7 @@ const fetchLikesList = async () => {
   try {
     // SẾP THAY ĐỔI ENDPOINT NÀY THEO BACKEND CỦA SẾP NHÉ
     // VD: API trả về mảng [{ accountID, fullName, avatar }, ...]
-    const response = await axios.get(`http://localhost:8080/api/likes/post/${pid}`);
+    const response = await api.get(`/api/likes/post/${pid}`);
     
     if (response.data && Array.isArray(response.data)) {
       likedUsersList.value = response.data.map(u => ({
@@ -251,7 +257,10 @@ const initData = async () => {
 
 // --- XỬ LÝ NÚT LIKE (TỐI ƯU GIAO DIỆN & LOGIC) ---
 const handleLike = async () => {
-  if (!authStore.isAuthenticated) return toast.warn("Vui lòng đăng nhập!");
+  if (!authStore.isAuthenticated) {
+    window.dispatchEvent(new CustomEvent('ui:open-login'))
+    return
+  }
   if (isLikeLoading.value) return;
   
   const pid = props.post.postID || props.post.id; 
@@ -300,7 +309,10 @@ const handleLike = async () => {
 }
 
 const toggleFavorite = async () => {
-  if (!authStore.isAuthenticated) return toast.warn("Vui lòng đăng nhập!");
+  if (!authStore.isAuthenticated) {
+    window.dispatchEvent(new CustomEvent('ui:open-login'))
+    return
+  }
   const pid = props.post.postID || props.post.id
   try {
     if (isFavorite.value) { await removeFavorite(authStore.user.accountID, pid); isFavorite.value = false; } 

@@ -285,7 +285,9 @@ const fetchEventEntries = async (eventId) => {
 }
 
 const handleOpenModal = () => {
-  if (!authStore.isAuthenticated) return toast.warn('Sếp đăng nhập để nộp bài nhé!')
+  if (!authStore.isAuthenticated) mEvent('ui:open-login'))
+    return
+  }
   isModalOpen.value = true
 }
 

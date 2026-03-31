@@ -2,6 +2,7 @@ package poly.edu.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize; // 🔥 IMPORT THẺ TỪ QUYỀN LỰC
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dao.SystemConfigDAO;
 import poly.edu.entity.SystemConfig;
@@ -13,18 +14,18 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/system-config")
 @RequiredArgsConstructor
-
 public class SystemConfigController {
 
     private final SystemConfigDAO systemConfigDAO;
 
-    // 1. API Public: Lấy toàn bộ cấu hình để hiển thị lên Website
+    // 🟢 PUBLIC: Mở cửa cho mọi người (kể cả khách) lấy cấu hình để hiển thị UI
     @GetMapping
     public ResponseEntity<List<SystemConfig>> getAllConfigs() {
         return ResponseEntity.ok(systemConfigDAO.findAll());
     }
 
-    // 2. API Admin: Cập nhật cấu hình (Tự động Update hoặc Thêm mới)
+    // 🔴 ADMIN ONLY: Chỉ Admin mới có quyền thay đổi vận mệnh của hệ thống
+    @PreAuthorize("hasRole('ADMIN')") // 🔥 CHỐT CHẶN ĐỎ: Chặn đứng mọi User thường hoặc Khách
     @PutMapping("/admin/update")
     public ResponseEntity<?> updateConfigs(@RequestBody Map<String, String> payload) {
         try {

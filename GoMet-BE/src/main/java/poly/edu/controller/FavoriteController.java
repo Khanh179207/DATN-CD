@@ -1,8 +1,8 @@
 package poly.edu.controller;
 
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize; // 🔥 IMPORT THẺ BẢO VỆ
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dto.FavoriteDTO;
 import poly.edu.service.FavoriteService;
@@ -10,16 +10,15 @@ import poly.edu.service.FavoriteService;
 import java.util.List;
 import java.util.Map;
 
-
 @RestController
 @RequestMapping("/api/favorites")
-
+@PreAuthorize("isAuthenticated()") // 🔥 CHỐT CHẶN VÀNG: Bắt buộc đăng nhập cho TẤT CẢ các hàm bên dưới
 public class FavoriteController {
 
     @Autowired
     private FavoriteService favoriteService;
 
-    // Lưu bài viết
+    // 🟡 USER: Lưu bài viết
     @PostMapping("/add")
     public ResponseEntity<?> saveFavorite(@RequestBody Map<String, Integer> body) {
 
@@ -33,7 +32,7 @@ public class FavoriteController {
         ));
     }
 
-    // Lấy danh sách bài viết đã lưu
+    // 🟡 USER: Lấy danh sách bài viết đã lưu
     @GetMapping("/{accountID}")
     public ResponseEntity<List<FavoriteDTO>> getFavorites(@PathVariable Integer accountID) {
 
@@ -42,7 +41,7 @@ public class FavoriteController {
         return ResponseEntity.ok(favorites);
     }
 
-    // Bỏ lưu bài viết
+    // 🟡 USER: Bỏ lưu bài viết
     @DeleteMapping("/remove")
     public ResponseEntity<?> removeFavorite(
             @RequestParam Integer accountID,
@@ -55,7 +54,7 @@ public class FavoriteController {
         ));
     }
 
-    // Kiểm tra đã lưu chưa
+    // 🟡 USER: Kiểm tra đã lưu chưa
     @GetMapping("/check")
     public ResponseEntity<?> checkFavorite(
             @RequestParam Integer accountID,

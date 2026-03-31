@@ -235,7 +235,10 @@ const goToDetail = () => { if (props.post.id) router.push({ name: 'PostDetail', 
 
 // --- ACTIONS ---
 const toggleLike = async () => {
-  if (!authStore.isAuthenticated) return toast.warn("Vui lòng đăng nhập để thích bài viết!")
+  if (!authStore.isAuthenticated) {
+    window.dispatchEvent(new CustomEvent('ui:open-login'))
+    return
+  }
   if (isLikeLoading.value) return
   
   const uid = authStore.user?.accountID || authStore.user?.id
@@ -279,14 +282,16 @@ const openLikesModal = async () => {
 
 const handleSaveToPlan = () => {
   if (!authStore.isAuthenticated) {
-    return toast.warn("Vui lòng đăng nhập để sử dụng tính năng này!");
+    window.dispatchEvent(new CustomEvent('ui:open-login'))
+    return
   }
   emit('save-to-plan', props.post);
 };
 
 const toggleSave = async () => {
   if (!authStore.isAuthenticated) {
-    return toast.warn("Vui lòng đăng nhập để lưu bài viết Sếp nhé!");
+    window.dispatchEvent(new CustomEvent('ui:open-login'))
+    return
   }
   if (isSaving.value) return;
 

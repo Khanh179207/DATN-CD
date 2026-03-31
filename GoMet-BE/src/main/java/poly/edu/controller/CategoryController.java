@@ -10,7 +10,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/categories")
 @RequiredArgsConstructor
-
+// 🟢 PUBLIC: Khu vực mở toang cho tất cả mọi người (Khách vãng lai cũng xem được danh mục)
 public class CategoryController {
 
     private final CategoryDAO categoryDAO;

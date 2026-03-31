@@ -40,7 +40,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useChatStore } from '@/stores/chat'
 import { toast } from '@/composables/useToast'
 import { checkFollow, follow, unfollow } from '@/services/socialService'
-import axios from 'axios'
+import api from '@/services/api'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -98,8 +98,8 @@ const goToProfile = () => {
 
 const handleContactUser = async () => {
   if (!authStore.isAuthenticated) { 
-    toast.warn(t('toast.need_login') || 'Vui lòng đăng nhập!')
-    return 
+    window.dispatchEvent(new CustomEvent('ui:open-login'))
+    return
   }
   
   const currentUserId = authStore.user?.accountID || authStore.user?.id
@@ -110,7 +110,7 @@ const handleContactUser = async () => {
   }
   
   try {
-    const res = await axios.post('http://localhost:8080/api/conversations/access', { 
+    const res = await api.post('/api/conversations/access', { 
       user1Id: currentUserId, 
       user2Id: targetId.value 
     })
@@ -130,8 +130,8 @@ const handleContactUser = async () => {
 
 const toggleFollow = async () => {
   if (!authStore.isAuthenticated) { 
-    toast.warn(t('toast.need_login') || 'Vui lòng đăng nhập!')
-    return 
+    window.dispatchEvent(new CustomEvent('ui:open-login'))
+    return
   }
   
   const currentUserId = authStore.user?.accountID || authStore.user?.id

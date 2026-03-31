@@ -3,6 +3,7 @@ package poly.edu.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize; // 🔥 IMPORT THẺ BẢO VỆ
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dto.CommentDTO;
 import poly.edu.service.CommentService;
@@ -13,11 +14,12 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/comments")
 @RequiredArgsConstructor
-
+// 🟢 KHÔNG ĐẶT KHÓA Ở CLASS: Để khách vãng lai còn lướt xem bình luận được
 public class CommentController {
 
     private final CommentService commentService;
 
+    // 🟢 PUBLIC: Mở toang cửa cho tất cả mọi người vào xem bình luận
     @GetMapping("/post/{postID}")
     public ResponseEntity<List<CommentDTO>> getByPost(
             @PathVariable Integer postID,
@@ -25,6 +27,8 @@ public class CommentController {
         return ResponseEntity.ok(commentService.getCommentsByPost(postID, currentAccountID));
     }
 
+    // 🟡 USER: Phải đăng nhập (có Token) mới được đăng bình luận
+    @PreAuthorize("isAuthenticated()")
     @PostMapping
     public ResponseEntity<?> addComment(@RequestBody CommentDTO req) {
         try {
@@ -35,7 +39,8 @@ public class CommentController {
         }
     }
 
-    // API: User tự xóa bình luận của chính mình
+    // 🟡 USER: Phải đăng nhập mới được xóa bình luận (Service sẽ tự check xem có phải chủ Cmt không)
+    @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/user/{id}")
     public ResponseEntity<?> deleteCommentByUser(
             @PathVariable Integer id,
@@ -48,8 +53,8 @@ public class CommentController {
         }
     }
 
-    // 🔥 THÊM API MỚI NÀY VÀO: DÀNH CHO ADMIN XÓA BÌNH LUẬN
-    // API Frontend gọi: DELETE /api/comments/27?adminId=1&adminName=NamAdmin
+    // 🔴 ADMIN ONLY: Vùng cấm, chỉ Admin mới có quyền xóa bình luận của người khác
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteCommentByAdmin(
             @PathVariable Integer id,

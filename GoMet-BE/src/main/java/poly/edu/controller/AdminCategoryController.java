@@ -2,6 +2,7 @@ package poly.edu.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dto.AdminCategoryDTO;
 import poly.edu.service.CategoryService;
@@ -11,6 +12,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/admin/categories")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ADMIN')")
 
 public class AdminCategoryController {
 

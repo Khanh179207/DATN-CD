@@ -88,7 +88,7 @@ import { useChatStore } from '@/stores/chat'
 import { useAuthStore } from '@/stores/auth' 
 import SockJS from 'sockjs-client'
 import Stomp from 'stompjs'
-import axios from 'axios'
+import api from '@/services/api'
 
 const chatStore = useChatStore()
 const authStore = useAuthStore()
@@ -149,10 +149,12 @@ const connectWebSocket = (conversationId) => {
  */
 const fetchHistory = async (convId) => {
   if (!convId || convId === 'undefined') return;
+  
+  // Kiểm tra xem store có user chưa
+  console.log("Token hiện tại nè sếp:", authStore.user?.token);
 
   try {
-    const res = await axios.get(`http://localhost:8080/api/messages/${convId}`);
-    // Chuyển đổi toàn bộ mảng tin nhắn cũ sang format hiển thị
+    const res = await api.get(`/api/messages/${convId}`);
     messages.value = res.data.map(msg => mapMessage(msg));
     scrollToBottom();
   } catch (err) {

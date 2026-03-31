@@ -3,6 +3,7 @@ package poly.edu.controller;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dao.AccountDAO;
 import poly.edu.dto.AdminTicketDTO;
@@ -17,6 +18,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/admin/tickets")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ADMIN')")
 
 public class AdminTicketController {
 

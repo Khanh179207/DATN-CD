@@ -7,6 +7,7 @@ import poly.edu.service.AppealService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize; // 🔥 Import thẻ bảo vệ
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,7 +17,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api")
-
 public class AppealController {
 
     @Autowired
@@ -28,6 +28,7 @@ public class AppealController {
     @Autowired
     private poly.edu.util.JwtUtils jwtUtils;
 
+    // 🟢 PUBLIC: Mở toang cho User bị ban gửi đơn khiếu nại (Không cần Token)
     @PostMapping("/appeals")
     public ResponseEntity<?> createAppeal(@RequestBody Map<String, String> request) {
         try {
@@ -43,11 +44,15 @@ public class AppealController {
         }
     }
 
+    // 🔴 ADMIN ONLY: Chỉ Admin mới được xem danh sách khiếu nại
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/appeals")
     public ResponseEntity<?> getAllAppeals() {
         return ResponseEntity.ok(Map.of("success", true, "data", appealService.getAllAppeals()));
     }
 
+    // 🔴 ADMIN ONLY: Chỉ Admin mới được duyệt đơn khiếu nại
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/admin/appeals/{appealID}")
     public ResponseEntity<?> updateAppeal(
             @PathVariable Integer appealID,
@@ -74,6 +79,8 @@ public class AppealController {
         }
     }
 
+    // 🔴 ADMIN ONLY: Chỉ Admin mới được gỡ ban từ đơn khiếu nại
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/admin/appeals/{appealID}/unban")
     public ResponseEntity<?> unbanAccount(@PathVariable Integer appealID, HttpServletRequest httpRequest) {
         try {
@@ -88,7 +95,7 @@ public class AppealController {
         }
     }
 
-    // 🔥 HÀM TRÍCH XUẤT ADMIN MỚI DÙNG JWT
+    // 🔥 HÀM TRÍCH XUẤT ADMIN MỚI DÙNG JWT (Hàm nội bộ, không cần bảo vệ)
     private Account getAdminFromToken(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
 

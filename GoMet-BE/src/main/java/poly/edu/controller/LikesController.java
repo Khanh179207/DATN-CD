@@ -2,6 +2,7 @@ package poly.edu.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize; // 🔥 IMPORT THẺ BẢO VỆ
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dto.LikesDTO;
 import poly.edu.service.LikesService;
@@ -11,12 +12,13 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/likes")
 @RequiredArgsConstructor
-
+// 🟢 KHÔNG ĐẶT KHÓA Ở CLASS: Để khách vãng lai còn xem được số lượt like
 public class LikesController {
 
     private final LikesService likesService;
 
-    // 1. Thả tim hoặc Hủy thả tim (Toggle)
+    // 🟡 USER: Bắt buộc đăng nhập mới được thả tim hoặc hủy tim
+    @PreAuthorize("isAuthenticated()") // 🔥 CHỐT CHẶN VÀNG
     // Gọi: POST /api/likes/toggle?accountId=1&postId=5
     @PostMapping("/toggle")
     public ResponseEntity<Boolean> toggleLike(
@@ -26,14 +28,15 @@ public class LikesController {
         return ResponseEntity.ok(isLiked);
     }
 
-    // 2. Lấy danh sách những người đã like bài viết
+    // 🟢 PUBLIC: Mở toang cho ai cũng xem được danh sách người đã like
     // Gọi: GET /api/likes/post/5
     @GetMapping("/post/{postId}")
     public ResponseEntity<List<LikesDTO>> getLikesOfPost(@PathVariable Integer postId) {
         return ResponseEntity.ok(likesService.getLikesByPostId(postId));
     }
 
-    // 3. Kiểm tra xem user hiện tại đã like bài này chưa (để load icon)
+    // 🟡 USER: Bắt buộc đăng nhập mới check được trạng thái tim của chính mình
+    @PreAuthorize("isAuthenticated()") // 🔥 CHỐT CHẶN VÀNG
     // Gọi: GET /api/likes/check?accountId=1&postId=5
     @GetMapping("/check")
     public ResponseEntity<Boolean> checkLikeStatus(
