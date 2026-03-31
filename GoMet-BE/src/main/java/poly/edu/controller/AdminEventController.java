@@ -1,12 +1,16 @@
 package poly.edu.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dto.AdminEventDTO;
 import poly.edu.dto.AdminEventPostDTO;
+import poly.edu.dto.RewardedUserDTO;
 import poly.edu.service.AdminEventService;
+import poly.edu.service.EventRewardService;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin/events")
@@ -15,9 +19,7 @@ import java.util.List;
 public class AdminEventController {
 
     private final AdminEventService adminEventService;
-
-    // ĐÃ XÓA @InitBinder VÌ BÂY GIỜ DÙNG @RequestBody (JSON)
-    // Mọi convert ngày tháng sẽ do Jackson tự động làm!
+    private final EventRewardService eventRewardService;
 
     @GetMapping
     public List<AdminEventDTO> getAll() {
@@ -38,16 +40,40 @@ public class AdminEventController {
     @PutMapping("/{id}")
     public AdminEventDTO update(@PathVariable Integer id, @RequestBody AdminEventDTO dto) {
         dto.setEventID(id);
-        // Khi Vue gửi lệnh Kết thúc nhanh, dto.getIsForceEnded() sẽ là TRUE
-        // Cập nhật lại thời gian EndAt, VoteEndAt về hiện tại
         return adminEventService.saveEvent(dto);
     }
 
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Integer id) {
-        // TÍNH NĂNG XÓA MỀM (SOFT DELETE)
-        // Lưu ý: Bên trong AdminEventService sếp phải đổi logic hàm này thành UPDATE isActive = 0 nhé!
         adminEventService.deleteEvent(id);
+    }
+
+    // ===== REWARD ENDPOINT: Trigger thưởng người thắng =====
+    @PostMapping("/{id}/reward")
+    public ResponseEntity<?> rewardTopUsers(@PathVariable Integer id) {
+        try {
+            List<RewardedUserDTO> rewardedUsers = eventRewardService.rewardTopUsersForEvent(id);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Thưởng người thắng thành công!",
+                    "rewardedUsers", rewardedUsers
+            ));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of(
+                    "success", false,
+                    "message", "Lỗi hệ thống: " + e.getMessage()
+            ));
+        }
     }
 
     // ===== Event Detail (Quản lý bài thi trong sự kiện) =====
@@ -59,6 +85,23 @@ public class AdminEventController {
     @DeleteMapping("/posts/{eventPostID}")
     public void removePost(@PathVariable Integer eventPostID) {
         adminEventService.removePostFromEvent(eventPostID);
+    }
+    
+    // ===== 🛑 FORCE END EVENT ENDPOINT =====
+    @PostMapping("/{id}/force-end")
+    public ResponseEntity<?> forceEndEvent(@PathVariable Integer id) {
+        try {
+            adminEventService.forceEndEventWithReward(id);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Kết thúc sự kiện và thưởng người thắng thành công!"
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of(
+                    "success", false,
+                    "message", "Lỗi hệ thống: " + e.getMessage()
+            ));
+        }
     }
     // ===== TÍNH NĂNG KHÔI PHỤC (RESTORE) =====
     @PutMapping("/{id}/restore")

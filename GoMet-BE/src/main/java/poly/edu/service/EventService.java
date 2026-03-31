@@ -6,10 +6,9 @@ import java.util.List;
 
 public interface EventService {
     List<EventDTO> getAllEvents();
-    EventDTO getEventById(Integer id); // 👈 Tên hàm phải như này
+    EventDTO getEventById(Integer id);
     List<EventDTO> getActiveEvents();
     
-    // 🔥 NEW: Reward methods (uses event.winner as flag)
     List<RewardedUserDTO> rewardTopUsersForEvent(Integer eventId);
     boolean isEventEligibleForReward(Integer eventId);
 }
