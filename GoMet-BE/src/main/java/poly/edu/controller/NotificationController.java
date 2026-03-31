@@ -3,6 +3,7 @@ package poly.edu.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize; // 🔥 IMPORT THẺ BẢO VỆ
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dao.NotificationDAO;
@@ -26,11 +27,12 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/notifications")
 @RequiredArgsConstructor
+@PreAuthorize("isAuthenticated()") // 🔥 CHỐT CHẶN VÀNG: Bắt buộc đăng nhập để thao tác với Thông báo
 public class NotificationController {
 
     private final NotificationDAO notificationDAO;
 
-    // ── List notifications for user ──────────────────────────────────────
+    // 🟡 USER: Xem danh sách thông báo của mình ──────────────────────────────
     @GetMapping("/{accountID}")
     @Transactional
     public ResponseEntity<List<Map<String, Object>>> getUserNotifications(
@@ -57,7 +59,7 @@ public class NotificationController {
         return ResponseEntity.ok(result);
     }
 
-    // ── Mark single notification as read ────────────────────────────────
+    // 🟡 USER: Đánh dấu 1 thông báo là đã đọc ────────────────────────────────
     @PutMapping("/{id}/read")
     @Transactional
     public ResponseEntity<?> markRead(@PathVariable Integer id) {
@@ -70,7 +72,7 @@ public class NotificationController {
                 .body(Map.of("message", "Notification not found")));
     }
 
-    // ── Mark ALL as read for a user ──────────────────────────────────────
+    // 🟡 USER: Đánh dấu TẤT CẢ thông báo là đã đọc ────────────────────────────
     @PutMapping("/{accountID}/read-all")
     @Transactional
     public ResponseEntity<?> markAllRead(@PathVariable Integer accountID) {
@@ -91,7 +93,7 @@ public class NotificationController {
                 "updatedCount", unread.size()));
     }
 
-    // ── Delete a notification ────────────────────────────────────────────
+    // 🟡 USER: Xóa 1 thông báo ────────────────────────────────────────────
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteNotification(@PathVariable Integer id) {
         if (!notificationDAO.existsById(id)) {

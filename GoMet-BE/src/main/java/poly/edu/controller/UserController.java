@@ -3,6 +3,7 @@ package poly.edu.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize; // 🔥 IMPORT THẺ BẢO VỆ
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dao.AccountDAO;
 import poly.edu.dao.FollowDAO;
@@ -18,15 +19,14 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
-
 public class UserController {
 
     private final BCryptPasswordEncoder passwordEncoder;
-
     private final AccountDAO accountDAO;
     private final PostDAO postDAO;
     private final FollowDAO followDAO;
 
+    // 🟢 PUBLIC: Cho phép mọi người xem profile của nhau để tăng tính tương tác
     @GetMapping("/{id}")
     public ResponseEntity<UserProfileDTO> getProfile(@PathVariable Integer id) {
         return accountDAO.findById(id).map(acc -> {
@@ -35,6 +35,8 @@ public class UserController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
+    // 🟡 USER ONLY: Chỉ người dùng đã đăng nhập mới được sửa đổi thông tin cá nhân
+    @PreAuthorize("isAuthenticated()") // 🔥 CHỐT CHẶN VÀNG: Ngăn chặn sửa đổi trái phép
     @PutMapping("/{id}")
     public ResponseEntity<?> updateProfile(
             @PathVariable Integer id,
@@ -53,6 +55,7 @@ public class UserController {
         return ResponseEntity.ok(toDTO(acc));
     }
 
+    // 🟢 PUBLIC: Mọi người đều có thể thấy các chỉ số "khủng" của các đầu bếp
     @GetMapping("/{id}/stats")
     public ResponseEntity<?> getStats(@PathVariable Integer id) {
         Account acc = accountDAO.findById(id).orElse(null);
@@ -68,6 +71,24 @@ public class UserController {
                 "followingCount", followingCount,
                 "point", acc.getPoint()
         ));
+    }
+
+    // 🟢 PUBLIC: Tính năng tìm kiếm bạn bè phải luôn mở cửa
+    @GetMapping("/search")
+    public ResponseEntity<?> searchUsers(@RequestParam(required = false, defaultValue = "") String keyword) {
+        List<Account> accounts;
+
+        if (keyword.isBlank()) {
+            accounts = accountDAO.findAll();
+        } else {
+            accounts = accountDAO.findByUsernameContainingIgnoreCase(keyword.trim());
+        }
+
+        List<UserProfileDTO> result = accounts.stream()
+                .map(this::toDTO)
+                .toList();
+
+        return ResponseEntity.ok(result);
     }
 
     private UserProfileDTO toDTO(Account acc) {
@@ -97,22 +118,5 @@ public class UserController {
         dto.setTotalViews(totalViews);
 
         return dto;
-    }
-
-    @GetMapping("/search")
-    public ResponseEntity<?> searchUsers(@RequestParam(required = false, defaultValue = "") String keyword) {
-        List<Account> accounts;
-
-        if (keyword.isBlank()) {
-            accounts = accountDAO.findAll(); // Nếu không gõ gì thì lấy tất cả
-        } else {
-            accounts = accountDAO.findByUsernameContainingIgnoreCase(keyword.trim()); // Tìm theo tên
-        }
-
-        List<UserProfileDTO> result = accounts.stream()
-                .map(this::toDTO)
-                .toList();
-
-        return ResponseEntity.ok(result);
     }
 }

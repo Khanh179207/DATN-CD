@@ -2,6 +2,7 @@ package poly.edu.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize; // 🔥 1. Nhớ import cái này sếp nhé
 import org.springframework.web.bind.annotation.*;
 import poly.edu.entity.BlacklistWord;
 import poly.edu.service.BlacklistService;
@@ -12,11 +13,14 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/admin/blacklist") // 🔥 Đường dẫn cũ của Frontend Admin
 @RequiredArgsConstructor
-
+@PreAuthorize("hasRole('ADMIN')") // 🔥 2. ĐẶT CHỐT TRẠM ADMIN TẠI ĐÂY
 public class AdminBlacklistController {
 
     // 🔥 Bắt buộc dùng Service để nó tự động Refresh Cache trên RAM
     private final BlacklistService blacklistService;
+
+    // Các hàm bên dưới tự động được kế thừa "Haki Bá Vương" của Role ADMIN
+    // Sếp không cần gắn thêm gì cho từng hàm nữa.
 
     @GetMapping
     public ResponseEntity<List<BlacklistWord>> getAllWords() {

@@ -164,7 +164,10 @@ const fetchNote = async () => {
 }
 
 const handleSaveNote = async () => {
-  if (!authStore.isAuthenticated) return toast.warn('Đăng nhập để lưu ghi chú nhé!');
+  if (!authStore.isAuthenticated) {
+    window.dispatchEvent(new CustomEvent('ui:open-login'))
+    return
+  }
   isSavingNote.value = true
   try {
     // ✅ CHUẨN XỊN: Dùng api.post (Đã tự động đính kèm Token)

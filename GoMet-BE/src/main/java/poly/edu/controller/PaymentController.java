@@ -1,6 +1,8 @@
 package poly.edu.controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize; // 🔥 IMPORT THẺ BẢO VỆ
 import org.springframework.web.bind.annotation.*;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -25,9 +27,13 @@ public class PaymentController {
     @PersistenceContext
     private EntityManager entityManager;
 
+    @Autowired
+    private VnPayConfig vnPayConfig;
+
     // ==========================================
     // 1. TẠO LINK THANH TOÁN
     // ==========================================
+    @PreAuthorize("isAuthenticated()") // 🟡 USER: Phải đăng nhập mới được tạo thanh toán
     @PostMapping("/create-vnpay-payment")
     @Transactional
     public ResponseEntity<?> createPayment(HttpServletRequest req, @RequestBody Map<String, Object> payload) {
@@ -60,7 +66,8 @@ public class PaymentController {
                 };
             }
 
-            String vnp_TxnRef = VnPayConfig.getRandomNumber(8) + "_" + System.currentTimeMillis();
+            String vnp_TxnRef = vnPayConfig.getRandomNumber(8) + "_" + System.currentTimeMillis();
+
             String insertTxSql = "INSERT INTO PaymentTransaction (AccountID, OrderCode, Amount, PlanType, Status, CreatedAt) " +
                     "VALUES (:accId, :orderCode, :amount, :planType, 'PENDING', :now)";
             entityManager.createNativeQuery(insertTxSql)
@@ -74,15 +81,15 @@ public class PaymentController {
             Map<String, String> vnp_Params = new TreeMap<>();
             vnp_Params.put("vnp_Version", "2.1.0");
             vnp_Params.put("vnp_Command", "pay");
-            vnp_Params.put("vnp_TmnCode", VnPayConfig.vnp_TmnCode);
+            vnp_Params.put("vnp_TmnCode", vnPayConfig.vnp_TmnCode);
             vnp_Params.put("vnp_Amount", String.valueOf(amount * 100));
             vnp_Params.put("vnp_CurrCode", "VND");
             vnp_Params.put("vnp_TxnRef", vnp_TxnRef);
             vnp_Params.put("vnp_OrderInfo", "ThanhToanPremium");
             vnp_Params.put("vnp_OrderType", "other");
             vnp_Params.put("vnp_Locale", "vn");
-            vnp_Params.put("vnp_ReturnUrl", VnPayConfig.vnp_ReturnUrl);
-            vnp_Params.put("vnp_IpAddr", "127.0.0.1");
+            vnp_Params.put("vnp_ReturnUrl", vnPayConfig.vnp_ReturnUrl);
+            vnp_Params.put("vnp_IpAddr", vnPayConfig.getIpAddress(req));
 
             Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
             SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
@@ -99,8 +106,8 @@ public class PaymentController {
             }
 
             String queryUrl = joiner.toString();
-            String vnp_SecureHash = VnPayConfig.hmacSHA512(VnPayConfig.vnp_HashSecret, queryUrl);
-            String paymentUrl = VnPayConfig.vnp_PayUrl + "?" + queryUrl + "&vnp_SecureHash=" + vnp_SecureHash;
+            String vnp_SecureHash = vnPayConfig.hmacSHA512(vnPayConfig.vnp_HashSecret, queryUrl);
+            String paymentUrl = vnPayConfig.vnp_PayUrl + "?" + queryUrl + "&vnp_SecureHash=" + vnp_SecureHash;
 
             return ResponseEntity.ok(Map.of("url", paymentUrl));
         } catch (Exception e) {
@@ -109,8 +116,9 @@ public class PaymentController {
     }
 
     // ==========================================
-    // 2. CALLBACK
+    // 2. CALLBACK (GIỮ PUBLIC)
     // ==========================================
+    // 🟢 PUBLIC: Không được chặn hàm này, VNPAY cần gọi vào đây từ server của họ
     @GetMapping("/vnpay-callback")
     @Transactional
     public void vnpayCallback(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -121,13 +129,11 @@ public class PaymentController {
         if ("00".equals(vnp_ResponseCode)) {
             Integer realPlanType = 1;
             try {
-                // Cập nhật PAID
                 entityManager.createNativeQuery("UPDATE PaymentTransaction SET Status = 'PAID', PaidAt = :now WHERE OrderCode = :code")
                         .setParameter("now", LocalDateTime.now())
                         .setParameter("code", vnp_TxnRef)
                         .executeUpdate();
 
-                // Dùng Number để tránh lỗi ép kiểu Long -> Integer
                 String findSql = "SELECT TransactionID, AccountID, PlanType FROM PaymentTransaction WHERE OrderCode = :code";
                 List<?> results = entityManager.createNativeQuery(findSql)
                         .setParameter("code", vnp_TxnRef)
@@ -135,7 +141,6 @@ public class PaymentController {
 
                 if (!results.isEmpty()) {
                     Object[] row = (Object[]) results.get(0);
-                    // Ép kiểu an toàn (Safe Casting)
                     Integer transId = ((Number) row[0]).intValue();
                     Integer accId = ((Number) row[1]).intValue();
                     realPlanType = ((Number) row[2]).intValue();
@@ -212,8 +217,9 @@ public class PaymentController {
     }
 
     // ==========================================
-    // 4. GIẢ LẬP
+    // 4. GIẢ LẬP & AUTO
     // ==========================================
+    @PreAuthorize("isAuthenticated()") // 🟡 USER/ADMIN: Chỉ người dùng thực tế mới được force upgrade
     @PostMapping("/force-upgrade")
     @Transactional
     public ResponseEntity<?> forceUpgrade(@RequestBody Map<String, Object> payload) {
@@ -236,12 +242,10 @@ public class PaymentController {
                     .setParameter("code", mockOrderCode)
                     .getSingleResult();
 
-            // Ép kiểu an toàn
             Integer mockTransId = ((Number) newIdObj).intValue();
-
             updateAccountToPremium(accId, pType, mockTransId);
 
-            return ResponseEntity.ok(Map.of("success", true, "message", "Giả lập thành công với mã giao dịch: " + mockOrderCode));
+            return ResponseEntity.ok(Map.of("success", true, "message", "Giả lập thành công: " + mockOrderCode));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "error", e.getMessage()));
         }
@@ -257,6 +261,7 @@ public class PaymentController {
         } catch (Exception e) {}
     }
 
+    @PreAuthorize("isAuthenticated()") // 🟡 USER: Chỉ chủ tài khoản mới check được hạn dùng
     @GetMapping("/check-expiry/{accountId}")
     public ResponseEntity<?> checkPremiumExpiry(@PathVariable Integer accountId) {
         try {

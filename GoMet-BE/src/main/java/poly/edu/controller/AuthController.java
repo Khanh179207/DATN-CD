@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize; // 🔥 IMPORT THÊM CÁI NÀY
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dao.AccountDAO;
@@ -262,6 +263,9 @@ public class AuthController {
     }
 
     // ─── ME (Lấy thông tin User hiện tại) ─────────────────────────────────────
+
+    // 🔥 ĐÃ ĐẶT CHỐT BẢO VỆ TẠI ĐÂY:
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {

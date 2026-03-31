@@ -3,6 +3,7 @@ package poly.edu.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize; // 🔥 IMPORT THẺ BẢO VỆ
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dao.AccountDAO;
 import poly.edu.dao.HistoryDAO;
@@ -28,7 +29,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/history")
 @RequiredArgsConstructor
-
+@PreAuthorize("isAuthenticated()") // 🔥 CHỐT CHẶN VÀNG: Toàn bộ Lịch sử đều cần đăng nhập
 public class HistoryController {
 
     private final HistoryDAO    historyDAO;
@@ -36,13 +37,14 @@ public class HistoryController {
     private final PostDAO       postDAO;
     private final PostController postController;
 
+    // 🟡 USER: Test endpoint
     @GetMapping("/test")
     public String test() {
         System.out.println(">>> HistoryController: GET /api/history/test called");
         return "HistoryController is working!";
     }
 
-    // ── GET history for a user ───────────────────────────────────────────
+    // 🟡 USER: Lấy lịch sử xem của user
     @GetMapping("/{accountID}")
     public ResponseEntity<List<PublicPostDTO>> getHistory(
             @PathVariable Integer accountID,
@@ -62,7 +64,7 @@ public class HistoryController {
         return ResponseEntity.ok(result);
     }
 
-    // ── POST record a view ───────────────────────────────────────────────
+    // 🟡 USER: Ghi nhận 1 lượt xem (Lưu lịch sử)
     @PostMapping
     public ResponseEntity<?> recordView(@RequestBody Map<String, Integer> body) {
         System.out.println(">>> HistoryController: POST /api/history called with: " + body);
@@ -103,7 +105,7 @@ public class HistoryController {
         return ResponseEntity.ok(Map.of("message", "History recorded"));
     }
 
-    // ── DELETE clear all history ─────────────────────────────────────────
+    // 🟡 USER: Xóa toàn bộ lịch sử
     @DeleteMapping("/{accountID}/clear")
     public ResponseEntity<?> clearHistory(@PathVariable Integer accountID) {
         historyDAO.deleteAllByAccountId(accountID);

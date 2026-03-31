@@ -6,53 +6,53 @@
       
       <div class="bg-column col-slow">
         <div class="scroll-track">
-          <img src="@/assets/images/intro/bun.jpg" alt="Food">
-          <img src="@/assets/images/intro/bunbo.jpg" alt="Food">
-          <img src="@/assets/images/intro/banhmi.jpg" alt="Food">
-          <img src="@/assets/images/intro/com.jpg" alt="Food">
-          <img src="@/assets/images/intro/bun.jpg" alt="Food">
-          <img src="@/assets/images/intro/bunbo.jpg" alt="Food">
-          <img src="@/assets/images/intro/banhmi.jpg" alt="Food">
-          <img src="@/assets/images/intro/com.jpg" alt="Food">
+          <img src="@/assets/images/intro/bun.webp" alt="Food">
+          <img src="@/assets/images/intro/bunbo.webp" alt="Food">
+          <img src="@/assets/images/intro/banhmi.webp" alt="Food">
+          <img src="@/assets/images/intro/com.webp" alt="Food">
+          <img src="@/assets/images/intro/bun.webp" alt="Food">
+          <img src="@/assets/images/intro/bunbo.webp" alt="Food">
+          <img src="@/assets/images/intro/banhmi.webp" alt="Food">
+          <img src="@/assets/images/intro/com.webp" alt="Food">
         </div>
       </div>
 
       <div class="bg-column col-fast offset-down">
         <div class="scroll-track reverse">
-          <img src="@/assets/images/intro/banh.jpg" alt="Food">
-          <img src="@/assets/images/intro/goi.jpg" alt="Food">
-          <img src="@/assets/images/intro/bun.jpg" alt="Food">
-          <img src="@/assets/images/intro/bunbo.jpg" alt="Food">
-          <img src="@/assets/images/intro/banh.jpg" alt="Food">
-          <img src="@/assets/images/intro/goi.jpg" alt="Food">
-          <img src="@/assets/images/intro/bun.jpg" alt="Food">
-          <img src="@/assets/images/intro/bunbo.jpg" alt="Food">
+          <img src="@/assets/images/intro/banh.webp" alt="Food">
+          <img src="@/assets/images/intro/goi.webp" alt="Food">
+          <img src="@/assets/images/intro/bun.webp" alt="Food">
+          <img src="@/assets/images/intro/bunbo.webp" alt="Food">
+          <img src="@/assets/images/intro/banh.webp" alt="Food">
+          <img src="@/assets/images/intro/goi.webp" alt="Food">
+          <img src="@/assets/images/intro/bun.webp" alt="Food">
+          <img src="@/assets/images/intro/bunbo.webp" alt="Food">
         </div>
       </div>
 
       <div class="bg-column col-medium">
         <div class="scroll-track">
-          <img src="@/assets/images/intro/banhmi.jpg" alt="Food">
-          <img src="@/assets/images/intro/com.jpg" alt="Food">
-          <img src="@/assets/images/intro/banh.jpg" alt="Food">
-          <img src="@/assets/images/intro/goi.jpg" alt="Food">
-          <img src="@/assets/images/intro/banhmi.jpg" alt="Food">
-          <img src="@/assets/images/intro/com.jpg" alt="Food">
-          <img src="@/assets/images/intro/banh.jpg" alt="Food">
-          <img src="@/assets/images/intro/goi.jpg" alt="Food">
+          <img src="@/assets/images/intro/banhmi.webp" alt="Food">
+          <img src="@/assets/images/intro/com.webp" alt="Food">
+          <img src="@/assets/images/intro/banh.webp" alt="Food">
+          <img src="@/assets/images/intro/goi.webp" alt="Food">
+          <img src="@/assets/images/intro/banhmi.webp" alt="Food">
+          <img src="@/assets/images/intro/com.webp" alt="Food">
+          <img src="@/assets/images/intro/banh.webp" alt="Food">
+          <img src="@/assets/images/intro/goi.webp" alt="Food">
         </div>
       </div>
 
       <div class="bg-column col-fast mobile-hidden">
         <div class="scroll-track reverse">
-          <img src="@/assets/images/intro/bun.jpg" alt="Food">
-          <img src="@/assets/images/intro/goi.jpg" alt="Food">
-          <img src="@/assets/images/intro/banh.jpg" alt="Food">
-          <img src="@/assets/images/intro/com.jpg" alt="Food">
-          <img src="@/assets/images/intro/bun.jpg" alt="Food">
-          <img src="@/assets/images/intro/goi.jpg" alt="Food">
-          <img src="@/assets/images/intro/banh.jpg" alt="Food">
-          <img src="@/assets/images/intro/com.jpg" alt="Food">
+          <img src="@/assets/images/intro/bun.webp" alt="Food">
+          <img src="@/assets/images/intro/goi.webp" alt="Food">
+          <img src="@/assets/images/intro/banh.webp" alt="Food">
+          <img src="@/assets/images/intro/com.webp" alt="Food">
+          <img src="@/assets/images/intro/bun.webp" alt="Food">
+          <img src="@/assets/images/intro/goi.webp" alt="Food">
+          <img src="@/assets/images/intro/banh.webp" alt="Food">
+          <img src="@/assets/images/intro/com.webp" alt="Food">
         </div>
       </div>
     </div>

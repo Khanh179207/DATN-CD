@@ -3,6 +3,7 @@ package poly.edu.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize; // 🔥 IMPORT THẺ BẢO VỆ
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dao.AccountDAO;
 import poly.edu.dao.FollowDAO;
@@ -18,12 +19,14 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/follows")
 @RequiredArgsConstructor
+@PreAuthorize("isAuthenticated()") // 🔥 CHỐT CHẶN VÀNG: Bắt buộc đăng nhập cho TẤT CẢ các hàm bên dưới
 public class FollowController {
 
     private final FollowDAO followDAO;
     private final AccountDAO accountDAO;
     private final NotificationService notificationService;
 
+    // 🟡 USER: Theo dõi
     @PostMapping
     public ResponseEntity<?> follow(
             @RequestParam Integer followerID,
@@ -68,6 +71,7 @@ public class FollowController {
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message", "Đã follow"));
     }
 
+    // 🟡 USER: Bỏ theo dõi
     @DeleteMapping
     public ResponseEntity<?> unfollow(
             @RequestParam Integer followerID,
@@ -82,6 +86,7 @@ public class FollowController {
         return ResponseEntity.ok(Map.of("message", "Đã unfollow"));
     }
 
+    // 🟡 USER: Kiểm tra trạng thái theo dõi
     @GetMapping("/check")
     public ResponseEntity<?> checkFollow(
             @RequestParam Integer followerID,
@@ -91,6 +96,7 @@ public class FollowController {
 
     }
 
+    // 🟡 USER: Lấy danh sách đang theo dõi
     @GetMapping("/my-follows")
     public ResponseEntity<List<Integer>> getMyFollows(@RequestParam Integer followerID) {
         // Truyền trạng thái 1 (đang follow) vào hàm DAO

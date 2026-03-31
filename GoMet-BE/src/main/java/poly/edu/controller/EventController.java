@@ -2,6 +2,7 @@ package poly.edu.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize; // 🔥 IMPORT THẺ BẢO VỆ
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dao.EventDAO;
 import poly.edu.dao.EventPostsDAO;
@@ -21,7 +22,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/events")
 @RequiredArgsConstructor
-
+// 🟢 KHÔNG ĐẶT KHÓA Ở CLASS: Khách vãng lai vẫn được hóng hớt Event thoải mái
 public class EventController {
 
     private final EventService eventService;
@@ -30,22 +31,26 @@ public class EventController {
     private final PostDAO postDAO;
     private final VoteDAO voteDAO;
 
+    // 🟢 PUBLIC: Mở toang cho mọi người xem danh sách Event
     @GetMapping
     public ResponseEntity<List<EventDTO>> getAll() {
         return ResponseEntity.ok(eventService.getAllEvents());
     }
 
+    // 🟢 PUBLIC: Mở toang cho mọi người xem chi tiết Event
     @GetMapping("/{id}")
     public ResponseEntity<EventDTO> getById(@PathVariable Integer id) {
         EventDTO dto = eventService.getEventById(id);
         return dto != null ? ResponseEntity.ok(dto) : ResponseEntity.notFound().build();
     }
 
+    // 🟢 PUBLIC: Mở toang cho mọi người xem Event đang diễn ra
     @GetMapping("/active")
     public ResponseEntity<List<EventDTO>> getActive() {
         return ResponseEntity.ok(eventService.getActiveEvents());
     }
 
+    // 🟢 PUBLIC: Mở toang cho mọi người xem các bài thi của Event
     // 🔥 ĐÃ FIX API NÀY: Trả về tên, avatar và check trạng thái Vote của user
     @GetMapping("/{eventId}/posts")
     public ResponseEntity<?> getEventPosts(
@@ -86,6 +91,8 @@ public class EventController {
         return ResponseEntity.ok(response);
     }
 
+    // 🟡 USER ONLY: Muốn nộp bài dự thi thì bắt buộc phải đăng nhập!
+    @PreAuthorize("isAuthenticated()") // 🔥 CHỐT CHẶN VÀNG NẰM Ở ĐÂY
     // ─── API NỘP BÀI: ĐÃ THÊM LOGIC CHECK THỜI GIAN ───────────────────────
     @PostMapping("/submit")
     public ResponseEntity<?> submitToEvent(@RequestBody Map<String, Object> payload) {
