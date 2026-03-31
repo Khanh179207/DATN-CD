@@ -112,34 +112,34 @@
 
             <form @submit.prevent="handleSubmit">
               
-<div v-if="activeTab === 'register'" class="fade-in-anim">
-  <div class="input-group">
-    <label>Tên đăng nhập</label>
-    <input v-model="registerForm.username" type="text" placeholder="VD: masterchef_vn" class="input-field" required />
-  </div>
-  <div class="input-group">
-    <label>Email</label>
-    <input v-model="registerForm.email" type="email" placeholder="name@example.com" class="input-field" required />
-  </div>
-  <div class="input-group">
-    <label>Mật khẩu</label>
-    <input v-model="registerForm.password" type="password" placeholder="Tối thiểu 6 ký tự" class="input-field" required />
-  </div>
-  <div class="input-group">
-    <label>Xác nhận mật khẩu</label>
-    <input v-model="registerForm.confirmPassword" type="password" placeholder="Nhập lại mật khẩu" class="input-field" required />
-  </div>
+              <div v-if="activeTab === 'register'" class="fade-in-anim">
+                <div class="input-group">
+                  <label>Tên đăng nhập</label>
+                  <input v-model="registerForm.username" type="text" placeholder="VD: masterchef_vn" class="input-field" required />
+                </div>
+                <div class="input-group">
+                  <label>Email</label>
+                  <input v-model="registerForm.email" type="email" placeholder="name@example.com" class="input-field" required />
+                </div>
+                <div class="input-group">
+                  <label>Mật khẩu</label>
+                  <input v-model="registerForm.password" type="password" placeholder="Tối thiểu 6 ký tự" class="input-field" required />
+                </div>
+                <div class="input-group">
+                  <label>Xác nhận mật khẩu</label>
+                  <input v-model="registerForm.confirmPassword" type="password" placeholder="Nhập lại mật khẩu" class="input-field" required />
+                </div>
 
-<div class="input-group-checkbox">
-  <label class="checkbox-container">
-    <input type="checkbox" v-model="registerForm.agreeTerms" required>
-    <span class="checkmark"></span>
-    <span class="label-text">
-      Tôi đồng ý với <router-link to="/terms-and-policy">Điều khoản</router-link> và <router-link to="/terms-and-policy">Chính sách bảo mật</router-link>
-    </span>
-  </label>
-</div>
-</div>
+                <div class="input-group-checkbox">
+                  <label class="checkbox-container">
+                    <input type="checkbox" v-model="registerForm.agreeTerms" required>
+                    <span class="checkmark"></span>
+                    <span class="label-text">
+                      Tôi đồng ý với <router-link to="/terms-and-policy">Điều khoản</router-link> và <router-link to="/terms-and-policy">Chính sách bảo mật</router-link>
+                    </span>
+                  </label>
+                </div>
+              </div>
 
               <div v-else-if="activeTab === 'login'" class="fade-in-anim">
                 <div class="input-group">
@@ -155,7 +155,6 @@
                   <a href="#" class="forgot-pass" @click.prevent="activeTab = 'forgot-password'; forgotState = 'idle'; forgotError = ''; forgotIdentifier = '';">Quên mật khẩu?</a>
                 </div>
 
-                <!-- BANNED ALERT BOX LUXURY -->
                 <transition name="fade-slide" mode="out-in">
                   <div v-if="isBannedBoxVisible" key="banned-local" class="banned-alert-box">
                     <button type="button" class="btn-close-alert" @click="closeBannedAlert" title="Đóng">
@@ -185,9 +184,9 @@
                   </div>
                 </transition>
                 <transition name="fade-slide">
-                  <div v-if="loginError && !isBannedBoxVisible && wrongPasswordCount >= 3" class="appeal-hint">
-                    <button type="button" class="btn-appeal-link" @click="openAppealAction">
-                      Bạn nghĩ mình bị ban nhầm? → Nộp khiếu nại
+                  <div v-if="!isBannedBoxVisible && wrongPasswordCount >= 3" class="appeal-hint">
+                    <button type="button" class="btn-appeal-link" @click.prevent="activeTab = 'forgot-password'; forgotState = 'idle'; forgotError = ''; forgotIdentifier = '';">
+                      Quên mật khẩu? → Lấy lại mật khẩu
                     </button>
                   </div>
                 </transition>
@@ -229,14 +228,16 @@
                 </div>
               </div>
 
-<button 
-  type="submit" 
-  class="btn-submit" 
-  :disabled="isLoading || (activeTab === 'register' && !registerForm.agreeTerms)"
->
-  <span v-if="isLoading" class="spinner-border" role="status" aria-hidden="true"></span>
-  <span v-else>{{ activeTab === 'login' ? 'Đăng Nhập Ngay' : 'Đăng Ký Miễn Phí' }}</span>
-</button>
+              <button 
+                v-if="activeTab !== 'forgot-password'"
+                type="submit" 
+                class="btn-submit" 
+                :disabled="isLoading || (activeTab === 'register' && !registerForm.agreeTerms)"
+              >
+                <span v-if="isLoading" class="spinner-border" role="status" aria-hidden="true"></span>
+                <span v-else>{{ activeTab === 'login' ? 'Đăng Nhập Ngay' : 'Đăng Ký Miễn Phí' }}</span>
+              </button>
+
               <div class="divider" v-if="activeTab !== 'forgot-password'"><span>Hoặc tiếp tục với</span></div>
               
               <div class="social-buttons custom-google-wrapper" v-if="activeTab !== 'forgot-password'">
@@ -320,6 +321,11 @@ const switchTab = (tab) => {
   isBannedBoxVisible.value = false;
   bannedDetails.value = null;
   forgotError.value = '';
+  
+  // 🔥 Đã FIX: Reset đếm lỗi sai pass khi chuyển tab
+  if (tab === 'login') {
+    wrongPasswordCount.value = 0;
+  }
 }
 
 const switchTabListener = (event) => {
@@ -349,6 +355,7 @@ onUnmounted(() => {
   window.removeEventListener('switch-auth-tab', switchTabListener)
 })
 
+// Tự dọn dẹp lỗi khi khách hàng gõ chữ mới
 watch([() => loginForm.email, () => loginForm.password], () => {
   if (loginError.value || isBannedBoxVisible.value) {
     loginError.value = ''
@@ -365,11 +372,13 @@ const closeBannedAlert = () => {
 
 const openAppealAction = () => {
   showAppealModal.value = true;
-  closeBannedAlert(); // Chủ động dọn dẹp lỗi đỏ để UI thông thoáng khi mở Modal
+  closeBannedAlert(); 
 }
 
 const processBannedError = (errData, errorMessage) => {
   isBannedBoxVisible.value = true;
+  loginError.value = ''; // 🔥 Đã FIX: Ép rỗng để nhường hoàn toàn cho Banned Box
+
   const banReason = errData.banReason || 'Vi phạm chính sách và tiêu chuẩn cộng đồng GOMET.';
   const bannedBy = errData.bannedByName || 'Quản trị viên hệ thống';
   let timeStr = '';
@@ -381,7 +390,6 @@ const processBannedError = (errData, errorMessage) => {
      timeStr = ` vào lúc ${rawTimeStr}`;
   }
   bannedDetails.value = { reason: banReason, by: bannedBy, time: rawTimeStr };
-  loginError.value = `Tài khoản bị khóa${timeStr}. Lý do: ${banReason}`;
   toast.error(`🚨 Đăng nhập thất bại do tài khoản đã bị khóa!`, { timeout: 8000 })
 }
 
@@ -397,7 +405,8 @@ const handleSubmit = async () => {
       toast.success('Đã gửi Email khôi phục!')
     } catch (err) {
       forgotState.value = 'idle'
-      forgotError.value = err.response?.data?.message || 'Có lỗi xảy ra khi gửi yêu cầu.'
+      // 🔥 Đã FIX: Móc đúng fullData
+      forgotError.value = err.fullData?.message || err.response?.data?.message || 'Có lỗi xảy ra khi gửi yêu cầu.'
       toast.error(forgotError.value)
     }
     return
@@ -406,20 +415,21 @@ const handleSubmit = async () => {
   // Xử lý Đăng Nhập
   if (activeTab.value === 'login') {
     isLoading.value = true
+    isBannedBoxVisible.value = false // 🔥 Đã FIX: Đảm bảo dọn hộp cũ trước khi gọi API mới
+    
     try {
       const role = await authStore.login(loginForm.email, loginForm.password)
       toast.success('Đăng nhập thành công!')
-      
-      // 🔥 BẮT BUỘC THÊM DÒNG NÀY: Báo cho MainLayout biết là tao vừa login xong, hiện Loading đi!
+      wrongPasswordCount.value = 0 // 🔥 Đã FIX: Đăng nhập thành công thì reset đếm
       sessionStorage.setItem('just_logged_in', 'true')
-      
       router.push(role === 'admin' ? '/admin' : '/home')
     } catch (err) {
-      const errData = err.response?.data || {}
+      // 🔥 Đã FIX: Móc đúng fullData
+      const errData = err.fullData || err.response?.data || {}
       const backendMsg = errData.message || err.message || ''
       const errorString = backendMsg.toUpperCase()
       
-      if (errorString.includes('ACCOUNT_BANNED')) {
+      if (errorString.includes('ACCOUNT_BANNED') || errorString.includes('BANNED') || err.status === 403) {
         processBannedError(errData, backendMsg)
       } else {
         wrongPasswordCount.value++
@@ -433,9 +443,9 @@ const handleSubmit = async () => {
   // Xử lý Đăng Ký
   } else if (activeTab.value === 'register') {
     if (!registerForm.agreeTerms) {
-    toast.warn('Vui lòng đồng ý với điều khoản dịch vụ!')
-    return
-  }
+      toast.warn('Vui lòng đồng ý với điều khoản dịch vụ!')
+      return
+    }
     if (registerForm.password !== registerForm.confirmPassword) {
       toast.warn('Mật khẩu xác nhận không khớp!')
       return
@@ -447,7 +457,8 @@ const handleSubmit = async () => {
       otpCode.value = ''
       showOtpModal.value = true
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Có lỗi xảy ra khi gửi OTP.')
+      // 🔥 Đã FIX: Móc đúng fullData
+      toast.error(err.fullData?.message || err.response?.data?.message || 'Có lỗi xảy ra khi gửi OTP.')
     } finally {
       isLoading.value = false
     }
@@ -465,19 +476,18 @@ const handleVerifyOtp = async () => {
     
     toast.success('Đăng ký thành công! Chào mừng bạn đến với GoMet.')
     showOtpModal.value = false
-    
-    // 🔥 THÊM Ở ĐÂY LUÔN CHO CHẮC: Đăng ký thành công cũng coi như vừa login
     sessionStorage.setItem('just_logged_in', 'true')
-    
     router.push('/home')
   } catch (err) {
-    toast.error(err.response?.data?.message || 'Mã xác nhận không đúng hoặc đã hết hạn.')
+    // 🔥 Đã FIX: Móc đúng fullData
+    toast.error(err.fullData?.message || err.response?.data?.message || 'Mã xác nhận không đúng hoặc đã hết hạn.')
   }
 }
 
 const handleGoogleCallback = async (response) => {
   loginError.value = ''
-  isBannedBoxVisible.value = false
+  isBannedBoxVisible.value = false // 🔥 Đã FIX: Dọn dẹp trước khi gọi
+  
   try {
     if (!response || !response.credential) {
       throw new Error("Không nhận được token từ Google");
@@ -488,19 +498,18 @@ const handleGoogleCallback = async (response) => {
     authStore.setUser(data);
 
     toast.success('Đăng nhập Google thành công!')
-    
-    // 🔥 VÀ THÊM Ở ĐÂY NỮA (Google Login)
     sessionStorage.setItem('just_logged_in', 'true')
-    
     router.push(authStore.user.role === 'admin' ? '/admin' : '/home')
 
   } catch (err) {
     console.error("Google Login Error:", err)
-    const errData = err.response?.data || err?.data || err || {}
+    
+    // 🔥 Đã FIX: Móc đúng fullData
+    const errData = err.fullData || err.response?.data || err?.data || err || {}
     const errorMessage = errData.message || err.message || String(err)
     const errorString = errorMessage.toUpperCase()
 
-    if (errorString.includes('ACCOUNT_BANNED') || errorString.includes('BANNED') || errData.status === 403) {
+    if (errorString.includes('ACCOUNT_BANNED') || errorString.includes('BANNED') || err.status === 403 || errData.status === 403) {
       processBannedError(errData, errorMessage);
     } else {
       loginError.value = errorMessage || 'Lỗi đăng nhập bằng Google. Vui lòng thử lại.'

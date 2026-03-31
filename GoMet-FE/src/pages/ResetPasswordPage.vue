@@ -5,15 +5,13 @@
     <div class="bg-grain"></div>
 
     <div class="auth-card">
-      <!-- Brand -->
       <div class="brand">
         <span class="brand-name">GOMET<span class="dot">.</span></span>
-        <span class="brand-sub">CULINARY COMMUNITY</span>
+        <span class="brand-sub">CỘNG ĐỒNG ẨM THỰC TINH HOA</span>
       </div>
 
       <Transition name="fade-slide" mode="out-in">
 
-        <!-- INVALID / NO TOKEN -->
         <div v-if="state === 'invalid'" key="invalid" class="result-pane">
           <div class="result-ring result-ring--error">
             <svg viewBox="0 0 24 24" fill="none" class="result-icon">
@@ -21,12 +19,11 @@
               <path d="M15 9l-6 6M9 9l6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
             </svg>
           </div>
-          <h2 class="r-title">Invalid Link</h2>
-          <p class="r-sub">This password reset link is invalid, expired, or has already been used. Please request a new one.</p>
-          <button class="btn-primary btn-full" @click="goForgot">Request New Link</button>
+          <h2 class="r-title">Đường dẫn không hợp lệ</h2>
+          <p class="r-sub">Link khôi phục mật khẩu này đã hết hạn, không hợp lệ hoặc đã được sử dụng. Vui lòng yêu cầu một link mới.</p>
+          <button class="btn-primary btn-full" @click="goForgot">Yêu cầu Link Mới</button>
         </div>
 
-        <!-- SUCCESS -->
         <div v-else-if="state === 'success'" key="success" class="result-pane">
           <div class="result-ring result-ring--success">
             <svg viewBox="0 0 52 52" class="checkmark" xmlns="http://www.w3.org/2000/svg">
@@ -34,12 +31,11 @@
               <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
             </svg>
           </div>
-          <h2 class="r-title">Password Updated!</h2>
-          <p class="r-sub">Your password has been reset successfully. You can now log in with your new password.</p>
-          <button class="btn-primary btn-full" @click="goLogin">Go to Login</button>
+          <h2 class="r-title">Đổi mật khẩu thành công!</h2>
+          <p class="r-sub">Tài khoản của bạn đã được cập nhật an toàn. Bây giờ bạn có thể đăng nhập bằng mật khẩu mới.</p>
+          <button class="btn-primary btn-full" @click="goLogin">Quay lại Đăng nhập</button>
         </div>
 
-        <!-- FORM -->
         <div v-else key="form" class="form-pane">
           <div class="icon-wrap">
             <div class="icon-glow"></div>
@@ -48,10 +44,9 @@
             </svg>
           </div>
 
-          <h1 class="card-title">Set New Password</h1>
-          <p class="card-sub">Choose a strong password. It must be at least 8 characters and include uppercase, lowercase, and a number.</p>
+          <h1 class="card-title">Thiết Lập Mật Khẩu Mới</h1>
+          <p class="card-sub">Vui lòng chọn một mật khẩu mạnh. Tối thiểu 8 ký tự, bao gồm chữ hoa, chữ thường và số.</p>
 
-          <!-- Strength bar -->
           <div v-if="newPassword" class="strength-wrap">
             <div class="strength-bar">
               <div class="strength-fill" :class="`strength-fill--${strengthLevel}`" :style="{ width: strengthWidth }"></div>
@@ -60,16 +55,15 @@
           </div>
 
           <form @submit.prevent="handleReset" novalidate>
-            <!-- New Password -->
             <div class="field-group">
-              <label class="field-label">New Password</label>
+              <label class="field-label">Mật khẩu mới</label>
               <div class="input-wrap">
                 <input
                   v-model="newPassword"
                   :type="showNew ? 'text' : 'password'"
                   class="field-input"
                   :class="{ 'input--error': fieldErrors.newPassword }"
-                  placeholder="Minimum 8 characters"
+                  placeholder="Tối thiểu 8 ký tự"
                   autocomplete="new-password"
                   :disabled="state === 'loading'"
                   @input="fieldErrors.newPassword = ''"
@@ -92,16 +86,15 @@
               </Transition>
             </div>
 
-            <!-- Confirm Password -->
             <div class="field-group">
-              <label class="field-label">Confirm Password</label>
+              <label class="field-label">Xác nhận mật khẩu</label>
               <div class="input-wrap">
                 <input
                   v-model="confirmPassword"
                   :type="showConfirm ? 'text' : 'password'"
                   class="field-input"
                   :class="{ 'input--error': fieldErrors.confirmPassword }"
-                  placeholder="Re-enter your password"
+                  placeholder="Nhập lại mật khẩu mới"
                   autocomplete="new-password"
                   :disabled="state === 'loading'"
                   @input="fieldErrors.confirmPassword = ''"
@@ -124,7 +117,6 @@
               </Transition>
             </div>
 
-            <!-- Global server error -->
             <Transition name="fade-slide">
               <div v-if="serverError" class="server-error">
                 <svg viewBox="0 0 20 20" fill="currentColor" class="err-icon"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
@@ -138,12 +130,12 @@
               :disabled="!canSubmit || state === 'loading'"
             >
               <span v-if="state === 'loading'" class="spinner"></span>
-              <span>{{ state === 'loading' ? 'Updating...' : 'Reset Password' }}</span>
+              <span>{{ state === 'loading' ? 'Đang cập nhật...' : 'Đổi Mật Khẩu' }}</span>
             </button>
           </form>
 
           <div class="footer-links">
-            <button class="link-btn" @click="goForgot">← Request new link</button>
+            <button class="link-btn" @click="goForgot">← Yêu cầu link khôi phục mới</button>
           </div>
         </div>
 
@@ -194,7 +186,7 @@ const strengthLevel = computed(() => {
   if (score === 3) return 'good'
   return 'strong'
 })
-const strengthText  = computed(() => ({ weak: 'Weak', fair: 'Fair', good: 'Good', strong: 'Strong' }[strengthLevel.value] || ''))
+const strengthText  = computed(() => ({ weak: 'Yếu', fair: 'Trung bình', good: 'Khá', strong: 'Mạnh' }[strengthLevel.value] || ''))
 const strengthWidth = computed(() => ({ weak: '25%', fair: '50%', good: '75%', strong: '100%' }[strengthLevel.value] || '0%'))
 
 // ── Submit guard ──────────────────────────────────────────────────────────
@@ -203,21 +195,15 @@ const canSubmit = computed(() => newPassword.value.trim().length >= 8 && confirm
 const validateFields = () => {
   let ok = true
   const pw = newPassword.value
-  if (!pw || pw.length < 8) {
-    fieldErrors.value.newPassword = 'Password must be at least 8 characters.'
-    ok = false
-  } else if (!/[A-Z]/.test(pw)) {
-    fieldErrors.value.newPassword = 'Must include at least one uppercase letter.'
-    ok = false
-  } else if (!/[a-z]/.test(pw)) {
-    fieldErrors.value.newPassword = 'Must include at least one lowercase letter.'
-    ok = false
-  } else if (!/\d/.test(pw)) {
-    fieldErrors.value.newPassword = 'Must include at least one number.'
+  
+  // Tối ưu UX: Gộp báo lỗi thành 1 câu rõ ràng thay vì rớt từng lỗi lắt nhắt
+  if (!pw || pw.length < 8 || !/[A-Z]/.test(pw) || !/[a-z]/.test(pw) || !/\d/.test(pw)) {
+    fieldErrors.value.newPassword = 'Mật khẩu phải từ 8 ký tự, gồm ít nhất 1 chữ hoa, 1 chữ thường và 1 số.'
     ok = false
   }
+  
   if (pw !== confirmPassword.value) {
-    fieldErrors.value.confirmPassword = 'Passwords do not match.'
+    fieldErrors.value.confirmPassword = 'Mật khẩu xác nhận không khớp.'
     ok = false
   }
   return ok
@@ -236,14 +222,15 @@ const handleReset = async () => {
     if (msg && (msg.toLowerCase().includes('invalid') || msg.toLowerCase().includes('expired') || msg.toLowerCase().includes('used'))) {
       state.value = 'invalid'
     } else {
-      serverError.value = msg || 'Something went wrong. Please try again.'
+      serverError.value = msg || 'Có lỗi xảy ra. Vui lòng thử lại sau.'
       state.value = 'idle'
     }
   }
 }
 
 const goLogin  = () => router.push({ path: '/', hash: '#sectionsigninlanding' })
-const goForgot = () => router.push('/forgot-password')
+// Giả sử trang quên pass ở màn Signin (sếp có thể điều chỉnh route này nếu cần)
+const goForgot = () => router.push({ path: '/', hash: '#sectionsigninlanding' }) 
 </script>
 
 <style scoped>
@@ -458,4 +445,3 @@ const goForgot = () => router.push('/forgot-password')
   .brand-name  { font-size: 1.5rem; }
 }
 </style>
-
