@@ -8,3 +8,6 @@ export const updateUserProfile = (id, data) =>
 
 export const getUserStats = (id) =>
   api.get(`/api/users/${id}/stats`).then(r => r.data)
+
+export const getLeaderboardChefs = (timeframe = 'month', limit = 10) =>
+  api.get(`/api/users/leaderboard?timeframe=${timeframe}&limit=${limit}`).then(r => r.data)

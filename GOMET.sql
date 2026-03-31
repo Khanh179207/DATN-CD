@@ -206,12 +206,20 @@ CREATE TABLE Follow (
     Status INT DEFAULT 0,
     FollowedAt DATETIME DEFAULT GETDATE(),
 
+<<<<<<< Updated upstream
     CONSTRAINT FK_Follow_Follower FOREIGN KEY (FollowerID) REFERENCES Account(AccountID),
     CONSTRAINT FK_Follow_Followee FOREIGN KEY (FolloweeID) REFERENCES Account(AccountID),
     -- RÀNG BUỘC: Đảm bảo một cặp (Follower, Followee) chỉ xuất hiện 1 lần duy nhất
     CONSTRAINT UQ_Follower_Followee UNIQUE (FollowerID, FolloweeID)
 );
 GO
+=======
+		CONSTRAINT FK_Follow_Follower FOREIGN KEY (FollowerID) REFERENCES Account(AccountID),
+		CONSTRAINT FK_Follow_Followee FOREIGN KEY (FolloweeID) REFERENCES Account(AccountID),
+		-- RÀNG BUỘC MỚI: Đảm bảo một cặp (Follower, Followee) chỉ xuất hiện 1 lần duy nhất
+        CONSTRAINT UQ_Follower_Followee UNIQUE (FollowerID, FolloweeID)
+	)
+>>>>>>> Stashed changes
 
 	-- ==========================================
 	-- 4. NHÓM CHỨC NĂNG NGƯỜI DÙNG & TIỆN ÍCH
@@ -404,6 +412,10 @@ CREATE TABLE Notification (
 		AdminID INT NULL,
 		AdminName NVARCHAR(255) NULL,
 		AdminNote NVARCHAR(MAX) NULL, -- Để Admin phản hồi Bug/Góp ý
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
     
 		CONSTRAINT FK_Ticket_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
 		CONSTRAINT FK_Ticket_Post FOREIGN KEY (TargetPostID) REFERENCES Post(PostID)
@@ -455,6 +467,16 @@ CREATE TABLE ModerationLog (
     AdminName NVARCHAR(255),
     Reason NVARCHAR(500),
     CreatedAt DATETIME DEFAULT GETDATE()
+);
+GO
+CREATE TABLE InteractionLog (
+    LogID INT PRIMARY KEY IDENTITY(1,1),
+    PostID INT NOT NULL,
+	ReferenceID INT,
+    Type NVARCHAR(10), -- 'VIEW', 'LIKE', 'RATE'
+    Value INT,         -- View/Like: 1, Rate: số sao (1-5)
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (PostID) REFERENCES Post(PostID)
 );
 GO
 	-- ==========================================
@@ -570,6 +592,11 @@ INSERT INTO EventPosts (EventID, PostID, VoteCount) VALUES (1, 2, 15), (2, 4, 10
 INSERT INTO Votes (AccountID, EventPostID) VALUES (1, 1), (4, 1), (5, 2);
 GO
 
+-- Log bài viết
+INSERT INTO InteractionLog (PostID, Type, Value, CreatedAt) VALUES (1, 'VIEW', 500, GETDATE());
+INSERT INTO InteractionLog (PostID, Type, Value, CreatedAt) VALUES (2, 'LIKE', 50, GETDATE());
+INSERT INTO InteractionLog (PostID, Type, Value, CreatedAt) VALUES (3, 'RATE', 5, GETDATE());
+
 -- 8. TIỆN ÍCH (Note, Shopping, MealPlan)
 -- ==========================================
 INSERT INTO Note (AccountID, PostID, Content) VALUES (3, 1, N'Lần sau nên cho ít muối hơn một chút.');
@@ -669,3 +696,7 @@ GO
 	SELECT * FROM Appeals;
 	
 	SELECT * FROM ModerationLog;
+
+	SELECT * FROM SystemConfig;
+
+	ALTER TABLE InteractionLog ADD ReferenceID INT;

@@ -3,19 +3,18 @@ package poly.edu.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import poly.edu.dao.AccountDAO;
-import poly.edu.dao.CommentDAO;
-import poly.edu.dao.PostDAO;
-import poly.edu.dao.CommentLikeDAO;
+import poly.edu.dao.*;
 import poly.edu.dto.AdminCommentDTO;
 import poly.edu.dto.CommentDTO;
 import poly.edu.entity.Account;
 import poly.edu.entity.Comment;
+import poly.edu.entity.InteractionLog;
 import poly.edu.entity.Post;
 import poly.edu.service.CommentService;
 import poly.edu.service.ModerationLogService; // 🔥 IMPORT MỚI
 import poly.edu.service.NotificationService;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -32,6 +31,7 @@ public class CommentServiceImpl implements CommentService {
     private final AccountDAO accountDAO;
     private final CommentLikeDAO commentLikeDAO;
     private final NotificationService notificationService;
+    private final InteractionLogDAO interactionLogDAO;
 
     // 🔥 INJECT THÊM MÁY NGHE LÉN
     private final ModerationLogService moderationLogService;
@@ -108,6 +108,24 @@ public class CommentServiceImpl implements CommentService {
 
         Comment saved = commentDAO.save(comment);
 
+        try {
+            if (finalRating != null && finalRating > 0) {
+                InteractionLog log = new InteractionLog();
+                log.setPostID(post.getPostID());
+                log.setType("RATING"); // Khớp với SQL 'RATE' của sếp
+                log.setValue(finalRating);
+                log.setCreatedAt(LocalDateTime.now());
+
+                // 🔥 Gắn CommentID vừa sinh ra vào ReferenceID
+                log.setReferenceId(saved.getCommentID());
+
+                interactionLogDAO.save(log);
+            }
+        } catch (Exception e) {
+            // Bọc trong try-catch để lỡ log có lỗi thì user vẫn comment được
+            System.err.println("Lỗi lưu InteractionLog: " + e.getMessage());
+        }
+
         if (post.getAccount() != null && !account.getAccountID().equals(post.getAccount().getAccountID())) {
             notificationService.notifyComment(
                     account.getUsername(),
@@ -124,18 +142,21 @@ public class CommentServiceImpl implements CommentService {
     @Override
     @Transactional
     public void delete(Integer id, Integer adminId, String adminName) {
+        // 1. Tìm comment để kiểm tra tồn tại
         Comment comment = commentDAO.findById(id)
                 .orElseThrow(() -> new RuntimeException("Bình luận không tồn tại"));
+
+        interactionLogDAO.deleteByReference(id, "RATING");
 
         comment.setIsActive(-1);
         commentDAO.save(comment);
 
-        // Tự động cắt 50 ký tự đầu tiên của bình luận để làm lý do ghi Log
+        // 3. Tự động lấy nội dung làm lý do (Giữ nguyên logic của sếp)
         String content = comment.getContent() != null ? comment.getContent() : "[Chỉ có hình ảnh/Đánh giá]";
         if (content.length() > 50) content = content.substring(0, 50) + "...";
         String autoReason = "Xóa bình luận vi phạm: '" + content + "'";
 
-        // Ghi thẳng vào Sổ Nam Tào
+        // 4. Ghi vào Moderation Log (Giữ nguyên logic của sếp)
         moderationLogService.logAction(id, "COMMENT", "DELETE", adminId, adminName, autoReason);
     }
 
@@ -146,7 +167,7 @@ public class CommentServiceImpl implements CommentService {
         if (!comment.getAccount().getAccountID().equals(userId)) {
             throw new RuntimeException("Bạn không có quyền!");
         }
-        // User tự xóa (0)
+        interactionLogDAO.deleteByReference(id, "RATING");
         comment.setIsActive(0);
         commentDAO.save(comment);
     }

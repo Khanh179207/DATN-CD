@@ -51,8 +51,6 @@ export const getSuggestedPosts = (params = {}) =>
 /**
  * @param {number} limit
  */
-export const getTrendingPosts = (limit = 10) =>
-  api.get('/api/posts/trending', { params: { limit } }).then(r => r.data)
 
 /**
  * Create a new post (pending approval).
@@ -88,5 +86,17 @@ export function normalizePost(dto) {
       avatar: dto.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(dto.authorName||'G')}&background=EA580C&color=fff`
     },
     category: dto.categoryName || ''
+  }
+}
+
+export const getTrendingPosts = async (timeframe = 'month', limit = 10) => {
+  try {
+    const response = await api.get('/api/posts/trending', {
+      params: { timeframe, limit }
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi lấy bảng xếp hạng:", error);
+    return [];
   }
 }

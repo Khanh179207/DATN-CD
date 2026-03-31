@@ -1,6 +1,7 @@
 package poly.edu.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
@@ -33,6 +34,8 @@ public class PostController {
     private final LikesDAO likesDAO;
     private final NotificationService notificationService;
     private final poly.edu.service.PostService postService;
+    @Autowired
+    private InteractionLogDAO interactionLogDAO;
 
     @GetMapping("/search-mini")
     public ResponseEntity<List<Map<String, Object>>> searchMini(@RequestParam String q) {
@@ -91,6 +94,13 @@ public class PostController {
         return postDAO.findById(id).map(post -> {
             post.setViews(post.getViews() + 1);
             postDAO.save(post);
+            try {
+                interactionLogDAO.save(new InteractionLog(id, "VIEW", 1));
+            } catch (Exception e) {
+                System.err.println("Lỗi lưu InteractionLog VIEW: " + e.getMessage());
+            }
+
+            // 3. Chuyển đổi DTO và trả về (logic cũ)
             PostDetailDTO dto = toDetailDTO(post, accountId);
             return ResponseEntity.ok(dto);
         }).orElse(ResponseEntity.notFound().build());
@@ -170,23 +180,6 @@ public class PostController {
                 .limit(20)
                 .map(p -> toPublicDTO(p, accountId))
                 .collect(Collectors.toList()));
-    }
-
-    @GetMapping("/trending")
-    public ResponseEntity<List<PublicPostDTO>> getTrending(
-            @RequestParam(defaultValue = "10") int limit,
-            @RequestParam(required = false) Integer accountId) {
-        List<Post> posts = postDAO.findByIsApprovedAndIsActive(1, 1);
-        List<PublicPostDTO> result = posts.stream().map(p -> toPublicDTO(p, accountId))
-                .sorted(Comparator.comparingDouble((PublicPostDTO p) -> {
-                    double views = p.getViews() != null ? p.getViews() / 1000.0 : 0;
-                    double rating = p.getAvgRating() != null ? p.getAvgRating() : 0;
-                    double fav = p.getFavoriteCount() != null ? p.getFavoriteCount() / 10.0 : 0;
-                    return views + rating + fav;
-                }).reversed())
-                .limit(limit)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(result);
     }
 
     public PublicPostDTO toPublicDTO(Post p, Integer accountId) {
@@ -366,6 +359,21 @@ public class PostController {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("message", "Lỗi server: " + e.getMessage()));
+        }
+    }
+
+    // === API BẢNG XẾP HẠNG MÓN ĂN (TOP DISHES) ===
+    @GetMapping("/trending")
+    public ResponseEntity<?> getTrending(
+            @RequestParam(defaultValue = "month") String timeframe,
+            @RequestParam(defaultValue = "10") int limit) {
+        try {
+            // Gọi Service - lúc này Service đã trả về Map chứa đầy đủ: id, title, image, pts...
+            List<Map<String, Object>> result = postService.getLeaderboard(timeframe, limit);
+
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
         }
     }
 

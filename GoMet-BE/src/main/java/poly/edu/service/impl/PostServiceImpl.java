@@ -1,12 +1,12 @@
 package poly.edu.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import poly.edu.dao.AccountDAO;
-import poly.edu.dao.CategoryDAO;
-import poly.edu.dao.PostDAO;
-import poly.edu.dao.CookingStepsDAO;
+import poly.edu.dao.*;
 import poly.edu.dto.PostDTO;
 import poly.edu.dto.StepRequestDTO;
 import poly.edu.entity.Account;
@@ -19,13 +19,19 @@ import poly.edu.service.BlacklistService; // 🔥 Đã Import Service xịn
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class PostServiceImpl implements PostService {
 
+    @Autowired
     private final PostDAO postDAO;
+
+    @Autowired
+    private InteractionLogDAO interactionLogDAO;
+
     private final CategoryDAO categoryDAO;
     private final AccountDAO accountDAO;
     private final CookingStepsDAO cookingStepsDAO;
@@ -208,5 +214,29 @@ public class PostServiceImpl implements PostService {
         }
 
         return dto;
+    }
+
+    @Override
+    public List<Map<String, Object>> getLeaderboard(String timeframe, int limit) {
+        LocalDateTime startDate;
+        LocalDateTime now = LocalDateTime.now();
+
+        if (timeframe == null) timeframe = "month";
+
+        switch (timeframe.toLowerCase()) {
+            case "day":
+                startDate = now.toLocalDate().atStartOfDay();
+                break;
+            case "month":
+                startDate = now.withDayOfMonth(1).toLocalDate().atStartOfDay();
+                break;
+            case "year":
+                startDate = now.withDayOfYear(1).toLocalDate().atStartOfDay();
+                break;
+            default:
+                startDate = now.withDayOfMonth(1).toLocalDate().atStartOfDay();
+        }
+
+        return interactionLogDAO.findTopTrending(startDate, limit);
     }
 }

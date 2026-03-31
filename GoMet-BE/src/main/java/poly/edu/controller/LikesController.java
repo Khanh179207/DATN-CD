@@ -1,9 +1,12 @@
 package poly.edu.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import poly.edu.dao.InteractionLogDAO;
 import poly.edu.dto.LikesDTO;
+import poly.edu.entity.InteractionLog;
 import poly.edu.service.LikesService;
 
 import java.util.List;
@@ -16,6 +19,8 @@ public class LikesController {
 
     private final LikesService likesService;
 
+    private final InteractionLogDAO interactionLogDAO;
+
     // 1. Thả tim hoặc Hủy thả tim (Toggle)
     // Gọi: POST /api/likes/toggle?accountId=1&postId=5
     @PostMapping("/toggle")
@@ -23,6 +28,17 @@ public class LikesController {
             @RequestParam Integer accountId,
             @RequestParam Integer postId) {
         boolean isLiked = likesService.toggleLike(accountId, postId);
+
+        try {
+            if (isLiked) {
+                interactionLogDAO.save(new InteractionLog(postId, "LIKE", 1));
+            } else {
+                interactionLogDAO.save(new InteractionLog(postId, "LIKE", -1));
+            }
+        } catch (Exception e) {
+            System.err.println("Lỗi lưu InteractionLog LIKE: " + e.getMessage());
+        }
+
         return ResponseEntity.ok(isLiked);
     }
 
