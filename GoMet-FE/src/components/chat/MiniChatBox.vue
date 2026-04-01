@@ -105,6 +105,13 @@ const currentUserId = computed(() => {
   return id ? Number(id) : null;
 })
 
+// 🚀 [THÊM MỚI]: Hàm lấy Token từ Pinia để vượt chốt Security
+const getAuthHeaders = () => {
+  return {
+    'Authorization': `Bearer ${authStore.user?.token}`
+  }
+}
+
 const formatTime = (dateInput) => {
   if (!dateInput) return 'vừa xong'
   const date = new Date(dateInput)
@@ -130,7 +137,8 @@ const connectWebSocket = (conversationId) => {
   stompClient.value = Stomp.over(socket)
   stompClient.value.debug = null 
 
-  stompClient.value.connect({}, () => {
+  // 🚀 [SỬA]: Gắn Token vào lúc Connect
+  stompClient.value.connect(getAuthHeaders(), () => {
     stompClient.value.subscribe(`/topic/${conversationId}`, (payload) => {
       const receivedMsg = JSON.parse(payload.body)
       
@@ -150,13 +158,16 @@ const connectWebSocket = (conversationId) => {
 const fetchHistory = async (convId) => {
   if (!convId || convId === 'undefined') return;
   
-  // Kiểm tra xem store có user chưa
-  console.log("Token hiện tại nè sếp:", authStore.user?.token);
-
   try {
     const res = await api.get(`/api/messages/${convId}`);
-    messages.value = res.data.map(msg => mapMessage(msg));
-    scrollToBottom();
+    
+    // 🚀 [SỬA]: Bọc giáp an toàn, lỡ BE trả về { data: [] } app vẫn không crash
+    const rawData = res.data?.data || res.data;
+    
+    if (Array.isArray(rawData)) {
+        messages.value = rawData.map(msg => mapMessage(msg));
+        scrollToBottom();
+    }
   } catch (err) {
     console.error("Lỗi khi tải lịch sử chat:", err);
   }
@@ -198,7 +209,8 @@ const sendMsg = () => {
       conversation: { conversationID: conversationId },
       sender: { accountID: currentUserId.value }
     }
-    stompClient.value.send("/app/chat.sendMessage", {}, JSON.stringify(chatMessage))
+    // 🚀 [SỬA]: Gắn Token vào Header lúc Send tin nhắn
+    stompClient.value.send("/app/chat.sendMessage", getAuthHeaders(), JSON.stringify(chatMessage))
   }
 }
 
