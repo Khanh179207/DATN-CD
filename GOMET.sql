@@ -102,6 +102,7 @@ CREATE TABLE Post (
     CookingTime INT DEFAULT 30,
     Views INT DEFAULT 0,
     LikeCount INT DEFAULT 0,
+	TotalPts INT DEFAULT 0,
     isActive INT DEFAULT 1,
     isApproved INT DEFAULT 0,
     CreatedAt DATETIME DEFAULT GETDATE(),
@@ -206,20 +207,12 @@ CREATE TABLE Follow (
     Status INT DEFAULT 0,
     FollowedAt DATETIME DEFAULT GETDATE(),
 
-<<<<<<< Updated upstream
     CONSTRAINT FK_Follow_Follower FOREIGN KEY (FollowerID) REFERENCES Account(AccountID),
     CONSTRAINT FK_Follow_Followee FOREIGN KEY (FolloweeID) REFERENCES Account(AccountID),
     -- RÀNG BUỘC: Đảm bảo một cặp (Follower, Followee) chỉ xuất hiện 1 lần duy nhất
     CONSTRAINT UQ_Follower_Followee UNIQUE (FollowerID, FolloweeID)
 );
 GO
-=======
-		CONSTRAINT FK_Follow_Follower FOREIGN KEY (FollowerID) REFERENCES Account(AccountID),
-		CONSTRAINT FK_Follow_Followee FOREIGN KEY (FolloweeID) REFERENCES Account(AccountID),
-		-- RÀNG BUỘC MỚI: Đảm bảo một cặp (Follower, Followee) chỉ xuất hiện 1 lần duy nhất
-        CONSTRAINT UQ_Follower_Followee UNIQUE (FollowerID, FolloweeID)
-	)
->>>>>>> Stashed changes
 
 	-- ==========================================
 	-- 4. NHÓM CHỨC NĂNG NGƯỜI DÙNG & TIỆN ÍCH
@@ -412,10 +405,6 @@ CREATE TABLE Notification (
 		AdminID INT NULL,
 		AdminName NVARCHAR(255) NULL,
 		AdminNote NVARCHAR(MAX) NULL, -- Để Admin phản hồi Bug/Góp ý
-<<<<<<< Updated upstream
-=======
-
->>>>>>> Stashed changes
     
 		CONSTRAINT FK_Ticket_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
 		CONSTRAINT FK_Ticket_Post FOREIGN KEY (TargetPostID) REFERENCES Post(PostID)
@@ -469,6 +458,7 @@ CREATE TABLE ModerationLog (
     CreatedAt DATETIME DEFAULT GETDATE()
 );
 GO
+
 CREATE TABLE InteractionLog (
     LogID INT PRIMARY KEY IDENTITY(1,1),
     PostID INT NOT NULL,
@@ -479,21 +469,11 @@ CREATE TABLE InteractionLog (
     FOREIGN KEY (PostID) REFERENCES Post(PostID)
 );
 GO
+
 	-- ==========================================
 	-- 6. TRIGGERS TỰ ĐỘNG CẬP NHẬT
 	-- ==========================================
 
-	GO
-	CREATE TRIGGER TRG_UpdateLikeCount_Insert ON Likes AFTER INSERT AS
-	BEGIN
-		UPDATE Post SET LikeCount = LikeCount + 1 FROM Post p JOIN inserted i ON p.PostID = i.PostID;
-	END;
-	GO
-	CREATE TRIGGER TRG_UpdateLikeCount_Delete ON Likes AFTER DELETE AS
-	BEGIN
-		UPDATE Post SET LikeCount = LikeCount - 1 FROM Post p JOIN deleted d ON p.PostID = d.PostID;
-	END;
-	GO
 
 	-- Trigger khi có người Vote
 	CREATE TRIGGER TRG_UpdateVoteCount_Insert ON Votes AFTER INSERT AS
@@ -513,9 +493,67 @@ GO
 	END;
 	GO
 
+-- TẠO ĐÚNG 1 TRIGGER CHUẨN ĐỂ QUẢN LÝ ĐIỂM SỐ
+CREATE OR ALTER TRIGGER trg_UpdatePostStats
+ON InteractionLog
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
 
+    -- 1. XỬ LÝ LƯỢT LIKE / UNLIKE (1 Like = 5 Điểm)
+    UPDATE p
+    SET p.LikeCount = p.LikeCount + i.Value,
+        p.TotalPts = p.TotalPts + (i.Value * 5)
+    FROM Post p
+    INNER JOIN inserted i ON p.PostID = i.PostID
+    WHERE i.Type = 'LIKE';
 
+    -- 2. XỬ LÝ LƯỢT VIEW (1 View = 1 Điểm)
+    UPDATE p
+    SET p.Views = p.Views + i.Value,
+        p.TotalPts = p.TotalPts + (i.Value * 1)
+    FROM Post p
+    INNER JOIN inserted i ON p.PostID = i.PostID
+    WHERE i.Type = 'VIEW';
 
+    -- 3. XỬ LÝ LƯỢT RATING (Ví dụ: 1 sao = 10 Điểm)
+    UPDATE p
+    SET p.TotalPts = p.TotalPts + (i.Value * 10)
+    FROM Post p
+    INNER JOIN inserted i ON p.PostID = i.PostID
+    WHERE i.Type = 'RATING';
+
+END;
+GO
+
+	-- ==========================================
+	-- 7. Stored Procedure
+	-- ==========================================
+
+	-- PROCEDURE xóa các log có lượt VIEW và LIKE đã cũ hơn 1 năm
+	CREATE OR ALTER PROCEDURE sp_CleanupOldInteractionLogs
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DISABLE TRIGGER ALL ON InteractionLog;
+    -- 2. DỌN RÁC: Xóa các lượt VIEW và LIKE đã cũ hơn 1 năm (365 ngày)
+    DELETE FROM InteractionLog 
+    WHERE CreatedAt < DATEADD(year, -1, GETDATE())
+      AND Type IN ('VIEW', 'LIKE');
+    ENABLE TRIGGER ALL ON InteractionLog;
+    -- In ra thông báo (dùng để check log hệ thống)
+    PRINT 'Đã dọn dẹp thành công Log VIEW và LIKE cũ hơn 1 năm và BẢO TOÀN View/Like tổng!';
+END;
+GO
+
+	-- ==========================================
+	-- 8. Index
+	-- ==========================================
+
+	CREATE INDEX IX_InteractionLog_Post_Time 
+    ON InteractionLog (PostID, CreatedAt) 
+    INCLUDE (Type, Value); 
 
 -- 1. DỮ LIỆU TÀI KHOẢN (Đa dạng phân quyền)
 -- ==========================================================
@@ -591,11 +629,6 @@ INSERT INTO Favorite (AccountID, PostID) VALUES (3, 1), (4, 2), (3, 3);
 INSERT INTO EventPosts (EventID, PostID, VoteCount) VALUES (1, 2, 15), (2, 4, 10);
 INSERT INTO Votes (AccountID, EventPostID) VALUES (1, 1), (4, 1), (5, 2);
 GO
-
--- Log bài viết
-INSERT INTO InteractionLog (PostID, Type, Value, CreatedAt) VALUES (1, 'VIEW', 500, GETDATE());
-INSERT INTO InteractionLog (PostID, Type, Value, CreatedAt) VALUES (2, 'LIKE', 50, GETDATE());
-INSERT INTO InteractionLog (PostID, Type, Value, CreatedAt) VALUES (3, 'RATE', 5, GETDATE());
 
 -- 8. TIỆN ÍCH (Note, Shopping, MealPlan)
 -- ==========================================
@@ -696,7 +729,3 @@ GO
 	SELECT * FROM Appeals;
 	
 	SELECT * FROM ModerationLog;
-
-	SELECT * FROM SystemConfig;
-
-	ALTER TABLE InteractionLog ADD ReferenceID INT;

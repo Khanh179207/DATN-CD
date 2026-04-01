@@ -91,19 +91,22 @@ public class PostController {
     public ResponseEntity<?> getDetail(
             @PathVariable Integer id,
             @RequestParam(required = false) Integer accountId) {
-        return postDAO.findById(id).map(post -> {
-            post.setViews(post.getViews() + 1);
-            postDAO.save(post);
-            try {
-                interactionLogDAO.save(new InteractionLog(id, "VIEW", 1));
-            } catch (Exception e) {
-                System.err.println("Lỗi lưu InteractionLog VIEW: " + e.getMessage());
-            }
 
-            // 3. Chuyển đổi DTO và trả về (logic cũ)
+        return postDAO.findById(id).map(post -> {
             PostDetailDTO dto = toDetailDTO(post, accountId);
             return ResponseEntity.ok(dto);
         }).orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/{id}/view")
+    public ResponseEntity<?> recordView(@PathVariable Integer id) {
+        try {
+            interactionLogDAO.save(new InteractionLog(id, "VIEW", 1));
+            return ResponseEntity.ok().body("Đã ghi nhận lượt xem");
+        } catch (Exception e) {
+            System.err.println("Lỗi lưu InteractionLog VIEW: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Lỗi hệ thống");
+        }
     }
 
     @GetMapping("/search")

@@ -21,6 +21,14 @@ export const getPosts = (page = 1, size = 12) =>
 export const getPostById = (id) =>
   api.get(`/api/posts/${id}`).then(r => r.data)
 
+// 🔥 CODE MỚI THÊM VÀO: Hàm ghi nhận lượt xem
+/**
+ * Ghi nhận 1 lượt xem (View) cho bài viết
+ * @param {number|string} id
+ */
+export const recordPostView = (id) =>
+  api.post(`/api/posts/${id}/view`).then(r => r.data)
+
 /**
  * @param {string} keyword
  * @param {number|null} categoryID
@@ -47,10 +55,6 @@ export const getPostsByUser = (accountID) =>
  */
 export const getSuggestedPosts = (params = {}) =>
   api.get('/api/posts/suggest', { params }).then(r => r.data)
-
-/**
- * @param {number} limit
- */
 
 /**
  * Create a new post (pending approval).

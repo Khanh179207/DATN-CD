@@ -66,7 +66,7 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
         </span>
       </div>
-      <span class="label">GoMet Assistant</span>
+      <span class="label">GOMET AI</span>
     </button>
 
     <Teleport to="body">
@@ -168,7 +168,39 @@ const handleRenew = () => { showExpired.value = false; showPremium.value = true;
 const handleClosePremium = () => { showPremium.value = false; if (isEnforcingRenewal.value) { showExpired.value = true; toast.error("Bạn cần gia hạn Premium để tiếp tục sử dụng các tính năng cao cấp!"); } };
 const handleUpgraded = () => { isEnforcingRenewal.value = false; showPremium.value = false; showExpired.value = false; };
 const handleCancel = () => { showExpired.value = false; isEnforcingRenewal.value = false; };
-const openAiChat = () => { if (aiChatRef.value) aiChatRef.value.openChat() };
+
+// --- LOGIC LOCK PREMIUM CHO NÚT GOMET ASSISTANT ---
+const openAiChat = () => { 
+  // 1. Lấy thông tin user từ LocalStorage
+  const userStr = localStorage.getItem('user');
+  let isPremiumUser = false;
+  
+  if (userStr) {
+    try {
+      const user = JSON.parse(userStr);
+      
+      // 🔥 ĐÃ SỬA CHỖ NÀY: Bắt chuẩn xác số 1, true, hoặc chữ PREMIUM/ADMIN
+      const isPremium = user?.isPremium || user?.IsPremium || user?.role === 'PREMIUM' || user?.role === 'premium';
+      const isAdmin = user?.isAdmin || user?.IsAdmin || user?.role === 'ADMIN' || user?.role === 'admin';
+      
+      // VIP hoặc Admin đều được dùng
+      isPremiumUser = isPremium || isAdmin; 
+    } catch (e) {
+      console.error('Lỗi parse user data', e);
+    }
+  }
+
+  // 2. Nếu là User thường (hoặc chưa đăng nhập), chặn và bật Popup Premium
+  if (!isPremiumUser) {
+    showPremium.value = true;
+    toast.warn("Gomet Assistant là tính năng đặc quyền dành riêng cho tài khoản Premium sếp nhé!");
+    return;
+  }
+
+  // 3. Nếu là Premium/Admin, mở cửa cho vào
+  if (aiChatRef.value) aiChatRef.value.openChat();
+};
+
 const openAuth = (tab) => { modalTab.value = tab; showAuthModal.value = true; };
 const handleLogout = async () => { localStorage.removeItem('user'); localStorage.removeItem('token'); sessionStorage.removeItem('just_logged_in'); await router.push('/'); };
 </script>
@@ -223,7 +255,7 @@ const handleLogout = async () => { localStorage.removeItem('user'); localStorage
 @keyframes breathe { 0% { opacity: 0.5; } 100% { opacity: 1; } }
 .fade-loader-leave-to { opacity: 0; transform: scale(1.1); }
 
-/* --- CSS CŨ GIỮ NGUYÊN --- */
+/* --- CSS CŨ CỦA SẾP GIỮ NGUYÊN --- */
 .app-container { display: flex; height: 100vh; overflow: hidden; background-color: var(--color-neutral-0); font-family: var(--font-body); color: var(--color-neutral-900); position: relative; transition: background-color 0.4s ease; }
 .app-container.is-dark-theme { background-color: #000000 !important; }
 .fixed-sidebar { flex-shrink: 0; z-index: var(--z-toast); }
@@ -233,8 +265,38 @@ const handleLogout = async () => { localStorage.removeItem('user'); localStorage
 .page-fade-enter-active, .page-fade-leave-active { transition: opacity var(--duration-normal) var(--ease-out), transform var(--duration-normal) var(--ease-out); }
 .page-fade-enter-from { opacity: 0; transform: translateY(10px); }
 .page-fade-leave-to   { opacity: 0; transform: translateY(-10px); }
-.float-ai-btn { position: fixed; bottom: var(--space-8); right: var(--space-8); z-index: 99; display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-5) var(--space-2) var(--space-2); background: var(--color-neutral-0); border: 1px solid var(--color-neutral-200); border-radius: var(--radius-full); box-shadow: var(--shadow-lg); cursor: pointer; transition: var(--transition-spring); }
+
+.float-ai-btn { 
+  position: fixed; bottom: var(--space-8); right: var(--space-8); z-index: 99; 
+  display: flex; align-items: center; 
+  gap: 0; /* Ban đầu không có khoảng cách chữ */
+  padding: var(--space-2); /* Padding đều để nó thành hình tròn tròn */
+  background: var(--color-neutral-0); border: 1px solid var(--color-neutral-200); 
+  border-radius: var(--radius-full); box-shadow: var(--shadow-lg); cursor: pointer; 
+  transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1); /* Hiệu ứng trượt mượt */
+}
+.float-ai-btn:hover {
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-5) var(--space-2) var(--space-2);
+}
+
 .is-dark-theme .float-ai-btn { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px); }
-.ai-icon-bg { width: 44px; height: 44px; background: linear-gradient(135deg, var(--color-primary-600), var(--color-warning)); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; color: var(--color-neutral-0); font-size: var(--text-lg); box-shadow: var(--shadow-primary-md); }
-.label { font-weight: var(--font-extrabold); font-size: var(--text-base); color: var(--color-primary-700); }
+
+.ai-icon-bg { width: 44px; height: 44px; background: linear-gradient(135deg, var(--color-primary-600), var(--color-warning)); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; color: var(--color-neutral-0); font-size: var(--text-lg); box-shadow: var(--shadow-primary-md); flex-shrink: 0; }
+
+.label { 
+  font-weight: var(--font-extrabold); 
+  font-size: var(--text-base); 
+  color: var(--color-primary-700); 
+  max-width: 0; 
+  opacity: 0; 
+  white-space: nowrap; 
+  overflow: hidden; 
+  transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1); 
+}
+
+.float-ai-btn:hover .label { 
+  max-width: 200px; 
+  opacity: 1; 
+}
 </style>

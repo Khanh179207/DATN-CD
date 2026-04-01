@@ -228,7 +228,7 @@ public class PostServiceImpl implements PostService {
                 startDate = now.toLocalDate().atStartOfDay();
                 break;
             case "month":
-                startDate = now.withDayOfMonth(1).toLocalDate().atStartOfDay();
+                startDate = now.withDayOfMonth(1).toLocalDate(  ).atStartOfDay();
                 break;
             case "year":
                 startDate = now.withDayOfYear(1).toLocalDate().atStartOfDay();
