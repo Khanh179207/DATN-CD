@@ -7,10 +7,12 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import poly.edu.dao.AccountDAO;
+import poly.edu.dao.ConversationDAO;
 import poly.edu.dao.FollowDAO;
 import poly.edu.dao.PostDAO;
 import poly.edu.dto.ContactDTO;
 import poly.edu.entity.Account;
+import poly.edu.entity.Conversation;
 import poly.edu.entity.Follow;
 import poly.edu.entity.Post;
 
@@ -26,6 +28,7 @@ public class SharePostService {
 
     private final FollowDAO followDAO;
     private final AccountDAO accountDAO;
+    private final ConversationDAO conversationDAO;
     private final PostDAO postDAO;
     private final JavaMailSender mailSender;
 
@@ -39,26 +42,34 @@ public class SharePostService {
      * Get a list of unique contacts (followers and following) for sharing.
      */
     public List<ContactDTO> getSharingContacts(Integer accountID) {
-        // Get people I follow
+        // 1. Get from Follows (followers and following)
         List<Follow> following = followDAO.findByFollower_AccountID(accountID);
-        // Get people following me
         List<Follow> followers = followDAO.findByFollowee_AccountID(accountID);
 
         List<Account> contacts = new ArrayList<>();
 
-        // Add followees (the people I follow)
+        // Add followees 
         contacts.addAll(following.stream()
                 .filter(f -> f.getStatus() == 1)
                 .map(Follow::getFollowee)
                 .collect(Collectors.toList()));
 
-        // Add followers (the people following me)
+        // Add followers
         contacts.addAll(followers.stream()
                 .filter(f -> f.getStatus() == 1)
                 .map(Follow::getFollower)
                 .collect(Collectors.toList()));
 
-        // Deduplicate by AccountID and map to DTO
+        // 2. [NEW]: Get from Conversations
+        List<Conversation> conversations = conversationDAO.findByUserOneAccountIDOrUserTwoAccountID(accountID, accountID);
+        for (Conversation conv : conversations) {
+            Account otherUser = conv.getUserOne().getAccountID().equals(accountID) 
+                    ? conv.getUserTwo() 
+                    : conv.getUserOne();
+            contacts.add(otherUser);
+        }
+
+        // 3. Deduplicate by AccountID and map to DTO
         return contacts.stream()
                 .filter(a -> !a.getAccountID().equals(accountID)) // Don't include myself
                 .collect(Collectors.toMap(

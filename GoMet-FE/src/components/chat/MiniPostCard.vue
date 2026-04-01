@@ -30,8 +30,8 @@ const fetchPost = async () => {
     postData.value = {
       id: p.postID,
       title: p.title,
-      image: p.media || p.image,
-      author: p.account?.username || 'Đầu bếp GoMet',
+      image: p.media,
+      author: p.authorName || 'Đầu bếp GoMet',
       hasVideo: !!p.video
     }
   } catch (error) {
