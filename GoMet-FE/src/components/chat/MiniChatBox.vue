@@ -51,7 +51,14 @@
                   class="msg-avatar"
                 >
               </div>
-              <div class="bubble" :title="msg.timeStr">{{ msg.text }}</div>
+              <div class="bubble" :title="msg.timeStr">
+                <template v-if="isPostShare(msg.text)">
+                  <MiniPostCard :postID="getPostId(msg.text)" />
+                </template>
+                <template v-else>
+                  {{ msg.text }}
+                </template>
+              </div>
             </div>
 
             <div class="msg-time" v-if="i === messages.length - 1 || messages[i+1]?.isMine !== msg.isMine">
@@ -83,12 +90,13 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick, computed, onUnmounted } from 'vue'
+import { ref, watch, nextTick, computed, onUnmounted, onMounted } from 'vue'
 import { useChatStore } from '@/stores/chat'
 import { useAuthStore } from '@/stores/auth' 
 import SockJS from 'sockjs-client'
 import Stomp from 'stompjs'
 import api from '@/services/api'
+import MiniPostCard from './MiniPostCard.vue'
 
 const chatStore = useChatStore()
 const authStore = useAuthStore()
@@ -128,6 +136,13 @@ const mapMessage = (msg) => {
     isMine: Number(msg.sender?.accountID) === currentUserId.value,
     timeStr: formatTime(msg.createdAt)
   };
+}
+
+// 🚀 [THÊM MỚI]: Detect & Extract Post ID from special message pattern [POST_SHARE_ID:123]
+const isPostShare = (text) => text && text.startsWith('[POST_SHARE_ID:') && text.endsWith(']')
+const getPostId = (text) => {
+  const match = text.match(/\[POST_SHARE_ID:(\d+)\]/)
+  return match ? match[1] : null
 }
 
 const connectWebSocket = (conversationId) => {
@@ -226,7 +241,26 @@ const scrollToBottom = async () => {
   }
 }
 
-onUnmounted(() => { if (stompClient.value) stompClient.value.disconnect() })
+// 🚀 [THÊM MỚI]: Lắng nghe sự kiện chia sẻ đặc biệt từ ShareModal
+const handleSpecialShare = (e) => {
+    const { conversation, sender, content } = e.detail;
+    const activeConvId = chatStore.activeChat?.id || chatStore.activeChat?.conversationID;
+    
+    if (conversation.conversationID === activeConvId && stompClient.value?.connected) {
+        messages.value.push({ text: content, isMine: true, timeStr: formatTime(new Date()) });
+        scrollToBottom();
+        stompClient.value.send("/app/chat.sendMessage", getAuthHeaders(), JSON.stringify(e.detail));
+    }
+}
+
+onMounted(() => {
+    window.addEventListener('chat:send-special', handleSpecialShare);
+});
+
+onUnmounted(() => { 
+    if (stompClient.value) stompClient.value.disconnect();
+    window.removeEventListener('chat:send-special', handleSpecialShare);
+})
 </script>
 
 <style scoped lang="scss" src="./MiniChatBox.scss"></style>
