@@ -3,6 +3,7 @@ package poly.edu.controller;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize; // 🔥 IMPORT THẺ BẢO VỆ ADMIN
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dao.AccountDAO;
 import poly.edu.entity.Account;
@@ -15,18 +16,20 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/admin/moderation-logs")
 @RequiredArgsConstructor
-
+@PreAuthorize("hasRole('ADMIN')") // 🔴 CHỐT CHẶN ĐỎ: Chỉ Admin mới được bước qua cánh cửa này!
 public class ModerationLogController {
 
     private final ModerationLogService moderationLogService;
     private final AccountDAO accountDAO; // 🔥 Thêm AccountDAO để bốc Token tìm Admin
     private final poly.edu.util.JwtUtils jwtUtils;
 
+    // 🔴 ADMIN ONLY: Xem lịch sử kiểm duyệt
     @GetMapping
     public ResponseEntity<List<ModerationLog>> getAll() {
         return ResponseEntity.ok(moderationLogService.getAllLogs());
     }
 
+    // 🔴 ADMIN ONLY: Đẩy log kiểm duyệt lên
     // 🔥 MỞ CỬA POST CHO FRONTEND ĐẨY LOG LÊN
     @PostMapping
     public ResponseEntity<?> createLog(@RequestBody Map<String, Object> payload, HttpServletRequest request) {
@@ -56,6 +59,7 @@ public class ModerationLogController {
         }
     }
 
+    // Hàm nội bộ hỗ trợ bóc tách Token
     private Account getAdminFromToken(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {

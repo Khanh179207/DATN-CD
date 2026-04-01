@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dao.*;
 import poly.edu.dto.*;
@@ -336,6 +337,7 @@ public class PostController {
 
         return dto;
     }
+    @PreAuthorize("isAuthenticated()")
     @PostMapping
     public ResponseEntity<?> createPost(@RequestBody PostDTO postDTO) {
         try {

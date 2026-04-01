@@ -6,6 +6,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize; // 🔥 IMPORT THẺ BẢO VỆ
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dao.AccountDAO;
 import poly.edu.dao.FollowDAO;
@@ -25,11 +26,9 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
-
 public class UserController {
 
     private final BCryptPasswordEncoder passwordEncoder;
-
     private final AccountDAO accountDAO;
     private final PostDAO postDAO;
     private final FollowDAO followDAO;
@@ -37,6 +36,7 @@ public class UserController {
     @Autowired
     private InteractionLogDAO interactionLogDAO;
 
+    // 🟢 PUBLIC: Cho phép mọi người xem profile của nhau để tăng tính tương tác
     @GetMapping("/{id}")
     public ResponseEntity<UserProfileDTO> getProfile(@PathVariable Integer id) {
         return accountDAO.findById(id).map(acc -> {
@@ -45,6 +45,8 @@ public class UserController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
+    // 🟡 USER ONLY: Chỉ người dùng đã đăng nhập mới được sửa đổi thông tin cá nhân
+    @PreAuthorize("isAuthenticated()") // 🔥 CHỐT CHẶN VÀNG: Ngăn chặn sửa đổi trái phép
     @PutMapping("/{id}")
     public ResponseEntity<?> updateProfile(
             @PathVariable Integer id,
@@ -63,6 +65,7 @@ public class UserController {
         return ResponseEntity.ok(toDTO(acc));
     }
 
+    // 🟢 PUBLIC: Mọi người đều có thể thấy các chỉ số "khủng" của các đầu bếp
     @GetMapping("/{id}/stats")
     public ResponseEntity<?> getStats(@PathVariable Integer id) {
         Account acc = accountDAO.findById(id).orElse(null);
@@ -80,35 +83,7 @@ public class UserController {
         ));
     }
 
-    private UserProfileDTO toDTO(Account acc) {
-        UserProfileDTO dto = new UserProfileDTO();
-        dto.setAccountID(acc.getAccountID());
-        dto.setUsername(acc.getUsername());
-        dto.setEmail(acc.getEmail());
-        dto.setAvatar(acc.getAvatar());
-        dto.setPoint(acc.getPoint());
-        dto.setIsPremium(acc.getIsPremium());
-        dto.setIsAdmin(acc.getIsAdmin());
-        dto.setBio(acc.getBio());
-        dto.setCreatedAt(acc.getCreatedAt());
-
-        long postCount = acc.getPosts() != null ? acc.getPosts().stream()
-                .filter(p -> p.getIsApproved() == 1 && p.getIsActive() == 1).count() : 0;
-        dto.setPostCount(postCount);
-
-        long followerCount = followDAO.countByFollowee_AccountIDAndStatus(acc.getAccountID(), 1);
-        dto.setFollowerCount(followerCount);
-
-        long followingCount = followDAO.countByFollower_AccountIDAndStatus(acc.getAccountID(), 1);
-        dto.setFollowingCount(followingCount);
-
-        long totalViews = acc.getPosts() != null ? acc.getPosts().stream()
-                .mapToLong(p -> p.getViews() != null ? p.getViews() : 0).sum() : 0;
-        dto.setTotalViews(totalViews);
-
-        return dto;
-    }
-
+    // 🟢 PUBLIC: Tính năng tìm kiếm bạn bè phải luôn mở cửa
     @GetMapping("/search")
     public ResponseEntity<?> searchUsers(@RequestParam(required = false, defaultValue = "") String keyword) {
         List<Account> accounts;
@@ -144,6 +119,35 @@ public class UserController {
         }
     }
 
+    private UserProfileDTO toDTO(Account acc) {
+        UserProfileDTO dto = new UserProfileDTO();
+        dto.setAccountID(acc.getAccountID());
+        dto.setUsername(acc.getUsername());
+        dto.setEmail(acc.getEmail());
+        dto.setAvatar(acc.getAvatar());
+        dto.setPoint(acc.getPoint());
+        dto.setIsPremium(acc.getIsPremium());
+        dto.setIsAdmin(acc.getIsAdmin());
+        dto.setBio(acc.getBio());
+        dto.setCreatedAt(acc.getCreatedAt());
+
+        long postCount = acc.getPosts() != null ? acc.getPosts().stream()
+                .filter(p -> p.getIsApproved() == 1 && p.getIsActive() == 1).count() : 0;
+        dto.setPostCount(postCount);
+
+        long followerCount = followDAO.countByFollowee_AccountIDAndStatus(acc.getAccountID(), 1);
+        dto.setFollowerCount(followerCount);
+
+        long followingCount = followDAO.countByFollower_AccountIDAndStatus(acc.getAccountID(), 1);
+        dto.setFollowingCount(followingCount);
+
+        long totalViews = acc.getPosts() != null ? acc.getPosts().stream()
+                .mapToLong(p -> p.getViews() != null ? p.getViews() : 0).sum() : 0;
+        dto.setTotalViews(totalViews);
+
+        return dto;
+    }
+
     private LocalDateTime calculateStartDate(String timeframe) {
         if (timeframe == null) return LocalDateTime.now().minusMonths(1);
         return switch (timeframe.toLowerCase()) {
@@ -156,3 +160,4 @@ public class UserController {
 
 
 }
+

@@ -1,48 +1,47 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { toast } from '@/composables/useToast'
-// --- 1. IMPORT LAYOUTS ---
+
+// --- 1. LAYOUTS (Giữ DefaultLayout nạp trực tiếp để trang chủ hiện ngay lập tức) ---
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
-import LandingLayout from '@/layouts/LandingLayout.vue'
-import AdminLayout from '@/layouts/AdminLayout.vue'
+const LandingLayout = () => import('@/layouts/LandingLayout.vue')
+const AdminLayout = () => import('@/layouts/AdminLayout.vue')
 
-// --- 2. IMPORT VIEWS ---
-import HomeView from '@/pages/home/HomeView.vue'
-import SearchPage from '@/pages/search/SearchPage.vue'
-import PostDetail from '@/pages/home/PostDetail.vue'
-import CreatePost from '@/pages/CreatePost.vue'
+// --- 2. CORE VIEWS (Lazy Loading để tối ưu tốc độ) ---
+const HomeView = () => import('@/pages/home/HomeView.vue')
+const SearchPage = () => import('@/pages/search/SearchPage.vue')
+const PostDetail = () => import('@/pages/home/PostDetail.vue')
+const CreatePost = () => import('@/pages/CreatePost.vue')
 
-// --- 3. IMPORT NEW PAGES (EDITORIAL LUXURY) ---
-import ProfilePage from '@/pages/profile/ProfilePage.vue'
-import EventList from '@/pages/events/EventPage.vue'
-import EventDetail from '@/pages/events/EventDetail.vue'
-import ComparePage from '@/pages/compare/ComparePage.vue'
+// --- 3. USER PAGES ---
+const ProfilePage = () => import('@/pages/profile/ProfilePage.vue')
+const EventList = () => import('@/pages/events/EventPage.vue')
+const EventDetail = () => import('@/pages/events/EventDetail.vue')
+const ComparePage = () => import('@/pages/compare/ComparePage.vue')
 
-// 🚀 NEW PREMIUM FEATURES RECENTLY ADDED
-import Leaderboard from '@/pages/Leaderboard.vue'
-import Suggestions from '@/pages/suggestions/SuggestionsPage.vue'
-import MealPlan from '@/pages/mealplan/MealPlanPage.vue'
-import PaymentSuccess from '@/pages/PaymentSuccess.vue'
-import TermsAndPolicy from '@/pages/terms/TermsAndPolicy.vue'
+// --- 4. PREMIUM FEATURES ---
+const Leaderboard = () => import('@/pages/Leaderboard.vue')
+const Suggestions = () => import('@/pages/suggestions/SuggestionsPage.vue')
+const MealPlan = () => import('@/pages/mealplan/MealPlanPage.vue')
+const PaymentSuccess = () => import('@/pages/PaymentSuccess.vue')
+const TermsAndPolicy = () => import('@/pages/terms/TermsAndPolicy.vue')
 
-// --- ADMIN PAGES ---
-import AdminDashboard from '@/pages/admin/Dashboard.vue'
-import PostManagement from '@/pages/admin/postadmin/PostManagement.vue'
-import CategoryManagement from '@/pages/admin/categoryadmin/CategoryManagement.vue'
-import UserManagement from '@/pages/admin/UserManagement.vue'
-import CommentManagement from '@/pages/admin/CommentManagement.vue'
-import NotificationManagement from '@/pages/admin/NotificationManagement.vue'
-import AchievementManagement from '@/pages/admin/AchievementManagement.vue'
-import Statistics from '@/pages/admin/Statistics.vue'
-import TicketManagement from '@/pages/admin/ticketadmin/TicketManagement.vue'
-import EventManagement from '@/pages/admin/eventadmin/EventManagement.vue'
-import PostEventManagement from '@/pages/admin/eventadmin/PostEventManagement.vue'
-import AppealManagement from '@/pages/admin/AppealManagement.vue'
-import BlacklistManagement from '@/pages/admin/BlacklistManagement.vue'
-import TransactionManagement from '@/pages/admin/TransactionManagement.vue'
-
-// 🔥 IMPORT CÁC TRANG HỆ THỐNG
-import SystemLogs from '@/pages/admin/SystemLogs.vue' 
-import SystemSettings from '@/pages/admin/SystemSettings.vue' // <--- THÊM TRANG VẬN HÀNH HỆ THỐNG VÀO ĐÂY
+// --- 5. ADMIN PAGES (Gom nhóm vào một chunk tên là 'admin' để không làm chậm trang chủ) ---
+const AdminDashboard = () => import(/* webpackChunkName: "admin" */ '@/pages/admin/Dashboard.vue')
+const Statistics = () => import(/* webpackChunkName: "admin" */ '@/pages/admin/Statistics.vue')
+const PostManagement = () => import(/* webpackChunkName: "admin" */ '@/pages/admin/postadmin/PostManagement.vue')
+const CategoryManagement = () => import(/* webpackChunkName: "admin" */ '@/pages/admin/categoryadmin/CategoryManagement.vue')
+const UserManagement = () => import(/* webpackChunkName: "admin" */ '@/pages/admin/UserManagement.vue')
+const CommentManagement = () => import(/* webpackChunkName: "admin" */ '@/pages/admin/CommentManagement.vue')
+const NotificationManagement = () => import(/* webpackChunkName: "admin" */ '@/pages/admin/NotificationManagement.vue')
+const AchievementManagement = () => import(/* webpackChunkName: "admin" */ '@/pages/admin/AchievementManagement.vue')
+const TicketManagement = () => import(/* webpackChunkName: "admin" */ '@/pages/admin/ticketadmin/TicketManagement.vue')
+const EventManagement = () => import(/* webpackChunkName: "admin" */ '@/pages/admin/eventadmin/EventManagement.vue')
+const PostEventManagement = () => import(/* webpackChunkName: "admin" */ '@/pages/admin/eventadmin/PostEventManagement.vue')
+const AppealManagement = () => import(/* webpackChunkName: "admin" */ '@/pages/admin/AppealManagement.vue')
+const BlacklistManagement = () => import(/* webpackChunkName: "admin" */ '@/pages/admin/BlacklistManagement.vue')
+const TransactionManagement = () => import(/* webpackChunkName: "admin" */ '@/pages/admin/TransactionManagement.vue')
+const SystemLogs = () => import(/* webpackChunkName: "admin" */ '@/pages/admin/SystemLogs.vue')
+const SystemSettings = () => import(/* webpackChunkName: "admin" */ '@/pages/admin/SystemSettings.vue')
 
 const routes = [
   // 1. LANDING PAGE
@@ -50,28 +49,18 @@ const routes = [
     path: '/',
     component: LandingLayout,
     children: [
-      {
-        path: '',
-        name: 'IntroPage',
-        component: () => import('@/pages/intro/IntroPage.vue')
-      },
-      {
-        path: 'terms-and-policy',
-        name: 'TermsAndPolicyLanding',
-        component: () => import('@/pages/terms/TermsAndPolicy.vue')
-      }
+      { path: '', name: 'IntroPage', component: () => import('@/pages/intro/IntroPage.vue') },
+      { path: 'terms-and-policy', name: 'TermsAndPolicyLanding', component: TermsAndPolicy }
     ]
   },
 
-  // 2. MAIN APP (Default Layout) - CORE USER FEATURES
+  // 2. MAIN APP
   {
     path: '/',
     component: DefaultLayout,
     children: [
       { path: 'home', name: 'Home', component: HomeView },
       { path: 'search', name: 'Search', component: SearchPage },
-
-      // 🔒 KHÓA: Xem chi tiết bài viết phải đăng nhập
       {
         path: 'post/:id',
         name: 'PostDetail',
@@ -79,53 +68,32 @@ const routes = [
         props: true,
         meta: { requiresAuth: true }
       },
-
-      // ✅ Events Routes
-      { path: 'events', name: 'Events', component: EventList }, 
-
-      // 🔒 KHÓA: Xem chi tiết sự kiện phải đăng nhập
+      { path: 'events', name: 'Events', component: EventList },
       {
         path: 'events/:id',
         name: 'EventDetail',
         component: EventDetail,
         meta: { requiresAuth: true }
       },
-
       {
         path: 'create-post',
         name: 'CreatePost',
         component: CreatePost,
         meta: { requiresAuth: true }
       },
-
-      // ✅ Profile & Storage Routes
       {
-        path: 'profile',
+        path: 'profile/:id?', // Dùng ? để id là optional, gộp chung trang Profile cá nhân và người khác
         name: 'Profile',
         component: ProfilePage,
-        meta: { requiresAuth: true } 
-      },
-      {
-        path: 'profile/:id',
-        name: 'ProfileById',
-        component: ProfilePage,
-        meta: { requiresAuth: true } 
+        meta: { requiresAuth: true }
       },
       {
         path: 'storage',
         name: 'Storage',
         component: () => import('@/pages/storage/StoragePage.vue'),
-        meta: { requiresAuth: true } 
+        meta: { requiresAuth: true }
       },
-
-      // ✅ Compare Routes
-      {
-        path: 'compare',
-        name: 'Compare',
-        component: ComparePage
-      },
-
-      // ✨✨✨ NEW PREMIUM ROUTES (SYNCED WITH SIDEBAR) ✨✨✨
+      { path: 'compare', name: 'Compare', component: ComparePage },
       {
         path: 'leaderboard',
         name: 'Leaderboard',
@@ -148,7 +116,7 @@ const routes = [
         path: 'payment-success',
         name: 'PaymentSuccess',
         component: PaymentSuccess,
-        meta: { requiresAuth: true } // Đánh dấu để guard bắt, nhưng sẽ có ngoại lệ bên dưới
+        meta: { requiresAuth: true }
       }
     ]
   },
@@ -175,33 +143,17 @@ const routes = [
       { path: 'blacklist', name: 'AdminBlacklist', component: BlacklistManagement },
       { path: 'transactions', name: 'AdminTransactions', component: TransactionManagement },
       { path: 'system-logs', name: 'AdminSystemLogs', component: SystemLogs },
-      { path: 'system-settings', name: 'AdminSystemSettings', component: SystemSettings } // <--- KHAI BÁO TRANG VẬN HÀNH HỆ THỐNG Ở ĐÂY
+      { path: 'system-settings', name: 'AdminSystemSettings', component: SystemSettings }
     ]
   },
 
-  // 4. STANDALONE PAGES (no layout wrapper)
-  {
-    path: '/verify-email',
-    name: 'VerifyEmail',
-    component: () => import('@/pages/VerifyEmailPage.vue')
-  },
-  {
-    path: '/forgot-password',
-    name: 'ForgotPassword',
-    component: () => import('@/pages/ForgotPasswordPage.vue')
-  },
-  {
-    path: '/reset-password',
-    name: 'ResetPassword',
-    component: () => import('@/pages/ResetPasswordPage.vue')
-  },
+  // 4. STANDALONE PAGES
+  { path: '/verify-email', component: () => import('@/pages/VerifyEmailPage.vue') },
+  { path: '/forgot-password', component: () => import('@/pages/ForgotPasswordPage.vue') },
+  { path: '/reset-password', component: () => import('@/pages/ResetPasswordPage.vue') },
 
-  // 5. NOT FOUND (404 page)
-  {
-    path: '/:pathMatch(.*)*',
-    name: 'NotFound',
-    component: () => import('@/pages/NotFound.vue')
-  }
+  // 5. NOT FOUND
+  { path: '/:pathMatch(.*)*', name: 'NotFound', component: () => import('@/pages/NotFound.vue') }
 ]
 
 const router = createRouter({
@@ -220,27 +172,33 @@ router.beforeEach((to, from, next) => {
   const user = userStr ? JSON.parse(userStr) : null
   const isLoggedIn = !!user?.token
   
-  // Tối ưu hóa kiểm tra quyền, ưu tiên 'role' từ JWT
-  const isPremium = isLoggedIn && (user?.role === 'premium' || ['true', '1'].includes(String(user?.isPremium)));
-  const isAdmin = isLoggedIn && (user?.role === 'ADMIN' || ['true', '1'].includes(String(user?.isAdmin)));
+  // 🔥 FIXED: Tối ưu hóa kiểm tra quyền (Chấp nhận mọi format: 1, true, "true", "admin", "ADMIN")
+  const isPremium = isLoggedIn && (
+    String(user?.role).toLowerCase() === 'premium' || 
+    ['true', '1', 1, true].includes(user?.isPremium)
+  );
 
-  // 1. Admin-only routes: must be logged in AND be an admin
+  const isAdmin = isLoggedIn && (
+    String(user?.role).toLowerCase() === 'admin' || 
+    ['true', '1', 1, true].includes(user?.isAdmin)
+  );
+
+  // 1. Admin-only routes
   if (to.matched.some(r => r.meta?.requiresAdmin)) {
     if (!isLoggedIn) {
       toast.error('Vui lòng đăng nhập để truy cập trang này')
       return next({ path: '/', query: { redirect: to.fullPath } })
     }
     if (!isAdmin) {
-      toast.error('Bạn không có quyền truy cập trang này')
+      toast.error('Bạn không có quyền truy cập trang quản trị')
       return next({ path: '/home' })
     }
   }
 
-  // 2. Auth-required routes (Khóa các trang yêu cầu đăng nhập)
+  // 2. Auth-required routes
   if (to.matched.some(r => r.meta?.requiresAuth)) {
-    // Ngoại lệ: Cho phép truy cập trang kết quả thanh toán để cập nhật trạng thái user
     if (to.name === 'PaymentSuccess') {
-      return next();
+      return next(); // Ngoại lệ cho VNPAY Callback
     }
     if (!isLoggedIn) {
       toast.error('Vui lòng đăng nhập để xem chi tiết')
@@ -254,8 +212,7 @@ router.beforeEach((to, from, next) => {
       toast.warn('Vui lòng đăng nhập để sử dụng tính năng Premium')
       return next({ path: '/home', query: { login: '1' } })
     }
-
-    if (!isPremium && !isAdmin) {
+    if (!isPremium && !isAdmin) { // Admin cũng được phép xem Premium
       toast.warn('Tính năng này chỉ dành cho Premium users')
       return next({ path: '/home' })
     }

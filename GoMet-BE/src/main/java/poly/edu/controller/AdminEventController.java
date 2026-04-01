@@ -1,6 +1,7 @@
 package poly.edu.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dto.AdminEventDTO;
 import poly.edu.dto.AdminEventPostDTO;
@@ -11,6 +12,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/admin/events")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ADMIN')")
 
 public class AdminEventController {
 

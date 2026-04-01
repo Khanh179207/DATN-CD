@@ -11,16 +11,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.access.prepost.PreAuthorize; // 🔥 IMPORT THẺ BẢO VỆ
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.Date; // <-- THÊM MỚI: Import Date để set thời gian
 import java.util.List;
 import org.springframework.http.ResponseEntity;
-// ... các import giữ nguyên
 
 @RestController
-
+@PreAuthorize("isAuthenticated()") // 🔥 CHỐT CHẶN VÀNG: Bắt buộc đăng nhập cho TẤT CẢ các hàm bên dưới
 public class ChatController {
 
     @Autowired private SimpMessagingTemplate messagingTemplate;

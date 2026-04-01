@@ -2,6 +2,7 @@ package poly.edu.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize; // 🔥 IMPORT THẺ BẢO VỆ
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dao.ConversationDAO;
 import poly.edu.dao.AccountDAO; // Giả sử bạn dùng AccountDAO
@@ -11,9 +12,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-
 @RestController
 @RequestMapping("/api/conversations")
+@PreAuthorize("isAuthenticated()") // 🔥 CHỐT CHẶN VÀNG: Bắt buộc phải có Token mới được vào tạo phòng chat
 public class ConversationController {
 
     @Autowired ConversationDAO convDao;

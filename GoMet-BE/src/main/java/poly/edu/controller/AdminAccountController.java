@@ -2,6 +2,7 @@ package poly.edu.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dto.AdminAccountDTO;
 import poly.edu.service.AccountService;
@@ -12,6 +13,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/admin/accounts")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ADMIN')")
 
 public class AdminAccountController {
 

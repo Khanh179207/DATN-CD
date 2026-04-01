@@ -265,7 +265,10 @@ const clearForm = () => {
   if (commentInputRef.value) commentInputRef.value.style.height = 'auto';
 }
 const onPhotosSelected = (e) => {
-  if (!authStore.isAuthenticated) { toast.warn('Vui lòng đăng nhập!'); return }
+  if (!authStore.isAuthenticated) {
+    window.dispatchEvent(new CustomEvent('ui:open-login'))
+    return
+  }
   Array.from(e.target.files || []).forEach(file => {
     selectedPhotos.value.push({ file, preview: URL.createObjectURL(file) })
   })
@@ -407,7 +410,10 @@ const submitComment = async () => {
   }
 
   if (!content && selectedPhotos.value.length === 0 && userRating.value === 0) return
-  if (!authStore.isAuthenticated) { toast.warn('Vui lòng đăng nhập!'); return }
+  if (!authStore.isAuthenticated) {
+    window.dispatchEvent(new CustomEvent('ui:open-login'))
+    return
+  }
   
   isUploading.value = true
 
@@ -446,7 +452,10 @@ const submitComment = async () => {
 const handleSubmitReply = async ({ parentId, content }) => {
   let textContent = content;
   if (!textContent || !textContent.trim()) return
-  if (!authStore.isAuthenticated) { toast.warn('Vui lòng đăng nhập!'); return }
+  if (!authStore.isAuthenticated) {
+    window.dispatchEvent(new CustomEvent('ui:open-login'))
+    return
+  }
 
   // 🔥 TÍNH NĂNG CHUYỂN ĐỔI BAD WORD CHO REPLY
   const isViolating = await checkContentPolicy(textContent);
@@ -470,7 +479,10 @@ const handleSubmitReply = async ({ parentId, content }) => {
 }
 
 const handleDeleteComment = async (commentId) => {
-  if (!authStore.isAuthenticated) { toast.warn('Vui lòng đăng nhập!'); return; }
+  if (!authStore.isAuthenticated) {
+    window.dispatchEvent(new CustomEvent('ui:open-login'))
+    return
+  }
   
   try {
     const userId = authStore.user.accountID || authStore.user.id;
@@ -509,7 +521,10 @@ const handleDeleteComment = async (commentId) => {
 }
 
 const handleToggleLikeComment = async (comment) => {
-  if (!authStore.isAuthenticated) { toast.warn('Vui lòng đăng nhập để thả tim!'); return; }
+  if (!authStore.isAuthenticated) {
+    window.dispatchEvent(new CustomEvent('ui:open-login'))
+    return
+  }
   const accountID = authStore.user.accountID || authStore.user.id;
   const commentID = comment.commentID || comment.id;
 
