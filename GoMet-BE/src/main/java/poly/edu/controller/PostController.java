@@ -1,6 +1,7 @@
 package poly.edu.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -10,11 +11,10 @@ import poly.edu.dto.*;
 import poly.edu.entity.*;
 import poly.edu.service.NotificationService;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime; // 🔥 Đã đổi sang LocalDateTime
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -34,6 +34,8 @@ public class PostController {
     private final LikesDAO likesDAO;
     private final NotificationService notificationService;
     private final poly.edu.service.PostService postService;
+    @Autowired
+    private InteractionLogDAO interactionLogDAO;
 
     @GetMapping("/search-mini")
     public ResponseEntity<List<Map<String, Object>>> searchMini(@RequestParam String q) {
@@ -89,12 +91,22 @@ public class PostController {
     public ResponseEntity<?> getDetail(
             @PathVariable Integer id,
             @RequestParam(required = false) Integer accountId) {
+
         return postDAO.findById(id).map(post -> {
-            post.setViews(post.getViews() + 1);
-            postDAO.save(post);
             PostDetailDTO dto = toDetailDTO(post, accountId);
             return ResponseEntity.ok(dto);
         }).orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/{id}/view")
+    public ResponseEntity<?> recordView(@PathVariable Integer id) {
+        try {
+            interactionLogDAO.save(new InteractionLog(id, "VIEW", 1));
+            return ResponseEntity.ok().body("Đã ghi nhận lượt xem");
+        } catch (Exception e) {
+            System.err.println("Lỗi lưu InteractionLog VIEW: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Lỗi hệ thống");
+        }
     }
 
     @GetMapping("/search")
@@ -171,23 +183,6 @@ public class PostController {
                 .limit(20)
                 .map(p -> toPublicDTO(p, accountId))
                 .collect(Collectors.toList()));
-    }
-
-    @GetMapping("/trending")
-    public ResponseEntity<List<PublicPostDTO>> getTrending(
-            @RequestParam(defaultValue = "10") int limit,
-            @RequestParam(required = false) Integer accountId) {
-        List<Post> posts = postDAO.findByIsApprovedAndIsActive(1, 1);
-        List<PublicPostDTO> result = posts.stream().map(p -> toPublicDTO(p, accountId))
-                .sorted(Comparator.comparingDouble((PublicPostDTO p) -> {
-                    double views = p.getViews() != null ? p.getViews() / 1000.0 : 0;
-                    double rating = p.getAvgRating() != null ? p.getAvgRating() : 0;
-                    double fav = p.getFavoriteCount() != null ? p.getFavoriteCount() / 10.0 : 0;
-                    return views + rating + fav;
-                }).reversed())
-                .limit(limit)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(result);
     }
 
     public PublicPostDTO toPublicDTO(Post p, Integer accountId) {
@@ -369,6 +364,61 @@ public class PostController {
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("message", "Lỗi server: " + e.getMessage()));
         }
+    }
+
+    // === API BẢNG XẾP HẠNG MÓN ĂN (TOP DISHES) ===
+    @GetMapping("/trending")
+    public ResponseEntity<?> getTrending(
+            @RequestParam(defaultValue = "month") String timeframe,
+            @RequestParam(defaultValue = "10") int limit) {
+        try {
+            // Gọi Service - lúc này Service đã trả về Map chứa đầy đủ: id, title, image, pts...
+            List<Map<String, Object>> result = postService.getLeaderboard(timeframe, limit);
+
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/top-comments-batch")
+    public ResponseEntity<?> getTopCommentsBatch(@RequestParam List<Integer> postIds) {
+        // Nếu không truyền ID nào thì trả về mảng rỗng luôn cho an toàn
+        if (postIds == null || postIds.isEmpty()) {
+            return ResponseEntity.ok(Collections.emptyMap());
+        }
+
+        List<Comment> topComments = commentDAO.findTopCommentsByPostIds(postIds);
+
+        // Tạo một Map để map PostID -> Dữ liệu Top Comment
+        Map<Integer, Object> resultMap = new HashMap<>();
+
+        for (Comment cmt : topComments) {
+            Map<String, Object> dto = new HashMap<>();
+
+            // Xử lý cắt chuỗi
+            String content = cmt.getContent();
+            if (content.length() > 75) {
+                content = content.substring(0, 72) + "...";
+            }
+            dto.put("content", content);
+
+            // Xử lý Tác giả
+            String author = cmt.getAccount().getUsername();
+            dto.put("author", author);
+
+            // Xử lý Avatar
+            String avatar = cmt.getAccount().getAvatar();
+            if (avatar == null || avatar.isEmpty()) {
+                avatar = "https://ui-avatars.com/api/?name=" + URLEncoder.encode(author, StandardCharsets.UTF_8) + "&background=EA580C&color=fff";
+            }
+            dto.put("avatar", avatar);
+
+            // Gắn vào Map với Key là PostID (Sửa getPost() thành cách gọi tương ứng trong Entity của sếp nếu cần)
+            resultMap.put(cmt.getPost().getPostID(), dto);
+        }
+
+        return ResponseEntity.ok(resultMap);
     }
 
 }

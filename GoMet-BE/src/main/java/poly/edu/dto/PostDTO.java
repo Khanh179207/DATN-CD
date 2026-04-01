@@ -26,6 +26,7 @@ public class PostDTO {
 
     private Integer views;
     private Integer likeCount; // 🔥 Rất quan trọng để hiển thị lượt Thích
+    private Integer totalPts;
 
     // Các thông tin phụ để Frontend hiển thị cho đẹp
     private String username;

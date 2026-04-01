@@ -1,20 +1,27 @@
 package poly.edu.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize; // 🔥 IMPORT THẺ BẢO VỆ
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dao.AccountDAO;
 import poly.edu.dao.FollowDAO;
+import poly.edu.dao.InteractionLogDAO;
 import poly.edu.dao.PostDAO;
 import poly.edu.dto.UserProfileDTO;
 import poly.edu.entity.Account;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/users")
@@ -25,6 +32,9 @@ public class UserController {
     private final AccountDAO accountDAO;
     private final PostDAO postDAO;
     private final FollowDAO followDAO;
+
+    @Autowired
+    private InteractionLogDAO interactionLogDAO;
 
     // 🟢 PUBLIC: Cho phép mọi người xem profile của nhau để tăng tính tương tác
     @GetMapping("/{id}")
@@ -91,6 +101,24 @@ public class UserController {
         return ResponseEntity.ok(result);
     }
 
+    @GetMapping("/leaderboard")
+    public ResponseEntity<?> getLeaderboard(
+            @RequestParam(defaultValue = "all") String timeframe,
+            @RequestParam(defaultValue = "10") int limit) {
+        try {
+            LocalDateTime startDate = calculateStartDate(timeframe);
+
+            Pageable pageable = PageRequest.of(0, limit);
+
+            List<Map<String, Object>> topChefs = accountDAO.findTopChefs(startDate, pageable);
+
+            return ResponseEntity.ok(topChefs);
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Lỗi lấy BXH Đầu Bếp: " + e.getMessage()));
+        }
+    }
+
     private UserProfileDTO toDTO(Account acc) {
         UserProfileDTO dto = new UserProfileDTO();
         dto.setAccountID(acc.getAccountID());
@@ -119,4 +147,17 @@ public class UserController {
 
         return dto;
     }
+
+    private LocalDateTime calculateStartDate(String timeframe) {
+        if (timeframe == null) return LocalDateTime.now().minusMonths(1);
+        return switch (timeframe.toLowerCase()) {
+            case "day" -> LocalDateTime.now().with(java.time.LocalTime.MIN);
+            case "month" -> LocalDateTime.now().minusMonths(1);
+            case "year" -> LocalDateTime.now().with(java.time.temporal.TemporalAdjusters.firstDayOfYear()).with(java.time.LocalTime.MIN);
+            default -> LocalDateTime.now().minusMonths(1);
+        };
+    }
+
+
 }
+
