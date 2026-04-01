@@ -128,21 +128,25 @@
                   <select v-model="form.rewardType" :disabled="isViewOnly"
                     style="width: 100%; padding: 12px 16px; border: 1px solid #dbe4ee; border-radius: 12px; font-size: 0.95rem; background: #ffffff; cursor: pointer; transition: all 0.28s ease;">
                     <option disabled value="">Chọn loại phần thưởng</option>
-                    <option value="premium">Premium</option>
-                    <option value="points">Points</option>
+                    <option value="premium_1m">Premium 1 tháng (Tất cả top đều nhận)</option>
+                    <option value="premium_1y">Premium 1 năm (Tất cả top đều nhận)</option>
+                    <option value="points">Points (Nhập riêng cho Top 1, 2, 3)</option>
                   </select>
 
-                  <!-- PREMIUM -->
-                  <div v-if="form.rewardType === 'premium'" class="form-group mt-3">
-                    <label>Thời gian Premium cho Top 1 (ngày)</label>
-                    <input v-model.number="form.premiumDaysTop1" type="number" min="1" placeholder="VD: 30"
-                      :disabled="isViewOnly" class="mb-2" />
-                    <label>Thời gian Premium cho Top 2 (ngày)</label>
-                    <input v-model.number="form.premiumDaysTop2" type="number" min="1" placeholder="VD: 15"
-                      :disabled="isViewOnly" class="mb-2" />
-                    <label>Thời gian Premium cho Top 3 (ngày)</label>
-                    <input v-model.number="form.premiumDaysTop3" type="number" min="1" placeholder="VD: 7"
-                      :disabled="isViewOnly" />
+                  <!-- PREMIUM 1 MONTH -->
+                  <div v-if="form.rewardType === 'premium_1m'" class="form-group mt-3">
+                    <div class="reward-info-box">
+                      <i class="fas fa-info-circle"></i>
+                      <p><strong>Top 1, Top 2, Top 3</strong> đều sẽ nhận <strong>Premium 1 tháng</strong></p>
+                    </div>
+                  </div>
+
+                  <!-- PREMIUM 1 YEAR -->
+                  <div v-if="form.rewardType === 'premium_1y'" class="form-group mt-3">
+                    <div class="reward-info-box">
+                      <i class="fas fa-info-circle"></i>
+                      <p><strong>Top 1, Top 2, Top 3</strong> đều sẽ nhận <strong>Premium 1 năm</strong></p>
+                    </div>
                   </div>
 
                   <!-- POINTS -->
@@ -366,16 +370,14 @@ const form = reactive({
   isForceEnded: 0,
 });
 
+
 watch(
   () => form.rewardType,
-  (val) => {
-    form.premiumDaysTop1 = null;
-    form.premiumDaysTop2 = null;
-    form.premiumDaysTop3 = null;
+  () => {
     form.pointsTop1 = null;
     form.pointsTop2 = null;
     form.pointsTop3 = null;
-  },
+  }
 );
 
 // --- Hàm hỗ trợ ---
@@ -427,7 +429,10 @@ const fetchWinnerForEvent = async (event) => {
   try {
     const res = await api.get(`/api/admin/events/${event.eventID}/posts`);
     if (res.data?.length > 0) {
-      event.winnerData = res.data.sort((a, b) => b.voteCount - a.voteCount)[0];
+      const sorted = res.data.sort((a, b) => b.voteCount - a.voteCount);
+      // Lưu top 3
+      event.topWinners = sorted.slice(0, 3);
+      event.winnerData = sorted[0]; // Top 1 cho backward compatibility
       if (!event.winner || event.winner !== event.winnerData.accountID) {
         await api.put(`/api/admin/events/${event.eventID}`, {
           ...event,
@@ -632,8 +637,10 @@ const saveEvent = async () => {
 
     let rewardText = "";
 
-    if (form.rewardType === "premium") {
-      rewardText = `PREMIUM|${form.premiumDaysTop1 || 0}|${form.premiumDaysTop2 || 0}|${form.premiumDaysTop3 || 0}`;
+    if (form.rewardType === "premium_1m") {
+      rewardText = "PREMIUM_1M|30|30|30";
+    } else if (form.rewardType === "premium_1y") {
+      rewardText = "PREMIUM_1Y|365|365|365";
     } else if (form.rewardType === "points") {
       rewardText = `POINTS|${form.pointsTop1 || 0}|${form.pointsTop2 || 0}|${form.pointsTop3 || 0}`;
     }

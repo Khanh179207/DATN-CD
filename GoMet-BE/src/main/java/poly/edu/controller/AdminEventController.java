@@ -64,4 +64,11 @@ public class AdminEventController {
     public void restoreEvent(@PathVariable Integer id) {
         adminEventService.restoreEvent(id);
     }
+
+    // ===== Force End Event + Auto Reward =====
+
+    @PostMapping("/{id}/force-end")
+    public void forceEndEvent(@PathVariable Integer id) {
+        adminEventService.forceEndEventWithReward(id);
+    }
 }

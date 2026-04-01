@@ -79,15 +79,13 @@ public class EventRewardServiceImpl implements EventRewardService {
                             int existingVotes = existing.getVoteCount() != null ? existing.getVoteCount() : 0;
                             int newerVotes = newer.getVoteCount() != null ? newer.getVoteCount() : 0;
                             return newerVotes > existingVotes ? newer : existing;
-                        }
-                ));
+                        }));
 
         // 6. Sort and get top 3
         List<EventPosts> topPosts = bestPostByAccount.values().stream()
                 .sorted((ep1, ep2) -> Integer.compare(
                         ep2.getVoteCount() != null ? ep2.getVoteCount() : 0,
-                        ep1.getVoteCount() != null ? ep1.getVoteCount() : 0
-                ))
+                        ep1.getVoteCount() != null ? ep1.getVoteCount() : 0))
                 .limit(MAX_REWARD_RANKS)
                 .collect(Collectors.toList());
 
@@ -113,13 +111,14 @@ public class EventRewardServiceImpl implements EventRewardService {
             }
 
             // Apply reward based on type
-            if ("PREMIUM".equals(rewardConfig.type)) {
+            if ("PREMIUM".equals(rewardConfig.type) || "PREMIUM_1M".equals(rewardConfig.type)
+                    || "PREMIUM_1Y".equals(rewardConfig.type)) {
                 int premiumDays = rewardConfig.getPremiumDaysForRank(rewardRank);
                 if (premiumDays > 0) {
                     // Create subscription record
                     LocalDateTime startDate = LocalDateTime.now();
                     LocalDateTime endDate = startDate.plusDays(premiumDays);
-                    
+
                     Subscription subscription = Subscription.builder()
                             .account(account)
                             .planType(1) // Premium plan
@@ -127,11 +126,11 @@ public class EventRewardServiceImpl implements EventRewardService {
                             .endAt(endDate)
                             .isActive(1)
                             .build();
-                    
+
                     subscriptionsToCreate.add(subscription);
                     account.setIsPremium(1);
-                    
-                    log.info("🎁 Rank #{}: Premium reward {} days for account {}", 
+
+                    log.info("🎁 Rank #{}: Premium reward {} days for account {}",
                             rewardRank, premiumDays, account.getAccountID());
                 }
             } else if ("POINTS".equals(rewardConfig.type)) {
@@ -139,8 +138,8 @@ public class EventRewardServiceImpl implements EventRewardService {
                 if (points > 0) {
                     Integer currentPoints = account.getPoint() != null ? account.getPoint() : 0;
                     account.setPoint(currentPoints + points);
-                    
-                    log.info("🎁 Rank #{}: Points reward {} for account {}", 
+
+                    log.info("🎁 Rank #{}: Points reward {} for account {}",
                             rewardRank, points, account.getAccountID());
                 }
             }
@@ -153,9 +152,9 @@ public class EventRewardServiceImpl implements EventRewardService {
                     .username(account.getUsername())
                     .avatar(account.getAvatar())
                     .rank(rewardRank)
-                    .pointsRewarded("PREMIUM".equals(rewardConfig.type) ? 
-                            rewardConfig.getPremiumDaysForRank(rewardRank) : 
-                            rewardConfig.getPointsForRank(rewardRank))
+                    .pointsRewarded("PREMIUM".equals(rewardConfig.type) || "PREMIUM_1M".equals(rewardConfig.type)
+                            || "PREMIUM_1Y".equals(rewardConfig.type) ? rewardConfig.getPremiumDaysForRank(rewardRank)
+                                    : rewardConfig.getPointsForRank(rewardRank))
                     .voteCount(topPost.getVoteCount() != null ? topPost.getVoteCount() : 0)
                     .postID(topPost.getPost().getPostID())
                     .build();
@@ -166,7 +165,7 @@ public class EventRewardServiceImpl implements EventRewardService {
         // 9. Save all changes
         accountDAO.saveAll(accountsToUpdate);
         subscriptionDAO.saveAll(subscriptionsToCreate);
-        
+
         if (topWinnerAccountID != null) {
             event.setWinner(topWinnerAccountID);
         }
@@ -233,6 +232,15 @@ public class EventRewardServiceImpl implements EventRewardService {
         }
 
         int getPremiumDaysForRank(int rank) {
+            // Xử lý PREMIUM_1M - cả 3 top đều nhận 30 ngày
+            if ("PREMIUM_1M".equals(type)) {
+                return 30;
+            }
+            // Xử lý PREMIUM_1Y - cả 3 top đều nhận 365 ngày
+            if ("PREMIUM_1Y".equals(type)) {
+                return 365;
+            }
+            // Xử lý PREMIUM (format cũ: PREMIUM|30|15|7) - mỗi top nhận khác nhau
             return switch (rank) {
                 case 1 -> top1Value;
                 case 2 -> top2Value;
