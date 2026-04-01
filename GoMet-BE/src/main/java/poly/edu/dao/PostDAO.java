@@ -1,11 +1,13 @@
 package poly.edu.dao;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;
 import poly.edu.entity.Post;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface PostDAO extends JpaRepository<Post, Integer> {
@@ -93,4 +95,5 @@ public interface PostDAO extends JpaRepository<Post, Integer> {
     @Modifying
     @Query("UPDATE Post p SET p.category.categoryID = 1 WHERE p.category.categoryID = :oldCatId")
     int movePostsToDefaultCategory(@Param("oldCatId") Integer oldCatId);
+
 }

@@ -164,7 +164,7 @@ import RelatedSuggestions from '@/components/post-detail/RelatedSuggestions.vue'
 
 // --- IMPORT SERVICES ---
 import api from '@/services/api'
-import { getPostById, getRelatedPosts, normalizePost } from '@/services/postService'
+import { getPostById, getRelatedPosts, normalizePost, recordPostView } from '@/services/postService'
 import { uploadMedia } from '@/services/uploadService'
 import { recordHistory } from '@/services/interactionService'
 
@@ -333,6 +333,7 @@ async function loadPost(id) {
     /* END */
 
     post.value = {
+      // ... (Phần map dữ liệu post.value này SẾP GIỮ NGUYÊN HOÀN TOÀN nhé) ...
       id: dto.postID,
       postID: dto.postID,
       title: dto.title,
@@ -352,7 +353,7 @@ async function loadPost(id) {
       ratingCount: dto.ratingCount || 0,
       favoriteCount: dto.favoriteCount || 0,
       views: dto.views || 0,
-      isPremium: dto.isPremium || dto.IsPremium || false, // 🔥 THÊM CỜ PREMIUM CHO BÀI VIẾT CHÍNH
+      isPremium: dto.isPremium || dto.IsPremium || false,
       steps: (dto.steps || []).map(s => ({
         stepNumber: s.stepNumber,
         desc: s.content || '',
@@ -363,13 +364,12 @@ async function loadPost(id) {
 
     const related = await getRelatedPosts(id, 4)
     
-    // 🔥 SỬA CHỖ NÀY: Giữ lại cờ isPremium cho các bài viết gợi ý (Sidebar)
     relatedPosts.value = related.map(dto => {
       const normPost = normalizePost(dto) || {};
       return {
         ...normPost,
         authorID: dto.authorID || dto.accountID || normPost.authorID,
-        isPremium: dto.isPremium || dto.IsPremium || normPost.isPremium || false, // <--- Quan trọng nhất ở đây
+        isPremium: dto.isPremium || dto.IsPremium || normPost.isPremium || false, 
         likes: dto.likes ?? dto.Likes ?? dto.likeCount ?? dto.favoriteCount ?? 0
       };
     });
@@ -381,6 +381,8 @@ async function loadPost(id) {
       const uid = user.accountID || user.id;
       recordHistory(uid, Number(id)).catch(() => { })
     }
+    recordPostView(id).catch(err => console.warn('Không ghi nhận được view:', err));
+
   } catch (err) {
     console.warn('PostDetail: load error', err)
   }

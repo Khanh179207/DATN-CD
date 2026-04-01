@@ -21,6 +21,14 @@ export const getPosts = (page = 1, size = 12) =>
 export const getPostById = (id) =>
   api.get(`/api/posts/${id}`).then(r => r.data)
 
+// 🔥 CODE MỚI THÊM VÀO: Hàm ghi nhận lượt xem
+/**
+ * Ghi nhận 1 lượt xem (View) cho bài viết
+ * @param {number|string} id
+ */
+export const recordPostView = (id) =>
+  api.post(`/api/posts/${id}/view`).then(r => r.data)
+
 /**
  * @param {string} keyword
  * @param {number|null} categoryID
@@ -49,12 +57,6 @@ export const getSuggestedPosts = (params = {}) =>
   api.get('/api/posts/suggest', { params }).then(r => r.data)
 
 /**
- * @param {number} limit
- */
-export const getTrendingPosts = (limit = 10) =>
-  api.get('/api/posts/trending', { params: { limit } }).then(r => r.data)
-
-/**
  * Create a new post (pending approval).
  * @param {object} data - { accountID, categoryID, title, description, ingredients, media, video, level, cookingTime, steps }
  * (Đã thêm trường video vào payload)
@@ -62,6 +64,30 @@ export const getTrendingPosts = (limit = 10) =>
 export const createPost = (data) =>
   api.post('/api/posts', data).then(r => r.data)
 
+/**
+ * @param {Array<number|string>} postIds - Mảng các ID bài viết (VD: [1, 2, 3])
+ * @returns {Promise<Object>} Map chứa top comment, key là postID
+ */
+export const getTopCommentsBatch = (postIds = []) => {
+  // Tránh gửi request thừa nếu mảng rỗng
+  if (!postIds || postIds.length === 0) return Promise.resolve({});
+  
+  return api.get('/api/posts/top-comments-batch', { 
+    params: { postIds: postIds.join(',') } 
+  }).then(r => r.data)
+}
+
+export const getTrendingPosts = async (timeframe = 'month', limit = 10) => {
+  try {
+    const response = await api.get('/api/posts/trending', {
+      params: { timeframe, limit }
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi lấy bảng xếp hạng:", error);
+    return [];
+  }
+}
 
 // ── Helpers: map BE DTO fields to FE-compatible shape ──────────────────────
 /**
@@ -90,3 +116,4 @@ export function normalizePost(dto) {
     category: dto.categoryName || ''
   }
 }
+
