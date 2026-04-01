@@ -2,6 +2,7 @@ package poly.edu.util;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value; // 🔥 IMPORT CÁI NÀY
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -10,12 +11,13 @@ import java.util.Date;
 @Component
 public class JwtUtils {
 
-    // Khóa bí mật để ký JWT (Đổi chuỗi này thành một chuỗi cực kỳ bảo mật và dài)
-    // Thực tế người ta hay cấu hình trong application.properties, nhưng nay mình hardcode cho nhanh
-    private final String jwtSecret = "GoMetSuperSecretKeyForJsonWebTokenWhichNeedsToBeVeryLongAndSecure2026";
+    // 🔥 HÚT CHUỖI BÍ MẬT TỪ APPLICATION.PROPERTIES
+    @Value("${jwt.secret}")
+    private String jwtSecret;
 
-    // Thời gian sống của Token: 7 ngày (Tính bằng milliseconds)
-    private final int jwtExpirationMs = 7 * 24 * 60 * 60 * 1000;
+    // 🔥 HÚT THỜI GIAN SỐNG TỪ APPLICATION.PROPERTIES
+    @Value("${jwt.expirationMs}")
+    private int jwtExpirationMs;
 
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes());
