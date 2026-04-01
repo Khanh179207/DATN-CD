@@ -73,3 +73,7 @@ vnpay.return_url=http://localhost:8080/api/payments/vnpay-callback
 vnpay.api_url=https://sandbox.vnpayment.vn/merchant_webapi/api.transaction
 
 groq.api.key=dien_mat_khau_apikey_vao_day
+
+jwt.secret=dien_mat_khau_apikey_vao_day
+# Thoi gian song cua Token: 7 ngay (7 * 24 * 60 * 60 * 1000)
+jwt.expirationMs=604800000

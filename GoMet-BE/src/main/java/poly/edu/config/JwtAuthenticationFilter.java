@@ -20,7 +20,7 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtils jwtUtils;
-    private final CustomUserDetailsService customUserDetailsService; // 🔥 Gọi file vừa tạo ở Bước 1
+    private final CustomUserDetailsService customUserDetailsService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -33,14 +33,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (jwtUtils.validateJwtToken(token)) {
                 String email = jwtUtils.getEmailFromJwtToken(token);
 
-                // 🔥 1. Mang Email đi hỏi DB xem thằng này có quyền gì
+                // 1. Mang Email đi hỏi DB xem thằng này có quyền gì
                 UserDetails userDetails = customUserDetailsService.loadUserByUsername(email);
 
-                // 🔥 2. Gắn cái QUYỀN (userDetails.getAuthorities()) vào Token thay cho chữ null
+                // 🔥 ĐÃ FIX: Truyền nguyên cục `userDetails` vào đây, TUYỆT ĐỐI KHÔNG dùng `userDetails.getUsername()`
                 UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                        userDetails.getUsername(),
+                        userDetails,
                         null,
-                        userDetails.getAuthorities() // QUYỀN LỰC NẰM Ở ĐÂY RỒI SẾP!
+                        userDetails.getAuthorities()
                 );
 
                 auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
