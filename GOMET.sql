@@ -1,4 +1,5 @@
 
+	
 -- Bước 1: Trở về database master (Bắt buộc)
 	USE master;
 	GO
@@ -11,7 +12,6 @@ BEGIN
     DROP DATABASE DATN_CD;
 END
 GO
-	
 	-- Bước 3: Khởi tạo lại Database
 	CREATE DATABASE DATN_CD;
 	GO
