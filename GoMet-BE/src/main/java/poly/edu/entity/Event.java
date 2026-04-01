@@ -7,7 +7,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Data
-@Builder // 🔥 Thêm cái này để fix lỗi AdminEventServiceImpl
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -37,10 +37,9 @@ public class Event {
     private String bannerImage;
 
     @OneToMany(mappedBy = "event")
-    @JsonIgnore // 🔥 Thêm cái này để fix lỗi getEventPosts() trong EventServiceImpl
+    @JsonIgnore
     private List<EventPosts> eventPosts;
 
-    // Thêm 3 dòng này vào file Event.java
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String description;
 
@@ -51,8 +50,8 @@ public class Event {
     private Integer maxVotes;
 
     @Column(name = "IsActive")
-    private Integer isActive; // Đổi từ Boolean sang Integer
+    private Integer isActive;
 
     @Column(name = "IsForceEnded")
-    private Integer isForceEnded; // Đổi từ Boolean sang Integer
+    private Integer isForceEnded;
 }
