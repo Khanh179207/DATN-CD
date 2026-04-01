@@ -19,7 +19,7 @@ public class DatabaseCleanupTask {
             log.info("==== BẮT ĐẦU TIẾN TRÌNH DỌN DẸP DATABASE ====");
 
             // Gọi Stored Procedure sếp đã tạo trong SQL
-            jdbcTemplate.execute("EXEC sp_CleanupOldInteractionLogs");
+            jdbcTemplate.execute("EXEC CleanupOldInteractionLogs");
 
             log.info("==== DỌN DẸP LOG CŨ (VIEW/LIKE > 1 NĂM) HOÀN TẤT ====");
         } catch (Exception e) {

@@ -307,6 +307,7 @@ CREATE TABLE Notification (
 	CONSTRAINT FK_Notification_Actor FOREIGN KEY (ActorID) REFERENCES Account(AccountID),
 	CONSTRAINT FK_Notification_Post FOREIGN KEY (PostID) REFERENCES Post(PostID)
 );
+GO
 
 	CREATE TABLE History (
 		HistoryID INT IDENTITY(1,1) PRIMARY KEY,
@@ -469,6 +470,28 @@ CREATE TABLE InteractionLog (
     FOREIGN KEY (PostID) REFERENCES Post(PostID)
 );
 GO
+
+CREATE TABLE PasswordResetToken (
+    id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    accountId INT NOT NULL,
+    tokenHash VARCHAR(64) NOT NULL,
+    expiresAt DATETIMEOFFSET NOT NULL,
+    usedAt DATETIMEOFFSET NULL,
+    createdAt DATETIMEOFFSET NOT NULL,
+    requestIp VARCHAR(45) NULL,
+    
+    -- Ràng buộc khóa ngoại để đảm bảo dữ liệu chuẩn
+    CONSTRAINT FK_PasswordReset_Account FOREIGN KEY (accountId) 
+    REFERENCES Account(AccountID) ON DELETE CASCADE
+);
+GO
+
+-- Tạo Index để tìm kiếm Token nhanh hơn
+CREATE INDEX IX_PasswordResetToken_Hash ON PasswordResetToken(tokenHash);
+CREATE INDEX IX_PasswordResetToken_Ip ON PasswordResetToken(requestIp, createdAt);
+CREATE INDEX IX_InteractionLog_Post_Time ON InteractionLog (PostID, CreatedAt) INCLUDE (Type, Value); 
+GO
+
 	-- ==========================================
 	-- 6. TRIGGERS TỰ ĐỘNG CẬP NHẬT
 	-- ==========================================
@@ -566,7 +589,7 @@ GO
 	-- ==========================================
 
 	-- PROCEDURE xóa các log có lượt VIEW và LIKE đã cũ hơn 1 năm
-	CREATE OR ALTER PROCEDURE sp_CleanupOldInteractionLogs
+	CREATE OR ALTER PROCEDURE CleanupOldInteractionLogs
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -580,16 +603,6 @@ BEGIN
     PRINT 'Đã dọn dẹp thành công Log VIEW và LIKE cũ hơn 1 năm và BẢO TOÀN View/Like tổng!';
 END;
 GO
-
-	-- ==========================================
-	-- 8. Index
-	-- ==========================================
-
-	CREATE INDEX IX_InteractionLog_Post_Time 
-    ON InteractionLog (PostID, CreatedAt) 
-    INCLUDE (Type, Value); 
-
-
 
 
 -- 1. DỮ LIỆU TÀI KHOẢN (Đa dạng phân quyền)
