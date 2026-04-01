@@ -12,7 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 public class DatabaseCleanupTask {
 
     private final JdbcTemplate jdbcTemplate;
-    @Scheduled(cron = "0/10 * * * * ?")
+    //@Scheduled(cron = "0/10 * * * * ?")
+    @Scheduled(cron = "0 0 2 * * ?")
     public void runAutoCleanup() {
         try {
             log.info("==== BẮT ĐẦU TIẾN TRÌNH DỌN DẸP DATABASE ====");

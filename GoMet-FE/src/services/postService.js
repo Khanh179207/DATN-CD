@@ -64,6 +64,30 @@ export const getSuggestedPosts = (params = {}) =>
 export const createPost = (data) =>
   api.post('/api/posts', data).then(r => r.data)
 
+/**
+ * @param {Array<number|string>} postIds - Mảng các ID bài viết (VD: [1, 2, 3])
+ * @returns {Promise<Object>} Map chứa top comment, key là postID
+ */
+export const getTopCommentsBatch = (postIds = []) => {
+  // Tránh gửi request thừa nếu mảng rỗng
+  if (!postIds || postIds.length === 0) return Promise.resolve({});
+  
+  return api.get('/api/posts/top-comments-batch', { 
+    params: { postIds: postIds.join(',') } 
+  }).then(r => r.data)
+}
+
+export const getTrendingPosts = async (timeframe = 'month', limit = 10) => {
+  try {
+    const response = await api.get('/api/posts/trending', {
+      params: { timeframe, limit }
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi lấy bảng xếp hạng:", error);
+    return [];
+  }
+}
 
 // ── Helpers: map BE DTO fields to FE-compatible shape ──────────────────────
 /**
@@ -93,14 +117,3 @@ export function normalizePost(dto) {
   }
 }
 
-export const getTrendingPosts = async (timeframe = 'month', limit = 10) => {
-  try {
-    const response = await api.get('/api/posts/trending', {
-      params: { timeframe, limit }
-    });
-    return response.data;
-  } catch (error) {
-    console.error("Lỗi khi lấy bảng xếp hạng:", error);
-    return [];
-  }
-}

@@ -469,11 +469,9 @@ CREATE TABLE InteractionLog (
     FOREIGN KEY (PostID) REFERENCES Post(PostID)
 );
 GO
-
 	-- ==========================================
 	-- 6. TRIGGERS TỰ ĐỘNG CẬP NHẬT
 	-- ==========================================
-
 
 	-- Trigger khi có người Vote
 	CREATE TRIGGER TRG_UpdateVoteCount_Insert ON Votes AFTER INSERT AS
@@ -493,7 +491,7 @@ GO
 	END;
 	GO
 
--- TẠO ĐÚNG 1 TRIGGER CHUẨN ĐỂ QUẢN LÝ ĐIỂM SỐ
+	-- TRIGGER CHUẨN ĐỂ QUẢN LÝ ĐIỂM SỐ
 CREATE OR ALTER TRIGGER trg_UpdatePostStats
 ON InteractionLog
 AFTER INSERT
@@ -527,6 +525,42 @@ BEGIN
 END;
 GO
 
+---- TRIGGER xóa điểm rating của tổng điểm
+CREATE OR ALTER TRIGGER trg_HandleCommentDeletion_UpdatePts
+ON Comment
+AFTER UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Kiểm tra xem có thao tác cập nhật cột IsActive hay không
+    IF UPDATE(IsActive)
+    BEGIN
+        -- 1. TRỪ ĐIỂM khi comment bị XÓA (từ trạng thái Bình thường -> Xóa)
+        -- (1/NULL biến thành 0/-1)
+        UPDATE p
+        SET p.TotalPts = p.TotalPts - (ISNULL(d.Rating, 0) * 10)
+        FROM Post p
+        INNER JOIN deleted d ON p.PostID = d.PostID
+        INNER JOIN inserted i ON d.CommentID = i.CommentID
+        WHERE (d.IsActive IS NULL OR d.IsActive = 1)  -- Trạng thái cũ là đang sống
+          AND (i.IsActive = 0 OR i.IsActive = -1)     -- Trạng thái mới là đã chết/xóa
+          AND ISNULL(d.Rating, 0) > 0;                -- Chỉ trừ khi comment đó thực sự có rating
+
+        -- 2. (Tùy chọn) CỘNG LẠI ĐIỂM nếu Admin KHÔI PHỤC comment
+        -- (0/-1 biến thành 1/NULL)
+        UPDATE p
+        SET p.TotalPts = p.TotalPts + (ISNULL(i.Rating, 0) * 10)
+        FROM Post p
+        INNER JOIN deleted d ON p.PostID = d.PostID
+        INNER JOIN inserted i ON d.CommentID = i.CommentID
+        WHERE (d.IsActive = 0 OR d.IsActive = -1)     -- Trạng thái cũ là đã xóa
+          AND (i.IsActive IS NULL OR i.IsActive = 1)  -- Trạng thái mới là khôi phục
+          AND ISNULL(i.Rating, 0) > 0;
+    END
+END;
+GO
+
 	-- ==========================================
 	-- 7. Stored Procedure
 	-- ==========================================
@@ -554,6 +588,9 @@ GO
 	CREATE INDEX IX_InteractionLog_Post_Time 
     ON InteractionLog (PostID, CreatedAt) 
     INCLUDE (Type, Value); 
+
+
+
 
 -- 1. DỮ LIỆU TÀI KHOẢN (Đa dạng phân quyền)
 -- ==========================================================
