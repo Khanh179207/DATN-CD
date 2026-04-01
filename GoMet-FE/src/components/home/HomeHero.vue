@@ -200,6 +200,7 @@ const fetchHeroData = async () => {
   try {
     let fetchedPosts = [];
 
+    // 1. Cố gắng lấy 3 bài từ cấu hình hệ thống
     try {
       const configRes = await api.get('/api/system-config');
       const configs = Array.isArray(configRes.data) ? configRes.data : (configRes.data?.data || []);
@@ -214,62 +215,77 @@ const fetchHeroData = async () => {
       }
     } catch (e) {}
 
+    // 2. Nếu thiếu thì bù thêm bài mới nhất
     if (fetchedPosts.length < 3) {
       try {
         const latestRes = await api.get('/api/posts'); 
         const latest = Array.isArray(latestRes.data) ? latestRes.data : (latestRes.data?.content || latestRes.data?.data || []);
         const needed = 3 - fetchedPosts.length;
-        const extra = latest
+        
+        // Lấy ra các bài tóm tắt còn thiếu
+        const extraSummaries = latest
           .filter(lp => !fetchedPosts.find(fp => (fp.postID || fp.id) === (lp.postID || lp.id)))
           .slice(0, needed);
-        fetchedPosts = [...fetchedPosts, ...extra];
-      } catch (e) { }
+
+        // 🔥 FIX LỖI SỐ BƯỚC: Gọi API lấy "Chi Tiết" cho các bài bù vào để lấy được mảng steps
+        const extraPromises = extraSummaries.map(summary => {
+            const id = summary.postID || summary.id;
+            return api.get(`/api/posts/${id}`)
+                      .then(res => res.data?.data || res.data)
+                      .catch(() => summary); // Lỗi thì dùng lại bản tóm tắt
+        });
+        
+        const extraFullDetails = await Promise.all(extraPromises);
+        fetchedPosts = [...fetchedPosts, ...extraFullDetails];
+
+      } catch (e) { 
+        console.warn("Không tải được bài mới nhất", e);
+      }
     }
 
-    // 🔥 FETCH REALTIME COMMENTS: Chủ động lấy bình luận mới nhất cho 3 bài Hero
+    // 3. GỌI API BATCH LẤY TOP COMMENT TỪ BACKEND
     if (fetchedPosts.length > 0) {
-      await Promise.all(fetchedPosts.map(async (p) => {
-        try {
-          const pid = p.postID || p.id;
-          if (pid) {
-            const cmtRes = await api.get(`/api/comments/post/${pid}`);
-            p.comments = Array.isArray(cmtRes.data) ? cmtRes.data : (cmtRes.data?.data || []);
-          }
-        } catch (e) {
-          p.comments = p.comments || [];
+      try {
+        const postIds = fetchedPosts.map(p => p.postID || p.id).filter(Boolean);
+        
+        if (postIds.length > 0) {
+          const cmtRes = await api.get('/api/posts/top-comments-batch', {
+            params: { postIds: postIds.join(',') }
+          });
+          
+          const topCommentsMap = cmtRes.data || {};
+          
+          // Đắp Top Comment tương ứng vào từng Post
+          fetchedPosts.forEach(p => {
+            const cmt = topCommentsMap[p.postID || p.id];
+            if (cmt && cmt.content && cmt.content !== "[Người dùng đã xóa bình luận này]" && cmt.content.trim() !== '') {
+                 p.topComment = {
+                     content: truncateText(cmt.content, 75),
+                     author: cmt.author || 'Thành viên',
+                     avatar: cmt.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(cmt.author || 'G')}&background=EA580C&color=fff`
+                 };
+            } else {
+                 p.topComment = null;
+            }
+          });
         }
-      }));
+      } catch (e) {
+        console.error('Lỗi khi lấy Top Comments:', e);
+      }
     }
 
+    // 4. MAP DATA
     if(fetchedPosts.length > 0) {
         slides.value = fetchedPosts.map((p, index) => {
           const template = colorTemplates[index % 3]; 
           const authorName = p.authorName || p.author || p.account?.username || 'GoMet Chef';
-          let stepCount = p.steps?.length || p.cookingSteps?.length || 0;
+          
+          let stepCount = 0;
+          if (Array.isArray(p.steps)) stepCount = p.steps.length;
+          else if (Array.isArray(p.cookingSteps)) stepCount = p.cookingSteps.length;
+          else if (typeof p.stepCount === 'number') stepCount = p.stepCount; 
+
           const ratingValue = (p.avgRating && Number(p.avgRating) > 0) ? Number(p.avgRating).toFixed(1) : 'Mới';
-
-          let topComment = null;
-          if (p.comments && Array.isArray(p.comments) && p.comments.length > 0) {
-              const sortedComments = [...p.comments].sort((a, b) => {
-                  const aScore = (Number(a.likeCount || a.likes || 0) * 2) + Number(a.rating || a.rate || 0);
-                  const bScore = (Number(b.likeCount || b.likes || 0) * 2) + Number(b.rating || b.rate || 0);
-                  if (bScore !== aScore) return bScore - aScore; // Ưu tiên điểm số (Điểm cao lên đầu)
-                  return (Number(b.commentID || b.id || 0)) - (Number(a.commentID || a.id || 0)); // Nếu bằng điểm, ưu tiên bình luận mới nhất lên đầu
-              });
-              const bestCmt = sortedComments[0];
-              const cmtContent = bestCmt?.content || bestCmt?.text || '';
-
-              if (cmtContent && cmtContent.trim() !== '') {
-                  const cmtAuthor = bestCmt.account?.fullName || bestCmt.account?.username || bestCmt.authorName || bestCmt.fullName || bestCmt.name || 'Thành viên';
-                  const cmtAvatar = bestCmt.account?.avatar || bestCmt.authorAvatar || bestCmt.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(cmtAuthor)}&background=EA580C&color=fff`;
-
-                  topComment = {
-                      content: truncateText(cmtContent, 75),
-                      author: cmtAuthor,
-                      avatar: cmtAvatar
-                  };
-              }
-          }
 
           return {
             id: p.postID || p.id,
@@ -279,11 +295,11 @@ const fetchHeroData = async () => {
             desc: truncateText(p.description || p.desc, 140),
             time: p.cookingTime ? `${p.cookingTime} Phút` : (p.time || '30 Phút'),
             difficulty: p.level === 1 ? 'Dễ' : (p.level === 3 ? 'Khó' : 'Vừa'),
-            stepCount: stepCount > 0 ? stepCount : 5,
+            stepCount: stepCount, 
             views: p.views || 0,
             likes: p.favoriteCount || p.likeCount || p.likes || 0,
             rating: ratingValue,
-            topComment: topComment,
+            topComment: p.topComment, 
             video: p.video || p.videoUrl || null,
             mainImg: p.media || p.image || p.thumbnail || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80',
             themeColor: template.themeColor,
@@ -300,7 +316,7 @@ const fetchHeroData = async () => {
   }
 }
 
-// --- ĐIỀU HƯỚNG (BỎ HIỆU ỨNG CHUỘT LÀM RỐI) ---
+// --- ĐIỀU HƯỚNG ---
 const nextSlide = () => { currentIndex.value = (currentIndex.value + 1) % slides.value.length }
 const prevSlide = () => { currentIndex.value = (currentIndex.value - 1 + slides.value.length) % slides.value.length }
 const goToSlide = (index) => { currentIndex.value = index; }

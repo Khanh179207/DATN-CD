@@ -50,6 +50,10 @@
             <span class="rank-type">
               {{ mode === 'user' ? 'Grand Master' : 'The Masterpiece' }}
             </span>
+
+            <span v-if="displayData?.isPremium === 1" class="premium-star">
+              ✦ PREMIUM
+            </span>
           </div>
 
           <!-- TITLE -->
@@ -207,9 +211,8 @@ const defaultDescription =
   'Vinh danh tinh hoa ẩm thực và sự cống hiến xuất sắc tại GoMet.'
 
 /* =========================
-   META LOGIC
+   META LOGIC - ĐÃ ĐỒNG BỘ ĐIỂM SỐ
 ========================= */
-
 const computedMeta = computed(() => {
   const d = displayData.value
   if (!d) return {}
@@ -217,47 +220,31 @@ const computedMeta = computed(() => {
   if (mode.value === 'user') {
     return {
       'Tuyệt tác': d.postCount ?? 0,
-      'Người hâm mộ': (d.followers ?? 0).toLocaleString()
+      'Người hâm mộ': d.followers ?? 0,
+      // 🔥 FIX TẠI ĐÂY: Dùng d.pts hoặc d.totalPts để lấy đúng dữ liệu từ Backend
+      'Điểm cống hiến': (d.pts || d.totalPts) ? `${d.pts || d.totalPts} PTS` : '0 PTS'
     }
   }
 
   return {
-    'Lượt xem': (d.views ?? 0).toLocaleString(),
+    'Điểm tinh hoa': d.pts ? `${d.pts} PTS` : '0 PTS', 
     'Độ khó': d.difficulty ?? 'Trung bình'
   }
 })
 
 /* =========================
-   AUTHOR DATA (REAL SAFE)
+    AUTHOR DATA - ĐẢM BẢO CLICK ĐƯỢC
 ========================= */
-
 const authorData = computed(() => {
   const d = props.topDish
   if (!d) return null
 
-  const id =
-    d.authorId ||
-    d.userId ||
-    d.accountId ||
-    d.accountID ||
-    d.author?.id
 
-  const name =
-    d.authorName ||
-    d.chefName ||
-    d.username ||
-    d.author?.name
-
-  const avatar =
-    d.authorAvatar ||
-    d.chefAvatar ||
-    d.avatar ||
-    d.author?.avatar
-
-  // Nếu không có tên thì không hiển thị block tác giả
-  if (!name) return null
-
-  return { id, name, avatar }
+  return { 
+    id: d.authorId, 
+    name: d.authorName || 'GoMet Chef', 
+    avatar: d.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(d.authorName || 'G')}&background=EA580C&color=fff`
+  }
 })
 
 /* =========================

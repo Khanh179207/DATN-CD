@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import poly.edu.entity.Comment;
 import java.util.List;
+import java.util.Optional;
 
 public interface CommentDAO extends JpaRepository<Comment, Integer> {
 
@@ -22,4 +23,17 @@ public interface CommentDAO extends JpaRepository<Comment, Integer> {
             "FROM Comment c WHERE YEAR(c.CreatedAt) = :year " +
             "GROUP BY MONTH(c.CreatedAt)", nativeQuery = true)
     List<Object[]> countCommentsByMonth(@Param("year") int year);
+
+    @Query(value = "WITH RankedComments AS (" +
+            "  SELECT c.*, " +
+            "         ROW_NUMBER() OVER(PARTITION BY c.PostID " +
+            "                           ORDER BY (ISNULL(c.Likes, 0) * 2 + ISNULL(c.Rating, 0)) DESC, c.CommentID DESC) as rn " +
+            "  FROM Comment c " +
+            "  WHERE c.cmtid IS NULL AND c.Content IS NOT NULL AND c.Content <> '' " +
+            "    AND c.PostID IN (:postIds) " +
+            "    AND (c.IsActive IS NULL OR c.IsActive = 1) " +
+            ") " +
+            "SELECT * FROM RankedComments WHERE rn = 1",
+            nativeQuery = true)
+    List<Comment> findTopCommentsByPostIds(@Param("postIds") List<Integer> postIds);
 }

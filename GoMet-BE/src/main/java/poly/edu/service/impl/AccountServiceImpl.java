@@ -1,6 +1,7 @@
 package poly.edu.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder; // 🔥 IMPORT THÊM CÁI NÀY
 import org.springframework.stereotype.Service;
 import poly.edu.dao.AccountDAO;
 import poly.edu.dto.AdminAccountDTO;
@@ -17,9 +18,10 @@ import java.util.stream.Collectors;
 public class AccountServiceImpl implements AccountService {
 
     private final AccountDAO accountDAO;
-
-    // 🔥 INJECT THÊM SERVICE NHẬT KÝ KIỂM DUYỆT VÀO ĐÂY
     private final ModerationLogService moderationLogService;
+
+    // 🔥 BƯỚC 1: Gọi máy băm mật khẩu (BCrypt) vào đây
+    private final PasswordEncoder passwordEncoder;
 
     // 1. SỬA HÀM toDTO
     private AdminAccountDTO toDTO(Account acc) {
@@ -37,12 +39,12 @@ public class AccountServiceImpl implements AccountService {
         dto.setCreatedAt(acc.getCreatedAt() != null ? acc.getCreatedAt().toString() : null);
         dto.setRole(acc.getIsAdmin() != null && acc.getIsAdmin() == 1 ? "ADMIN" : "USER");
 
-        // 🔥 CHỈ MAP NHỮNG CỘT CẦN THIẾT (Đã xóa các cột Admin dư thừa)
+        // CHỈ MAP NHỮNG CỘT CẦN THIẾT
         dto.setBanReason(acc.getBanReason());
         dto.setBannedAt(acc.getBannedAt() != null ? acc.getBannedAt().toString() : null);
 
         // ========================================================
-        // 🔥 LOGIC ĐẾM SỐ BÀI, FOLLOW VÀ TỔNG LIKE 🔥
+        // LOGIC ĐẾM SỐ BÀI, FOLLOW VÀ TỔNG LIKE
         // ========================================================
 
         // 1. Đếm số bài viết
@@ -92,12 +94,19 @@ public class AccountServiceImpl implements AccountService {
             if (dto.getRole() != null) {
                 acc.setIsAdmin("ADMIN".equalsIgnoreCase(dto.getRole()) ? 1 : 0);
             }
+
+            // 🔥 Nâng cấp thêm: Nếu cập nhật tài khoản mà có gõ mật khẩu mới -> Băm luôn!
+            if (dto.getPassword() != null && !dto.getPassword().trim().isEmpty()) {
+                acc.setPassword(passwordEncoder.encode(dto.getPassword()));
+            }
+
             acc.setUpdatedAt(LocalDateTime.now());
         } else {
             acc = Account.builder()
                     .username(dto.getUsername())
                     .email(dto.getEmail())
-                    .password(dto.getPassword() != null ? dto.getPassword() : "changeme")
+                    // 🔥 BƯỚC 2: Băm nát mật khẩu bằng BCrypt trước khi lưu (Nếu bỏ trống thì băm chữ "changeme")
+                    .password(passwordEncoder.encode(dto.getPassword() != null ? dto.getPassword() : "changeme"))
                     .avatar(dto.getAvatar())
                     .isPremium(dto.getIsPremium() != null ? dto.getIsPremium() : 0)
                     .isActive(dto.getIsActive()  != null ? dto.getIsActive()  : 1)
@@ -109,35 +118,29 @@ public class AccountServiceImpl implements AccountService {
         return toDTO(accountDAO.save(acc));
     }
 
-    // 🔥 LOGIC KHÓA TÀI KHOẢN (ĐÃ TÍCH HỢP GHI LOG & CLEAN CODE)
     @Override
     public void ban(Integer id, Integer adminId, String adminName, String adminEmail, String reason) {
         Account acc = accountDAO.findById(id).orElseThrow();
-        acc.setIsActive(0); // Lưu ý: 0 là khóa (khớp với query Thống kê)
+        acc.setIsActive(0);
 
-        // Chỉ cập nhật lý do và thời gian khóa trên Entity Account
         acc.setBanReason(reason);
         acc.setBannedAt(LocalDateTime.now());
         acc.setUpdatedAt(LocalDateTime.now());
         accountDAO.save(acc);
 
-        // 📝 GHI VÀO NHẬT KÝ KIỂM DUYỆT (Tên Admin nằm ở đây nè)
         moderationLogService.logAction(id, "ACCOUNT", "BAN", adminId, adminName, reason);
     }
 
-    // 🔥 LOGIC MỞ KHÓA TÀI KHOẢN (ĐÃ FIX: Lưu đúng tên Admin & CLEAN CODE)
     @Override
     public void unban(Integer id, Integer adminId, String adminName) {
         Account acc = accountDAO.findById(id).orElseThrow();
         acc.setIsActive(1);
 
-        // Rửa sạch lý do và thời gian khóa
         acc.setBanReason(null);
         acc.setBannedAt(null);
         acc.setUpdatedAt(LocalDateTime.now());
         accountDAO.save(acc);
 
-        // 📝 GHI VÀO NHẬT KÝ KIỂM DUYỆT (Đã truyền chuẩn tên Admin)
         moderationLogService.logAction(id, "ACCOUNT", "UNBAN", adminId, adminName, "Đã ân xá, gỡ lệnh cấm");
     }
 
