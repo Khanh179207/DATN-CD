@@ -40,10 +40,9 @@ public class PostServiceImpl implements PostService {
     @Override
     public List<PostDTO> getPostsByAccountId(Integer accountId) {
         if (accountId == null) return List.of();
-        // 🔥 CHỈ LẤY BÀI CHƯA XÓA (isActive = 1)
+        // 🔥 Lấy TOÀN BỘ (Cả isActive = 0) để User có thể quản lý ẩn/hiện trong Profile
         List<Post> posts = postDAO.findByAccount_AccountIDOrderByCreatedAtDesc(accountId);
         return posts.stream()
-                .filter(p -> p.getIsActive() == 1)
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
@@ -135,9 +134,6 @@ public class PostServiceImpl implements PostService {
         if (post.getIsApproved() == -1) {
             throw new RuntimeException("Bài viết này đã bị Admin khóa vĩnh viễn, không thể chỉnh sửa!");
         }
-        if (post.getIsActive() == 0) {
-            throw new RuntimeException("Bài viết này không còn tồn tại trên hệ thống!");
-        }
 
         mapDtoToEntity(dto, post);
 
@@ -159,6 +155,17 @@ public class PostServiceImpl implements PostService {
         // 🔥 SOFT DELETE: Chỉ ẩn đi, không xóa khỏi DB để lưu vết
         post.setIsActive(0);
         postDAO.save(post);
+    }
+
+    @Override
+    @Transactional
+    public PostDTO toggleActive(Integer postId) {
+        Post post = postDAO.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy bài viết!"));
+        
+        // Đảo trạng thái: 1 -> 0 hoặc 0 -> 1
+        post.setIsActive(post.getIsActive() == 1 ? 0 : 1);
+        return convertToDTO(postDAO.save(post));
     }
 
     @Override
@@ -201,6 +208,7 @@ public class PostServiceImpl implements PostService {
         dto.setViews(post.getViews());
         dto.setLikeCount(post.getLikeCount());
         dto.setIsApproved(post.getIsApproved());
+        dto.setIsActive(post.getIsActive()); // 🔥 Trạng thái hiện tại
         dto.setCreatedAt(post.getCreatedAt());
 
         if (post.getAccount() != null) {

@@ -154,6 +154,9 @@ const connectWebSocket = (conversationId) => {
 
   // 🚀 [SỬA]: Gắn Token vào lúc Connect
   stompClient.value.connect(getAuthHeaders(), () => {
+    // 🚀 [MỚI]: Ngay khi vừa Connect xong, "đốc thúc" xử lý hàng chờ bài viết (nếu có)
+    processSpecialQueue();
+
     stompClient.value.subscribe(`/topic/${conversationId}`, (payload) => {
       const receivedMsg = JSON.parse(payload.body)
       
@@ -175,12 +178,28 @@ const fetchHistory = async (convId) => {
   
   try {
     const res = await api.get(`/api/messages/${convId}`);
-    
-    // 🚀 [SỬA]: Bọc giáp an toàn, lỡ BE trả về { data: [] } app vẫn không crash
     const rawData = res.data?.data || res.data;
     
     if (Array.isArray(rawData)) {
-        messages.value = rawData.map(msg => mapMessage(msg));
+        // 🚀 [SỬA]: Không ghi đè mù quáng. Chỉ append nếu chưa có trong danh sách
+        const historicalMsgs = rawData.map(msg => mapMessage(msg));
+        
+        // Nếu hiện đang có tin nhắn mới (do user vừa gửi lúc đang load history)
+        if (messages.value.length > 0) {
+            // Lọc ra các tin nhắn lịch sử mà KHÔNG trùng với tin nhắn vừa gửi
+            // (Dựa trên nội dung - vì sharing message content là duy nhất theo ID)
+            const newSentMsgs = [...messages.value];
+            messages.value = [...historicalMsgs];
+            
+            newSentMsgs.forEach(m => {
+                if (!messages.value.some(h => h.text === m.text)) {
+                    messages.value.push(m);
+                }
+            });
+        } else {
+            messages.value = historicalMsgs;
+        }
+        
         scrollToBottom();
     }
   } catch (err) {
@@ -189,17 +208,24 @@ const fetchHistory = async (convId) => {
 }
 
 // Theo dõi thay đổi của Chat đang chọn
-watch(() => chatStore.activeChat, async (newVal) => {
+watch(() => chatStore.activeChat, async (newVal, oldVal) => {
   if (newVal) {
     isMinimized.value = false;
-    messages.value = []; 
     
     const convId = newVal.id || newVal.conversationID;
+    const oldConvId = oldVal?.id || oldVal?.conversationID;
 
-    if (convId) {
-      // Gọi API lấy lịch sử trước, sau đó mới kết nối socket
-      await fetchHistory(convId);
-      connectWebSocket(convId);
+    // 🚀 [SỬA]: Chỉ xóa sạch tin nhắn khi ĐỔI người chat
+    // Khi đang chat với cùng 1 người (VD: Bấm Share bài tiếp cho người đó),
+    // mình KHÔNG được xóa messages.value dẹp đường vì nó sẽ làm mất tin nhắn vừa đẩy vào.
+    if (convId !== oldConvId) {
+      messages.value = []; 
+      
+      if (convId) {
+        // Kết nối Socket và Lấy lịch sử (Chạy song song để tối ưu tốc độ)
+        connectWebSocket(convId);
+        fetchHistory(convId); 
+      }
     }
     
     nextTick(() => { if(chatInput.value) chatInput.value.focus() });
@@ -241,25 +267,38 @@ const scrollToBottom = async () => {
   }
 }
 
-// 🚀 [THÊM MỚI]: Lắng nghe sự kiện chia sẻ đặc biệt từ ShareModal
-const handleSpecialShare = (e) => {
-    const { conversation, sender, content } = e.detail;
-    const activeConvId = chatStore.activeChat?.id || chatStore.activeChat?.conversationID;
+// 🚀 [MỚI]: Tách logic xử lý hàng chờ ra hàm riêng để dùng chung
+const processSpecialQueue = () => {
+    if (!chatStore.specialMessageQueue || chatStore.specialMessageQueue.length === 0) return;
     
-    if (conversation.conversationID === activeConvId && stompClient.value?.connected) {
-        messages.value.push({ text: content, isMine: true, timeStr: formatTime(new Date()) });
-        scrollToBottom();
-        stompClient.value.send("/app/chat.sendMessage", getAuthHeaders(), JSON.stringify(e.detail));
-    }
-}
+    const activeConvId = chatStore.activeChat?.id || chatStore.activeChat?.conversationID;
+
+    chatStore.specialMessageQueue.forEach(msg => {
+        // 🚀 [SỬA]: Gỡ bỏ chốt chặn Duplicate. Một bài viết có thể share nhiều lần.
+        if (msg.conversation.conversationID === activeConvId && stompClient.value?.connected) {
+            // Đẩy luôn vào giao diện, không cần check trùng nội dung nữa
+            messages.value.push({ text: msg.content, isMine: true, timeStr: formatTime(new Date()) });
+            scrollToBottom();
+            
+            // Gửi đi
+            stompClient.value.send("/app/chat.sendMessage", getAuthHeaders(), JSON.stringify(msg));
+            // Xóa khỏi hàng chờ Pinia
+            chatStore.clearSpecialMessage(msg.timestamp);
+        }
+    });
+};
+
+// Theo dõi hàng chờ tin nhắn đặc biệt từ Pinia
+watch(() => chatStore.specialMessageQueue, () => {
+    processSpecialQueue();
+}, { deep: true });
 
 onMounted(() => {
-    window.addEventListener('chat:send-special', handleSpecialShare);
+    // Không dùng Event nữa vì đã có Pinia Watcher xử lý
 });
 
 onUnmounted(() => { 
     if (stompClient.value) stompClient.value.disconnect();
-    window.removeEventListener('chat:send-special', handleSpecialShare);
 })
 </script>
 

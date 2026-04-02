@@ -285,7 +285,8 @@ const fetchEventEntries = async (eventId) => {
 }
 
 const handleOpenModal = () => {
-  if (!authStore.isAuthenticated) mEvent('ui:open-login'))
+  if (!authStore.isAuthenticated) {
+    window.dispatchEvent(new CustomEvent('ui:open-login'))
     return
   }
   isModalOpen.value = true

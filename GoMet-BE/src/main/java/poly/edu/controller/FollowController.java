@@ -12,6 +12,7 @@ import poly.edu.entity.Follow;
 import poly.edu.service.NotificationService;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -102,5 +103,39 @@ public class FollowController {
         // Truyền trạng thái 1 (đang follow) vào hàm DAO
         List<Integer> followedIds = followDAO.findFolloweeIdsByFollowerIdAndStatus(followerID, 1);
         return ResponseEntity.ok(followedIds);
+    }
+
+    // 🟡 USER: Chi tiết danh sách Follower (Người theo dõi mình)
+    @GetMapping("/followers-list")
+    public ResponseEntity<?> getFollowersList(@RequestParam Integer followeeID) {
+        List<Follow> list = followDAO.findByFollowee_AccountID(followeeID);
+        List<Map<String, Object>> res = list.stream()
+                .filter(f -> f.getStatus() == 1)
+                .map(f -> {
+                    Map<String, Object> map = new HashMap<>();
+                    Account acc = f.getFollower();
+                    map.put("accountID", acc.getAccountID());
+                    map.put("username", acc.getUsername());
+                    map.put("avatar", acc.getAvatar());
+                    return map;
+                }).toList();
+        return ResponseEntity.ok(res);
+    }
+
+    // 🟡 USER: Chi tiết danh sách Following (Người mình đang theo dõi)
+    @GetMapping("/following-list")
+    public ResponseEntity<?> getFollowingList(@RequestParam Integer followerID) {
+        List<Follow> list = followDAO.findByFollower_AccountID(followerID);
+        List<Map<String, Object>> res = list.stream()
+                .filter(f -> f.getStatus() == 1)
+                .map(f -> {
+                    Map<String, Object> map = new HashMap<>();
+                    Account acc = f.getFollowee();
+                    map.put("accountID", acc.getAccountID());
+                    map.put("username", acc.getUsername());
+                    map.put("avatar", acc.getAvatar());
+                    return map;
+                }).toList();
+        return ResponseEntity.ok(res);
     }
 }

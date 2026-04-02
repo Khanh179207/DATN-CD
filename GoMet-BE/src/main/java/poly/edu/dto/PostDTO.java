@@ -35,6 +35,7 @@ public class PostDTO {
     // Trong PostDTO.java và FavoriteDTO.java
     private LocalDateTime createdAt;
     private Integer isApproved;
+    private Integer isActive;
 
     // 🔥 Bây giờ nó sẽ tự động hiểu và dùng cái file StepRequestDTO.java riêng biệt ở trên
     // Trong file PostDTO.java

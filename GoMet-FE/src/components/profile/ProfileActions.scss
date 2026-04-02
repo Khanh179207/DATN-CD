@@ -1,0 +1,121 @@
+.profile-actions-premium {
+  display: flex;
+  gap: 12px;
+  margin-top: 25px;
+  width: 100%;
+
+  button {
+    flex: 1;
+    position: relative;
+    border: none;
+    border-radius: 14px;
+    padding: 12px 20px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    .inner-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 2;
+    }
+  }
+
+  // Follow Button - Premium Orange Gradient
+  .btn-follow-premium {
+    background: linear-gradient(135deg, #FF7E5F 0%, #FEB47B 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(255, 126, 95, 0.3);
+
+    &.is-following {
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid #e2e8f0;
+      box-shadow: none;
+
+      &:hover {
+        background: #e2e8f0;
+        transform: translateY(-2px);
+      }
+    }
+
+    &:hover:not(.is-following):not(:disabled) {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(255, 126, 95, 0.4);
+
+      .glow-effect {
+        opacity: 1;
+      }
+    }
+
+    .glow-effect {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at center, rgba(255, 255, 255, 0.4) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.5s;
+      z-index: 1;
+    }
+  }
+
+  // Message Button - Glassmorphism Refined
+  .btn-message-premium {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1.5px solid rgba(0, 0, 0, 0.08);
+    color: #1a1a1a;
+
+    &:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 1);
+      border-color: rgba(0, 0, 0, 0.15);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
+  }
+}
+
+// Micro-animations
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spinner-sm {
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+// Dark mode adaptation (if applicable)
+[data-theme='dark'] {
+  .btn-message-premium {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border-color: rgba(255, 255, 255, 0.2);
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+  }
+}

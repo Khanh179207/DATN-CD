@@ -19,8 +19,11 @@ public interface PostService {
     // Lấy chi tiết bài viết
     PostDTO getPostById(Integer postId);
 
-    // Xóa hoặc Ẩn bài viết
+    // Xả hoặc Ẩn bài viết
     void deletePost(Integer postId);
+
+    // Ẩn/Hiện bài viết (is_active)
+    PostDTO toggleActive(Integer postId);
 
     List<Map<String, Object>> getLeaderboard(String timeframe, int limit);
 }

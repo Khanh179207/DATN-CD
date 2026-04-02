@@ -161,7 +161,8 @@ public class PostController {
     public ResponseEntity<List<PublicPostDTO>> getByUser(
             @PathVariable Integer accountID,
             @RequestParam(required = false) Integer currentUserId) {
-        List<Post> posts = postDAO.findByAccount_AccountIDAndIsApprovedAndIsActive(accountID, 1, 1);
+        // 🔥 TRẢ VỀ TẤT CẢ: Để Frontend tự lọc (Sếp yêu cầu bài ẩn vẫn phải hiện cho chủ sở hữu)
+        List<Post> posts = postDAO.findByAccount_AccountIDOrderByCreatedAtDesc(accountID);
         return ResponseEntity.ok(posts.stream().map(p -> toPublicDTO(p, currentUserId)).collect(Collectors.toList()));
     }
 
@@ -196,7 +197,9 @@ public class PostController {
         dto.setLevel(p.getLevel());
         dto.setCookingTime(p.getCookingTime());
         dto.setViews(p.getViews());
-        dto.setCreatedAt(p.getCreatedAt()); // 🔥 Sẽ tự map LocalDateTime
+        dto.setCreatedAt(p.getCreatedAt()); 
+        dto.setIsActive(p.getIsActive());   // 🔥 TRẠNG THÁI ẨN/HIỆN
+        dto.setIsApproved(p.getIsApproved()); // 🔥 TRẠNG THÁI DUYỆT
 
         if (p.getAccount() != null) {
             dto.setAuthorID(p.getAccount().getAccountID());
@@ -419,6 +422,26 @@ public class PostController {
         }
 
         return ResponseEntity.ok(resultMap);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> updatePost(@PathVariable Integer id, @RequestBody PostDTO postDTO) {
+        try {
+            return ResponseEntity.ok(postService.updatePost(id, postDTO));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PatchMapping("/{id}/toggle-active")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> toggleActive(@PathVariable Integer id) {
+        try {
+            return ResponseEntity.ok(postService.toggleActive(id));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 
 }

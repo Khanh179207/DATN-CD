@@ -66,7 +66,8 @@ const shareToChat = async (contact) => {
   
   const myId = authStore.user.accountID || authStore.user.id
   const targetId = contact.accountID
-  const postId = props.post.postID || props.post.id
+  // 🚀 [MỚI]: Trích xuất ID bài viết siêu linh hoạt (PostID (DTO), id (Normalized), post_id (Legacy))
+  const postId = props.post.postID || props.post.id || props.post.post_id
 
   try {
     const convRes = await api.post('/api/conversations/access', { 
@@ -75,6 +76,7 @@ const shareToChat = async (contact) => {
     })
     const convId = convRes.data.conversationID
     
+    // Mở khung chat ngay lập tức
     chatStore.openChat({
       id: convId,
       name: contact.username,
@@ -82,16 +84,17 @@ const shareToChat = async (contact) => {
       online: true
     })
 
-    setTimeout(() => {
-        const socketMessage = {
-            conversation: { conversationID: convId },
-            sender: { accountID: myId },
-            content: `[POST_SHARE_ID:${postId}]`
-        }
-        window.dispatchEvent(new CustomEvent('chat:send-special', { detail: socketMessage }));
-        toast.success(`Đã chia sẻ cho ${contact.username}`);
-        emit('close');
-    }, 400);
+    // 🚀 [SỬA]: Không dùng Event nữa mà đưa vào Hàng chờ trong Pinia
+    // Điều này đảm bảo tin nhắn không bao giờ bị "rơi" dù mạng lag hay chat chưa load xong
+    const socketMessage = {
+        conversation: { conversationID: convId },
+        sender: { accountID: myId },
+        content: `[POST_SHARE_ID:${postId}]`
+    }
+    
+    chatStore.addSpecialMessage(socketMessage);
+    toast.success(`Đã chuẩn bị chia sẻ cho ${contact.username}`);
+    emit('close');
 
   } catch (error) {
     console.error("Lỗi khi chia sẻ qua chat:", error)

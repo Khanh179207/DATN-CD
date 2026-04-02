@@ -6,34 +6,16 @@
 // ── Core Layout ──────────────────────────────────────────────
 .gomet-profile-full {
   width: 100%;
-  background: #FBF6F1;
+  background: #FFFFFF; // Nền trắng như Home
   color: #1E293B;
   font-family: 'Manrope', sans-serif;
   position: relative;
+  min-height: 100vh;
 }
 
-// Background
+// Background (Removed caro, keeping simple)
 .bg-layer {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.grid-mesh {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
-  background-size: 40px 40px;
-}
-
-.noise-texture {
-  position: absolute;
-  inset: 0;
-  opacity: 0.04;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  display: none; // Ẩn nền caro theo yêu cầu
 }
 
 // ── 3-Column Layout ──────────────────────────────────────────
@@ -139,9 +121,32 @@
   border-radius: $radius-sm;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.3s, transform 0.2s;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 
   &:hover { background: $primary-600; transform: translateY(-1px); }
+  &:active { transform: scale(0.97); }
+}
+
+.btn-message {
+  flex: 1;
+  background: #F1F5F9;
+  color: #475569;
+  border: 1.5px solid #E2E8F0;
+  padding: $space-3;
+  border-radius: $radius-sm;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  &:hover { background: #E2E8F0; color: #1E293B; border-color: #CBD5E1; }
   &:active { transform: scale(0.97); }
 }
 
@@ -306,6 +311,14 @@
 .stat-cell {
   display: flex;
   flex-direction: column;
+  padding: 10px;
+  border-radius: 8px;
+  transition: background 0.2s;
+  
+  &.clickable {
+    cursor: pointer;
+    &:hover { background: #F1F5F9; }
+  }
 
   .val { font-size: 1.2rem; font-weight: 800; color: #1E293B; }
   .lbl { font-size: $text-xs; color: #64748B; margin-top: 4px; }
@@ -596,4 +609,309 @@
     transform: scale(0.94) translateY(16px);
     opacity: 0;
   }
+}
+// ── VIP Post Edit Modal (Premium Design) ─────────────────────
+.vip-post-modal {
+  max-width: 900px !important;
+  background: rgba(255, 255, 255, 0.94) !important;
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.25);
+}
+
+.badge-vip {
+  background: linear-gradient(135deg, #FFD700, #DAA520);
+  color: #1E293B;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  margin-right: 12px;
+  box-shadow: 0 2px 8px rgba(218, 165, 32, 0.3);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+}
+
+.vip-body {
+  display: flex !important;
+  gap: 30px;
+  padding: 30px 40px !important;
+  max-height: 75vh;
+  overflow-y: auto;
+}
+
+.vip-col-left {
+  width: 320px;
+  flex-shrink: 0;
+}
+
+.post-preview-card {
+  background: #F1F5F9;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1.5px solid #E2E8F0;
+  transition: all 0.3s ease;
+
+  &:hover { transform: translateY(-4px); box-shadow: 0 12px 25px rgba(0,0,0,0.1); }
+}
+
+.preview-img-wrap {
+  position: relative;
+  aspect-ratio: 1;
+  background: #CBD5E1;
+  
+  .preview-img { width: 100%; height: 100%; object-fit: cover; }
+}
+
+.img-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(30, 41, 59, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.preview-img-wrap:hover .img-overlay { opacity: 1; }
+
+.btn-upload-vip {
+  background: white;
+  color: #1E293B;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  transition: all 0.2s;
+
+  &:hover { transform: scale(1.05); background: #F8FAFC; }
+}
+
+.preview-info {
+  padding: 20px;
+  text-align: center;
+}
+
+.preview-label {
+  display: block;
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: #1E293B;
+  margin-bottom: 6px;
+}
+
+.preview-hint {
+  font-size: 0.75rem;
+  color: #64748B;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.vip-col-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.premium-input, .premium-select {
+  width: 100%;
+  background: white !important;
+  border: 1.5px solid #E2E8F0 !important;
+  border-radius: 12px !important;
+  padding: 12px 18px !important;
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  transition: all 0.2s !important;
+
+  &:focus {
+    border-color: #EA580C !important;
+    box-shadow: 0 0 0 4px rgba(234, 88, 12, 0.1) !important;
+    transform: translateY(-1px);
+  }
+}
+
+.input-with-icon {
+  position: relative;
+  .input-icon {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94A3B8;
+  }
+}
+
+.vip-footer {
+  padding: 25px 40px !important;
+  background: #F8FAFC;
+  justify-content: flex-end !important;
+}
+
+.btn-cancel-vip {
+  border: none;
+  background: transparent;
+  color: #64748B;
+  font-weight: 700;
+  padding: 12px 25px;
+  cursor: pointer;
+  transition: color 0.2s;
+  &:hover { color: #1E293B; }
+}
+
+.btn-save-vip {
+  background: linear-gradient(135deg, #1E293B, #0F172A);
+  color: white;
+  border: none;
+  padding: 12px 35px;
+  border-radius: 14px;
+  font-weight: 800;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.15);
+
+  &:hover:not(:disabled) {
+    background: #EA580C;
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 15px 30px rgba(234, 88, 12, 0.3);
+  }
+
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+@media (max-width: 900px) {
+  .vip-body { flex-direction: column; align-items: center; }
+  .vip-col-left { width: 100%; max-width: 320px; }
+}
+
+
+// ── VIP Follow List Modal (Basic Normal - Stable) ────────────
+.vip-follow-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1500; // Đưa lên trên tất cả
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: $space-5;
+}
+
+.vip-follow-container {
+  background: $neutral-0;
+  width: 100%;
+  max-width: 500px;
+  border-radius: 24px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  position: relative;
+  
+  .edit-modal-header {
+    padding: $space-5 $space-6;
+    border-bottom: 1px solid $neutral-200;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    h2 { font-size: 1.25rem; font-weight: 800; color: #1E293B; margin: 0; }
+    .btn-close { 
+      background: #F1F5F9; border: none; width: 32px; height: 32px; 
+      border-radius: 50%; color: #64748B; cursor: pointer; transition: all 0.2s;
+      &:hover { background: #E2E8F0; color: #1E293B; }
+    }
+  }
+}
+
+.vip-follow-body {
+  padding: $space-4 $space-6;
+  max-height: 450px;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar { width: 5px; }
+  &::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+}
+
+.follow-list-grid {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+}
+
+.follow-user-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: $space-4 !important;
+  padding: $space-3 $space-4 !important;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover { background: #F8FAFC; }
+
+  .user-avatar-wrap {
+    width: 50px;
+    height: 50px;
+    flex-shrink: 0;
+
+    img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%; // CHỐT CHẶN: Ép hình tròn cơ bản nhất
+      object-fit: cover;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+  }
+
+  .user-info {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    
+    .user-name { font-weight: 700; color: #1E293B; font-size: 0.95rem; }
+    .user-handle { color: #64748B; font-size: 0.8rem; }
+  }
+
+  .btn-view-profile {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: transparent;
+    color: #64748B;
+    border: none;
+    font-size: 0.75rem;
+    font-weight: 700;
+    
+    svg { margin-left: 2px; }
+  }
+}
+
+.follow-loading, .follow-empty {
+  padding: 50px 0;
+  text-align: center;
+  color: #94A3B8;
+  .empty-icon { font-size: 3rem; margin-bottom: 10px; opacity: 0.5; }
+  p { font-weight: 600; margin: 0; }
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner-xl {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #F1F5F9;
+  border-top-color: #1E293B;
+  border-radius: 50%;
+  animation: spin 1s infinite linear;
+  margin: 0 auto;
 }
