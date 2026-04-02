@@ -190,6 +190,23 @@ watch(() => props.post.ingredientsRaw, (newVal) => {
 }, { immediate: true })
 
 const handleGoShopping = () => {
+  if (!authStore.isAuthenticated) {
+    window.dispatchEvent(new CustomEvent('ui:open-login'))
+    return
+  }
+
+  // Kiểm tra quyền Premium
+  const role = String(authStore.user?.role || '').toUpperCase();
+  const isPremiumUser = authStore.user?.isPremium === true || authStore.user?.IsPremium === true || role === 'PREMIUM';
+  const isAdmin = authStore.user?.isAdmin === true || role === 'ADMIN';
+  const hasPremiumAccess = isPremiumUser || isAdmin;
+
+  if (!hasPremiumAccess) {
+    toast.warn('Tính năng Giỏ đi chợ là đặc quyền chỉ dành cho tài khoản Premium sếp nhé!');
+    window.dispatchEvent(new CustomEvent('ui:open-premium'));
+    return;
+  }
+
   const selected = ingredientsList.value.filter(i => i.selectedForShopping)
   if (!selected.length) return toast.warn('Sếp chưa chọn nguyên liệu nào!');
   shoppingStore.addItems(selected, props.post.id)

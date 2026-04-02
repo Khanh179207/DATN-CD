@@ -167,7 +167,6 @@
             class="grid-item"
             :style="{ '--delay': index * 0.05 + 's' }" 
             @click="goToDetail(post.id)"
-            @save-to-plan="handleOpenPlanModal"
           />
         </transition-group>
 
@@ -212,12 +211,6 @@
       </div>
     </div>
 
-    <MealPlanModal 
-      :is-open="isPlanModalOpen" 
-      :recipe="selectedRecipeForPlan" 
-      @close="isPlanModalOpen = false"
-      @success="onPlanSaved"
-    />
 
   </div>
 </template>
@@ -230,7 +223,6 @@ import { useAuthStore } from '@/stores/auth'
 
 // Components
 import RecipeCard from '@/components/common/RecipeCard.vue'
-import MealPlanModal from '@/components/modals/MealPlanModal.vue'
 import UserCard from '@/components/common/UserCard.vue'
 
 // Services
@@ -297,18 +289,6 @@ const removeIncludedIngredient = (ing) => {
   filters.value.includedIngredients = filters.value.includedIngredients.filter(i => i !== ing)
 }
 
-// --- MEAL PLAN MODAL LOGIC ---
-const isPlanModalOpen = ref(false)
-const selectedRecipeForPlan = ref(null)
-
-const handleOpenPlanModal = (recipeData) => {
-  selectedRecipeForPlan.value = recipeData
-  isPlanModalOpen.value = true
-}
-
-const onPlanSaved = () => {
-  toast.success(t('mealPlan.save_success', 'Đã lưu vào kế hoạch'))
-}
 
 // --- KIỂM TRA QUYỀN PREMIUM ---
 const isPremiumUser = computed(() => {
@@ -328,6 +308,7 @@ const toggleAdvancedFilter = () => {
   }
   if (!isPremiumUser.value) {
     toast.warn('Tính năng Bộ lọc nâng cao chỉ dành cho thành viên Premium! 👑');
+    window.dispatchEvent(new CustomEvent('ui:open-premium'));
     return;
   }
   showAdvanced.value = !showAdvanced.value;
