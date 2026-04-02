@@ -58,7 +58,6 @@ GO
 		BannerImage NVARCHAR(MAX),
     
 		Description NVARCHAR(MAX),
-		Rules NVARCHAR(MAX),
 		Reward NVARCHAR(255),
     
 		StartAt DATETIME NOT NULL,
@@ -633,9 +632,9 @@ GO
 
 -- 3. SỰ KIỆN (Trạng thái: Đang diễn ra và Đã kết thúc)
 -- ==========================================================
-INSERT INTO Event (EventName, BannerImage, Description, Rules, Reward, StartAt, EndAt, VoteStartAt, VoteEndAt, MaxVotes, Winner, IsActive) VALUES
-(N'Vua Bếp Việt 2026', 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1', N'Tìm kiếm công thức món Việt sáng tạo.', N'Ít nhất 5 bước thực hiện.', N'Huy hiệu Vàng & 1.000.000đ', '2026-03-01', '2026-04-01', '2026-04-02', '2026-04-10', 3, NULL, 1),
-(N'Giải Cứu Món Chay', 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd', N'Thử thách nấu món chay ngon.', N'Chỉ nguyên liệu thực vật.', N'Gói Premium 1 năm', '2026-02-01', '2026-03-15', '2026-03-16', '2026-03-20', 1, 2, 1);
+INSERT INTO Event (EventName, BannerImage, Description, Reward, StartAt, EndAt, VoteStartAt, VoteEndAt, MaxVotes, Winner, IsActive) VALUES
+(N'Vua Bếp Việt 2026', 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1', N'Tìm kiếm công thức món Việt sáng tạo.', N'Huy hiệu Vàng & 1.000.000đ', '2026-03-01', '2026-04-01', '2026-04-02', '2026-04-10', 3, NULL, 1),
+(N'Giải Cứu Món Chay', 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd', N'Thử thách nấu món chay ngon.', N'Gói Premium 1 năm', '2026-02-01', '2026-03-15', '2026-03-16', '2026-03-20', 1, 2, 1);
 GO
 
 -- 4. BÀI VIẾT (Gồm bài đã duyệt, chưa duyệt và bài tham gia sự kiện)

@@ -2,9 +2,6 @@ package poly.edu.dto;
 
 import lombok.*;
 
-/**
- * DTO for representing a user rewarded from an event
- */
 @Data
 @Builder
 @NoArgsConstructor

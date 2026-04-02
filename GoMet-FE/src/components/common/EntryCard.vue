@@ -55,8 +55,11 @@ import { useAuthStore } from '@/stores/auth';
 const props = defineProps({
   post: Object,
   rank: { type: Number, default: 0 },
-  canVote: { type: Boolean, default: false }
+  canVote: { type: Boolean, default: false },
+  limitReached: { type: Boolean, default: false }
 });
+
+const emit = defineEmits(['vote-toggled']);
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -87,6 +90,12 @@ const handleVote = async () => {
     return;
   }
 
+  // CHẶN: NẾU CHƯA VOTE BÀI NÀY VÀ ĐÃ ĐẠT GIỚI HẠN VOTE TOÀN SỰ KIỆN
+  if (!isVoted.value && props.limitReached) {
+    toast.warn("Sếp đã dùng hết hạn mức phiếu bầu cho sự kiện này!");
+    return;
+  }
+
   isProcessing.value = true;
   try {
     // 🔥 GỬI ĐẦY ĐỦ 2 TRƯỜNG LÊN CHO JAVA
@@ -106,6 +115,9 @@ const handleVote = async () => {
     } else {
       toast.warn(res.data.message || "Đã hủy bình chọn!");
     }
+    
+    // Thông báo cho component cha (EventDetail) cập nhật Progress Bar
+    emit('vote-toggled', isVoted.value);
   } catch (err) {
     toast.error(err.response?.data?.message || "Không thể bình chọn lúc này!");
   } finally {

@@ -11,10 +11,18 @@
         </div>
         
         <div v-if="step === 1" class="modal-body step-1">
+          <div v-if="hasSubmitted" class="already-submitted-alert">
+            <div class="alert-icon">⚠️</div>
+            <div class="alert-content">
+              <h4>Sếp đã nộp bài dự thi!</h4>
+              <p>Mỗi sự kiện chỉ cho phép tham gia 1 bài viết. Sếp có thể xem lại bài đã nộp ở danh sách bài thi.</p>
+            </div>
+          </div>
+
           <p class="modal-desc">Vui lòng chọn hình thức nộp bài dự thi</p>
           
-          <div class="action-cards">
-            <div class="action-card" @click="goToCreatePost">
+          <div class="action-cards" :class="{ 'disabled-area': hasSubmitted }">
+            <div class="action-card" @click="!hasSubmitted && goToCreatePost()">
               <div class="icon-box">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
               </div>
@@ -27,7 +35,7 @@
               </div>
             </div>
 
-            <div class="action-card" @click="goToSelectPost">
+            <div class="action-card" @click="!hasSubmitted && goToSelectPost()">
               <div class="icon-box">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
               </div>
@@ -71,7 +79,7 @@
 
         <div v-if="step === 2" class="modal-footer">
           <button class="btn-cancel" @click="step = 1">Quay lại</button>
-          <button class="btn-submit" :disabled="!selectedPostId || isSubmitting" @click="confirmSubmit">
+          <button class="btn-submit" :disabled="!selectedPostId || isSubmitting || hasSubmitted" @click="confirmSubmit">
             {{ isSubmitting ? 'Đang gửi...' : 'Xác nhận Nộp Bài' }}
           </button>
         </div>
@@ -90,7 +98,8 @@ import { toast } from '@/composables/useToast'
 
 const props = defineProps({
   isOpen: Boolean,
-  eventId: [String, Number]
+  eventId: [String, Number],
+  hasSubmitted: Boolean // 🔥 NHẬN THÔNG TIN TỪ CHA
 })
 
 const emit = defineEmits(['close', 'submit-success'])
@@ -125,7 +134,14 @@ const goToSelectPost = async () => {
   try {
     const uid = authStore.user?.accountID || authStore.user?.id
     const res = await api.get(`/api/posts/account/${uid}`)
-    myPosts.value = res.data
+    
+    console.log("Dữ liệu kho bài viết của tôi:", res.data);
+
+    myPosts.value = res.data.filter(p => {
+      const active = (p.isActive == 1 || p.isActive === true);
+      const approved = (p.isApproved != -1); 
+      return active && approved;
+    })
   } catch (e) {
     toast.error('Lỗi tải danh sách công thức của sếp')
   } finally {
@@ -133,12 +149,10 @@ const goToSelectPost = async () => {
   }
 }
 
-// 🔥 ĐÃ FIX HÀM SUBMIT TẠI ĐÂY
 const confirmSubmit = async () => {
-  if (!selectedPostId.value) return;
+  if (!selectedPostId.value || props.hasSubmitted) return; // 🔥 CHẶN NẾU ĐÃ NỘP
   isSubmitting.value = true;
   try {
-    // Ép kiểu sang số và gửi đúng tên key mà Java mong đợi
     const payload = {
       eventID: Number(props.eventId),
       postID: Number(selectedPostId.value)
@@ -150,6 +164,7 @@ const confirmSubmit = async () => {
     emit('submit-success');
     closeModal();
   } catch (e) {
+    // 🔥 HIỂN THỊ LỖI CHI TIẾT TỪ BACKEND TRẢ VỀ (VÍ DỤ: "Sếp đã nộp bài rồi")
     toast.error(e.response?.data?.message || 'Lỗi khi nộp bài!');
   } finally {
     isSubmitting.value = false;
@@ -175,6 +190,13 @@ const formatDate = (dateStr) => {
 
 .modal-body { padding: 24px; overflow-y: auto; background: #FFFFFF; }
 .modal-desc { margin: 0 0 20px 0; color: #6B7280; font-size: 0.95rem; }
+
+/* 🔥 STYLE CẢNH BÁO MỚI */
+.already-submitted-alert { display: flex; gap: 16px; background: #FFF7ED; border: 1px solid #FED7AA; padding: 16px; border-radius: 12px; margin-bottom: 24px; }
+.alert-icon { font-size: 1.5rem; }
+.alert-content h4 { margin: 0 0 4px 0; color: #9A3412; font-size: 0.95rem; font-weight: 700; }
+.alert-content p { margin: 0; color: #C2410C; font-size: 0.85rem; line-height: 1.4; }
+.disabled-area { opacity: 0.5; cursor: not-allowed !important; pointer-events: none; }
 
 /* Action Cards - Monochrome Style */
 .action-cards { display: flex; flex-direction: column; gap: 12px; }

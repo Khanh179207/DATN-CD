@@ -7,24 +7,17 @@ import org.springframework.transaction.annotation.Transactional;
 import poly.edu.dao.EventDAO;
 import poly.edu.dao.EventPostsDAO;
 import poly.edu.dao.AccountDAO;
+import poly.edu.dao.SubscriptionDAO;
 import poly.edu.dto.RewardedUserDTO;
 import poly.edu.entity.Event;
 import poly.edu.entity.EventPosts;
 import poly.edu.entity.Account;
+import poly.edu.entity.Subscription;
 import poly.edu.service.EventRewardService;
-
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * Service implementation for handling event rewards
- * Uses event.winner field as reward flag (NULL = not rewarded, non-NULL = already rewarded)
- * Rewards top 3 users when an event ends with points:
- * - Rank 1: +3 points
- * - Rank 2: +2 points
- * - Rank 3: +1 point
- */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -33,23 +26,10 @@ public class EventRewardServiceImpl implements EventRewardService {
     private final EventDAO eventDAO;
     private final EventPostsDAO eventPostsDAO;
     private final AccountDAO accountDAO;
+    private final SubscriptionDAO subscriptionDAO;
 
-    private static final int RANK_1_POINTS = 3;
-    private static final int RANK_2_POINTS = 2;
-    private static final int RANK_3_POINTS = 1;
     private static final int MAX_REWARD_RANKS = 3;
 
-    /**
-     * Rewards top 3 users for a completed event
-     * Transaction ensures atomicity - all or nothing
-     * Only executes once per event (winner flag prevents duplicates)
-     * Avoids duplicate rewards if one user has multiple posts (takes best post only)
-     *
-     * @param eventId the ID of the event to reward for
-     * @return list of rewarded users with their reward details
-     * @throws IllegalArgumentException if event not found
-     * @throws IllegalStateException if event has already been rewarded or not ended
-     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public List<RewardedUserDTO> rewardTopUsersForEvent(Integer eventId) {
@@ -62,164 +42,241 @@ public class EventRewardServiceImpl implements EventRewardService {
                     return new IllegalArgumentException("Event not found with ID: " + eventId);
                 });
 
-        // 2. Check if event has already been rewarded (winner != null means rewarded)
+        // 2. Check if already rewarded
         if (event.getWinner() != null) {
-            log.warn("⚠️ Event ID: {} has already been rewarded (winner: {})", eventId, event.getWinner());
+            log.warn("⚠️ Event ID: {} has already been rewarded", eventId);
             throw new IllegalStateException("Event has already been rewarded");
         }
 
-        // 3. Check if event has ended (check voteEndAt first, then endAt)
+        // 3. Check if event has ended
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime endTime = event.getVoteEndAt() != null ? event.getVoteEndAt() : event.getEndAt();
 
         if (endTime == null || now.isBefore(endTime)) {
-            log.warn("⏰ Event ID: {} has not ended yet. End time: {}, Current time: {}", eventId, endTime, now);
-            throw new IllegalStateException("Event has not ended yet. End time: " + endTime);
+            log.warn("⏰ Event ID: {} has not ended yet", eventId);
+            throw new IllegalStateException("Event has not ended yet");
         }
 
         log.info("✅ Event eligibility check passed");
 
-        // 4. Get all event posts sorted by voteCount (descending)
+        // 4. Get all event posts
         List<EventPosts> eventPosts = eventPostsDAO.findByEvent_EventID(eventId);
-        log.info("📊 Found {} event posts for event ID: {}", eventPosts.size(), eventId);
+        log.info("📊 Found {} event posts", eventPosts.size());
 
         if (eventPosts.isEmpty()) {
-            log.info("📭 No posts found for event ID: {}. Marking event as rewarded with no recipients.", eventId);
-            event.setWinner(0); // Use 0 to mark as rewarded but no winner
+            log.info("📭 No posts found for event");
+            event.setWinner(0);
             eventDAO.save(event);
             return Collections.emptyList();
         }
 
-        // 5. Group by account and take the best post (highest voteCount) for each account
-        // This prevents the same user from being rewarded multiple times
+        // 5. Group by account, take best post per user
         Map<Integer, EventPosts> bestPostByAccount = eventPosts.stream()
                 .collect(Collectors.toMap(
                         ep -> ep.getPost().getAccount().getAccountID(),
                         ep -> ep,
                         (existing, newer) -> {
-                            // Keep the post with higher voteCount
                             int existingVotes = existing.getVoteCount() != null ? existing.getVoteCount() : 0;
                             int newerVotes = newer.getVoteCount() != null ? newer.getVoteCount() : 0;
                             return newerVotes > existingVotes ? newer : existing;
-                        }
-                ));
+                        }));
 
-        log.info("👥 Unique participants after deduplication: {}", bestPostByAccount.size());
-
-        // 6. Sort by voteCount descending and take top 3
+        // 6. Sort and get top 3
         List<EventPosts> topPosts = bestPostByAccount.values().stream()
-                .sorted((ep1, ep2) -> {
-                    int votes1 = ep1.getVoteCount() != null ? ep1.getVoteCount() : 0;
-                    int votes2 = ep2.getVoteCount() != null ? ep2.getVoteCount() : 0;
-                    return Integer.compare(votes2, votes1); // Descending
-                })
+                .sorted((ep1, ep2) -> Integer.compare(
+                        ep2.getVoteCount() != null ? ep2.getVoteCount() : 0,
+                        ep1.getVoteCount() != null ? ep1.getVoteCount() : 0))
                 .limit(MAX_REWARD_RANKS)
                 .collect(Collectors.toList());
 
-        log.info("🏆 Top {} posts selected for reward", topPosts.size());
+        log.info("🏆 Top {} posts selected", topPosts.size());
 
-        // 7. Reward points and track rewarded users
+        // 7. Parse reward config
+        RewardConfig rewardConfig = parseRewardConfig(event.getReward());
+        log.info("💰 Reward type: {}", rewardConfig.type);
+
+        // 8. Apply rewards
         List<RewardedUserDTO> rewardedUsers = new ArrayList<>();
         List<Account> accountsToUpdate = new ArrayList<>();
+        List<Subscription> subscriptionsToCreate = new ArrayList<>();
         Integer topWinnerAccountID = null;
 
         for (int rank = 0; rank < topPosts.size(); rank++) {
             EventPosts topPost = topPosts.get(rank);
             Account account = topPost.getPost().getAccount();
-            int rewardRank = rank + 1; // 1-based rank
-            int pointsToAdd = getPointsForRank(rewardRank);
+            int rewardRank = rank + 1;
 
-            // Store top winner's account ID
             if (rank == 0) {
                 topWinnerAccountID = account.getAccountID();
             }
 
-            // Update account points
-            Integer currentPoints = account.getPoint() != null ? account.getPoint() : 0;
-            account.setPoint(currentPoints + pointsToAdd);
+            // Apply reward based on type
+            if ("PREMIUM".equals(rewardConfig.type) || "PREMIUM_1M".equals(rewardConfig.type)
+                    || "PREMIUM_1Y".equals(rewardConfig.type)) {
+                int premiumDays = rewardConfig.getPremiumDaysForRank(rewardRank);
+                if (premiumDays > 0) {
+                    // Create subscription record
+                    LocalDateTime startDate = LocalDateTime.now();
+                    LocalDateTime endDate = startDate.plusDays(premiumDays);
+
+                    Subscription subscription = Subscription.builder()
+                            .account(account)
+                            .planType(1) // Premium plan
+                            .startAt(startDate)
+                            .endAt(endDate)
+                            .isActive(1)
+                            .build();
+
+                    subscriptionsToCreate.add(subscription);
+                    account.setIsPremium(1);
+
+                    log.info("🎁 Rank #{}: Premium reward {} days for account {}",
+                            rewardRank, premiumDays, account.getAccountID());
+                }
+            } else if ("POINTS".equals(rewardConfig.type)) {
+                int points = rewardConfig.getPointsForRank(rewardRank);
+                if (points > 0) {
+                    Integer currentPoints = account.getPoint() != null ? account.getPoint() : 0;
+                    account.setPoint(currentPoints + points);
+
+                    log.info("🎁 Rank #{}: Points reward {} for account {}",
+                            rewardRank, points, account.getAccountID());
+                }
+            }
+
             accountsToUpdate.add(account);
 
-            log.info("🎁 Rewarding account ID: {} ({}) with {} points (Rank: #{})",
-                    account.getAccountID(), account.getUsername(), pointsToAdd, rewardRank);
-
-            // Create reward DTO
-            RewardedUserDTO rewardedUser = RewardedUserDTO.builder()
+            // Create DTO
+            RewardedUserDTO dto = RewardedUserDTO.builder()
                     .accountID(account.getAccountID())
                     .username(account.getUsername())
                     .avatar(account.getAvatar())
                     .rank(rewardRank)
-                    .pointsRewarded(pointsToAdd)
+                    .pointsRewarded("PREMIUM".equals(rewardConfig.type) || "PREMIUM_1M".equals(rewardConfig.type)
+                            || "PREMIUM_1Y".equals(rewardConfig.type) ? rewardConfig.getPremiumDaysForRank(rewardRank)
+                                    : rewardConfig.getPointsForRank(rewardRank))
                     .voteCount(topPost.getVoteCount() != null ? topPost.getVoteCount() : 0)
                     .postID(topPost.getPost().getPostID())
                     .build();
 
-            rewardedUsers.add(rewardedUser);
+            rewardedUsers.add(dto);
         }
 
-        // 8. Save updated accounts
+        // 9. Save all changes
         accountDAO.saveAll(accountsToUpdate);
-        log.info("💾 Updated {} accounts with reward points", accountsToUpdate.size());
+        subscriptionDAO.saveAll(subscriptionsToCreate);
 
-        // 9. Mark event as rewarded by setting winner to top 1 account ID
         if (topWinnerAccountID != null) {
             event.setWinner(topWinnerAccountID);
-            log.info("👑 Set event winner to account ID: {}", topWinnerAccountID);
         }
-        // event.setUpdatedAt(LocalDateTime.now());
         eventDAO.save(event);
 
-        log.info("✨ Event ID: {} has been successfully rewarded. Rewarded {} users", eventId, rewardedUsers.size());
+        log.info("✨ Event ID: {} rewarded {} users", eventId, rewardedUsers.size());
         return rewardedUsers;
     }
 
-    /**
-     * Check if an event is eligible for rewards
-     *
-     * @param eventId the ID of the event
-     * @return true if event can be rewarded (voteEndAt passed and winner is NULL)
-     */
     @Override
     public boolean isEventEligibleForReward(Integer eventId) {
         Optional<Event> eventOpt = eventDAO.findById(eventId);
 
         if (eventOpt.isEmpty()) {
-            log.debug("❌ Event not found with ID: {}", eventId);
             return false;
         }
 
         Event event = eventOpt.get();
 
-        // Check if already rewarded (winner != null)
         if (event.getWinner() != null) {
-            log.debug("⚠️ Event ID: {} already rewarded (winner: {})", eventId, event.getWinner());
             return false;
         }
 
-        // Check if event has ended
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime endTime = event.getVoteEndAt() != null ? event.getVoteEndAt() : event.getEndAt();
 
         if (endTime == null || now.isBefore(endTime)) {
-            log.debug("⏰ Event ID: {} has not ended yet. End time: {}", eventId, endTime);
             return false;
         }
 
         return true;
     }
 
-    /**
-     * Get reward points for a specific rank
-     *
-     * @param rank 1, 2, or 3
-     * @return points to reward
-     * @throws IllegalArgumentException if rank is invalid
-     */
-    private int getPointsForRank(int rank) {
-        return switch (rank) {
-            case 1 -> RANK_1_POINTS;
-            case 2 -> RANK_2_POINTS;
-            case 3 -> RANK_3_POINTS;
-            default -> throw new IllegalArgumentException("Invalid rank: " + rank);
-        };
+    private RewardConfig parseRewardConfig(String reward) {
+        if (reward == null || reward.trim().isEmpty()) {
+            return new RewardConfig("NONE", 0, 0, 0, 0, 0, 0);
+        }
+
+        String[] parts = reward.split("\\|");
+        String type = parts[0];
+
+        // 1. Xử lý giải PREMIUM (Chỉ có gói cố định, không cần tham số top1, top2, top3)
+        if ("PREMIUM_1M".equals(type) || "PREMIUM_1Y".equals(type)) {
+            return new RewardConfig(type, 0, 0, 0, 0, 0, 0);
+        }
+
+        // 2. Xử lý giải POINTS (Bắt buộc phải có format: POINTS|top1|top2|top3)
+        if (parts.length < 4) {
+            log.error("❌ Sai format phần thưởng (cần 4 phần): {}", reward);
+            return new RewardConfig("NONE", 0, 0, 0, 0, 0, 0);
+        }
+
+        try {
+            int val1 = Integer.parseInt(parts[1]);
+            int val2 = Integer.parseInt(parts[2]);
+            int val3 = Integer.parseInt(parts[3]);
+            return new RewardConfig(type, val1, val2, val3, 0, 0, 0);
+        } catch (NumberFormatException e) {
+            log.error("❌ Lỗi parse số liệu phần thưởng: {}", reward);
+            return new RewardConfig("NONE", 0, 0, 0, 0, 0, 0);
+        }
+    }
+
+    // Inner class to hold reward configuration
+    private static class RewardConfig {
+        String type;
+        int top1Value;
+        int top2Value;
+        int top3Value;
+
+        RewardConfig(String type, int top1, int top2, int top3, int dummy1, int dummy2, int dummy3) {
+            this.type = type;
+            this.top1Value = top1;
+            this.top2Value = top2;
+            this.top3Value = top3;
+        }
+
+        int getPremiumDaysForRank(int rank) {
+            // Cả 3 Top đều nhận 30 ngày
+            if ("PREMIUM_1M".equals(type)) {
+                return 30;
+            }
+            // Cả 3 Top đều nhận 365 ngày
+            if ("PREMIUM_1Y".equals(type)) {
+                return 365;
+            }
+
+            // (Phòng hờ dữ liệu cũ trong DB đang lưu chữ "PREMIUM|30|15|7")
+            if ("PREMIUM".equals(type)) {
+                return switch (rank) {
+                    case 1 -> top1Value;
+                    case 2 -> top2Value;
+                    case 3 -> top3Value;
+                    default -> 0;
+                };
+            }
+            return 0;
+        }
+
+        int getPointsForRank(int rank) {
+            // Tùy theo top mà lấy Point tương ứng
+            if ("POINTS".equals(type)) {
+                return switch (rank) {
+                    case 1 -> top1Value;
+                    case 2 -> top2Value;
+                    case 3 -> top3Value;
+                    default -> 0;
+                };
+            }
+            return 0;
+        }
     }
 }
+
