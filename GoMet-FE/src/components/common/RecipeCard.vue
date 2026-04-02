@@ -286,12 +286,18 @@ const openLikesModal = async () => {
   }
 }
 
+// 🔥 ĐÃ FIX LẠI CHỖ NÀY: Cấu trúc truyền Event chuẩn xác
 const handleSaveToPlan = () => {
   if (!authStore.isAuthenticated) {
     window.dispatchEvent(new CustomEvent('ui:open-login'))
     return
   }
-  emit('save-to-plan', props.post);
+  
+  emit('save-to-plan', props.post); 
+  // Chú ý: Bọc props.post vào trong object { post: ... } để App.vue lấy đúng e.detail.post
+  window.dispatchEvent(new CustomEvent('ui:open-mealplan', { 
+    detail: { post: props.post } 
+  }));
 };
 
 const toggleSave = async () => {
@@ -304,7 +310,6 @@ const toggleSave = async () => {
   const uid = authStore.user?.accountID || authStore.user?.id;
   const pid = props.post.id;
 
-  // 🔥 1. ĐỊNH DANH ĐẠI GIA: Kiểm tra xem user có phải Premium hoặc Admin không
   const isPremiumUser = authStore.user?.isPremium || authStore.user?.role === 'PREMIUM' || authStore.user?.IsPremium;
   const isAdmin = authStore.user?.isAdmin || authStore.user?.role === 'ADMIN' || authStore.user?.role === 'admin';
   const hasUnlimitedSave = isPremiumUser || isAdmin;
@@ -312,29 +317,23 @@ const toggleSave = async () => {
   isSaving.value = true;
   try {
     if (isSaved.value) {
-      // 🟢 XÓA KHỎI BỘ SƯU TẬP (Ai cũng xóa được)
       await removeFavorite(uid, pid);
       isSaved.value = false;
       toast.success("Đã bỏ lưu công thức!");
       emit('unsaved', pid); 
       window.dispatchEvent(new CustomEvent('sync-favorite', { detail: { id: pid, status: false } }));
     } else {
-      // 🔴 THÊM VÀO BỘ SƯU TẬP
-      
-      // 2. NẾU LÀ USER THƯỜNG -> Mới cần gọi API check số lượng
       if (!hasUnlimitedSave) {
         const currentFavorites = await getFavorites(uid);
         
         if (currentFavorites && currentFavorites.length >= 5) {
           toast.warn("Bộ sưu tập đã đầy! Nâng cấp Premium để lưu không giới hạn sếp nhé.");
-          // Bật luôn popup chèo kéo mua Premium
           window.dispatchEvent(new CustomEvent('ui:open-premium'));
           isSaving.value = false;
           return; 
         }
       }
 
-      // 3. Nếu là VIP/Admin HOẶC user thường chưa đủ 5 bài -> Cho lưu thoải mái
       await addFavorite(uid, pid);
       isSaved.value = true;
       toast.success("Đã lưu công thức thành công!");
