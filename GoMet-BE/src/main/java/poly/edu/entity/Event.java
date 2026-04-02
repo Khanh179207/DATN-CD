@@ -46,7 +46,7 @@ public class Event {
     @Column(name = "reward", length = 255, columnDefinition = "NVARCHAR(255)")
     private String reward;
 
-    @Column(name = "MaxVotes")
+    @Column(name = "MaxVotes") // 🔥 Sếp sửa đúng tên cột có từ đầu của sếp ở đây
     private Integer maxVotes;
 
     @Column(name = "IsActive")

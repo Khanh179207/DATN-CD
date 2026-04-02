@@ -24,7 +24,7 @@
         </button>
 
         <button class="btn-action btn-compare" :class="{ active: compareStore.isSelected(post?.id) }" 
-                @click.stop="compareStore.toggleItem(post)" title="Compare">
+                @click.stop="handleCompareClick" title="So sánh món ăn (Chỉ dành cho Premium)">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M16 3h5v5"></path><path d="M4 20L21 3"></path><path d="M21 16v5h-5"></path><path d="M15 15l5 5"></path><path d="M4 4l5 5"></path>
           </svg>
@@ -137,7 +137,7 @@ import { ref, onMounted, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCompareStore } from '@/stores/compare'
 import { useAuthStore } from '@/stores/auth'
-import { addFavorite, removeFavorite, checkFavorite } from '@/services/socialService'
+import { addFavorite, removeFavorite, checkFavorite, getFavorites } from '@/services/socialService'
 import { togglePostLike, checkPostLiked } from '@/services/likeService'
 import api from '@/services/api'
 import { toast } from '@/composables/useToast'
@@ -226,6 +226,12 @@ onMounted(async () => {
     isSaved.value = savedStatus
     isLiked.value = likedStatus
   } catch (err) { console.error(err) }
+  
+  window.addEventListener('sync-favorite', (e) => {
+    if (e.detail.id === props.post?.id) {
+      isSaved.value = e.detail.status;
+    }
+  });
 })
 
 // --- HELPERS ---
@@ -298,17 +304,41 @@ const toggleSave = async () => {
   const uid = authStore.user?.accountID || authStore.user?.id;
   const pid = props.post.id;
 
+  // 🔥 1. ĐỊNH DANH ĐẠI GIA: Kiểm tra xem user có phải Premium hoặc Admin không
+  const isPremiumUser = authStore.user?.isPremium || authStore.user?.role === 'PREMIUM' || authStore.user?.IsPremium;
+  const isAdmin = authStore.user?.isAdmin || authStore.user?.role === 'ADMIN' || authStore.user?.role === 'admin';
+  const hasUnlimitedSave = isPremiumUser || isAdmin;
+
   isSaving.value = true;
   try {
     if (isSaved.value) {
+      // 🟢 XÓA KHỎI BỘ SƯU TẬP (Ai cũng xóa được)
       await removeFavorite(uid, pid);
       isSaved.value = false;
       toast.success("Đã bỏ lưu công thức!");
       emit('unsaved', pid); 
+      window.dispatchEvent(new CustomEvent('sync-favorite', { detail: { id: pid, status: false } }));
     } else {
+      // 🔴 THÊM VÀO BỘ SƯU TẬP
+      
+      // 2. NẾU LÀ USER THƯỜNG -> Mới cần gọi API check số lượng
+      if (!hasUnlimitedSave) {
+        const currentFavorites = await getFavorites(uid);
+        
+        if (currentFavorites && currentFavorites.length >= 5) {
+          toast.warn("Bộ sưu tập đã đầy! Nâng cấp Premium để lưu không giới hạn sếp nhé.");
+          // Bật luôn popup chèo kéo mua Premium
+          window.dispatchEvent(new CustomEvent('ui:open-premium'));
+          isSaving.value = false;
+          return; 
+        }
+      }
+
+      // 3. Nếu là VIP/Admin HOẶC user thường chưa đủ 5 bài -> Cho lưu thoải mái
       await addFavorite(uid, pid);
       isSaved.value = true;
       toast.success("Đã lưu công thức thành công!");
+      window.dispatchEvent(new CustomEvent('sync-favorite', { detail: { id: pid, status: true } }));
     }
   } catch (error) {
     console.error("Save error:", error);
@@ -316,6 +346,20 @@ const toggleSave = async () => {
   } finally {
     isSaving.value = false;
   }
+};
+
+const handleCompareClick = () => {
+  if (!authStore.isAuthenticated) {
+    return toast.warn("Vui lòng đăng nhập để sử dụng tính năng So sánh Sếp nhé!");
+  }
+
+  const isPremiumUser = authStore.user?.isPremium || authStore.user?.role === 'PREMIUM' || authStore.user?.IsPremium;
+  if (!isPremiumUser) {
+    toast.warn('Tính năng So sánh Công thức đặc quyền chỉ dành cho tài khoản Premium!');
+    window.dispatchEvent(new CustomEvent('ui:open-premium'));
+    return;
+  }
+  compareStore.toggleItem(props.post);
 };
 </script>
 

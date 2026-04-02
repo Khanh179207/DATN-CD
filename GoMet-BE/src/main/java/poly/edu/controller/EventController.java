@@ -67,6 +67,8 @@ public class EventController {
             map.put("postTitle", ep.getPost().getTitle());
             map.put("postImage", ep.getPost().getMedia());
             map.put("voteCount", ep.getVoteCount() != null ? ep.getVoteCount() : 0);
+            map.put("isActive", ep.getPost().getIsActive());
+            map.put("isApproved", ep.getPost().getIsApproved());
 
             // 1. Lấy thông tin tác giả từ Account
             if (ep.getPost().getAccount() != null) {
@@ -93,7 +95,8 @@ public class EventController {
 
     // 🟡 USER ONLY: Muốn nộp bài dự thi thì bắt buộc phải đăng nhập!
     @PreAuthorize("isAuthenticated()") // 🔥 CHỐT CHẶN VÀNG NẰM Ở ĐÂY
-    // ─── API NỘP BÀI: ĐÃ THÊM LOGIC CHECK THỜI GIAN ───────────────────────
+    // ... các import giữ nguyên ...
+
     @PostMapping("/submit")
     public ResponseEntity<?> submitToEvent(@RequestBody Map<String, Object> payload) {
         try {
@@ -111,7 +114,7 @@ public class EventController {
             Event event = eventDAO.findById(eventId)
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy sự kiện"));
 
-            // 🔥 THIẾT QUÂN LUẬT: Chỉ cho nộp bài trong khung giờ StartAt -> EndAt
+            // Logic check thời gian (Giữ nguyên)
             LocalDateTime now = LocalDateTime.now();
             if (now.isBefore(event.getStartAt())) {
                 return ResponseEntity.badRequest().body(Map.of("message", "Sự kiện chưa mở cổng nhận bài dự thi!"));
@@ -120,20 +123,29 @@ public class EventController {
                 return ResponseEntity.badRequest().body(Map.of("message", "Sự kiện đã kết thúc nhận bài dự thi!"));
             }
 
-            // 2. Tìm bài viết
+            // 2. Tìm bài viết sếp định nộp
             Post post = postDAO.findById(postId)
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy bài viết"));
 
-            // 3. Kiểm tra xem bài này đã nộp vào sự kiện này chưa (Tránh nộp trùng)
-            if (eventPostsDAO.existsByEvent_EventIDAndPost_PostID(eventId, postId)) {
-                return ResponseEntity.badRequest().body(Map.of("message", "Bài viết này đã nộp dự thi rồi sếp!"));
+            // 🔥 LOGIC MỚI: CHẶN 1 NGƯỜI - 1 BÀI
+            // Lấy ID người nộp từ bài viết
+            Integer authorId = post.getAccount().getAccountID();
+
+            // Check xem trong sự kiện này, Account này đã có bài nào chưa
+            if (eventPostsDAO.existsByEventIdAndAuthorId(eventId, authorId)) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "message", "Sếp đã nộp bài dự thi cho sự kiện này rồi! Mỗi người chỉ được tham gia 1 bài thôi nhé."
+                ));
             }
+
+            // Check phụ: Bài viết này có đang nộp cho sự kiện khác không (nếu sếp muốn chặn luôn)
+            // Hiện tại chỉ chặn theo Account trong 1 Event này thôi.
 
             // 4. Lưu vào bảng trung gian EventPosts
             EventPosts eventPost = new EventPosts();
             eventPost.setEvent(event);
             eventPost.setPost(post);
-            eventPost.setVoteCount(0); // Khởi tạo 0 vote cho bài mới
+            eventPost.setVoteCount(0);
             eventPost.setCreatedAt(LocalDateTime.now());
 
             eventPostsDAO.save(eventPost);
@@ -143,5 +155,4 @@ public class EventController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("message", "Lỗi hệ thống: " + e.getMessage()));
         }
-    }
-}
+    }}

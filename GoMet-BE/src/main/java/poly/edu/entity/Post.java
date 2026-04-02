@@ -55,6 +55,13 @@ public class Post {
     @Column(name = "Views", nullable = false)
     private Integer views;
 
+    @Column(name = "LikeCount")
+    @Builder.Default // 🔥 Thêm cái này để hết báo Warning lúc Build Maven
+    private Integer likeCount = 0;
+
+    @Column(name = "TotalPts")
+    private Integer totalPts = 0;
+
     @Column(name = "isActive", nullable = false)
     private Integer isActive;
 
@@ -65,9 +72,6 @@ public class Post {
     @Column(name = "CreatedAt", nullable = false)
     private java.time.LocalDateTime createdAt; // Đổi từ LocalDate sang LocalDateTime
 
-    @Column(name = "LikeCount")
-    @Builder.Default // 🔥 Thêm cái này để hết báo Warning lúc Build Maven
-    private Integer likeCount = 0;
 
     // Relationships
     @OneToMany(mappedBy = "post")

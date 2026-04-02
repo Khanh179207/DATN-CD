@@ -19,8 +19,8 @@
 
           <div class="event-meta">
             <span class="meta-pill">📅 {{ eventData.date }}</span>
-            <span class="meta-pill">👥 {{ eventData.participants }} bài dự thi</span>
-            <span class="meta-pill">🗳️ {{ totalEventVotes }} lượt bầu chọn</span>
+            <span class="meta-pill">👥 {{ totalParticipants }} bài dự thi</span>
+            <span class="meta-pill">️ {{ totalEventVotes }} lượt bầu chọn</span>
           </div>
 
           <div class="hero-actions">
@@ -30,7 +30,7 @@
                 <polyline points="17 8 12 3 7 8"></polyline>
                 <line x1="12" y1="3" x2="12" y2="15"></line>
               </svg>
-              <span>{{ hasSubmitted ? 'Gửi thêm bài dự thi' : 'Nộp bài dự thi ngay' }}</span>
+              <span>{{ hasSubmitted ? 'Sếp đã tham gia sự kiện' : 'Nộp bài dự thi ngay' }}</span>
             </button>
             <button v-else class="btn-disabled" disabled>
               {{ eventData.category === 'upcoming' ? 'Sự kiện chưa mở cổng nộp bài' : 'Sự kiện đã kết thúc' }}
@@ -54,31 +54,29 @@
           <div v-if="currentTab === 'info'" class="info-layout">
             <div class="info-main">
 
+              <div class="card-box shadow-sm">
+                <h3>📖 Giới thiệu</h3>
+                <p class="desc-text">{{ eventData.description }}</p>
+              </div>
+
               <div class="card-box prizes-section shadow-sm">
                 <h3>🏆 Cơ cấu giải thưởng</h3>
-
-                <div class="real-reward-display">
-                  <div class="reward-card-inner">
-                    <div class="reward-icon-main">🎁</div>
-                    <div class="reward-info">
-                      <span class="reward-label">Phần thưởng cho người thắng cuộc:</span>
-                      <p class="reward-text-real">{{ eventData.reward }}</p>
-                    </div>
-                  </div>
-                </div>
 
                 <div class="prizes-grid mt-6">
                   <div class="prize-card gold small-card">
                     <div class="prize-icon">🥇</div>
                     <p>Hạng Nhất</p>
+                    <div class="reward-val" :class="getRewardClass(parsedRewards[0].type)">{{ parsedRewards[0].value }}</div>
                   </div>
                   <div class="prize-card silver small-card">
                     <div class="prize-icon">🥈</div>
                     <p>Hạng Nhì</p>
+                    <div class="reward-val" :class="getRewardClass(parsedRewards[1].type)">{{ parsedRewards[1].value }}</div>
                   </div>
                   <div class="prize-card bronze small-card">
                     <div class="prize-icon">🥉</div>
                     <p>Hạng Ba</p>
+                    <div class="reward-val" :class="getRewardClass(parsedRewards[2].type)">{{ parsedRewards[2].value }}</div>
                   </div>
                 </div>
               </div>
@@ -103,9 +101,22 @@
                     {{ votingStatus.message }}
                   </div>
                 </div>
+                
+                <div class="voting-progress-block" v-if="votingStatus.type === 'active'">
+                  <div class="progress-header">
+                    <span class="progress-text">Sếp đã bầu chọn:</span>
+                    <span class="progress-nums"><strong>{{ votedCount }}</strong> / {{ eventData.maxVotes }} phiếu</span>
+                  </div>
+                  <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" :class="{ 'is-full': isVoteLimitReached }" :style="{ width: votePercentage + '%' }"></div>
+                  </div>
+                  <div v-if="isVoteLimitReached" class="progress-full-msg">
+                    <i class="fas fa-check-circle"></i> Đã dùng hết quyền bầu chọn
+                  </div>
+                </div>
 
                 <p class="vote-note" v-if="votingStatus.type === 'active'">
-                  * Sếp có tối đa <strong>3 phiếu bầu</strong> cho mỗi sự kiện. Hãy chọn kỹ nhé!
+                  * Sếp có tối đa <strong>{{ eventData.maxVotes }} phiếu bầu</strong> cho mỗi sự kiện. Hãy chọn kỹ nhé!
                 </p>
               </div>
             </div>
@@ -116,16 +127,29 @@
             <div v-if="topEntries.length > 0" class="ranking-section">
               <h3 class="section-title">🏆 Bảng xếp hạng tạm thời</h3>
               <div class="entries-grid">
-                <ContestEntryCard v-for="(entry, index) in topEntries" :key="entry.eventPostID" :post="entry"
-                  :rank="index + 1" :can-vote="isInVotingPeriod" />
+<ContestEntryCard 
+  v-for="(entry, index) in topEntries" 
+  :key="'top-' + entry.eventPostID" 
+  :post="entry"
+  :rank="index + 1" 
+  :can-vote="isInVotingPeriod"
+  :limit-reached="isVoteLimitReached"
+  @vote-toggled="entry.voted = $event" 
+/>
               </div>
             </div>
 
             <div class="all-entries-section mt-12">
-              <h3 class="section-title">🎨 Tác phẩm tham gia ({{ entries.length }})</h3>
-              <div v-if="entries.length > 0" class="entries-grid">
-                <ContestEntryCard v-for="entry in entries" :key="entry.eventPostID" :post="entry"
-                  :can-vote="isInVotingPeriod" />
+              <h3 class="section-title">🎨 Tác phẩm tham gia ({{ totalParticipants }})</h3>
+              <div v-if="approvedList.length > 0" class="entries-grid">
+                <ContestEntryCard 
+                  v-for="entry in approvedList" 
+                  :key="entry.eventPostID" 
+                  :post="entry"
+                  :can-vote="isInVotingPeriod"
+                  :limit-reached="isVoteLimitReached"
+                  @vote-toggled="entry.voted = $event" 
+                />
               </div>
 
               <div v-else class="empty-entries">
@@ -138,8 +162,13 @@
         </transition>
       </div>
 
-      <SubmitEntryModal :is-open="isModalOpen" :event-id="eventData.id" @close="isModalOpen = false"
-        @submit-success="onEntrySubmitted" />
+      <SubmitEntryModal 
+  :is-open="isModalOpen" 
+  :event-id="eventData.id" 
+  :has-submitted="hasSubmitted" 
+  @close="isModalOpen = false"
+  @submit-success="onEntrySubmitted" 
+/>
 
     </template>
   </div>
@@ -176,14 +205,76 @@ const tabs = computed(() => [
 ])
 
 // --- LOGIC RANKING ---
+const approvedList = computed(() => {
+  return entries.value.filter(post => 
+    (post.isApproved == 1 || post.isApproved === true) && 
+    (post.isActive == 1 || post.isActive === true)
+  )
+})
+
+const totalParticipants = computed(() => approvedList.value.length)
+
 const topEntries = computed(() => {
   // Sắp xếp theo phiếu bầu giảm dần, lấy 3 ông cao nhất
-  return [...entries.value].sort((a, b) => b.voteCount - a.voteCount).slice(0, 3)
+  return [...approvedList.value].sort((a, b) => b.voteCount - a.voteCount).slice(0, 3)
 })
 
 const totalEventVotes = computed(() => {
-  return entries.value.reduce((sum, item) => sum + (item.voteCount || 0), 0)
+  return approvedList.value.reduce((sum, item) => sum + (item.voteCount || 0), 0)
 })
+
+// --- LOGIC PROGRESS BAR BẦU CHỌN ---
+const votedCount = computed(() => {
+  return approvedList.value.filter(post => post.voted).length
+})
+
+const votePercentage = computed(() => {
+  if (!eventData.value?.maxVotes) return 0
+  const percent = (votedCount.value / eventData.value.maxVotes) * 100
+  return Math.min(percent, 100)
+})
+
+const isVoteLimitReached = computed(() => {
+  return eventData.value && votedCount.value >= eventData.value.maxVotes
+})
+
+// --- LOGIC GIẢI THƯỞNG ---
+const parsedRewards = computed(() => {
+  const rewardStr = eventData.value?.reward
+  const defaultRewards = [
+    { type: 'empty', value: 'Đang cập nhật...' },
+    { type: 'empty', value: 'Đang cập nhật...' },
+    { type: 'empty', value: 'Đang cập nhật...' }
+  ]
+
+  if (!rewardStr) return defaultRewards
+
+  const parts = rewardStr.split('|')
+  if (parts.length < 4) {
+    return [
+      { type: 'text', value: rewardStr },
+      { type: 'text', value: rewardStr },
+      { type: 'text', value: rewardStr }
+    ]
+  }
+
+  const type = parts[0]
+  const formatValue = (val) => {
+    if (type === 'POINTS') return { type: 'points', value: `${val} Points` }
+    if (type === 'PREMIUM_1M') return { type: 'premium', value: 'Gói Premium 1 Tháng' }
+    if (type === 'PREMIUM_1Y') return { type: 'premium', value: 'Gói Premium 1 Năm' }
+    return { type: 'empty', value: 'Đang cập nhật...' }
+  }
+
+  return [formatValue(parts[1]), formatValue(parts[2]), formatValue(parts[3])]
+})
+
+const getRewardClass = (type) => {
+  if (type === 'points') return 'reward-points'
+  if (type === 'premium') return 'reward-premium'
+  if (type === 'text') return 'reward-text'
+  return 'reward-empty'
+}
 
 // --- LOGIC THỜI GIAN VOTE (VÔ CÙNG QUAN TRỌNG) ---
 const isInVotingPeriod = computed(() => {
@@ -243,6 +334,7 @@ const loadAllData = async () => {
 
       // Lấy từ SQL:
       description: data.description || 'Sự kiện này chưa có mô tả chi tiết.',
+      maxVotes: data.maxVotes || 3,
 
       // Tách chuỗi rules bằng dấu xuống dòng để hiển thị dạng list (li)
       rules: data.rules
@@ -263,7 +355,10 @@ const loadAllData = async () => {
 
 const fetchEventEntries = async (eventId) => {
   try {
-    const res = await api.get(`/api/events/${eventId}/posts`)
+    const uid = authStore.user?.accountID || authStore.user?.id;
+    const res = await api.get(`/api/events/${eventId}/posts`, {
+      params: uid ? { accountId: uid } : {}
+    })
     entries.value = res.data
 
     if (authStore.user) {
@@ -295,6 +390,23 @@ onMounted(loadAllData)
 
 <style lang="scss">
 @import './EventDetail.scss';
+
+.desc-text {
+  white-space: pre-line;
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+.reward-val {
+  margin-top: 8px;
+  font-size: 1.15rem;
+  font-weight: 900;
+  text-align: center;
+}
+.reward-points { color: #EA580C; }
+.reward-premium { color: #8B5CF6; }
+.reward-empty { color: #9CA3AF; font-size: 0.9rem; font-style: italic; font-weight: 600; }
+.reward-text { color: #111827; }
 
 .section-title {
   font-size: 1.5rem;
@@ -367,5 +479,50 @@ onMounted(loadAllData)
 
 .mb-12 {
   margin-bottom: 3rem;
+}
+
+/* --- PROGRESS BAR STYLES --- */
+.voting-progress-block {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px dashed #e2e8f0;
+}
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: #4b5563;
+  margin-bottom: 8px;
+}
+.progress-nums strong {
+  color: #111827;
+  font-weight: 800;
+}
+.progress-bar-bg {
+  width: 100%;
+  height: 8px;
+  background: #f1f5f9;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: #EA580C;
+  border-radius: 8px;
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.3s;
+}
+.progress-bar-fill.is-full {
+  background: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+}
+.progress-full-msg {
+  font-size: 0.75rem;
+  color: #10b981;
+  font-weight: 700;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 </style>

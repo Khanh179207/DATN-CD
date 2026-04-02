@@ -121,11 +121,14 @@
                 <div class="form-group">
                   <label>Số phiếu Vote/User
                     <span v-if="!isViewOnly" class="req">*</span></label>
-                  <input v-model="form.maxVotes" type="number" min="1" :disabled="isViewOnly" />
+                  <input v-model="form.maxVotes" type="number" min="1" :disabled="isViewOnly || isRulesLocked" />
+                  <small v-if="isRulesLocked" style="color: #ea580c; font-size: 0.75rem; font-style: italic; margin-top: 6px; display: block;">
+                    * Luật và thưởng đã được khóa để đảm bảo tính công bằng khi sự kiện diễn ra.
+                  </small>
                 </div>
                 <div class="form-group">
                   <label>Phần thưởng vinh danh</label>
-                  <select v-model="form.rewardType" :disabled="isViewOnly"
+                  <select v-model="form.rewardType" :disabled="isViewOnly || isRulesLocked"
                     style="width: 100%; padding: 12px 16px; border: 1px solid #dbe4ee; border-radius: 12px; font-size: 0.95rem; background: #ffffff; cursor: pointer; transition: all 0.28s ease;">
                     <option disabled value="">Chọn loại phần thưởng</option>
                     <option value="premium_1m">Premium 1 tháng (Tất cả top đều nhận)</option>
@@ -155,11 +158,11 @@
 
                     <div class="grid grid-cols-3 gap-2">
                       <input v-model="form.pointsTop1" type="number" placeholder="Top 1" min="0"
-                        :disabled="isViewOnly" />
+                        :disabled="isViewOnly || isRulesLocked" />
                       <input v-model="form.pointsTop2" type="number" placeholder="Top 2" min="0"
-                        :disabled="isViewOnly" />
+                        :disabled="isViewOnly || isRulesLocked" />
                       <input v-model="form.pointsTop3" type="number" placeholder="Top 3" min="0"
-                        :disabled="isViewOnly" />
+                        :disabled="isViewOnly || isRulesLocked" />
                     </div>
                   </div>
                 </div>
@@ -408,6 +411,32 @@ const formatForInput = (dateStr) => {
   const z = (n) => (n < 10 ? "0" : "") + n;
   return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}T${z(d.getHours())}:${z(d.getMinutes())}`;
 };
+const parseRewardForForm = (rewardStr) => {
+  const result = { rewardType: "", pointsTop1: null, pointsTop2: null, pointsTop3: null };
+  if (!rewardStr) return result;
+  
+  const parts = rewardStr.split("|");
+  const type = parts[0];
+  
+  if (type === "PREMIUM_1M") {
+    result.rewardType = "premium_1m";
+  } else if (type === "PREMIUM_1Y") {
+    result.rewardType = "premium_1y";
+  } else if (type === "POINTS") {
+    result.rewardType = "points";
+    result.pointsTop1 = Number(parts[1]) || null;
+    result.pointsTop2 = Number(parts[2]) || null;
+    result.pointsTop3 = Number(parts[3]) || null;
+  }
+  return result;
+};
+
+// --- LOGIC KHÓA LUẬT & THƯỞNG ---
+const isRulesLocked = computed(() => {
+  if (!isEditing.value) return false;
+  const status = getStatusHelper(form);
+  return status === 'active' || status === 'ended' || form.isForceEnded === 1;
+});
 
 const handleFileUpload = (event) => {
   const file = event.target.files[0];
@@ -541,6 +570,10 @@ const openEditModal = (ev) => {
   isEditing.value = true;
   isViewOnly.value = false;
   removeImage();
+  
+  // Dịch chuỗi phần thưởng từ DB ra
+  const parsedReward = parseRewardForForm(ev.reward);
+
   Object.assign(form, {
     ...ev,
     startAt: formatForInput(ev.startAt),
@@ -549,6 +582,11 @@ const openEditModal = (ev) => {
     voteEndAt: formatForInput(ev.voteEndAt),
     originalEndAt: ev.originalEndAt || ev.endAt,
     originalVoteEndAt: ev.originalVoteEndAt || ev.voteEndAt,
+    // Đổ dữ liệu vào Form
+    rewardType: parsedReward.rewardType,
+    pointsTop1: parsedReward.pointsTop1,
+    pointsTop2: parsedReward.pointsTop2,
+    pointsTop3: parsedReward.pointsTop3,
   });
   imagePreview.value = getImageUrl(ev.bannerImage);
   showModal.value = true;
@@ -558,12 +596,21 @@ const openViewModal = (ev) => {
   isEditing.value = false;
   isViewOnly.value = true;
   removeImage();
+  
+  // Dịch chuỗi phần thưởng từ DB ra
+  const parsedReward = parseRewardForForm(ev.reward);
+
   Object.assign(form, {
     ...ev,
     startAt: formatForInput(ev.startAt),
     endAt: formatForInput(ev.endAt),
     voteStartAt: formatForInput(ev.voteStartAt),
     voteEndAt: formatForInput(ev.voteEndAt),
+    // Đổ dữ liệu vào Form
+    rewardType: parsedReward.rewardType,
+    pointsTop1: parsedReward.pointsTop1,
+    pointsTop2: parsedReward.pointsTop2,
+    pointsTop3: parsedReward.pointsTop3,
   });
   imagePreview.value = getImageUrl(ev.bannerImage);
   showModal.value = true;

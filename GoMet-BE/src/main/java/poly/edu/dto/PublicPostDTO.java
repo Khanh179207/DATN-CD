@@ -16,6 +16,8 @@ public class PublicPostDTO {
     private Integer cookingTime;
     private Integer views;
     private LocalDateTime createdAt;
+    private Integer isApproved;
+    private Integer isActive;
 
     // Author
     private Integer authorID;

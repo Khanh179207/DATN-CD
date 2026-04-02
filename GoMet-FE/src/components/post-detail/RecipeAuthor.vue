@@ -56,14 +56,14 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue' // 🔥 Đã gom import lên đầu
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useChatStore } from '@/stores/chat'
 import api from '@/services/api'
 import { toast } from '@/composables/useToast'
-import { checkFollow, follow, unfollow, checkFavorite, addFavorite, removeFavorite } from '@/services/socialService'
+import { checkFollow, follow, unfollow, checkFavorite, addFavorite, removeFavorite, getFavorites } from '@/services/socialService'
 import { getUserStats } from '@/services/userService'
 
 const props = defineProps({ post: { type: Object, required: true } })
@@ -75,15 +75,13 @@ const chatStore = useChatStore()
 const isFollowing = ref(false)
 const isFavorite = ref(false)
 const authorStats = ref({ posts: 0, followers: 0, totalLikes: 0 })
-
-// Biến lưu Bio thật
+const isSaving = ref(false) 
 const realBio = ref('')
 
 const loadSocialState = async (postData) => {
   if (!postData) return
   
   realBio.value = postData.authorBio || postData.bio || ''
-
   const uid = authStore.user?.accountID || authStore.user?.id
   const authorID = postData.authorID || postData.authorId
 
@@ -101,14 +99,20 @@ const loadSocialState = async (postData) => {
     } catch { /* ignore */ }
   }
 
-  if (uid && uid !== authorID) {
+  // 🔥 ĐÃ SỬA TỪ ĐÂY: Tách riêng logic check Lưu bài và Follow
+  if (uid) {
     try {
-      const [followRes, favRes] = await Promise.allSettled([
-        checkFollow(uid, authorID), 
-        checkFavorite(uid, postData.postID || postData.id)
-      ])
-      if (followRes.status === 'fulfilled') isFollowing.value = !!followRes.value
-      if (favRes.status === 'fulfilled') isFavorite.value = !!favRes.value
+      // 1. Ai đăng nhập cũng được check xem đã Lưu bài này chưa (kể cả tác giả)
+      const isFav = await checkFavorite(uid, postData.postID || postData.id)
+      isFavorite.value = !!isFav
+
+      // 2. Chỉ check Follow nếu người đang xem KHÔNG PHẢI là tác giả
+      if (uid !== authorID) {
+        const isFoll = await checkFollow(uid, authorID)
+        isFollowing.value = !!isFoll
+      } else {
+        isFollowing.value = false // Tác giả thì không tự follow chính mình
+      }
     } catch { /* ignore */ }
   }
 }
@@ -141,7 +145,6 @@ const toggleFollow = async () => {
   if (!authStore.isAuthenticated) { toast.warn(t('toast.need_login') || 'Vui lòng đăng nhập!'); return }
   const uid = authStore.user.accountID || authStore.user.id
   const authorID = props.post?.authorID || props.post?.authorId
-
   if (!authorID || uid === authorID) return
   
   try {
@@ -157,23 +160,66 @@ const toggleFollow = async () => {
   } catch (err) { toast.error('Lỗi Follow!') }
 }
 
+// 🔥 HÀM TOGGLE FAVORITE (ĐÃ ĐÓNG NGOẶC CHUẨN)
 const toggleFavorite = async () => {
-  if (!authStore.isAuthenticated) { toast.warn(t('toast.need_login') || 'Vui lòng đăng nhập!'); return }
+  if (!authStore.isAuthenticated) { 
+    return toast.warn(t('toast.need_login') || 'Vui lòng đăng nhập để lưu bài viết!'); 
+  }
+  if (isSaving.value) return; 
+
   const uid = authStore.user.accountID || authStore.user.id
   const postID = props.post?.postID || props.post?.id
-
   if (!postID) return
-  
+
+  const isPremiumUser = authStore.user?.isPremium || authStore.user?.role === 'PREMIUM' || authStore.user?.IsPremium;
+  const isAdmin = authStore.user?.isAdmin || authStore.user?.role === 'ADMIN' || authStore.user?.role === 'admin';
+  const hasUnlimitedSave = isPremiumUser || isAdmin;
+
+  isSaving.value = true;
   try {
     if (isFavorite.value) {
       await removeFavorite(uid, postID); 
-      isFavorite.value = false
+      isFavorite.value = false;
+      toast.success("Đã bỏ lưu công thức!");
+      window.dispatchEvent(new CustomEvent('sync-favorite', { detail: { id: postID, status: false } }));
     } else {
+      if (!hasUnlimitedSave) {
+        const currentFavorites = await getFavorites(uid);
+        if (currentFavorites && currentFavorites.length >= 5) {
+          toast.warn("Bộ sưu tập đã đầy! Nâng cấp Premium để lưu không giới hạn sếp nhé.");
+          window.dispatchEvent(new CustomEvent('ui:open-premium'));
+          isSaving.value = false;
+          return; 
+        }
+      }
       await addFavorite(uid, postID); 
-      isFavorite.value = true
+      isFavorite.value = true;
+      toast.success("Đã lưu công thức thành công!");
+      window.dispatchEvent(new CustomEvent('sync-favorite', { detail: { id: postID, status: true } }));
     }
-  } catch (err) { toast.error('Lỗi yêu thích!') }
+  } catch (err) { 
+    console.error("Save error:", err);
+    toast.error('Lỗi yêu thích, vui lòng thử lại sau!') 
+  } finally {
+    isSaving.value = false;
+  }
 }
+
+// 🔥 CÁC HÀM ĐỒNG BỘ (NẰM NGOÀI TOGGLEFAVORITE)
+const handleSync = (e) => {
+  const currentPostId = props.post?.postID || props.post?.id;
+  if (e.detail.id === currentPostId) {
+    isFavorite.value = e.detail.status;
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('sync-favorite', handleSync);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('sync-favorite', handleSync);
+});
 </script>
 
 <style scoped lang="scss">

@@ -134,10 +134,24 @@ const suggestions = computed(() => {
 const highlightText = (text) => {
   const keyword = searchKeyword.value.trim()
   if (!keyword) return text
-  const regex = new RegExp(`(${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
-  return text.replace(regex, '<strong>$1</strong>')
-}
 
+  // 1. TẨY TRẦN (Escape HTML): Chặn đứng mọi loại Script độc hại
+  const escapedText = String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+
+  try {
+    // 2. BÔI ĐẬM: Tìm từ khóa (không phân biệt hoa thường) và bọc trong <strong>
+    const regex = new RegExp(`(${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
+    return escapedText.replace(regex, '<strong>$1</strong>')
+  } catch (e) {
+    // Phòng trường hợp user nhập ký tự regex lỗi
+    return escapedText
+  }
+}
 // Xử lý Actions
 const handleSearch = () => {
   const query = searchKeyword.value.trim()

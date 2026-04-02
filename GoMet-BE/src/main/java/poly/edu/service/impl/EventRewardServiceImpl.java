@@ -200,21 +200,33 @@ public class EventRewardServiceImpl implements EventRewardService {
     }
 
     private RewardConfig parseRewardConfig(String reward) {
-        if (reward == null || reward.isEmpty()) {
+        if (reward == null || reward.trim().isEmpty()) {
             return new RewardConfig("NONE", 0, 0, 0, 0, 0, 0);
         }
 
         String[] parts = reward.split("\\|");
+        String type = parts[0];
+
+        // 1. Xử lý giải PREMIUM (Chỉ có gói cố định, không cần tham số top1, top2, top3)
+        if ("PREMIUM_1M".equals(type) || "PREMIUM_1Y".equals(type)) {
+            return new RewardConfig(type, 0, 0, 0, 0, 0, 0);
+        }
+
+        // 2. Xử lý giải POINTS (Bắt buộc phải có format: POINTS|top1|top2|top3)
         if (parts.length < 4) {
+            log.error("❌ Sai format phần thưởng (cần 4 phần): {}", reward);
             return new RewardConfig("NONE", 0, 0, 0, 0, 0, 0);
         }
 
-        String type = parts[0];
-        int val1 = Integer.parseInt(parts[1]);
-        int val2 = Integer.parseInt(parts[2]);
-        int val3 = Integer.parseInt(parts[3]);
-
-        return new RewardConfig(type, val1, val2, val3, 0, 0, 0);
+        try {
+            int val1 = Integer.parseInt(parts[1]);
+            int val2 = Integer.parseInt(parts[2]);
+            int val3 = Integer.parseInt(parts[3]);
+            return new RewardConfig(type, val1, val2, val3, 0, 0, 0);
+        } catch (NumberFormatException e) {
+            log.error("❌ Lỗi parse số liệu phần thưởng: {}", reward);
+            return new RewardConfig("NONE", 0, 0, 0, 0, 0, 0);
+        }
     }
 
     // Inner class to hold reward configuration
@@ -232,30 +244,39 @@ public class EventRewardServiceImpl implements EventRewardService {
         }
 
         int getPremiumDaysForRank(int rank) {
-            // Xử lý PREMIUM_1M - cả 3 top đều nhận 30 ngày
+            // Cả 3 Top đều nhận 30 ngày
             if ("PREMIUM_1M".equals(type)) {
                 return 30;
             }
-            // Xử lý PREMIUM_1Y - cả 3 top đều nhận 365 ngày
+            // Cả 3 Top đều nhận 365 ngày
             if ("PREMIUM_1Y".equals(type)) {
                 return 365;
             }
-            // Xử lý PREMIUM (format cũ: PREMIUM|30|15|7) - mỗi top nhận khác nhau
-            return switch (rank) {
-                case 1 -> top1Value;
-                case 2 -> top2Value;
-                case 3 -> top3Value;
-                default -> 0;
-            };
+
+            // (Phòng hờ dữ liệu cũ trong DB đang lưu chữ "PREMIUM|30|15|7")
+            if ("PREMIUM".equals(type)) {
+                return switch (rank) {
+                    case 1 -> top1Value;
+                    case 2 -> top2Value;
+                    case 3 -> top3Value;
+                    default -> 0;
+                };
+            }
+            return 0;
         }
 
         int getPointsForRank(int rank) {
-            return switch (rank) {
-                case 1 -> top1Value;
-                case 2 -> top2Value;
-                case 3 -> top3Value;
-                default -> 0;
-            };
+            // Tùy theo top mà lấy Point tương ứng
+            if ("POINTS".equals(type)) {
+                return switch (rank) {
+                    case 1 -> top1Value;
+                    case 2 -> top2Value;
+                    case 3 -> top3Value;
+                    default -> 0;
+                };
+            }
+            return 0;
         }
     }
 }
+

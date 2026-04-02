@@ -67,6 +67,7 @@ public class EventServiceImpl implements EventService {
         // Lúc map từ Entity sang DTO, sếp nhớ thêm 2 dòng này:
         dto.setIsActive(e.getIsActive());
         dto.setIsForceEnded(e.getIsForceEnded());
+        dto.setMaxVotes(e.getMaxVotes());
 
         long count = (e.getEventPosts() != null) ? e.getEventPosts().size() : 0;
         dto.setPostCount(count);
