@@ -26,26 +26,31 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf.disable()) // Tắt CSRF để dùng JWT mượt hơn
                 .cors(cors -> cors.configure(http))
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
 
                 .authorizeHttpRequests(auth -> auth
+                        // Cho phép các yêu cầu Pre-flight (OPTIONS) đi qua hết
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // ✅ CỬA TỰ DO: Thêm "/api/ai/**" vào đây sếp ơi!
+                        // ✅ DANH SÁCH CỬA TỰ DO (PUBLIC ENDPOINTS)
                         .requestMatchers(
                                 "/api/auth/**",
                                 "/uploads/**",
                                 "/ws/**",
                                 "/ws-chat/**",
                                 "/api/payments/**",
-                                "/api/ai/**" // 🔥 THÊM DÒNG NÀY LÀ HẾT 403
+                                "/api/ai/**",
+                                "/api/appeals/**" // 🔥 CHÌA KHÓA ĐÂY RỒI: Cho phép gửi khiếu nại công khai
                         ).permitAll()
 
-                        // 🔒 KHÓA CỬA CHÍNH: Những cái còn lại (như API Admin) vẫn cần Token
+                        // 🔒 PHÂN QUYỀN ĐẶC BIỆT (Nếu sếp cần tách biệt)
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+
+                        // 🔒 TẤT CẢ CÁC REQUEST CÒN LẠI: Phải đăng nhập (Có Token hợp lệ)
                         .anyRequest().authenticated()
                 );
 

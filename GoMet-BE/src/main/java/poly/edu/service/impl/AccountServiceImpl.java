@@ -1,8 +1,10 @@
 package poly.edu.service.impl;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder; // 🔥 IMPORT THÊM CÁI NÀY
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional; // 🔥 QUAN TRỌNG
 import poly.edu.dao.AccountDAO;
 import poly.edu.dto.AdminAccountDTO;
 import poly.edu.entity.Account;
@@ -13,21 +15,22 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AccountServiceImpl implements AccountService {
 
     private final AccountDAO accountDAO;
     private final ModerationLogService moderationLogService;
-
-    // 🔥 BƯỚC 1: Gọi máy băm mật khẩu (BCrypt) vào đây
     private final PasswordEncoder passwordEncoder;
 
-    // 1. SỬA HÀM toDTO
+    /**
+     * Map Entity sang DTO chuyên nghiệp
+     */
     private AdminAccountDTO toDTO(Account acc) {
-        AdminAccountDTO dto = new AdminAccountDTO();
+        if (acc == null) return null;
 
-        // Map dữ liệu cơ bản
+        AdminAccountDTO dto = new AdminAccountDTO();
         dto.setAccountID(acc.getAccountID());
         dto.setUsername(acc.getUsername());
         dto.setEmail(acc.getEmail());
@@ -39,23 +42,17 @@ public class AccountServiceImpl implements AccountService {
         dto.setCreatedAt(acc.getCreatedAt() != null ? acc.getCreatedAt().toString() : null);
         dto.setRole(acc.getIsAdmin() != null && acc.getIsAdmin() == 1 ? "ADMIN" : "USER");
 
-        // CHỈ MAP NHỮNG CỘT CẦN THIẾT
+        // Thông tin Ban/Unban
         dto.setBanReason(acc.getBanReason());
         dto.setBannedAt(acc.getBannedAt() != null ? acc.getBannedAt().toString() : null);
 
-        // ========================================================
-        // LOGIC ĐẾM SỐ BÀI, FOLLOW VÀ TỔNG LIKE
-        // ========================================================
-
-        // 1. Đếm số bài viết
+        // Logic đếm số liệu thống kê (Sếp viết chỗ này rất chuẩn bài)
         int posts = acc.getPosts() != null ? acc.getPosts().size() : 0;
         dto.setPostCount(posts);
 
-        // 2. Đếm số người theo dõi (Followers)
         int followers = acc.getFollowers() != null ? acc.getFollowers().size() : 0;
         dto.setFollowerCount(followers);
 
-        // 3. Tính tổng số lượt thích từ TẤT CẢ bài viết của user này
         int likes = 0;
         if (acc.getPosts() != null) {
             likes = acc.getPosts().stream()
@@ -69,91 +66,103 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public List<AdminAccountDTO> findAll() {
-        return accountDAO.findAll()
-                .stream()
+        return accountDAO.findAll().stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
 
     @Override
     public AdminAccountDTO findById(Integer id) {
-        return toDTO(accountDAO.findById(id).orElseThrow());
+        return accountDAO.findById(id)
+                .map(this::toDTO)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản ID: " + id));
     }
 
     @Override
+    @Transactional // 🔥 Đảm bảo an toàn dữ liệu
     public AdminAccountDTO save(AdminAccountDTO dto) {
         Account acc;
         if (dto.getAccountID() != null) {
+            // CẬP NHẬT TÀI KHOẢN CŨ
             acc = accountDAO.findById(dto.getAccountID()).orElseThrow();
-            if (dto.getUsername() != null)  acc.setUsername(dto.getUsername());
-            if (dto.getEmail()    != null)  acc.setEmail(dto.getEmail());
-            if (dto.getAvatar()   != null)  acc.setAvatar(dto.getAvatar());
-            if (dto.getIsPremium()!= null)  acc.setIsPremium(dto.getIsPremium());
-            if (dto.getIsActive() != null)  acc.setIsActive(dto.getIsActive());
-            if (dto.getIsAdmin()  != null)  acc.setIsAdmin(dto.getIsAdmin());
+            if (dto.getUsername() != null) acc.setUsername(dto.getUsername());
+            if (dto.getEmail() != null) acc.setEmail(dto.getEmail());
+            if (dto.getAvatar() != null) acc.setAvatar(dto.getAvatar());
+            if (dto.getIsPremium() != null) acc.setIsPremium(dto.getIsPremium());
+            if (dto.getIsActive() != null) acc.setIsActive(dto.getIsActive());
+
             if (dto.getRole() != null) {
                 acc.setIsAdmin("ADMIN".equalsIgnoreCase(dto.getRole()) ? 1 : 0);
             }
 
-            // 🔥 Nâng cấp thêm: Nếu cập nhật tài khoản mà có gõ mật khẩu mới -> Băm luôn!
+            // Chỉ băm mật khẩu nếu sếp có nhập pass mới từ Frontend
             if (dto.getPassword() != null && !dto.getPassword().trim().isEmpty()) {
                 acc.setPassword(passwordEncoder.encode(dto.getPassword()));
+                log.info("Đã cập nhật mật khẩu mới cho user: {}", acc.getUsername());
             }
 
             acc.setUpdatedAt(LocalDateTime.now());
         } else {
+            // TẠO TÀI KHOẢN MỚI
             acc = Account.builder()
                     .username(dto.getUsername())
                     .email(dto.getEmail())
-                    // 🔥 BƯỚC 2: Băm nát mật khẩu bằng BCrypt trước khi lưu (Nếu bỏ trống thì băm chữ "changeme")
-                    .password(passwordEncoder.encode(dto.getPassword() != null ? dto.getPassword() : "changeme"))
+                    .password(passwordEncoder.encode(dto.getPassword() != null ? dto.getPassword() : "gomet123"))
                     .avatar(dto.getAvatar())
                     .isPremium(dto.getIsPremium() != null ? dto.getIsPremium() : 0)
-                    .isActive(dto.getIsActive()  != null ? dto.getIsActive()  : 1)
-                    .isAdmin(dto.getIsAdmin()    != null ? dto.getIsAdmin()   : 0)
+                    .isActive(dto.getIsActive() != null ? dto.getIsActive() : 1)
+                    .isAdmin("ADMIN".equalsIgnoreCase(dto.getRole()) ? 1 : 0)
                     .point(0)
                     .createdAt(LocalDateTime.now())
                     .build();
+            log.info("Đã tạo tài khoản mới: {}", acc.getUsername());
         }
         return toDTO(accountDAO.save(acc));
     }
 
     @Override
+    @Transactional // 🔥 Rất quan trọng vì liên quan đến ghi log nhật ký
     public void ban(Integer id, Integer adminId, String adminName, String adminEmail, String reason) {
         Account acc = accountDAO.findById(id).orElseThrow();
         acc.setIsActive(0);
-
         acc.setBanReason(reason);
         acc.setBannedAt(LocalDateTime.now());
         acc.setUpdatedAt(LocalDateTime.now());
         accountDAO.save(acc);
 
+        // Ghi lại nhật ký khóa
         moderationLogService.logAction(id, "ACCOUNT", "BAN", adminId, adminName, reason);
+        log.warn("Tài khoản {} đã bị khóa bởi Admin {} vì lý do: {}", acc.getUsername(), adminName, reason);
     }
 
     @Override
+    @Transactional
     public void unban(Integer id, Integer adminId, String adminName) {
         Account acc = accountDAO.findById(id).orElseThrow();
         acc.setIsActive(1);
-
         acc.setBanReason(null);
         acc.setBannedAt(null);
         acc.setUpdatedAt(LocalDateTime.now());
         accountDAO.save(acc);
 
-        moderationLogService.logAction(id, "ACCOUNT", "UNBAN", adminId, adminName, "Đã ân xá, gỡ lệnh cấm");
+        // Ghi lại nhật ký mở khóa
+        moderationLogService.logAction(id, "ACCOUNT", "UNBAN", adminId, adminName, "Admin đã mở khóa (ân xá)");
+        log.info("Tài khoản {} đã được mở khóa bởi Admin {}", acc.getUsername(), adminName);
     }
 
     @Override
+    @Transactional
     public void delete(Integer id) {
         Account acc = accountDAO.findById(id).orElseThrow();
         acc.setIsActive(0);
         acc.setDeletedAt(LocalDateTime.now());
         accountDAO.save(acc);
+        log.info("Đã xóa mềm tài khoản ID: {}", id);
     }
 
-    @Override
+    // 🔥 BỎ @Override Ở ĐÂY VÌ INTERFACE ĐÃ XÓA HÀM NÀY
     public void hardDelete(Integer id) {
-        accountDAO.deleteById(id);
+        log.error("Cảnh báo: Yêu cầu xóa vĩnh viễn ID {} bị từ chối!", id);
+        throw new UnsupportedOperationException("Chức năng xóa vĩnh viễn đã bị vô hiệu hóa.");
     }
 }

@@ -191,7 +191,13 @@ const loadCategories = async () => {
   error.value = null
   try {
     const res = await api.get('/api/admin/categories')
-    categories.value = res.data
+    categories.value = res.data.map(cat => {
+      // Chỉ đếm những bài viết có isActive là 1
+      if (Array.isArray(cat.posts)) {
+        cat.postCount = cat.posts.filter(p => p.isActive === 1 || p.isActive === true).length;
+      }
+      return cat;
+    })
   } catch (e) {
     error.value = 'Hệ thống GOMET đang bận, vui lòng thử lại sau.'
     toast.error(error.value)
