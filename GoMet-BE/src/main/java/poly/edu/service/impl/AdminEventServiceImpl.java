@@ -1,6 +1,7 @@
 package poly.edu.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import poly.edu.dao.EventDAO;
@@ -9,6 +10,7 @@ import poly.edu.dto.AdminEventDTO;
 import poly.edu.dto.AdminEventPostDTO;
 import poly.edu.entity.Event;
 import poly.edu.service.AdminEventService;
+import poly.edu.service.EventRewardService;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -16,10 +18,12 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AdminEventServiceImpl implements AdminEventService {
 
     private final EventDAO eventDAO;
     private final EventPostsDAO eventPostsDAO;
+    private final EventRewardService eventRewardService;
 
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
 
@@ -145,5 +149,33 @@ public class AdminEventServiceImpl implements AdminEventService {
     @Transactional
     public void removePostFromEvent(Integer eventPostID) {
         eventPostsDAO.deleteById(eventPostID);
+    }
+
+    // ===== 🎁 FORCE END EVENT + AUTO REWARD =====
+    @Override
+    @Transactional
+    public void forceEndEventWithReward(Integer eventID) {
+        log.info("🚀 Force ending event {} with auto reward", eventID);
+        
+        Event event = eventDAO.findById(eventID)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sự kiện"));
+        
+        // Set ngày kết thúc về hiện tại
+        LocalDateTime now = LocalDateTime.now();
+        event.setEndAt(now);
+        event.setVoteEndAt(now);
+        event.setIsForceEnded(1);
+        eventDAO.save(event);
+        
+        log.info("✅ Event {} force ended at {}", eventID, now);
+        
+        // 🎁 Auto trigger reward
+        try {
+            eventRewardService.rewardTopUsersForEvent(eventID);
+            log.info("🎉 Reward distributed for event {}", eventID);
+        } catch (Exception e) {
+            log.warn("⚠️ Failed to reward event {}: {}", eventID, e.getMessage());
+            // Không throw exception để event vẫn kết thúc, chỉ log warning
+        }
     }
 }

@@ -15,4 +15,7 @@ public interface AdminEventService {
     List<AdminEventPostDTO> getPostsOfEvent(Integer eventID);
     void removePostFromEvent(Integer eventPostID);
     void restoreEvent(Integer eventID);
+    
+    // 🎁 REWARD
+    void forceEndEventWithReward(Integer eventID);
 }

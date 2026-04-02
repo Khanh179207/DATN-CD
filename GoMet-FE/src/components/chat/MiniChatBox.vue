@@ -208,21 +208,19 @@ const fetchHistory = async (convId) => {
 }
 
 // Theo dõi thay đổi của Chat đang chọn
-watch(() => chatStore.activeChat, async (newVal, oldVal) => {
+watch(() => chatStore.activeChat, (newVal, oldVal) => {
   if (newVal) {
     isMinimized.value = false;
     
     const convId = newVal.id || newVal.conversationID;
     const oldConvId = oldVal?.id || oldVal?.conversationID;
 
-    // 🚀 [SỬA]: Chỉ xóa sạch tin nhắn khi ĐỔI người chat
-    // Khi đang chat với cùng 1 người (VD: Bấm Share bài tiếp cho người đó),
-    // mình KHÔNG được xóa messages.value dẹp đường vì nó sẽ làm mất tin nhắn vừa đẩy vào.
+    // 🚀 [SỬA]: Chỉ kết nối và tải lịch sử khi thực sự ĐỔI người chat
+    // Điều này giúp tránh việc fetch lại lịch sử làm ghi đè mất tin nhắn vừa share (nếu share bài cũ)
     if (convId !== oldConvId) {
       messages.value = []; 
       
       if (convId) {
-        // Kết nối Socket và Lấy lịch sử (Chạy song song để tối ưu tốc độ)
         connectWebSocket(convId);
         fetchHistory(convId); 
       }

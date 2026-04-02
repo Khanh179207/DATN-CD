@@ -16,8 +16,6 @@ public class PublicPostDTO {
     private Integer cookingTime;
     private Integer views;
     private LocalDateTime createdAt;
-
-    // Author
     private Integer authorID;
     private String authorName;
     private String authorAvatar;

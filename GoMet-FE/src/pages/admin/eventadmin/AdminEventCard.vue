@@ -1,5 +1,5 @@
 <template>
-  <div class="event-row-card" :class="{'is-deleted': getStatus(ev) === 'deleted'}">
+  <div class="event-row-card" :class="{ 'is-deleted': getStatus(ev) === 'deleted' }">
     <div class="event-id-badge">EVENT ID: {{ ev.eventID }}</div>
 
     <div class="card-main">
@@ -8,7 +8,7 @@
       </div>
       <div class="info-block">
         <h3 class="ev-name">{{ ev.eventName }}</h3>
-        
+
         <div class="visual-timeline">
           <div class="step" :class="phaseClass(ev.startAt, ev.endAt)">
             <span class="dot"></span>
@@ -23,12 +23,23 @@
             <span class="phase-badge">{{ phaseLabel(ev.voteStartAt, ev.voteEndAt) }}</span>
           </div>
         </div>
-        
+
         <div v-if="getStatus(ev) === 'ended' || getStatus(ev) === 'deleted'" class="winner-quick-view mt-2">
-          <template v-if="ev.winnerData">
-            <span class="badge-crown">👑 Quán quân:</span> 
-            <strong>{{ ev.winnerData.username }}</strong> 
-            <span class="text-sm text-gray-500">(Account ID: #{{ ev.winnerData.accountID }})</span>
+          <template v-if="ev.topWinners && ev.topWinners.length > 0">
+            <div v-for="(winner, idx) in ev.topWinners.slice(0, 3)" :key="idx" class="winner-item">
+              <span class="badge-rank" :class="`rank-${idx + 1}`">
+                {{ ['👑 Quán quân', '🥈 Á quân', '🥉 Quý quân'][idx] }}
+              </span>
+              <strong>{{ winner.username }}</strong>
+              <span class="text-sm text-gray-500">(#{{ winner.accountID }})</span>
+            </div>
+          </template>
+          <template v-else-if="ev.winnerData">
+            <div class="winner-item">
+              <span class="badge-rank rank-1">👑 Quán quân</span>
+              <strong>{{ ev.winnerData.username }}</strong>
+              <span class="text-sm text-gray-500">(#{{ ev.winnerData.accountID }})</span>
+            </div>
           </template>
           <template v-else>
             <span class="badge-pending">Chưa có dữ liệu người thắng</span>
@@ -55,21 +66,25 @@
     </div>
 
     <div class="card-actions">
-      <button v-if="getStatus(ev) === 'ended' || getStatus(ev) === 'deleted'" class="btn-circle winner" @click="$emit('viewWinner', ev)" title="Xem người thắng cuộc">
+      <button v-if="getStatus(ev) === 'ended' || getStatus(ev) === 'deleted'" class="btn-circle winner"
+        @click="$emit('viewWinner', ev)" title="Xem người thắng cuộc">
         <i class="fas fa-crown"></i>
       </button>
-      
-      <button v-if="getStatus(ev) !== 'ended' && getStatus(ev) !== 'deleted'" class="btn-circle edit" @click="$emit('openEditModal', ev)" title="Chỉnh sửa">
+
+      <button v-if="getStatus(ev) !== 'ended' && getStatus(ev) !== 'deleted'" class="btn-circle edit"
+        @click="$emit('openEditModal', ev)" title="Chỉnh sửa">
         <i class="fas fa-edit"></i>
       </button>
       <button v-else class="btn-circle view" @click="$emit('openViewModal', ev)" title="Xem thông tin">
         <i class="fas fa-eye"></i>
       </button>
-      
-      <button v-if="getStatus(ev) !== 'deleted'" class="btn-circle delete" @click="$emit('deleteEvent', ev.eventID, true)" title="Ẩn sự kiện (Xóa mềm)">
+
+      <button v-if="getStatus(ev) !== 'deleted'" class="btn-circle delete"
+        @click="$emit('deleteEvent', ev.eventID, true)" title="Ẩn sự kiện (Xóa mềm)">
         <i class="fas fa-trash-alt"></i>
       </button>
-      <button v-else class="btn-circle restore" @click="$emit('deleteEvent', ev.eventID, false)" title="Khôi phục sự kiện">
+      <button v-else class="btn-circle restore" @click="$emit('deleteEvent', ev.eventID, false)"
+        title="Khôi phục sự kiện">
         <i class="fas fa-redo"></i>
       </button>
 
@@ -91,10 +106,10 @@ const props = defineProps({
 })
 
 const emit = defineEmits([
-  'viewWinner', 
-  'openEditModal', 
-  'openViewModal', 
-  'deleteEvent', 
+  'viewWinner',
+  'openEditModal',
+  'openViewModal',
+  'deleteEvent',
   'goToPostManagement'
 ])
 
@@ -110,14 +125,14 @@ const getStatus = (ev) => {
   const activeStatus = Number(ev.isActive);
   const forceStatus = Number(ev.isForceEnded);
 
-  if (activeStatus === 0) return 'deleted'; 
-  if (forceStatus === 1) return 'ended'; 
+  if (activeStatus === 0) return 'deleted';
+  if (forceStatus === 1) return 'ended';
 
   if (!ev.startAt || !ev.voteEndAt) return 'upcoming';
 
   const now = new Date();
   const start = new Date(ev.startAt);
-  const end = new Date(ev.voteEndAt); 
+  const end = new Date(ev.voteEndAt);
 
   if (now < start) return 'upcoming';
   if (now > end) return 'ended';
@@ -161,136 +176,465 @@ $red-100: #fef2f2;
 $white: #ffffff;
 
 .event-row-card {
-  background: $white; border-radius: 32px; border: 1px solid rgba(0,0,0,0.03); 
-  padding: 25px; position: relative; transition: 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); 
-  box-shadow: 0 10px 30px rgba(0,0,0,0.02); 
-  display: grid; grid-template-columns: 1fr 180px 150px; align-items: center; gap: 40px;
-  
-  &:hover { 
-    transform: translateY(-5px); box-shadow: 0 30px 60px -15px rgba(0,0,0,0.08); 
-    border-color: rgba(234, 88, 12, 0.15); 
+  background: $white;
+  border-radius: 32px;
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  padding: 25px;
+  position: relative;
+  transition: 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
+  display: grid;
+  grid-template-columns: 1fr 180px 150px;
+  align-items: center;
+  gap: 40px;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.08);
+    border-color: rgba(234, 88, 12, 0.15);
   }
 
   &.is-deleted {
-    opacity: 0.6; filter: grayscale(80%); background: #f8fafc !important;
-    border: 1px dashed #cbd5e1 !important; transition: 0.3s;
-    &:hover { opacity: 0.9; filter: grayscale(0%); }
+    opacity: 0.6;
+    filter: grayscale(80%);
+    background: #f8fafc !important;
+    border: 1px dashed #cbd5e1 !important;
+    transition: 0.3s;
+
+    &:hover {
+      opacity: 0.9;
+      filter: grayscale(0%);
+    }
   }
-  
-  .event-id-badge { position: absolute; bottom: 20px; right: 30px; font-size: 0.75rem; font-weight: 900; color: #cbd5e1; letter-spacing: 1px; }
+
+  .event-id-badge {
+    position: absolute;
+    bottom: 20px;
+    right: 30px;
+    font-size: 0.75rem;
+    font-weight: 900;
+    color: #cbd5e1;
+    letter-spacing: 1px;
+  }
 
   /* --- CỘT 1: Ảnh + Timeline --- */
   .card-main {
-    display: flex; gap: 30px; align-items: center;
-    
-    .img-frame { 
-      width: 160px; height: 160px; border-radius: 24px; overflow: hidden; 
-      box-shadow: 0 15px 35px rgba(0,0,0,0.08); position: relative; flex-shrink: 0;
-      img { width: 100%; height: 100%; object-fit: cover; transition: 0.8s ease; }
-      &:hover img { transform: scale(1.08); }
+    display: flex;
+    gap: 30px;
+    align-items: center;
+
+    .img-frame {
+      width: 160px;
+      height: 160px;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+      position: relative;
+      flex-shrink: 0;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: 0.8s ease;
+      }
+
+      &:hover img {
+        transform: scale(1.08);
+      }
     }
-    
+
     .info-block {
-      display: flex; flex-direction: column;
-      .ev-name { font-size: 1.6rem; font-weight: 900; color: $slate-900; margin: 0 0 20px; letter-spacing: -0.5px; }
-      
+      display: flex;
+      flex-direction: column;
+
+      .ev-name {
+        font-size: 1.6rem;
+        font-weight: 900;
+        color: $slate-900;
+        margin: 0 0 20px;
+        letter-spacing: -0.5px;
+      }
+
       .visual-timeline {
-        display: flex; flex-direction: column; gap: 14px;
-        .step { 
-          display: flex; align-items: center; gap: 16px; 
-          .dot { 
-            width: 10px; height: 10px; border-radius: 50%; background: #cbd5e1; position: relative; 
-            &::after { content: ''; position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 2px; height: 14px; background: #e2e8f0; } 
-          } 
-          .t-label { font-size: 0.8rem; font-weight: 800; color: $slate-500; text-transform: uppercase; width: 85px; letter-spacing: 0.5px; } 
-          .t-date { font-size: 0.95rem; font-weight: 600; color: $slate-900; } 
-          .phase-badge { font-size: 0.72rem; font-weight: 700; color: #475569; background: #eff6ff; padding: 2px 8px; border-radius: 8px; margin-left: auto; font-style: italic;}
-          
-          &.step-active { 
-            .dot { background: $orange; box-shadow: 0 0 0 5px rgba(234, 88, 12, 0.15); } 
-            .t-label, .t-date { color: $orange; font-weight: 800; } 
-            .phase-badge { background: #fff7ed; color: $orange; }
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+
+        .step {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+
+          .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #cbd5e1;
+            position: relative;
+
+            &::after {
+              content: '';
+              position: absolute;
+              top: 10px;
+              left: 50%;
+              transform: translateX(-50%);
+              width: 2px;
+              height: 14px;
+              background: #e2e8f0;
+            }
           }
-          &.step-ended, &.past-step {
-            .dot { background: #94a3b8; box-shadow: 0 0 0 5px rgba(148,163,184,0.15); }
-            .t-label, .t-date { color: #94a3b8; font-weight: 600; text-decoration: line-through;}
-            .phase-badge { background: #e2e8f0; color: #64748b; }
+
+          .t-label {
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: $slate-500;
+            text-transform: uppercase;
+            width: 85px;
+            letter-spacing: 0.5px;
           }
+
+          .t-date {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: $slate-900;
+          }
+
+          .phase-badge {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #475569;
+            background: #eff6ff;
+            padding: 2px 8px;
+            border-radius: 8px;
+            margin-left: auto;
+            font-style: italic;
+          }
+
+          &.step-active {
+            .dot {
+              background: $orange;
+              box-shadow: 0 0 0 5px rgba(234, 88, 12, 0.15);
+            }
+
+            .t-label,
+            .t-date {
+              color: $orange;
+              font-weight: 800;
+            }
+
+            .phase-badge {
+              background: #fff7ed;
+              color: $orange;
+            }
+          }
+
+          &.step-ended,
+          &.past-step {
+            .dot {
+              background: #94a3b8;
+              box-shadow: 0 0 0 5px rgba(148, 163, 184, 0.15);
+            }
+
+            .t-label,
+            .t-date {
+              color: #94a3b8;
+              font-weight: 600;
+              text-decoration: line-through;
+            }
+
+            .phase-badge {
+              background: #e2e8f0;
+              color: #64748b;
+            }
+          }
+
           &.step-upcoming {
-            .dot { background: #cbd5e1; }
-            .t-date { color: #64748b; font-weight: 600; }
-            .phase-badge { background: #f8fafc; color: #64748b; }
+            .dot {
+              background: #cbd5e1;
+            }
+
+            .t-date {
+              color: #64748b;
+              font-weight: 600;
+            }
+
+            .phase-badge {
+              background: #f8fafc;
+              color: #64748b;
+            }
           }
         }
-        .step:last-child .dot::after { display: none; }
+
+        .step:last-child .dot::after {
+          display: none;
+        }
       }
 
       .winner-quick-view {
-        background: #FFF7ED; border: 1px solid #FFEDD5; padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; margin-top: 10px; display: inline-block;
-        .badge-crown { font-weight: 800; color: #EA580C; margin-right: 6px; }
-        strong { color: #0F172A; }
-        .badge-pending { color: #64748B; font-style: italic; }
+        background: #FFF7ED;
+        border: 1px solid #FFEDD5;
+        padding: 12px;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        margin-top: 10px;
+        display: block;
+
+        .winner-item {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 8px;
+          padding: 8px;
+          border-radius: 8px;
+          background: rgba(255, 255, 255, 0.5);
+
+          &:last-child {
+            margin-bottom: 0;
+          }
+
+          .badge-rank {
+            font-weight: 900;
+            font-size: 0.9rem;
+            min-width: 120px;
+            display: inline-block;
+
+            &.rank-1 {
+              color: #EA580C;
+            }
+
+            &.rank-2 {
+              color: #8b7355;
+            }
+
+            &.rank-3 {
+              color: #c7872a;
+            }
+          }
+
+          strong {
+            color: #0F172A;
+            font-weight: 700;
+            margin-right: 4px;
+          }
+
+          .text-sm {
+            font-size: 0.75rem;
+          }
+        }
+
+        .badge-pending {
+          color: #64748B;
+          font-style: italic;
+        }
       }
     }
   }
 
   /* --- CỘT 2: Stats Grid --- */
-  .card-stats { 
-    display: grid; grid-template-columns: 1fr; gap: 12px;
-    .stat-pill { 
-      background: #f8fafc; border: 1px solid transparent; padding: 12px 18px; border-radius: 16px; 
-      display: flex; justify-content: space-between; align-items: center; transition: 0.3s;
-      &:hover { background: $white; border-color: #e2e8f0; box-shadow: 0 5px 15px rgba(0,0,0,0.03); }
-      .s-lbl { font-size: 0.75rem; font-weight: 800; color: $slate-500; text-transform: uppercase; } 
-      .s-val { font-size: 1.1rem; font-weight: 900; color: $slate-900; } 
-    } 
+  .card-stats {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+
+    .stat-pill {
+      background: #f8fafc;
+      border: 1px solid transparent;
+      padding: 12px 18px;
+      border-radius: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: 0.3s;
+
+      &:hover {
+        background: $white;
+        border-color: #e2e8f0;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.03);
+      }
+
+      .s-lbl {
+        font-size: 0.75rem;
+        font-weight: 800;
+        color: $slate-500;
+        text-transform: uppercase;
+      }
+
+      .s-val {
+        font-size: 1.1rem;
+        font-weight: 900;
+        color: $slate-900;
+      }
+    }
   }
 
   /* --- CỘT 3: Trạng Thái --- */
   .card-status-box {
-    display: flex; flex-direction: column; align-items: center; gap: 8px;
-    .status-pill, .visibility-pill { font-size: 0.85rem; font-weight: 900; text-align: center; border-radius: 14px; text-transform: uppercase; letter-spacing: 0.5px; width: 100%; padding: 8px 0; }
-    .status-pill {
-      &.active { background: $green-300; color: $green-500; }
-      &.upcoming { background: $orange-light; color: $orange; border: 1px solid #ffedd5; }
-      &.ended { background: $slate-100; color: $slate-500; }
-      &.deleted { background: $red-100; color: $red-500; border: 1px solid #fecaca; }
-    }
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+
+    .status-pill,
     .visibility-pill {
-      font-size: 0.75rem; font-weight: 800; padding: 6px 14px; letter-spacing: 0.4px;
-      &.opened { background: #e0f2fe; color: #2563eb; border: 1px solid #bfdbfe;}
-      &.hidden { background: $slate-100; color: $slate-500; border: 1px solid $slate-200; }
+      font-size: 0.85rem;
+      font-weight: 900;
+      text-align: center;
+      border-radius: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      width: 100%;
+      padding: 8px 0;
+    }
+
+    .status-pill {
+      &.active {
+        background: $green-300;
+        color: $green-500;
+      }
+
+      &.upcoming {
+        background: $orange-light;
+        color: $orange;
+        border: 1px solid #ffedd5;
+      }
+
+      &.ended {
+        background: $slate-100;
+        color: $slate-500;
+      }
+
+      &.deleted {
+        background: $red-100;
+        color: $red-500;
+        border: 1px solid #fecaca;
+      }
+    }
+
+    .visibility-pill {
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 6px 14px;
+      letter-spacing: 0.4px;
+
+      &.opened {
+        background: #e0f2fe;
+        color: #2563eb;
+        border: 1px solid #bfdbfe;
+      }
+
+      &.hidden {
+        background: $slate-100;
+        color: $slate-500;
+        border: 1px solid $slate-200;
+      }
     }
   }
 
   /* --- FLOATING ACTIONS --- */
-  .card-actions { 
-    position: absolute; top: 25px; right: 25px; display: flex; gap: 8px; opacity: 0; transform: translateX(10px); transition: 0.4s ease; 
-    .btn-circle { 
-      width: 42px; height: 42px; border-radius: 50%; border: none; background: #f8fafc; color: $slate-500; 
-      cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; transition: 0.2s; 
-      
-      &:hover { background: $slate-900; color: $white; transform: scale(1.15) rotate(5deg); } 
-      &.delete:hover { background: #ef4444; } 
-      &.winner:hover { background: #fcd34d; color: $slate-900; } 
-      &.restore { color: #10b981; &:hover { background: #d1fae5; color: #047857; } }
-      &.view { color: #2563eb; &:hover { background: #dbeafe; color: #1d4ed8; } }
-      &.view-posts { color: #8b5cf6; &:hover { background: #ede9fe; color: #6d28d9; } }
-    } 
+  .card-actions {
+    position: absolute;
+    top: 25px;
+    right: 25px;
+    display: flex;
+    gap: 8px;
+    opacity: 0;
+    transform: translateX(10px);
+    transition: 0.4s ease;
+
+    .btn-circle {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: none;
+      background: #f8fafc;
+      color: $slate-500;
+      cursor: pointer;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      transition: 0.2s;
+
+      &:hover {
+        background: $slate-900;
+        color: $white;
+        transform: scale(1.15) rotate(5deg);
+      }
+
+      &.delete:hover {
+        background: #ef4444;
+      }
+
+      &.winner:hover {
+        background: #fcd34d;
+        color: $slate-900;
+      }
+
+      &.restore {
+        color: #10b981;
+
+        &:hover {
+          background: #d1fae5;
+          color: #047857;
+        }
+      }
+
+      &.view {
+        color: #2563eb;
+
+        &:hover {
+          background: #dbeafe;
+          color: #1d4ed8;
+        }
+      }
+
+      &.view-posts {
+        color: #8b5cf6;
+
+        &:hover {
+          background: #ede9fe;
+          color: #6d28d9;
+        }
+      }
+    }
   }
-  &:hover .card-actions { opacity: 1; transform: translateX(0); }
+
+  &:hover .card-actions {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 @media (max-width: 1200px) {
   .event-row-card {
-    grid-template-columns: 1fr; gap: 20px;
-    .card-main { flex-direction: column; }
-    .card-stats { grid-template-columns: repeat(2, 1fr); }
-    .event-id-badge { bottom: auto; top: 20px; right: 20px; }
+    grid-template-columns: 1fr;
+    gap: 20px;
+
+    .card-main {
+      flex-direction: column;
+    }
+
+    .card-stats {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .event-id-badge {
+      bottom: auto;
+      top: 20px;
+      right: 20px;
+    }
   }
 }
+
 @media (max-width: 768px) {
-  .event-row-card { padding: 18px; }
-  .card-main { gap: 16px; }
+  .event-row-card {
+    padding: 18px;
+  }
+
+  .card-main {
+    gap: 16px;
+  }
 }
 </style>

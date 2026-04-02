@@ -1,7 +1,6 @@
 package poly.edu.dto;
 
 import lombok.Data;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -18,8 +17,9 @@ public class EventDTO {
     private LocalDateTime voteEndAt;
     private String description;
     private String reward;
-
-    // 🔥 THÊM 2 DÒNG NÀY VÀO LÀ CỨU CẢ THẾ GIỚI
     private Integer isActive;
     private Integer isForceEnded;
+
+    // 🔥 "CHỐT ĐƠN" DÒNG NÀY Ở ĐÂY SẾP ƠI!
+    private Integer maxVotes;
 }
