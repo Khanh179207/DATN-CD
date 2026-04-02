@@ -524,8 +524,21 @@ async function fetchSecurityCharts() {
   loadingSecurity.value = true
   try {
     const { data } = await api.get('/api/admin/stats/appeals-chart')
-    appealsChartOptions.value = { ...appealsChartOptions.value, xaxis: { categories: data.labels, axisBorder: {show:false} } }
-    appealsChartSeries.value = [{ name: 'Khiếu nại', data: data.data }]
+    
+    // Lọc bỏ các cột có nhãn liên quan đến trạng thái chờ/đang duyệt
+    const filteredLabels = []
+    const filteredData = []
+    
+    data.labels.forEach((label, index) => {
+      const lowerLabel = String(label).toLowerCase()
+      if (!lowerLabel.includes('chờ duyệt') && !lowerLabel.includes('đang duyệt') && !lowerLabel.includes('pending')) {
+        filteredLabels.push(label)
+        filteredData.push(data.data[index])
+      }
+    })
+
+    appealsChartOptions.value = { ...appealsChartOptions.value, xaxis: { categories: filteredLabels, axisBorder: {show:false} } }
+    appealsChartSeries.value = [{ name: 'Khiếu nại', data: filteredData }]
   } catch (e) { console.error(e) }
   finally { loadingSecurity.value = false }
 }
