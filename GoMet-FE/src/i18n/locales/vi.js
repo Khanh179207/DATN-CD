@@ -311,9 +311,7 @@
     followers:    'Người theo dõi',
     following:    'Đang theo dõi',
     total_likes:  'Lượt thích',
-    achievements: 'THÀNH TÍCH',
     masterpieces: 'Tác phẩm',
-    no_achievements: 'Chưa có thành tích nào — tiếp tục nấu nhé!',
   },
   mealplan: {
     shopping_list:    'Danh sách đi chợ',

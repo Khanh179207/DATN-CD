@@ -1,17 +1,5 @@
 
 	
--- Bước 1: Trở về database master (Bắt buộc)
-	USE master;
-	GO
-
-
--- Bước 2: Đá đít toàn bộ các kết nối đang cắm vào Database này
-IF EXISTS(select * from sys.databases where name='DATN_CD')
-BEGIN
-    ALTER DATABASE DATN_CD SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-    DROP DATABASE DATN_CD;
-END
-GO
 	-- Bước 3: Khởi tạo lại Database
 	CREATE DATABASE DATN_CD;
 	GO
@@ -75,13 +63,6 @@ GO
 	);
 	GO
 
-	CREATE TABLE Achievement (
-		AchievementID INT IDENTITY(1,1) PRIMARY KEY,
-		AchievementName NVARCHAR(255) NOT NULL,
-		Description NVARCHAR(MAX) NOT NULL,
-		Icon NVARCHAR(255)
-	);
-	GO
 
 	-- ==========================================
 	-- 2. NHÓM BẢNG CHÍNH (POSTS & SỰ KIỆN)
@@ -319,17 +300,6 @@ GO
 	);
 	GO
 
-	-- Bảng trung gian nối Account với Achievement
-	CREATE TABLE UserAchievement (
-		UAID INT IDENTITY(1,1) PRIMARY KEY,
-		AccountID INT NOT NULL,
-		AchievementID INT NOT NULL,
-		ReceivedAt DATETIME DEFAULT GETDATE(),
-
-		CONSTRAINT FK_UA_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
-		CONSTRAINT FK_UA_Achievement FOREIGN KEY (AchievementID) REFERENCES Achievement(AchievementID)
-	);
-	GO
 
 	-- Bảng lưu lịch sử giao dịch thanh toán
 	CREATE TABLE PaymentTransaction (
@@ -623,12 +593,6 @@ INSERT INTO Category (CategoryName, CategoryImage, IsActive) VALUES
 (N'Món Âu', 'https://cdn-icons-png.flaticon.com/512/5328/5328003.png', 1),
 (N'Món Chay', 'https://cdn-icons-png.flaticon.com/512/2918/2918148.png', 1),
 (N'Tráng Miệng', 'https://cdn-icons-png.flaticon.com/512/2550/2550300.png', 1);
-
-INSERT INTO Achievement (AchievementName, Description, Icon) VALUES
-(N'Tân binh bếp núc', N'Đăng bài viết đầu tiên thành công.', 'https://img.icons8.com/color/96/seedling.png'),
-(N'Siêu đầu bếp', N'Có bài viết đạt trên 100 lượt thích.', 'https://img.icons8.com/color/96/chef-hat.png'),
-(N'Người truyền cảm hứng', N'Có 50 người theo dõi.', 'https://img.icons8.com/color/96/star--v1.png');
-GO
 
 -- 3. SỰ KIỆN (Trạng thái: Đang diễn ra và Đã kết thúc)
 -- ==========================================================
