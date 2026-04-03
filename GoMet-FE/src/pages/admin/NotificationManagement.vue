@@ -23,7 +23,7 @@
       <div v-for="n in notifs" :key="n.notificationID" class="notif-item">
         <div class="icon-box" :class="getTypeClass(n.type)">
           <component
-            :is="{ MAINTENANCE: Wrench, PROMOTION: PartyPopper, ACHIEVEMENT: Trophy, GENERAL: Megaphone }[n.type] || Megaphone"
+            :is="{ MAINTENANCE: Wrench, PROMOTION: PartyPopper, GENERAL: Megaphone }[n.type] || Megaphone"
             :size="18" />
         </div>
         <div class="content">
@@ -61,7 +61,6 @@
             <option value="GENERAL">General</option>
             <option value="MAINTENANCE">Maintenance</option>
             <option value="PROMOTION">Promotion</option>
-            <option value="ACHIEVEMENT">Achievement</option>
           </select>
         </div>
 
@@ -83,7 +82,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { Bell, Loader2, AlertTriangle, Trash2, Wrench, PartyPopper, Trophy, Megaphone, Send } from 'lucide-vue-next'
+import { Bell, Loader2, AlertTriangle, Trash2, Wrench, PartyPopper, Megaphone, Send } from 'lucide-vue-next'
 import api from '@/services/api'
 
 const notifs = ref([])
@@ -110,7 +109,7 @@ const getTypeIcon = (type) => {
 }
 
 const getTypeClass = (type) => {
-  const map = { MAINTENANCE: 'bg-orange', PROMOTION: 'bg-green', ACHIEVEMENT: 'bg-yellow', GENERAL: 'bg-blue' }
+  const map = { MAINTENANCE: 'bg-orange', PROMOTION: 'bg-green', GENERAL: 'bg-blue' }
   return map[type] || 'bg-blue'
 }
 

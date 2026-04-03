@@ -23,7 +23,7 @@ public class Message {
     private Conversation conversation;
 
     // Giữ nguyên phần Account
-    @JsonIgnoreProperties({"posts", "comments", "ratings", "favorites", "following", "followers", "histories", "notifications", "subscriptions", "userAchievements", "errors", "reports", "password", "token"})
+    @JsonIgnoreProperties({"posts", "comments", "ratings", "favorites", "following", "followers", "histories", "notifications", "subscriptions", "errors", "reports", "password", "token"})
     @ManyToOne
     @JoinColumn(name = "SenderID")
     private Account sender;

@@ -63,12 +63,25 @@ public class AdminEventServiceImpl implements AdminEventService {
         if (dto.getEventID() != null) {
             event = eventDAO.findById(dto.getEventID())
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy sự kiện"));
+
+            // 🔥 LOGIC 1: BẢO VỆ TÍNH CÔNG BẰNG (Chỉ chặn sửa Luật/Thưởng khi sự kiện đã bắt đầu)
+            if (event.getStartAt() != null && event.getStartAt().isBefore(LocalDateTime.now())) {
+                String oldDesc = event.getDescription() != null ? event.getDescription() : "";
+                String newDesc = dto.getDescription() != null ? dto.getDescription() : "";
+                String oldReward = event.getReward() != null ? event.getReward() : "";
+                String newReward = dto.getReward() != null ? dto.getReward() : "";
+
+                if (!oldDesc.equals(newDesc) || !oldReward.equals(newReward)) {
+                    throw new RuntimeException("Sự kiện đã bắt đầu, sếp không được chỉnh sửa Luật và Phần thưởng để đảm bảo công bằng!");
+                }
+            }
         } else {
             event = new Event();
             event.setIsActive(1);
             event.setIsForceEnded(0);
         }
 
+        // Cập nhật các trường thông tin cơ bản
         event.setEventName(dto.getEventName());
         event.setBannerImage(dto.getBannerImage());
         event.setDescription(dto.getDescription());
@@ -90,8 +103,34 @@ public class AdminEventServiceImpl implements AdminEventService {
             if (endStr != null && !endStr.isEmpty()) event.setEndAt(LocalDateTime.parse(endStr, formatter));
             if (voteStartStr != null && !voteStartStr.isEmpty()) event.setVoteStartAt(LocalDateTime.parse(voteStartStr, formatter));
             if (voteEndStr != null && !voteEndStr.isEmpty()) event.setVoteEndAt(LocalDateTime.parse(voteEndStr, formatter));
+
+            // 🔥 LOGIC 2: KIỂM DUYỆT TRỤC THỜI GIAN (Linh hoạt cho phép Overlap)
+            LocalDateTime start = event.getStartAt();
+            LocalDateTime end = event.getEndAt();
+            LocalDateTime vStart = event.getVoteStartAt();
+            LocalDateTime vEnd = event.getVoteEndAt();
+
+            if (start != null && end != null && !end.isAfter(start)) {
+                throw new RuntimeException("Lỗi: Thời gian kết thúc nộp bài phải sau thời gian bắt đầu nộp!");
+            }
+
+            if (vStart != null && vEnd != null && !vEnd.isAfter(vStart)) {
+                throw new RuntimeException("Lỗi: Thời gian kết thúc bình chọn phải sau thời gian bắt đầu bình chọn!");
+            }
+
+            if (start != null && vStart != null && vStart.isBefore(start)) {
+                throw new RuntimeException("Lỗi: Thời gian bắt đầu bình chọn không được diễn ra TRƯỚC khi sự kiện bắt đầu!");
+            }
+
+            if (end != null && vEnd != null && vEnd.isBefore(end)) {
+                throw new RuntimeException("Lỗi: Sự kiện không thể kết thúc bình chọn khi vẫn còn đang trong thời gian nhận bài!");
+            }
+        } catch (RuntimeException re) {
+            // Ném thẳng lỗi logic (ví dụ thời gian sai) ra ngoài cho Controller bắt và hiển thị Toast
+            throw re;
         } catch (Exception ex) {
-            System.err.println("Lỗi parse ngày tháng: " + ex.getMessage());
+            log.error("Lỗi parse ngày tháng: " + ex.getMessage());
+            throw new RuntimeException("Định dạng ngày tháng không hợp lệ!");
         }
 
         return toDTO(eventDAO.save(event));
@@ -134,7 +173,6 @@ public class AdminEventServiceImpl implements AdminEventService {
         }).toList();
     }
 
-    // ===== THÊM ĐOẠN NÀY ĐỂ FIX LỖI BUILD MAVEN =====
     @Override
     @Transactional
     public void restoreEvent(Integer eventID) {
@@ -151,24 +189,23 @@ public class AdminEventServiceImpl implements AdminEventService {
         eventPostsDAO.deleteById(eventPostID);
     }
 
-    // ===== 🎁 FORCE END EVENT + AUTO REWARD =====
     @Override
     @Transactional
     public void forceEndEventWithReward(Integer eventID) {
         log.info("🚀 Force ending event {} with auto reward", eventID);
-        
+
         Event event = eventDAO.findById(eventID)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sự kiện"));
-        
+
         // Set ngày kết thúc về hiện tại
         LocalDateTime now = LocalDateTime.now();
         event.setEndAt(now);
         event.setVoteEndAt(now);
         event.setIsForceEnded(1);
         eventDAO.save(event);
-        
+
         log.info("✅ Event {} force ended at {}", eventID, now);
-        
+
         // 🎁 Auto trigger reward
         try {
             eventRewardService.rewardTopUsersForEvent(eventID);

@@ -2,8 +2,6 @@ package poly.edu.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import poly.edu.dao.*;
@@ -14,7 +12,7 @@ import poly.edu.entity.Category;
 import poly.edu.entity.Post;
 import poly.edu.entity.CookingSteps;
 import poly.edu.service.PostService;
-import poly.edu.service.BlacklistService; // 🔥 Đã Import Service xịn
+import poly.edu.service.BlacklistService;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -35,15 +33,16 @@ public class PostServiceImpl implements PostService {
     private final CategoryDAO categoryDAO;
     private final AccountDAO accountDAO;
     private final CookingStepsDAO cookingStepsDAO;
-    private final BlacklistService blacklistService; // 🔥 Đã thay BlacklistWordDAO bằng Service
+    private final BlacklistService blacklistService;
 
     @Override
     public List<PostDTO> getPostsByAccountId(Integer accountId) {
         if (accountId == null) return List.of();
-        // 🔥 CHỈ LẤY BÀI CHƯA XÓA (isActive = 1)
         List<Post> posts = postDAO.findByAccount_AccountIDOrderByCreatedAtDesc(accountId);
+
+        // 🔥 MA TRẬN: Trả về bài (1 1), (1 0), (0 1), (0 0). CHỈ CHẶN bài bị Admin gỡ (-1 x)
         return posts.stream()
-                .filter(p -> p.getIsActive() == 1)
+                .filter(p -> p.getIsActive() != -1)
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
@@ -58,42 +57,33 @@ public class PostServiceImpl implements PostService {
         Account acc = accountDAO.findById(postDTO.getAccountID())
                 .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại!"));
 
-        // 🛡️ TẦNG 1: RATE LIMITING (CHỐNG SPAM) - 🔥 Đã sửa tính bằng GIÂY
-        // Quy tắc: Chỉ chặn User thường và Premium. Admin được đăng liên tục.
         if (acc.getIsAdmin() != 1) {
             List<Post> lastPosts = postDAO.findByAccount_AccountIDOrderByCreatedAtDesc(acc.getAccountID());
             if (!lastPosts.isEmpty() && lastPosts.get(0).getCreatedAt() != null) {
                 long seconds = Duration.between(lastPosts.get(0).getCreatedAt(), LocalDateTime.now()).getSeconds();
-                if (seconds < 180) { // 180 giây = 3 phút
-                    long waitTime = 180 - seconds;
-                    throw new RuntimeException("Hệ thống chống Spam: Sếp đăng bài quá nhanh! Vui lòng đợi " + waitTime + " giây nữa.");
+                if (seconds < 180) {
+                    throw new RuntimeException("Hệ thống chống Spam: Sếp đăng bài quá nhanh! Vui lòng đợi " + (180 - seconds) + " giây nữa.");
                 }
             }
         }
 
-        // 🛡️ TẦNG 2: BỘ LỌC TỪ KHÓA (BLACKLIST) - 🔥 Đã tối ưu tốc độ bằng RAM Cache
         StringBuilder contentToCheck = new StringBuilder();
         contentToCheck.append(postDTO.getTitle()).append(" ")
                 .append(postDTO.getDescription()).append(" ")
                 .append(postDTO.getIngredients());
 
-        // Cẩn thận gom luôn cả các bước nấu ăn vào để check 1 thể
         if (postDTO.getSteps() != null) {
             for (StepRequestDTO step : postDTO.getSteps()) {
                 contentToCheck.append(" ").append(step.getDesc());
             }
         }
 
-        // Gọi thẳng hàm siêu tốc từ Service
         if (blacklistService.containsBadWord(contentToCheck.toString())) {
             throw new RuntimeException("Vi phạm tiêu chuẩn: Nội dung bài viết chứa từ khóa bị cấm.");
         }
 
-        // 🛡️ TẦNG 3: ĐẶC QUYỀN DUYỆT BÀI
-        // Quy tắc: Admin và Premium được duyệt thẳng. (Giữ nguyên 100% của sếp)
         int autoApprove = (acc.getIsAdmin() == 1 || acc.getIsPremium() == 1) ? 1 : 0;
 
-        // BẮT ĐẦU LƯU
         Post post = new Post();
         mapDtoToEntity(postDTO, post);
 
@@ -102,14 +92,15 @@ public class PostServiceImpl implements PostService {
 
         post.setCategory(cat);
         post.setAccount(acc);
-        post.setIsActive(1);    // Luôn là 1 khi mới tạo
-        post.setIsApproved(autoApprove);
         post.setViews(0);
         post.setLikeCount(0);
 
+        // 🔥 MA TRẬN: Admin/Premium tạo bài ra (1 1), User tạo bài ra (1 0)
+        post.setIsActive(1);
+        post.setIsApproved(autoApprove);
+
         Post savedPost = postDAO.save(post);
 
-        // Lưu các bước nấu ăn
         if (postDTO.getSteps() != null) {
             for (int i = 0; i < postDTO.getSteps().size(); i++) {
                 StepRequestDTO stepDto = postDTO.getSteps().get(i);
@@ -131,12 +122,9 @@ public class PostServiceImpl implements PostService {
         Post post = postDAO.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Bài viết không tồn tại!"));
 
-        // 🛡️ CHỐT CHẶN AN NINH CỰC CAO
-        if (post.getIsApproved() == -1) {
-            throw new RuntimeException("Bài viết này đã bị Admin khóa vĩnh viễn, không thể chỉnh sửa!");
-        }
-        if (post.getIsActive() == 0) {
-            throw new RuntimeException("Bài viết này không còn tồn tại trên hệ thống!");
+        // 🔥 MA TRẬN: Chỉ chặn nếu Admin đã gỡ (-1). Còn User tự ẩn (0) thì vẫn được sửa.
+        if (post.getIsActive() == -1) {
+            throw new RuntimeException("Bài viết này đã bị Admin khóa/gỡ, không thể chỉnh sửa!");
         }
 
         mapDtoToEntity(dto, post);
@@ -156,8 +144,12 @@ public class PostServiceImpl implements PostService {
         Post post = postDAO.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy bài viết để xóa!"));
 
-        // 🔥 SOFT DELETE: Chỉ ẩn đi, không xóa khỏi DB để lưu vết
-        post.setIsActive(0);
+        if (post.getIsActive() == -1) {
+            throw new RuntimeException("Bài viết này đã bị Admin xử lý, không thể thay đổi trạng thái!");
+        }
+
+        // 🔥 MA TRẬN: Đảo trạng thái 1 thành 0, 0 thành 1 (Chức năng User tự ẩn/hiện bài)
+        post.setIsActive(post.getIsActive() == 1 ? 0 : 1);
         postDAO.save(post);
     }
 
@@ -166,9 +158,10 @@ public class PostServiceImpl implements PostService {
         Post post = postDAO.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Bài viết không tồn tại!"));
 
-        // Nếu bài đã xóa mà vẫn cố truy cập bằng link trực tiếp
-        if (post.getIsActive() == 0) {
-            throw new RuntimeException("Bài viết này đã được gỡ bỏ!");
+        // 🔥 Chặn xem public nếu bài không phải (1 1).
+        // Nếu sếp muốn tác giả được xem bài của họ, hãy handle thêm logic ID người gọi API ở đây.
+        if (post.getIsActive() != 1 || post.getIsApproved() != 1) {
+            throw new RuntimeException("Bài viết này đang chờ duyệt hoặc đã bị gỡ!");
         }
 
         return convertToDTO(post);
@@ -228,7 +221,7 @@ public class PostServiceImpl implements PostService {
                 startDate = now.toLocalDate().atStartOfDay();
                 break;
             case "month":
-                startDate = now.withDayOfMonth(1).toLocalDate(  ).atStartOfDay();
+                startDate = now.withDayOfMonth(1).toLocalDate().atStartOfDay();
                 break;
             case "year":
                 startDate = now.withDayOfYear(1).toLocalDate().atStartOfDay();

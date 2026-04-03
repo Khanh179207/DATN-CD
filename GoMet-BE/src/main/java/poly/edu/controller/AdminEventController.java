@@ -8,7 +8,6 @@ import poly.edu.dto.AdminEventDTO;
 import poly.edu.dto.AdminEventPostDTO;
 import poly.edu.service.AdminEventService;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -38,35 +37,25 @@ public class AdminEventController {
         return ResponseEntity.ok(adminEventService.saveEvent(dto));
     }
 
+    // 🔥 HÀM UPDATE ĐÃ ĐƯỢC DỌN SẠCH, CHUẨN MVC
     @PutMapping("/{id}")
     public ResponseEntity<?> update(@PathVariable Integer id, @RequestBody AdminEventDTO dto) {
-        AdminEventDTO existing = adminEventService.findEventById(id);
-        if (existing == null) {
-            return ResponseEntity.notFound().build();
+        try {
+            // Ép ID từ URL vào DTO để Service biết là đang Update chứ không phải Create mới
+            dto.setEventID(id);
+
+            // Gọi Service xử lý (Logic kiểm duyệt chặn sửa Luật/Thưởng đã nằm gọn trong Service)
+            AdminEventDTO saved = adminEventService.saveEvent(dto);
+
+            return ResponseEntity.ok(saved);
+
+        } catch (RuntimeException e) {
+            // Hứng lỗi "Sự kiện đã bắt đầu..." từ Service ném ra (nếu vi phạm)
+            // Trả về HTTP 400 kèm message để Frontend hiển thị thông báo đỏ
+            return ResponseEntity.badRequest().body(Map.of(
+                    "message", e.getMessage()
+            ));
         }
-
-        // 🔥 FIX LỖI Ở ĐÂY: Chuyển String từ DTO sang LocalDateTime để so sánh
-        // Giả sử existing.getStartAt() trả về String dạng "2026-04-02T15:10:00"
-        LocalDateTime startAtFromDB = LocalDateTime.parse(existing.getStartAt());
-        LocalDateTime now = LocalDateTime.now();
-
-        if (now.isAfter(startAtFromDB)) {
-            boolean isMaxVotesChanged = !existing.getMaxVotes().equals(dto.getMaxVotes());
-
-            String oldReward = existing.getReward() != null ? existing.getReward() : "";
-            String newReward = dto.getReward() != null ? dto.getReward() : "";
-            boolean isRewardChanged = !oldReward.equals(newReward);
-
-            if (isMaxVotesChanged || isRewardChanged) {
-                return ResponseEntity.badRequest().body(Map.of(
-                        "message", "Sự kiện đã bắt đầu, sếp không được chỉnh sửa Luật và Phần thưởng để đảm bảo công bằng!"
-                ));
-            }
-        }
-
-        dto.setEventID(id);
-        AdminEventDTO saved = adminEventService.saveEvent(dto);
-        return ResponseEntity.ok(saved);
     }
 
     @DeleteMapping("/{id}")

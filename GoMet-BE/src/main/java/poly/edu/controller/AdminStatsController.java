@@ -58,8 +58,7 @@ public class AdminStatsController {
         stats.put("categories", categoryDAO.count());
         stats.put("comments", commentDAO.count());
         stats.put("events", eventDAO.count());
-
-        // Thay Achievements thành Total Likes
+        
         Long totalLikes = postDAO.getTotalLikes();
         stats.put("totalLikes", totalLikes != null ? totalLikes : 0L);
 

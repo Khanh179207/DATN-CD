@@ -102,9 +102,6 @@ public class Account {
     @OneToMany(mappedBy = "account")
     private List<Subscription> subscriptions;
 
-    @JsonIgnore
-    @OneToMany(mappedBy = "account")
-    private List<UserAchievement> userAchievements;
 
     @JsonIgnore
     @OneToMany(mappedBy = "account")
