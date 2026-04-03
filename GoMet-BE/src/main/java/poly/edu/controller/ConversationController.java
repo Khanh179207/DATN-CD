@@ -1,6 +1,7 @@
 package poly.edu.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize; // 🔥 IMPORT THẺ BẢO VỆ
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +25,14 @@ public class ConversationController {
     public ResponseEntity<?> access(@RequestBody Map<String, Integer> body) {
         Integer u1Id = body.get("user1Id");
         Integer u2Id = body.get("user2Id");
+
+        // 🛡️ CHẶN CHÁT VỚI TÀI KHOẢN ĐÃ XÓA/BỊ KHÓA
+        poly.edu.entity.Account u1 = accDao.findById(u1Id).orElse(null);
+        poly.edu.entity.Account u2 = accDao.findById(u2Id).orElse(null);
+
+        if (u1 == null || u2 == null || u1.getIsActive() != 1 || u2.getIsActive() != 1) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Một trong hai tài khoản không khả dụng"));
+        }
 
         return convDao.findBetweenUsers(u1Id, u2Id)
                 .map(c -> {

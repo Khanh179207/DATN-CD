@@ -84,62 +84,73 @@
      PREMIUM CARD DESIGN - THE HERO MOVE
      ========================================== */
   &.is-premium-card {
-    border: 1.5px solid rgba(217, 119, 6, 0.4) !important; // Viền vàng kim loại tinh tế
+    border: 1px solid rgba(217, 119, 6, 0.4) !important; 
     box-shadow: 
-      0 12px 30px rgba(217, 119, 6, 0.1), // Glow đổ bóng ánh vàng siêu ấm áp
-      0 4px 10px rgba(0,0,0,0.03); 
-    background: linear-gradient(180deg, #fffcf6 0%, #ffffff 40%); // Màu nền ấm champagne nhẹ
+      0 12px 30px rgba(245, 158, 11, 0.1), 
+      0 4px 8px rgba(0,0,0,0.02); 
+    background: linear-gradient(180deg, rgba(255, 252, 246, 0.8) 0%, #ffffff 40%);
+    backdrop-filter: blur(4px);
 
-    /* CUSTOM Ribbon Banner "PREMIUM" thả từ trên xuống */
+    /* Ruy-băng "PREMIUM" tinh tế hơn */
     &::after {
       content: 'PREMIUM';
       position: absolute;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      background: linear-gradient(135deg, #ea580c, #d97706);
+      top: -1px;
+      right: 15px;
+      left: auto;
+      transform: none;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
       color: #fff;
-      font-size: 0.6rem;
+      font-size: 0.55rem;
       font-weight: 900;
-      letter-spacing: 1px;
-      padding: 4px 14px;
-      border-radius: 0 0 8px 8px;
-      box-shadow: 0 3px 8px rgba(217, 119, 6, 0.3);
+      letter-spacing: 1.5px;
+      padding: 3px 12px;
+      border-radius: 0 0 6px 6px;
+      box-shadow: 0 4px 10px rgba(217, 119, 6, 0.25);
       z-index: 10;
-      pointer-events: none;
     }
 
-    /* Đổi màu Tiêu đề món ăn sang nâu hoàng gia */
     .card-title {
-      font-family: var(--font-serif-luxury, 'Playfair Display', serif);
       color: #78350f !important;
+      font-weight: 800;
+      transition: color 0.3s ease;
     }
 
-    /* Đảm bảo dọn sạch các hiệu ứng viền cũ (nếu lỡ dính lại) */
-    &::before { display: none; }
+    .author-name {
+      color: #b45309 !important;
+      font-weight: 800;
+    }
+
+    .crown-icon-mini {
+      color: #f59e0b;
+      filter: drop-shadow(0 0 3px rgba(245, 158, 11, 0.4));
+      margin-left: 4px;
+      animation: crown-float 2s ease-in-out infinite;
+    }
 
     &:hover {
-      transform: translateY(-8px);
-      box-shadow: 0 16px 32px -8px rgba(245, 158, 11, 0.2); // Sáng hơn khi hover
+      transform: translateY(-12px);
+      box-shadow: 
+        0 24px 48px rgba(245, 158, 11, 0.18),
+        0 8px 16px rgba(0,0,0,0.04);
+      border-color: rgba(245, 158, 11, 0.8) !important;
 
-      /* Tia sáng lướt qua mặt kính ảnh (Giữ nguyên vì rất đẹp) */
       .card-media::after {
         content: '';
         position: absolute;
         top: 0; left: -150%;
-        width: 50%; height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
-        transform: skewX(-20deg);
-        animation: glass-reflection 0.6s ease-out forwards;
+        width: 100%; height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+        transform: skewX(-25deg);
+        animation: glass-reflection 0.8s ease-out forwards;
         z-index: 5;
-        pointer-events: none;
       }
     }
   }
 
-  // Căn chỉnh vị trí nhãn Tag khi thẻ là Premium (tránh bị cấn với Ruy-băng)
-  &.is-premium-card .category-tag {
-    top: 10px;
+  @keyframes crown-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-2px); }
   }
 
   /* --- HIDDEN STATE (MANAGEMENT) --- */
@@ -445,14 +456,29 @@
   align-items: center;
 }
 
+.author-name-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
 .author-name {
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   color: #334155;
   white-space: nowrap; 
   overflow: hidden;    
   text-overflow: ellipsis; 
   cursor: default;
+  transition: color 0.2s;
+}
+
+.crown-icon-mini {
+  flex-shrink: 0;
+  color: #94a3b8;
+  transition: color 0.2s;
 }
 
 /* Tooltip UI */

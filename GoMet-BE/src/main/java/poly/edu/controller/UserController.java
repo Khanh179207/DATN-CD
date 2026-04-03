@@ -32,6 +32,7 @@ public class UserController {
     private final AccountDAO accountDAO;
     private final PostDAO postDAO;
     private final FollowDAO followDAO;
+    private final poly.edu.service.AccountService accountService;
 
     @Autowired
     private InteractionLogDAO interactionLogDAO;
@@ -40,6 +41,10 @@ public class UserController {
     @GetMapping("/{id}")
     public ResponseEntity<UserProfileDTO> getProfile(@PathVariable Integer id) {
         return accountDAO.findById(id).map(acc -> {
+            // 🛡️ CHỈ CHO PHÉP XEM PROFILE NẾU TÀI KHOẢN ĐANG HOẠT ĐỘNG
+            if (acc.getIsActive() != 1) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).<UserProfileDTO>build();
+            }
             UserProfileDTO dto = toDTO(acc);
             return ResponseEntity.ok(dto);
         }).orElse(ResponseEntity.notFound().build());
@@ -89,9 +94,9 @@ public class UserController {
         List<Account> accounts;
 
         if (keyword.isBlank()) {
-            accounts = accountDAO.findAll();
+            accounts = accountDAO.findByIsActive(1);
         } else {
-            accounts = accountDAO.findByUsernameContainingIgnoreCase(keyword.trim());
+            accounts = accountDAO.findByUsernameContainingIgnoreCaseAndIsActive(keyword.trim(), 1);
         }
 
         List<UserProfileDTO> result = accounts.stream()
@@ -158,6 +163,32 @@ public class UserController {
         };
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // NEW: Quản lý Xóa mềm (Self-Service)
+    // ─────────────────────────────────────────────────────────────────────────
 
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/{id}/send-deactivate-otp")
+    public ResponseEntity<?> sendDeactivateOtp(@PathVariable Integer id) {
+        try {
+            accountService.sendDeactivateOTP(id);
+            return ResponseEntity.ok(Map.of("message", "Mã xác thực đã được gửi về Email của bạn."));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/{id}/deactivate")
+    public ResponseEntity<?> deactivateAccount(@PathVariable Integer id, @RequestBody Map<String, String> body) {
+        String password = body.get("password");
+        String otp = body.get("otp");
+        try {
+            accountService.verifyAndDeactivate(id, password, otp);
+            return ResponseEntity.ok(Map.of("message", "Tài khoản của bạn đã được xóa mềm thành công. Hẹn gặp lại!"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
 }
 

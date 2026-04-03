@@ -2,6 +2,7 @@ package poly.edu.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -93,9 +94,13 @@ public class PostController {
             @RequestParam(required = false) Integer accountId) {
 
         return postDAO.findById(id).map(post -> {
+            // 🛡️ BẢO VỆ RIÊNG TƯ: Nếu tác giả đã xóa tài khoản thì bài viết cũng phải ẩn
+            if (post.getAccount() != null && post.getAccount().getIsActive() != 1) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Bài viết không tồn tại hoặc đã bị ẩn"));
+            }
             PostDetailDTO dto = toDetailDTO(post, accountId);
             return ResponseEntity.ok(dto);
-        }).orElse(ResponseEntity.notFound().build());
+        }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Bài viết không tồn tại")));
     }
 
     @PostMapping("/{id}/view")

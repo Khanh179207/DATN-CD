@@ -160,6 +160,24 @@ $font-ui: 'Inter', sans-serif;
 .btn-appeal-lux span { font-weight: 800; text-decoration: underline; }
 .btn-appeal-lux:hover { background: #b91c1c; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4); }
 
+// ── KHU VỰC DEACTIVATED (XÓA MỀM) ALERT BOX ──
+.deactivated-alert-box {
+  background: #fff8f1; border: 1px solid #ffedd5; border-radius: 16px; padding: 18px; margin: 15px 0 24px;
+  text-align: left; box-shadow: 0 8px 24px rgba(234, 88, 12, 0.08); animation: fadeIn 0.4s ease-in-out;
+}
+
+.deactivated-header { display: flex; align-items: center; gap: 10px; color: #ea580c; margin-bottom: 12px; border-bottom: 1px dashed #fed7aa; padding-bottom: 10px; }
+.deactivated-header h4 { margin: 0; font-size: 1rem; font-weight: 800; }
+.deactivated-body { color: #431407; font-size: 0.95rem; line-height: 1.5; margin-bottom: 16px; }
+.btn-restore-trigger { 
+  background: #ea580c; color: white; border: none; padding: 12px 20px; border-radius: 100px; 
+  font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: 0.3s; width: 100%; 
+  box-shadow: 0 4px 15px rgba(234, 88, 12, 0.2); 
+  &:hover { background: #c2410c; transform: translateY(-2px); }
+}
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
 // ── Nút Gợi Ý Quên Mật Khẩu (SAI PASS 3 LẦN) ────────────────────────────────────
 .appeal-hint { margin-bottom: 20px; }
 .btn-appeal-link { 
@@ -231,4 +249,79 @@ $font-ui: 'Inter', sans-serif;
   .modal-motion-enter-from .modal-container-artistic { transform: translateY(100%); }
   .modal-motion-leave-to .modal-container-artistic { transform: translateY(100%); }
   .input-row { flex-direction: column; gap: 0;}
+}
+
+// ── ACCOUNT RESTORE LUXURY (ADDED) ──────────────────────────
+.otp-hint-restore {
+  background: rgba($primary, 0.08); 
+  border: 1.5px solid rgba($primary, 0.15);
+  color: #C2410C;
+  padding: 16px;
+  border-radius: 16px;
+  font-size: 0.9rem;
+  text-align: center;
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+.otp-group-lux {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.otp-input-lux {
+  width: 48px;
+  height: 60px;
+  background: white;
+  border: 2px solid #E7E5E4;
+  border-radius: 12px;
+  text-align: center;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: $primary;
+  outline: none;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+  
+  &:focus {
+    border-color: $primary;
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba($primary, 0.15);
+    transform: translateY(-4px);
+  }
+}
+
+.resend-container {
+  text-align: center;
+  margin-top: 12px;
+}
+
+.btn-resend-otp-lux {
+  background: none;
+  border: none;
+  color: $text-muted;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  
+  &:hover:not(:disabled) {
+    color: $primary;
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+    text-decoration: none;
+  }
+}
+
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+  border-width: 0.2em;
 }

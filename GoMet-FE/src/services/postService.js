@@ -126,8 +126,10 @@ export function normalizePost(dto) {
     authorID:   dto.authorID ?? dto.accountID ?? null,
     author: {
       name:   dto.authorName || 'GoMet Chef',
-      avatar: dto.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(dto.authorName||'G')}&background=EA580C&color=fff`
+      avatar: dto.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(dto.authorName||'G')}&background=EA580C&color=fff`,
+      isPremium: dto.isPremium || false
     },
+    isPremium: dto.isPremium || false, // Top level for card styling
     category: dto.categoryName || '',
     isActive: dto.isActive !== undefined ? dto.isActive : 1, // 🔥 Trạng thái ẩn/hiện
     isApproved: dto.isApproved ?? 1

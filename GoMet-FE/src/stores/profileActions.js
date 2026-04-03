@@ -67,14 +67,16 @@ export const useProfileActionsStore = defineStore('profileActions', () => {
           id: convData.conversationID,
           name: targetUser.username || targetUser.name,
           avatar: targetUser.avatar,
-          online: true // Mặc định hoặc lấy từ API nếu có
+          online: true 
         })
       } else {
         toast.error('Không thể khởi tạo cuộc hội thoại.')
       }
     } catch (err) {
       console.error('Chat error:', err)
-      toast.error('Lỗi khi mở tin nhắn.')
+      // 🔥 HIỆN LỖI CẶP NHẬT TỪ BACKEND (VD: TÀI KHOẢN ĐÃ XÓA)
+      const msg = err.response?.data?.message || 'Lỗi khi mở tin nhắn.'
+      toast.error(msg)
     } finally {
       loading.value = false
     }

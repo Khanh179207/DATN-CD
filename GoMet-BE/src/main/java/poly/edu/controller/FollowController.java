@@ -110,7 +110,7 @@ public class FollowController {
     public ResponseEntity<?> getFollowersList(@RequestParam Integer followeeID) {
         List<Follow> list = followDAO.findByFollowee_AccountID(followeeID);
         List<Map<String, Object>> res = list.stream()
-                .filter(f -> f.getStatus() == 1)
+                .filter(f -> f.getStatus() == 1 && f.getFollower().getIsActive() == 1)
                 .map(f -> {
                     Map<String, Object> map = new HashMap<>();
                     Account acc = f.getFollower();
@@ -127,7 +127,7 @@ public class FollowController {
     public ResponseEntity<?> getFollowingList(@RequestParam Integer followerID) {
         List<Follow> list = followDAO.findByFollower_AccountID(followerID);
         List<Map<String, Object>> res = list.stream()
-                .filter(f -> f.getStatus() == 1)
+                .filter(f -> f.getStatus() == 1 && f.getFollowee().getIsActive() == 1)
                 .map(f -> {
                     Map<String, Object> map = new HashMap<>();
                     Account acc = f.getFollowee();

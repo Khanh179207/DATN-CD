@@ -137,6 +137,15 @@ const startLoadingAnimation = () => {
   });
 };
 
+const handleRestorePrompt = (e) => {
+  modalTab.value = 'restore-account';
+  showAuthModal.value = true;
+  // 🔥 Đã FIX: Gửi ngược dữ liệu vào AuthModal sau khi nó được Mount (v-if)
+  nextTick(() => {
+    window.dispatchEvent(new CustomEvent('auth:restore-login-data', { detail: e.detail }));
+  });
+}
+
 onMounted(() => {
   if (sessionStorage.getItem('just_logged_in') === 'true') startLoadingAnimation();
   
@@ -145,6 +154,8 @@ onMounted(() => {
     showPremium.value = true
   })
   /* END */
+  
+  window.addEventListener('auth:restore-login-prompt', handleRestorePrompt)
 })
 
 watch(() => route.fullPath, () => {
@@ -159,6 +170,7 @@ watch(() => route.fullPath, () => {
 onUnmounted(() => {
   clearTimeout(safetyTimer);
   if (ctx) ctx.revert();
+  window.removeEventListener('auth:restore-login-prompt', handleRestorePrompt)
 })
 
 // --- CÁC TRẠNG THÁI CŨ GIỮ NGUYÊN ---

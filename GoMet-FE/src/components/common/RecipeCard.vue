@@ -91,11 +91,14 @@
           </div>
           
           <div class="author-name-wrapper">
-            <span class="author-name">
-              {{ post?.author?.name || 'Gomet Chef' }}
-            </span>
+            <div class="author-name-group">
+              <span class="author-name">
+                {{ post?.author?.name || 'Gomet Chef' }}
+              </span>
+              <svg v-if="post?.author?.isPremium" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="crown-icon-mini" title="Tác giả Premium"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"></path></svg>
+            </div>
             <div class="beautiful-tooltip">
-              {{ post?.author?.name || 'Gomet Chef' }}
+              {{ post?.author?.name || 'Gomet Chef' }} {{ post?.author?.isPremium ? '(Premium)' : '' }}
             </div>
           </div>
         </div>

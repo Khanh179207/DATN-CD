@@ -11,15 +11,19 @@
         
         <aside class="col-left">
           <div class="sticky-wrapper">
-            <div class="id-card">
+            <div class="id-card" :class="{ 'is-premium-profile': user.isPremium === 1 }">
               <div class="avatar-box">
                 <img :src="user.avatar" class="avatar-img" alt="Chef">
-                <div class="verify-badge">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <div class="verify-badge" :class="{ 'is-premium': user.isPremium === 1 }">
+                  <svg v-if="user.isPremium === 1" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="crown-icon"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"></path><path d="M5 20h14"></path></svg>
+                  <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
                 </div>
               </div>
               
-              <h1 class="user-name">{{ user.name }}</h1>
+              <div class="name-badge-row">
+                <h1 class="user-name">{{ user.name }}</h1>
+                <span v-if="user.isPremium === 1" class="luxury-badge-vip">PREMIUM</span>
+              </div>
               <p class="user-handle">@{{ user.handle }}</p>
               
               <div class="bio-box">
@@ -173,6 +177,15 @@
                 <textarea v-model="editForm.bio" placeholder="Tell others about yourself..." rows="4" maxlength="300"></textarea>
                 <span class="char-count">{{ editForm.bio.length }} / 300</span>
               </div>
+
+              <!-- 🔥 DANGER ZONE: Nút xóa tài khoản -->
+              <div class="danger-zone-mini">
+                <p class="zone-info">Sếp cần tạm nghỉ ngơi một thời gian?</p>
+                <button class="btn-deactivate-trigger" @click="showDeactivateModal = true">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path><line x1="18" y1="9" x2="12" y2="15"></line><line x1="12" y1="9" x2="18" y2="15"></line></svg>
+                  <span>Xóa tài khoản này</span>
+                </button>
+              </div>
             </div>
 
             <div class="edit-modal-footer">
@@ -323,6 +336,9 @@
           </div>
         </div>
       </transition>
+
+      <!-- Modal Xóa mềm tài khoản -->
+      <DeactivateAccountModal v-model="showDeactivateModal" />
   </div>
 </template>
 
@@ -338,6 +354,7 @@ import { getUserAchievements } from '@/services/achievementService'
 import { checkFollow, follow, unfollow } from '@/services/socialService'
 import { uploadMedia } from '@/services/uploadService'
 import { toast } from '@/composables/useToast'
+import DeactivateAccountModal from '@/components/modals/DeactivateAccountModal.vue' // 🔥 Import modal mới
 import api from '@/services/api'
 
 const route = useRoute()
@@ -346,7 +363,8 @@ const authStore = useAuthStore()
 
 const user = ref({
   name: '', handle: '', avatar: '', bio: '',
-  postsCount: 0, followers: '0', following: 0, point: 0, totalLikes: 0
+  postsCount: 0, followers: '0', following: 0, point: 0, totalLikes: 0,
+  isPremium: 0 
 })
 const allPosts = ref([])
 const postsLoading = ref(true)
@@ -371,6 +389,9 @@ const showFollowModal = ref(false)
 const followModalType = ref('followers') // 'followers' | 'following'
 const followList = ref([])
 const followLoadingList = ref(false)
+
+// Deactivate logic
+const showDeactivateModal = ref(false)
 
 // Derived: unique categories from loaded posts
 const postCategories = computed(() => {
@@ -423,7 +444,8 @@ async function loadProfile(forcedId = null) {
                     ? `${(profile.followerCount/1000).toFixed(1)}k`
                     : `${profile.followerCount || 0}`,
       following:  profile.followingCount || 0,
-      point:      profile.point || 0
+      point:      profile.point || 0,
+      isPremium:  profile.isPremium || 0
     }
     allPosts.value = userPosts.map(normalizePost)
     postsLoading.value = false
@@ -451,6 +473,11 @@ async function loadProfile(forcedId = null) {
     }
   } catch (err) {
     console.warn('ProfilePage: API error', err)
+    // 🔥 NẾU TÀI KHOẢN KHÔNG TỒN TẠI HOẶC ĐÃ BỊ ẨN (404) -> ĐẨY VỀ TRANG CHỦ
+    if (err.response?.status === 404) {
+      toast.error('Người dùng không tồn tại hoặc đã ngừng hoạt động.')
+      router.push('/')
+    }
     postsLoading.value = false
   }
 }
