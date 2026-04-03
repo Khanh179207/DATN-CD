@@ -27,19 +27,6 @@
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
               </button>
             </div>
-
-            <div class="actions">
-              <button class="btn-ai-gen" @click="autoFillAI" :disabled="isLoading" :class="{ loading: isLoading }">
-                <span class="icon-sparkle">
-                  <svg v-if="isLoading" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin-icon"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>
-                  <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                </span>
-                <div class="btn-col">
-                  <span class="main-text">{{ isLoading ? 'Đang tải...' : 'Điền Tự Động' }}</span>
-                  <span class="sub-text">Hỗ trợ bởi AI</span>
-                </div>
-              </button>
-            </div>
           </div>
         </header>
 
@@ -202,7 +189,6 @@ const showToast = (msg) => {
 }
 
 onMounted(loadWeekData)
-const autoFillAI = () => showToast('AI đang bảo trì')
 </script>
 
 <style scoped lang="scss">
@@ -228,61 +214,85 @@ $panel-bg: rgba(20, 20, 20, 0.7);
 .planner-content { height: 100%; display: flex; flex-direction: column; }
 
 .planner-header {
-  display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px;
-  background: $panel-bg; padding: 20px 35px; border-radius: 20px; border: 1px solid rgba($gold, 0.15); backdrop-filter: blur(15px);
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;
+  background: linear-gradient(135deg, rgba(20, 20, 20, 0.8), rgba(10, 10, 10, 0.9)); 
+  padding: 24px 40px; border-radius: 24px; border: 1px solid rgba($gold, 0.2); 
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5); backdrop-filter: blur(20px);
 }
-.brand-tag { font-size: 0.7rem; font-weight: 800; color: $gold; letter-spacing: 3px; margin-bottom: 5px; }
-.main-title { font-family: 'Playfair Display', serif; font-size: 2.8rem; font-weight: 800; color: #FFF; margin: 0; line-height: 1; }
+.brand-tag { font-size: 0.7rem; font-weight: 800; color: $gold; letter-spacing: 4px; margin-bottom: 8px; text-shadow: 0 0 10px rgba($gold, 0.3); }
+.main-title { font-family: 'Playfair Display', serif; font-size: 3rem; font-weight: 900; color: #FFF; margin: 0; line-height: 1; letter-spacing: 1px; }
 .text-serif { font-style: italic; color: $gold; }
 
-.week-selector { display: flex; align-items: center; background: rgba(0,0,0,0.5); padding: 6px; border-radius: 50px; border: 1px solid rgba(255,255,255,0.1); }
-.week-info { display: flex; flex-direction: column; align-items: center; padding: 0 15px; }
-.week-label { font-size: 0.6rem; font-weight: 800; color: rgba(255,255,255,0.4); letter-spacing: 2px; }
-.week-display { font-weight: 800; font-size: 0.95rem; color: $gold; }
-.btn-arrow { width: 38px; height: 38px; border-radius: 50%; border: none; background: rgba(255,255,255,0.05); color: #FFF; cursor: pointer; transition: 0.3s; }
-.btn-arrow:hover { background: $gold; color: #000; }
-
-.btn-ai-gen { background: rgba($gold, 0.1); border: 1px solid rgba($gold, 0.4); color: $gold; padding: 12px 28px; border-radius: 50px; cursor: pointer; transition: 0.3s; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
-.btn-ai-gen:hover { background: $gold; color: #000; box-shadow: 0 0 20px rgba($gold, 0.3); }
+.header-right { display: flex; align-items: center; }
+.week-selector { 
+  display: flex; align-items: center; background: rgba(0,0,0,0.6); 
+  padding: 8px; border-radius: 100px; border: 1px solid rgba($gold, 0.2); 
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 5px 15px rgba(0,0,0,0.3);
+}
+.week-info { display: flex; flex-direction: column; align-items: center; padding: 0 25px; min-width: 220px; }
+.week-label { font-size: 0.65rem; font-weight: 900; color: rgba($gold, 0.7); letter-spacing: 3px; margin-bottom: 4px; }
+.week-display { font-weight: 800; font-size: 1.05rem; color: #FFF; text-shadow: 0 0 10px rgba(255,255,255,0.2); }
+.btn-arrow { width: 42px; height: 42px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03); color: #FFF; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; justify-content: center; align-items: center;}
+.btn-arrow:hover:not(:disabled) { background: $gold; color: #000; border-color: $gold; transform: scale(1.1); box-shadow: 0 0 15px rgba($gold, 0.5); }
+.btn-arrow:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* GRID SYSTEM */
-.grid-wrapper { flex: 1; border-radius: 24px; border: 1px solid rgba($gold, 0.2); background: $panel-bg; backdrop-filter: blur(20px); overflow-x: auto; }
-.blueprint-grid { display: grid; grid-template-columns: repeat(7, 1fr); height: 100%; min-width: 1200px; gap: 1px; background: rgba($gold, 0.1); }
+.grid-wrapper { 
+  flex: 1; border-radius: 24px; border: 1px solid rgba($gold, 0.15); 
+  background: rgba(10, 10, 10, 0.6); backdrop-filter: blur(25px); 
+  overflow-x: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+}
+.blueprint-grid { display: grid; grid-template-columns: repeat(7, 1fr); height: 100%; min-width: 1200px; }
 
-.day-column { background: #0c0c0c; padding: 25px 15px; display: flex; flex-direction: column; transition: 0.3s; }
-.day-column.today { background: rgba($gold, 0.03); }
-.day-column:hover { background: #121212; }
+.day-column { padding: 30px 18px; display: flex; flex-direction: column; transition: 0.4s ease; border-right: 1px solid rgba(255,255,255,0.03); }
+.day-column:last-child { border-right: none; }
+.day-column:hover { background: rgba(255,255,255,0.02); }
+.day-column.today { background: linear-gradient(to bottom, rgba($gold, 0.08), transparent); position: relative; }
+.day-column.today::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: $gold; box-shadow: 0 0 15px $gold; }
 
-.day-name { font-size: 0.75rem; font-weight: 800; color: rgba(255,255,255,0.4); letter-spacing: 1px; display: block; margin-bottom: 5px; text-align: center; }
-.day-date { font-family: 'Playfair Display', serif; font-size: 2.4rem; font-weight: 800; color: #FFF; margin-top: 5px; display: block; text-align: center; }
-.header-line { width: 40px; height: 3px; background: rgba($gold, 0.2); margin: 10px auto 30px; border-radius: 10px; }
-.today .header-line { background: $gold; box-shadow: 0 0 10px $gold; width: 60px; }
+.day-name { font-size: 0.75rem; font-weight: 800; color: rgba(255,255,255,0.5); letter-spacing: 2px; display: block; margin-bottom: 8px; text-align: center; }
+.day-date { font-family: 'Playfair Display', serif; font-size: 2.8rem; font-weight: 900; color: #FFF; display: block; text-align: center; line-height: 1; }
+.header-line { width: 30px; height: 3px; background: rgba($gold, 0.3); margin: 15px auto 35px; border-radius: 10px; transition: 0.3s; }
+.today .header-line { background: $gold; box-shadow: 0 0 10px $gold; width: 50px; }
 .today .day-name { color: $gold; }
 
-.slots-container { flex: 1; display: flex; flex-direction: column; gap: 20px; }
-.meal-slot { display: flex; flex-direction: column; gap: 8px; }
-.slot-label { font-size: 0.7rem; font-weight: 900; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 1px; text-align: center; }
+.slots-container { flex: 1; display: flex; flex-direction: column; gap: 24px; }
+.meal-slot { display: flex; flex-direction: column; gap: 10px; }
+.slot-label { font-size: 0.75rem; font-weight: 900; color: rgba($gold, 0.5); text-transform: uppercase; letter-spacing: 1.5px; text-align: center; }
 
-.dish-card { position: relative; height: 140px; border-radius: 16px; overflow: hidden; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); transition: 0.4s; }
-.dish-card:hover { border-color: $gold; transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.8); }
-.dish-bg { width: 100%; height: 100%; object-fit: cover; opacity: 0.6; transition: 0.6s; }
-.dish-card:hover .dish-bg { transform: scale(1.1); opacity: 0.9; }
+.dish-card { 
+  position: relative; height: 150px; border-radius: 18px; overflow: hidden; cursor: pointer; 
+  border: 1px solid rgba(255,255,255,0.08); transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
+  box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+}
+.dish-card:hover { border-color: $gold; transform: translateY(-6px); box-shadow: 0 15px 30px rgba(0,0,0,0.6), 0 0 15px rgba($gold, 0.2); }
+.dish-bg { width: 100%; height: 100%; object-fit: cover; opacity: 0.7; transition: 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+.dish-card:hover .dish-bg { transform: scale(1.15); opacity: 1; }
 
-.dish-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.95), transparent 70%); padding: 15px; display: flex; flex-direction: column; justify-content: flex-end; }
-.dish-cat { font-size: 0.65rem; color: $gold; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
-.dish-name { font-size: 0.95rem; font-weight: 800; color: #FFF; margin-top: 5px; line-height: 1.3; }
+.dish-overlay { 
+  position: absolute; inset: 0; 
+  background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 60%, transparent 100%); 
+  padding: 18px 15px; display: flex; flex-direction: column; justify-content: flex-end; 
+}
+.dish-cat { font-size: 0.65rem; color: $gold; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+.dish-name { font-size: 1rem; font-weight: 800; color: #FFF; margin: 0; line-height: 1.3; text-shadow: 0 2px 4px rgba(0,0,0,0.8); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
-.btn-check, .btn-remove { position: absolute; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; border: none; backdrop-filter: blur(5px); }
-.btn-check { top: 10px; left: 10px; background: rgba(255,255,255,0.15); color: #FFF; }
-.btn-check:hover { background: $gold; color: #000; }
-.is-completed .btn-check { background: $gold; }
-.is-completed .dish-bg { filter: grayscale(1); opacity: 0.3; }
-.is-completed .dish-name { text-decoration: line-through; opacity: 0.5; }
+.btn-check, .btn-remove { position: absolute; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; border: none; backdrop-filter: blur(8px); z-index: 2; }
+.btn-check { top: 12px; left: 12px; background: rgba(0,0,0,0.5); color: #FFF; border: 1px solid rgba(255,255,255,0.2); }
+.btn-check:hover { background: $gold; color: #000; border-color: $gold; transform: scale(1.1); }
+.is-completed .btn-check { background: $gold; color: #000; border-color: $gold; box-shadow: 0 0 10px rgba($gold, 0.5); }
+.is-completed .dish-bg { filter: grayscale(0.8) brightness(0.5); }
+.is-completed .dish-name { text-decoration: line-through; color: rgba(255,255,255,0.5); }
+.is-completed .dish-cat { color: rgba($gold, 0.5); }
 
-.btn-remove { top: 10px; right: 10px; background: rgba(0,0,0,0.4); color: #FFF; opacity: 0; }
-.dish-card:hover .btn-remove { opacity: 1; }
-.btn-remove:hover { background: #EF4444; transform: rotate(90deg); }
+.btn-remove { top: 12px; right: 12px; background: rgba(0,0,0,0.6); color: #FFF; opacity: 0; border: 1px solid rgba(255,255,255,0.1); transform: translateX(10px); }
+.dish-card:hover .btn-remove { opacity: 1; transform: translateX(0); }
+.btn-remove:hover { background: #EF4444; border-color: #EF4444; transform: rotate(90deg); }
 
-.btn-add-slot { width: 100%; height: 70px; border: 1.5px dashed rgba(255,255,255,0.1); background: transparent; border-radius: 16px; cursor: pointer; transition: 0.3s; color: rgba(255,255,255,0.2); }
-.btn-add-slot:hover { border-color: $gold; color: $gold; background: rgba($gold, 0.05); }
+.btn-add-slot { 
+  width: 100%; height: 80px; border: 1.5px dashed rgba(255,255,255,0.15); 
+  background: rgba(0,0,0,0.2); border-radius: 18px; cursor: pointer; 
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); color: rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center;
+}
+.btn-add-slot:hover { border-color: $gold; border-style: solid; color: $gold; background: rgba($gold, 0.05); transform: translateY(-2px); box-shadow: inset 0 0 20px rgba($gold, 0.1), 0 5px 15px rgba(0,0,0,0.2); }
 </style>

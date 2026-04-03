@@ -16,10 +16,6 @@
           </div>
 
           <div class="action-buttons">
-            <button class="btn-icon-monochrome" :class="{ 'is-saved': isFavorite }" @click="toggleFavorite" :title="isFavorite ? 'Bỏ lưu' : 'Lưu bài viết'">
-              <svg width="18" height="18" viewBox="0 0 24 24" :fill="isFavorite ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
-            </button>
-
             <button class="btn-icon-monochrome" @click="handleContactChef" title="Nhắn tin cho tác giả">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
             </button>
@@ -56,14 +52,15 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onUnmounted } from 'vue' // 🔥 Đã gom import lên đầu
+import { ref, watch } from 'vue' 
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useChatStore } from '@/stores/chat'
 import api from '@/services/api'
 import { toast } from '@/composables/useToast'
-import { checkFollow, follow, unfollow, checkFavorite, addFavorite, removeFavorite, getFavorites } from '@/services/socialService'
+// Đã xóa các hàm checkFavorite, addFavorite, removeFavorite, getFavorites
+import { checkFollow, follow, unfollow } from '@/services/socialService'
 import { getUserStats } from '@/services/userService'
 
 const props = defineProps({ post: { type: Object, required: true } })
@@ -73,9 +70,7 @@ const authStore = useAuthStore()
 const chatStore = useChatStore()
 
 const isFollowing = ref(false)
-const isFavorite = ref(false)
 const authorStats = ref({ posts: 0, followers: 0, totalLikes: 0 })
-const isSaving = ref(false) 
 const realBio = ref('')
 
 const loadSocialState = async (postData) => {
@@ -99,14 +94,9 @@ const loadSocialState = async (postData) => {
     } catch { /* ignore */ }
   }
 
-  // 🔥 ĐÃ SỬA TỪ ĐÂY: Tách riêng logic check Lưu bài và Follow
   if (uid) {
     try {
-      // 1. Ai đăng nhập cũng được check xem đã Lưu bài này chưa (kể cả tác giả)
-      const isFav = await checkFavorite(uid, postData.postID || postData.id)
-      isFavorite.value = !!isFav
-
-      // 2. Chỉ check Follow nếu người đang xem KHÔNG PHẢI là tác giả
+      // Chỉ check Follow nếu người đang xem KHÔNG PHẢI là tác giả
       if (uid !== authorID) {
         const isFoll = await checkFollow(uid, authorID)
         isFollowing.value = !!isFoll
@@ -159,67 +149,6 @@ const toggleFollow = async () => {
     }
   } catch (err) { toast.error('Lỗi Follow!') }
 }
-
-// 🔥 HÀM TOGGLE FAVORITE (ĐÃ ĐÓNG NGOẶC CHUẨN)
-const toggleFavorite = async () => {
-  if (!authStore.isAuthenticated) { 
-    return toast.warn(t('toast.need_login') || 'Vui lòng đăng nhập để lưu bài viết!'); 
-  }
-  if (isSaving.value) return; 
-
-  const uid = authStore.user.accountID || authStore.user.id
-  const postID = props.post?.postID || props.post?.id
-  if (!postID) return
-
-  const isPremiumUser = authStore.user?.isPremium || authStore.user?.role === 'PREMIUM' || authStore.user?.IsPremium;
-  const isAdmin = authStore.user?.isAdmin || authStore.user?.role === 'ADMIN' || authStore.user?.role === 'admin';
-  const hasUnlimitedSave = isPremiumUser || isAdmin;
-
-  isSaving.value = true;
-  try {
-    if (isFavorite.value) {
-      await removeFavorite(uid, postID); 
-      isFavorite.value = false;
-      toast.success("Đã bỏ lưu công thức!");
-      window.dispatchEvent(new CustomEvent('sync-favorite', { detail: { id: postID, status: false } }));
-    } else {
-      if (!hasUnlimitedSave) {
-        const currentFavorites = await getFavorites(uid);
-        if (currentFavorites && currentFavorites.length >= 5) {
-          toast.warn("Bộ sưu tập đã đầy! Nâng cấp Premium để lưu không giới hạn sếp nhé.");
-          window.dispatchEvent(new CustomEvent('ui:open-premium'));
-          isSaving.value = false;
-          return; 
-        }
-      }
-      await addFavorite(uid, postID); 
-      isFavorite.value = true;
-      toast.success("Đã lưu công thức thành công!");
-      window.dispatchEvent(new CustomEvent('sync-favorite', { detail: { id: postID, status: true } }));
-    }
-  } catch (err) { 
-    console.error("Save error:", err);
-    toast.error('Lỗi yêu thích, vui lòng thử lại sau!') 
-  } finally {
-    isSaving.value = false;
-  }
-}
-
-// 🔥 CÁC HÀM ĐỒNG BỘ (NẰM NGOÀI TOGGLEFAVORITE)
-const handleSync = (e) => {
-  const currentPostId = props.post?.postID || props.post?.id;
-  if (e.detail.id === currentPostId) {
-    isFavorite.value = e.detail.status;
-  }
-}
-
-onMounted(() => {
-  window.addEventListener('sync-favorite', handleSync);
-});
-
-onUnmounted(() => {
-  window.removeEventListener('sync-favorite', handleSync);
-});
 </script>
 
 <style scoped lang="scss">
@@ -294,7 +223,6 @@ onUnmounted(() => {
   cursor: pointer; transition: 0.2s;
 
   &:hover { border-color: var(--color-neutral-900, #0f172a); color: var(--color-neutral-900, #0f172a); background: var(--color-neutral-50, #f8fafc); }
-  &.is-saved { color: var(--color-primary-500, #ea580c); border-color: var(--color-primary-500, #ea580c); background: var(--color-primary-50, #fff4ed); }
 }
 
 /* Nút Theo dõi chuẩn X/Threads */

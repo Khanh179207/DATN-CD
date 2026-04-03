@@ -664,6 +664,21 @@ const viewWinner = async (ev) => {
 const saveEvent = async () => {
   if (isViewOnly.value) return;
   if (!form.eventName.trim()) return toast.warn("Vui lòng nhập tên sự kiện");
+
+  if (!form.startAt || !form.endAt || !form.voteStartAt || !form.voteEndAt) {
+    return toast.warn("Vui lòng nhập đầy đủ các mốc thời gian của sự kiện!");
+  }
+
+  const dStart = new Date(form.startAt);
+  const dEnd = new Date(form.endAt);
+  const dVoteStart = new Date(form.voteStartAt);
+  const dVoteEnd = new Date(form.voteEndAt);
+
+  if (dEnd <= dStart) return toast.warn("Thời gian kết thúc nộp bài phải sau thời gian bắt đầu nộp!");
+  if (dVoteEnd <= dVoteStart) return toast.warn("Thời gian kết thúc bình chọn phải sau thời gian bắt đầu bình chọn!");
+  if (dVoteStart < dStart) return toast.warn("Thời gian bắt đầu bình chọn không được diễn ra TRƯỚC khi sự kiện bắt đầu!");
+  if (dVoteEnd < dEnd) return toast.warn("Sự kiện không thể kết thúc bình chọn khi vẫn còn đang trong thời gian nhận bài!");
+
   saving.value = true;
   try {
     let finalBannerUrl = form.bannerImage;

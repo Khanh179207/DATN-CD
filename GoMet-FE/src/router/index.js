@@ -33,7 +33,6 @@ const CategoryManagement = () => import(/* webpackChunkName: "admin" */ '@/pages
 const UserManagement = () => import(/* webpackChunkName: "admin" */ '@/pages/admin/UserManagement.vue')
 const CommentManagement = () => import(/* webpackChunkName: "admin" */ '@/pages/admin/CommentManagement.vue')
 const NotificationManagement = () => import(/* webpackChunkName: "admin" */ '@/pages/admin/NotificationManagement.vue')
-const AchievementManagement = () => import(/* webpackChunkName: "admin" */ '@/pages/admin/AchievementManagement.vue')
 const TicketManagement = () => import(/* webpackChunkName: "admin" */ '@/pages/admin/ticketadmin/TicketManagement.vue')
 const EventManagement = () => import(/* webpackChunkName: "admin" */ '@/pages/admin/eventadmin/EventManagement.vue')
 const PostEventManagement = () => import(/* webpackChunkName: "admin" */ '@/pages/admin/eventadmin/PostEventManagement.vue')
@@ -135,7 +134,6 @@ const routes = [
       { path: 'users', name: 'AdminUsers', component: UserManagement },
       { path: 'events', name: 'AdminEvents', component: EventManagement },
       { path: 'comments', name: 'AdminComments', component: CommentManagement },
-      { path: 'achievements', name: 'AdminAchievements', component: AchievementManagement },
       { path: 'notifications', name: 'AdminNotifications', component: NotificationManagement },
       { path: 'tickets', name: 'AdminTickets', component: TicketManagement },
       { path: 'events/:id/posts', name: 'AdminPostEventManagement', component: PostEventManagement },
@@ -149,7 +147,6 @@ const routes = [
 
   // 4. STANDALONE PAGES
   { path: '/verify-email', component: () => import('@/pages/VerifyEmailPage.vue') },
-  { path: '/forgot-password', component: () => import('@/pages/ForgotPasswordPage.vue') },
   { path: '/reset-password', component: () => import('@/pages/ResetPasswordPage.vue') },
 
   // 5. NOT FOUND

@@ -107,16 +107,6 @@
             </div>
             <span class="link-text" v-if="!isCollapsed">Quản lý Sự kiện</span>
           </router-link>
-
-          <router-link to="/admin/achievements" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Quản lý Thành tích' : ''">
-            <div class="icon-orb">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <circle cx="12" cy="8" r="7"></circle>
-                <polyline points="8.21 13.89 7 22 12 17 17 22 15.79 13.88"></polyline>
-              </svg>
-            </div>
-            <span class="link-text" v-if="!isCollapsed">Quản lý Thành tích</span>
-          </router-link>
         </div>
 
         <div class="nav-section anim-stagger" style="--d: 0.3s">
@@ -152,9 +142,19 @@
             </div>
             <span class="link-text" v-if="!isCollapsed">Xử lý Khiếu nại</span>
           </router-link>
+
+          <router-link to="/admin/notifications" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Thông báo Hệ thống' : ''">
+            <div class="icon-orb">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              </svg>
+            </div>
+            <span class="link-text" v-if="!isCollapsed">Thông báo Hệ thống</span>
+            <div class="lux-alert-dot"></div>
+          </router-link>
         </div>
 
-        <div class="nav-section anim-stagger" style="--d: 0.4s">
+        <div v-if="isSuperAdmin" class="nav-section anim-stagger" style="--d: 0.4s">
           <label class="section-tag" v-if="!isCollapsed">HỆ THỐNG & BẢO MẬT</label>
           <div class="section-divider" v-else></div>
 
@@ -166,16 +166,6 @@
               </svg>
             </div>
             <span class="link-text" v-if="!isCollapsed">Quản lý Giao dịch</span>
-          </router-link>
-
-          <router-link to="/admin/notifications" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Thông báo Hệ thống' : ''">
-            <div class="icon-orb">
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-              </svg>
-            </div>
-            <span class="link-text" v-if="!isCollapsed">Thông báo Hệ thống</span>
-            <div class="lux-alert-dot"></div>
           </router-link>
 
           <router-link to="/admin/blacklist" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Bộ lọc Từ khóa' : ''">
@@ -231,10 +221,17 @@
   </aside>
 </template>
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
+import { useAuthStore } from '@/stores/auth';
 
 // Khai báo sự kiện để báo cho Layout cha (AdminLayout) biết Sidebar đang ở trạng thái nào
 const emit = defineEmits(['toggle-collapse']);
+
+const authStore = useAuthStore();
+
+const isSuperAdmin = computed(() => {
+  return authStore.user && (String(authStore.user.accountID) === '1' || String(authStore.user.id) === '1');
+});
 
 // Đọc trạng thái từ LocalStorage để giữ nguyên khi F5 trang
 const isCollapsed = ref(localStorage.getItem('gomet_admin_sidebar_collapsed') === 'true');

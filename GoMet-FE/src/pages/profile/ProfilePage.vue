@@ -118,25 +118,6 @@
               </div>
             </div>
 
-            <div class="widget-box">
-              <h3 class="w-title">{{ $t('profile.achievements') }}</h3>
-              <ul class="award-list">
-                <li v-if="achievements.length === 0" class="award-empty">
-                  <span class="icon">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                  </span>
-                  <span>{{ $t('profile.no_achievements') }}</span>
-                </li>
-                <li v-for="ach in achievements" :key="ach.uaid">
-                  <span class="icon">{{ ach.icon }}</span>
-                  <div class="award-info">
-                    <strong>{{ ach.achievementName }}</strong>
-                    <span>{{ ach.description }}</span>
-                  </div>
-                </li>
-              </ul>
-            </div>
-
           </div>
         </aside>
 
@@ -350,7 +331,6 @@ import ProfileActions from '@/components/profile/ProfileActions.vue'
 import { getUserProfile, updateUserProfile } from '@/services/userService'
 import { getPostsByUser, normalizePost, togglePostActive, updatePost } from '@/services/postService'
 import { useAuthStore } from '@/stores/auth'
-import { getUserAchievements } from '@/services/achievementService'
 import { checkFollow, follow, unfollow } from '@/services/socialService'
 import { uploadMedia } from '@/services/uploadService'
 import { toast } from '@/composables/useToast'
@@ -369,7 +349,6 @@ const user = ref({
 const allPosts = ref([])
 const postsLoading = ref(true)
 const activeCategory = ref('All')
-const achievements = ref([])
 const isFollowing = ref(false)
 const followLoading = ref(false)
 
@@ -429,10 +408,9 @@ async function loadProfile(forcedId = null) {
   const targetId = forcedId || route.params.id || authStore.user?.accountID
   if (!targetId) return
   try {
-    const [profile, userPosts, userAch] = await Promise.all([
+    const [profile, userPosts] = await Promise.all([
       getUserProfile(targetId),
-      getPostsByUser(targetId),
-      getUserAchievements(targetId)
+      getPostsByUser(targetId)
     ])
     user.value = {
       name:       profile.username || 'Chef',
@@ -454,15 +432,13 @@ async function loadProfile(forcedId = null) {
       ? `${(rawLikes / 1000000).toFixed(1)}M`
       : rawLikes > 999
         ? `${(rawLikes / 1000).toFixed(1)}k`
-        : rawLikes
+        : `${rawLikes}`
+        
     // Fetch categories for edit modal
     try {
       const catRes = await api.get('/api/categories')
       categories.value = catRes.data
     } catch { console.warn('Failed to load categories') }
-
-    achievements.value = userAch || []
-    
     // Check follow status if viewing someone else's profile
     const myId = authStore.user?.accountID || authStore.user?.id
     if (!isOwnProfile.value && myId) {
@@ -659,6 +635,7 @@ async function saveProfile() {
     }
     
     await updateUserProfile(targetId, payload)
+    // 4. Refresh lại dữ liệu và giao diện
     await loadProfile()
     
     if (authStore.user) {

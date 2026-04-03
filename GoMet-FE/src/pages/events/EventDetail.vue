@@ -60,23 +60,47 @@
               </div>
 
               <div class="card-box prizes-section shadow-sm">
-                <h3>🏆 Cơ cấu giải thưởng</h3>
+                <h3>🏆 {{ eventData.category === 'ended' ? 'Kết quả chung cuộc & Giải thưởng' : 'Cơ cấu giải thưởng' }}</h3>
 
                 <div class="prizes-grid mt-6">
                   <div class="prize-card gold small-card">
                     <div class="prize-icon">🥇</div>
                     <p>Hạng Nhất</p>
                     <div class="reward-val" :class="getRewardClass(parsedRewards[0].type)">{{ parsedRewards[0].value }}</div>
+                    <div v-if="eventData.category === 'ended' && topEntries[0]" class="winner-reveal">
+                      <div class="winner-avatar" style="background: #b45309;">{{ topEntries[0].username.charAt(0).toUpperCase() }}</div>
+                      <div class="winner-details">
+                        <strong class="w-name">{{ topEntries[0].username }}</strong>
+                        <span class="w-post">{{ topEntries[0].postTitle }}</span>
+                        <span class="w-votes">{{ topEntries[0].voteCount }} bình chọn</span>
+                      </div>
+                    </div>
                   </div>
                   <div class="prize-card silver small-card">
                     <div class="prize-icon">🥈</div>
                     <p>Hạng Nhì</p>
                     <div class="reward-val" :class="getRewardClass(parsedRewards[1].type)">{{ parsedRewards[1].value }}</div>
+                    <div v-if="eventData.category === 'ended' && topEntries[1]" class="winner-reveal">
+                      <div class="winner-avatar" style="background: #475569;">{{ topEntries[1].username.charAt(0).toUpperCase() }}</div>
+                      <div class="winner-details">
+                        <strong class="w-name">{{ topEntries[1].username }}</strong>
+                        <span class="w-post">{{ topEntries[1].postTitle }}</span>
+                        <span class="w-votes">{{ topEntries[1].voteCount }} bình chọn</span>
+                      </div>
+                    </div>
                   </div>
                   <div class="prize-card bronze small-card">
                     <div class="prize-icon">🥉</div>
                     <p>Hạng Ba</p>
                     <div class="reward-val" :class="getRewardClass(parsedRewards[2].type)">{{ parsedRewards[2].value }}</div>
+                    <div v-if="eventData.category === 'ended' && topEntries[2]" class="winner-reveal">
+                      <div class="winner-avatar" style="background: #9a3412;">{{ topEntries[2].username.charAt(0).toUpperCase() }}</div>
+                      <div class="winner-details">
+                        <strong class="w-name">{{ topEntries[2].username }}</strong>
+                        <span class="w-post">{{ topEntries[2].postTitle }}</span>
+                        <span class="w-votes">{{ topEntries[2].voteCount }} bình chọn</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -125,7 +149,7 @@
           <div v-else class="entries-layout">
 
             <div v-if="topEntries.length > 0" class="ranking-section">
-              <h3 class="section-title">🏆 Bảng xếp hạng tạm thời</h3>
+              <h3 class="section-title">🏆 {{ eventData.category === 'ended' ? 'Kết quả chung cuộc (Top 3)' : 'Bảng xếp hạng tạm thời' }}</h3>
               <div class="entries-grid">
 <ContestEntryCard 
   v-for="(entry, index) in topEntries" 
@@ -382,7 +406,6 @@ const onEntrySubmitted = () => {
   isModalOpen.value = false
   fetchEventEntries(eventData.value.id)
   currentTab.value = 'entries'
-  toast.success('Gửi bài dự thi thành công! Chúc sếp giật giải!')
 }
 
 onMounted(loadAllData)
@@ -525,4 +548,31 @@ onMounted(loadAllData)
   align-items: center;
   gap: 4px;
 }
+
+/* --- WINNER REVEAL STYLES --- */
+.winner-reveal {
+  margin-top: 15px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 12px;
+  border: 1px dashed rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.winner-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  color: white; display: flex; align-items: center; justify-content: center;
+  font-weight: 900; font-size: 1.2rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+.winner-details {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+}
+.w-name { font-size: 1rem; color: #0f172a; font-weight: 800; }
+.w-post { font-size: 0.85rem; color: #475569; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-weight: 500; margin-top: 2px;}
+.w-votes { font-size: 0.8rem; color: #ea580c; font-weight: 800; margin-top: 6px; background: #fff7ed; padding: 2px 8px; border-radius: 100px; display: inline-block; align-self: center;}
 </style>

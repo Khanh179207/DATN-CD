@@ -224,7 +224,7 @@
                     </svg>
                   </div>
                   <h3 class="form-title" style="margin-top: 15px">Đã gửi Email</h3>
-                  <p class="description" style="text-align: center; margin-bottom: 20px; font-size: 0.9rem; color: #1C1917">Vui lòng kiểm tra email của bạn để lấy link đặt lại mật khẩu.</p>
+                  <p class="description" style="text-align: center; margin-bottom: 20px; font-size: 0.9rem; color: #1C1917">Nếu tài khoản có tồn tại thì chúng tôi sẽ gửi link đặt lại mật khẩu.</p>
                   <button type="button" class="btn-submit" @click="activeTab = 'login'">Quay lại Đăng nhập</button>
                 </div>
 

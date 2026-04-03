@@ -1,9 +1,10 @@
 package poly.edu.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Transactional; // 🔥 QUAN TRỌNG
 import poly.edu.dao.AccountDAO;
 import poly.edu.dao.PostDAO;
 import poly.edu.dto.AdminAccountDTO;
@@ -19,6 +20,7 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -33,7 +35,11 @@ public class AccountServiceImpl implements AccountService {
     // Bộ nhớ tạm lưu OTP (Key: Email, Value: Code)
     private final Map<String, String> otpStore = new ConcurrentHashMap<>();
 
+    /**
+     * Map Entity sang DTO
+     */
     private AdminAccountDTO toDTO(Account acc) {
+        if (acc == null) return null;
         AdminAccountDTO dto = new AdminAccountDTO();
         dto.setAccountID(acc.getAccountID());
         dto.setUsername(acc.getUsername());
@@ -45,9 +51,11 @@ public class AccountServiceImpl implements AccountService {
         dto.setPoint(acc.getPoint());
         dto.setCreatedAt(acc.getCreatedAt() != null ? acc.getCreatedAt().toString() : null);
         dto.setRole(acc.getIsAdmin() != null && acc.getIsAdmin() == 1 ? "ADMIN" : "USER");
+        // Thông tin Ban/Unban
         dto.setBanReason(acc.getBanReason());
         dto.setBannedAt(acc.getBannedAt() != null ? acc.getBannedAt().toString() : null);
 
+        // Thống kê số liệu
         int posts = acc.getPosts() != null ? acc.getPosts().size() : 0;
         dto.setPostCount(posts);
 
@@ -66,18 +74,25 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public List<AdminAccountDTO> findAll() {
-        return accountDAO.findAll().stream().map(this::toDTO).collect(Collectors.toList());
+        return accountDAO.findAll().stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
     }
+
 
     @Override
     public AdminAccountDTO findById(Integer id) {
-        return toDTO(accountDAO.findById(id).orElseThrow());
+        return accountDAO.findById(id)
+                .map(this::toDTO)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản ID: " + id));
     }
 
     @Override
+    @Transactional // 🔥 Đảm bảo an toàn dữ liệu
     public AdminAccountDTO save(AdminAccountDTO dto) {
         Account acc;
         if (dto.getAccountID() != null) {
+            // CẬP NHẬT TÀI KHOẢN CŨ
             acc = accountDAO.findById(dto.getAccountID()).orElseThrow();
             if (dto.getUsername() != null) acc.setUsername(dto.getUsername());
             if (dto.getEmail() != null) acc.setEmail(dto.getEmail());
@@ -88,27 +103,33 @@ public class AccountServiceImpl implements AccountService {
             if (dto.getRole() != null) {
                 acc.setIsAdmin("ADMIN".equalsIgnoreCase(dto.getRole()) ? 1 : 0);
             }
+
+            // Băm mật khẩu nếu có nhập mới
             if (dto.getPassword() != null && !dto.getPassword().trim().isEmpty()) {
                 acc.setPassword(passwordEncoder.encode(dto.getPassword()));
+                log.info("Đã cập nhật mật khẩu mới cho user: {}", acc.getUsername());
             }
             acc.setUpdatedAt(LocalDateTime.now());
         } else {
+            // TẠO TÀI KHOẢN MỚI
             acc = Account.builder()
                     .username(dto.getUsername())
                     .email(dto.getEmail())
-                    .password(passwordEncoder.encode(dto.getPassword() != null ? dto.getPassword() : "changeme"))
+                    .password(passwordEncoder.encode(dto.getPassword() != null ? dto.getPassword() : "gomet123"))
                     .avatar(dto.getAvatar())
                     .isPremium(dto.getIsPremium() != null ? dto.getIsPremium() : 0)
                     .isActive(dto.getIsActive() != null ? dto.getIsActive() : 1)
-                    .isAdmin(dto.getIsAdmin() != null ? dto.getIsAdmin() : 0)
+                    .isAdmin(dto.getIsAdmin() != null ? dto.getIsAdmin() : ("ADMIN".equalsIgnoreCase(dto.getRole()) ? 1 : 0))
                     .point(0)
                     .createdAt(LocalDateTime.now())
                     .build();
+            log.info("Đã tạo tài khoản mới: {}", acc.getUsername());
         }
         return toDTO(accountDAO.save(acc));
     }
 
     @Override
+    @Transactional // 🔥 Rất quan trọng vì liên quan đến ghi log nhật ký
     public void ban(Integer id, Integer adminId, String adminName, String adminEmail, String reason) {
         Account acc = accountDAO.findById(id).orElseThrow();
         acc.setIsActive(-1); // -1 là BỊ BAN
@@ -116,10 +137,15 @@ public class AccountServiceImpl implements AccountService {
         acc.setBannedAt(LocalDateTime.now());
         acc.setUpdatedAt(LocalDateTime.now());
         accountDAO.save(acc);
+
+        // Ghi lại nhật ký khóa
+
         moderationLogService.logAction(id, "ACCOUNT", "BAN", adminId, adminName, reason);
+        log.warn("Tài khoản {} đã bị khóa bởi Admin {} vì lý do: {}", acc.getUsername(), adminName, reason);
     }
 
     @Override
+    @Transactional
     public void unban(Integer id, Integer adminId, String adminName) {
         Account acc = accountDAO.findById(id).orElseThrow();
         acc.setIsActive(1);
@@ -127,20 +153,25 @@ public class AccountServiceImpl implements AccountService {
         acc.setBannedAt(null);
         acc.setUpdatedAt(LocalDateTime.now());
         accountDAO.save(acc);
+        // Ghi lại nhật ký mở khóa
         moderationLogService.logAction(id, "ACCOUNT", "UNBAN", adminId, adminName, "Đã ân xá, gỡ lệnh cấm");
+        log.info("Tài khoản {} đã được mở khóa bởi Admin {}", acc.getUsername(), adminName);
     }
 
     @Override
+    @Transactional
     public void delete(Integer id) {
         Account acc = accountDAO.findById(id).orElseThrow();
         acc.setIsActive(0);
         acc.setDeletedAt(LocalDateTime.now());
         accountDAO.save(acc);
+        log.info("Đã xóa mềm tài khoản ID: {}", id);
     }
 
-    @Override
+    // 🔥 BỎ @Override Ở ĐÂY VÌ INTERFACE ĐÃ XÓA HÀM NÀY
     public void hardDelete(Integer id) {
-        accountDAO.deleteById(id);
+        log.error("Cảnh báo: Yêu cầu xóa vĩnh viễn ID {} bị từ chối!", id);
+        throw new UnsupportedOperationException("Chức năng xóa vĩnh viễn đã bị vô hiệu hóa.");
     }
 
     // ─────────────────────────────────────────────────────────────────────────
