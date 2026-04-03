@@ -36,7 +36,7 @@ public class SecurityConfig {
                         // Cho phép các yêu cầu Pre-flight (OPTIONS) đi qua hết
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // ✅ DANH SÁCH CỬA TỰ DO (PUBLIC ENDPOINTS)
+                        // ✅ DANH SÁCH CỬA TỰ DO HOÀN TOÀN (Ai cũng được gọi mọi method GET/POST...)
                         .requestMatchers(
                                 "/api/auth/**",
                                 "/uploads/**",
@@ -44,13 +44,25 @@ public class SecurityConfig {
                                 "/ws-chat/**",
                                 "/api/payments/**",
                                 "/api/ai/**",
-                                "/api/appeals/**" // 🔥 CHÌA KHÓA ĐÂY RỒI: Cho phép gửi khiếu nại công khai
+                                "/api/appeals/**" // Cho phép gửi khiếu nại công khai
                         ).permitAll()
 
-                        // 🔒 PHÂN QUYỀN ĐẶC BIỆT (Nếu sếp cần tách biệt)
+                        // ✅ CỬA ĐỌC CHO GUEST (Chỉ cho phép xem - HTTP GET)
+                        // Guest có thể lướt xem bài, xem sự kiện, xem bình luận mà không cần đăng nhập
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/posts/**",
+                                "/api/events/**",
+                                "/api/categories/**",
+                                "/api/comments/**",
+                                "/api/system-config/**",
+                                "/api/users/**"// Cấp quyền đọc cấu hình banner/giá tiền
+                        ).permitAll()
+
+                        // 🔒 PHÂN QUYỀN ĐẶC BIỆT
                         .requestMatchers("/admin/**").hasRole("ADMIN")
 
                         // 🔒 TẤT CẢ CÁC REQUEST CÒN LẠI: Phải đăng nhập (Có Token hợp lệ)
+                        // Ví dụ: POST /api/posts (Đăng bài), PUT /api/users (Sửa profile) sẽ rơi vào đây
                         .anyRequest().authenticated()
                 );
 
