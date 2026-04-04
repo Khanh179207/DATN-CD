@@ -65,6 +65,21 @@ export const createPost = (data) =>
   api.post('/api/posts', data).then(r => r.data)
 
 /**
+ * Update an existing post.
+ * @param {number|string} id 
+ * @param {object} data - PostDTO
+ */
+export const updatePost = (id, data) =>
+  api.put(`/api/posts/${id}`, data).then(r => r.data)
+
+/**
+ * Toggle post visibility (isActive).
+ * @param {number|string} id 
+ */
+export const togglePostActive = (id) =>
+  api.patch(`/api/posts/${id}/toggle-active`).then(r => r.data)
+
+/**
  * @param {Array<number|string>} postIds - Mảng các ID bài viết (VD: [1, 2, 3])
  * @returns {Promise<Object>} Map chứa top comment, key là postID
  */
@@ -111,9 +126,13 @@ export function normalizePost(dto) {
     authorID:   dto.authorID ?? dto.accountID ?? null,
     author: {
       name:   dto.authorName || 'GoMet Chef',
-      avatar: dto.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(dto.authorName||'G')}&background=EA580C&color=fff`
+      avatar: dto.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(dto.authorName||'G')}&background=EA580C&color=fff`,
+      isPremium: dto.isPremium || false
     },
-    category: dto.categoryName || ''
+    isPremium: dto.isPremium || false, // Top level for card styling
+    category: dto.categoryName || '',
+    isActive: dto.isActive !== undefined ? dto.isActive : 1, // 🔥 Trạng thái ẩn/hiện
+    isApproved: dto.isApproved ?? 1
   }
 }
 

@@ -179,6 +179,28 @@
                       </button>
                     </div>
                   </div>
+
+                  <div v-else-if="isDeactivatedBoxVisible" key="deactivated-local" class="deactivated-alert-box">
+                    <button type="button" class="btn-close-alert" @click="closeDeactivatedAlert" title="Đóng">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                    <div class="deactivated-header">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 6L5 20"></path><path d="M5 6l14 14"></path></svg>
+                      <h4>TÀI KHOẢN ĐÃ XÓA MỀM</h4>
+                    </div>
+                    <div class="deactivated-body">
+                      <p class="deactivated-msg">
+                        Tài khoản này đã được yêu cầu xóa vào ngày <b>{{ deactivatedDetails?.time }}</b>. 
+                        Bạn vẫn có thể khôi phục lại toàn bộ dữ liệu trước khi tài khoản bị xóa vĩnh viễn.
+                      </p>
+                    </div>
+                    <div class="deactivated-footer">
+                      <button type="button" class="btn-restore-lux" @click="triggerRestoration">
+                        Khôi phục tài khoản ngay
+                      </button>
+                    </div>
+                  </div>
+
                   <div v-else-if="loginError" key="error-local" class="auth-error-msg">
                     {{ loginError }}
                   </div>
@@ -297,7 +319,10 @@ const isLoading = ref(false)
 const signupSection = ref(null)
 const showAppealModal = ref(false)
 const isBannedBoxVisible = ref(false)
+const isDeactivatedBoxVisible = ref(false)
 const bannedDetails = ref(null)
+const deactivatedDetails = ref(null)
+const loginEmailForRestore = ref('')
 const loginError = ref('')
 const wrongPasswordCount = ref(0)
 
@@ -370,27 +395,59 @@ const closeBannedAlert = () => {
   bannedDetails.value = null;
 }
 
+const closeDeactivatedAlert = () => {
+  isDeactivatedBoxVisible.value = false;
+  loginError.value = '';
+  deactivatedDetails.value = null;
+}
+
 const openAppealAction = () => {
   showAppealModal.value = true;
   closeBannedAlert(); 
 }
 
+const triggerRestoration = () => {
+  window.dispatchEvent(new CustomEvent('auth:restore-login-prompt', {
+    detail: { 
+      email: loginEmailForRestore.value,
+      deletedAt: deactivatedDetails.value?.rawDate 
+    }
+  }));
+  closeDeactivatedAlert();
+}
+
 const processBannedError = (errData, errorMessage) => {
   isBannedBoxVisible.value = true;
-  loginError.value = ''; // 🔥 Đã FIX: Ép rỗng để nhường hoàn toàn cho Banned Box
+  isDeactivatedBoxVisible.value = false;
+  loginError.value = ''; 
 
   const banReason = errData.banReason || 'Vi phạm chính sách và tiêu chuẩn cộng đồng GOMET.';
   const bannedBy = errData.bannedByName || 'Quản trị viên hệ thống';
-  let timeStr = '';
   let rawTimeStr = '';
   
   if (errData.bannedAt) {
      const d = new Date(errData.bannedAt);
      rawTimeStr = `${d.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})} ngày ${d.toLocaleDateString('vi-VN')}`;
-     timeStr = ` vào lúc ${rawTimeStr}`;
   }
   bannedDetails.value = { reason: banReason, by: bannedBy, time: rawTimeStr };
   toast.error(`🚨 Đăng nhập thất bại do tài khoản đã bị khóa!`, { timeout: 8000 })
+}
+
+const processDeactivatedError = (errData) => {
+  isDeactivatedBoxVisible.value = true;
+  isBannedBoxVisible.value = false;
+  loginEmailForRestore.value = errData.email || loginForm.email;
+  
+  let timeStr = 'Vừa qua';
+  if (errData.deletedAt) {
+    const d = new Date(errData.deletedAt);
+    timeStr = d.toLocaleDateString('vi-VN');
+    deactivatedDetails.value = { time: timeStr, rawDate: errData.deletedAt };
+  } else {
+    deactivatedDetails.value = { time: timeStr };
+  }
+  
+  toast.info('Tài khoản này đang trong trạng thái xóa mềm.');
 }
 
 const handleSubmit = async () => {
@@ -429,8 +486,10 @@ const handleSubmit = async () => {
       const backendMsg = errData.message || err.message || ''
       const errorString = backendMsg.toUpperCase()
       
-      if (errorString.includes('ACCOUNT_BANNED') || errorString.includes('BANNED') || err.status === 403) {
+      if (errorString.includes('ACCOUNT_BANNED')) {
         processBannedError(errData, backendMsg)
+      } else if (errorString.includes('ACCOUNT_DEACTIVATED')) {
+        processDeactivatedError(errData)
       } else {
         wrongPasswordCount.value++
         loginError.value = backendMsg || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.'
@@ -509,8 +568,10 @@ const handleGoogleCallback = async (response) => {
     const errorMessage = errData.message || err.message || String(err)
     const errorString = errorMessage.toUpperCase()
 
-    if (errorString.includes('ACCOUNT_BANNED') || errorString.includes('BANNED') || err.status === 403 || errData.status === 403) {
+    if (errorString.includes('ACCOUNT_BANNED')) {
       processBannedError(errData, errorMessage);
+    } else if (errorString.includes('ACCOUNT_DEACTIVATED')) {
+      processDeactivatedError(errData);
     } else {
       loginError.value = errorMessage || 'Lỗi đăng nhập bằng Google. Vui lòng thử lại.'
       toast.error(loginError.value)
@@ -541,6 +602,21 @@ const handleGoogleCallback = async (response) => {
 .btn-appeal-lux { background: #dc2626; color: white; border: none; padding: 12px 20px; border-radius: 100px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: 0.3s; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3); }
 .btn-appeal-lux span { font-weight: 800; text-decoration: underline; }
 .btn-appeal-lux:hover { background: #b91c1c; transform: translateY(-2px); box-shadow: 0 6px 15px rgba(220, 38, 38, 0.4); }
+
+/* --- DEACTIVATED ALERT BOX LUXURY (LOCAL) --- */
+.deactivated-alert-box {
+  background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 16px; padding: 16px; margin: 15px 0 20px;
+  text-align: left; box-shadow: 0 8px 20px rgba(12, 74, 110, 0.08); animation: fadeIn 0.4s ease-out; position: relative;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.deactivated-header { display: flex; align-items: center; gap: 10px; color: #0369a1; margin-bottom: 12px; border-bottom: 1px dashed #bae6fd; padding-bottom: 12px; }
+.deactivated-header h4 { margin: 0; font-size: 0.95rem; font-weight: 800; letter-spacing: 0.5px; }
+.deactivated-body { margin-bottom: 16px; }
+.deactivated-msg { color: #0c4a6e; font-size: 0.9rem; line-height: 1.5; margin: 0; font-weight: 500; }
+.deactivated-msg b { color: #0369a1; text-decoration: underline; }
+.deactivated-footer { text-align: center; }
+.btn-restore-lux { background: #0369a1; color: white; border: none; padding: 12px 20px; border-radius: 100px; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: 0.3s; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(3, 105, 161, 0.3); }
+.btn-restore-lux:hover { background: #075985; transform: translateY(-2px); box-shadow: 0 6px 15px rgba(3, 105, 161, 0.4); }
 
 .auth-error-msg { background: #FEF2F2; color: #DC2626; border: 1px solid #FCA5A5; border-radius: 8px; padding: 10px; font-size: 0.85rem; font-weight: 600; margin-bottom: 15px; text-align: center; }
 

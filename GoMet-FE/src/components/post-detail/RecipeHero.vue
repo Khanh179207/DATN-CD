@@ -79,7 +79,7 @@
                 <svg width="18" height="18" viewBox="0 0 24 24" :fill="isFavorite ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
               </button>
 
-              <button class="btn-share-clean" @click="copyLink" title="Chia sẻ">
+              <button class="btn-share-clean" @click="openShareModal" title="Chia sẻ">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
               </button>
             </div>
@@ -144,6 +144,7 @@
     </Teleport>
 
     <FeedbackModal v-if="showReportModal" :form="reportForm" @close="showReportModal = false" />
+    <SharePostModal v-if="showShareModal" :post="post" :show="showShareModal" @close="showShareModal = false" />
   </section>
 </template>
 
@@ -157,6 +158,7 @@ import api from '@/services/api'
 import { addFavorite, removeFavorite, checkFavorite, getFavorites } from '@/services/socialService'
 import { togglePostLike, checkPostLiked } from '@/services/likeService' 
 import FeedbackModal from '@/components/modals/FeedbackModal.vue'
+import SharePostModal from '@/components/modals/SharePostModal.vue'
 
 const props = defineProps({ 
   post: { type: Object, required: true },
@@ -180,6 +182,7 @@ const isLikeLoading = ref(false)
 const isLikeAnimating = ref(false)
 const localLikeCount = ref(0)
 const showReportModal = ref(false)
+const showShareModal = ref(false)
 const reportForm = ref({ ticketType: 'REPORT', title: '', description: '', attachment: null, targetPostID: null })
 
 // --- STATES MODAL LIKE ---
@@ -201,7 +204,13 @@ const isNewToday = computed(() => {
 const formatNumber = (n) => n >= 1000 ? (n / 1000).toFixed(1) + 'k' : (n || 0)
 
 // --- ACTIONS ---
-const copyLink = () => { navigator.clipboard.writeText(window.location.href); toast.success("Đã sao chép liên kết!"); }
+const openShareModal = () => {
+    if (!authStore.isAuthenticated) {
+        window.dispatchEvent(new CustomEvent('ui:open-login'))
+        return
+    }
+    showShareModal.value = true
+}
 const goToProfile = (id) => { showLikesModal.value = false; router.push(`/profile/${id}`); }
 const openReportModal = () => {
   if (!authStore.isAuthenticated) {

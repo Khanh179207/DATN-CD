@@ -123,7 +123,7 @@
                   <button @click="askRejectAction(post)" class="btn-action ban" title="Từ chối/Gỡ bài"><Ban :size="16" /></button>
                 </template>
 
-                <template v-if="post._status === 'deactivated'">
+              <template v-if="post._status === 'banned' || post._status === 'rejected'">
                   <button @click="reactivatePost(post.postID)" class="btn-action restore" title="Khôi phục bài"><RotateCcw :size="16" /></button>
                 </template>
                 
@@ -196,7 +196,7 @@
               </div>
             </div>
 
-            <div v-if="selectedPost._status === 'deactivated' && selectedPost.rejectReason" class="p-detail-ban-reason">
+            <div v-if="(selectedPost._status === 'banned' || selectedPost._status === 'rejected') && selectedPost.rejectReason" class="p-detail-ban-reason">
               <div class="ban-header">
                 <AlertTriangle :size="16" /> Thông tin gỡ/từ chối bài viết
               </div>
@@ -226,12 +226,12 @@
               </div>
             </div>
 
-            <div class="modal-action-zone" v-if="selectedPost._status === 'deactivated'" style="background: #f0f9ff; border-color: #e0f2fe; margin-top: 24px;">
+            <div class="modal-action-zone" v-if="selectedPost._status === 'banned' || selectedPost._status === 'rejected'" style="background: #f0f9ff; border-color: #e0f2fe; margin-top: 24px;">
               <div class="alert-ribbon" style="color: #0369a1;">
                 <AlertCircle :size="18" /> Bài viết đã bị gỡ. Bạn có muốn khôi phục lại không?
               </div>
               <div class="btn-grid-lux" style="grid-template-columns: 1fr;">
-                <button @click="reactivatePost(selectedPost.postID); closeDetail()" class="btn-lux-primary" style="background: linear-gradient(135deg, #0284c7, #0ea5e9); box-shadow: 0 10px 20px -5px rgba(2, 132, 199, 0.4);">
+                <button @click="reactivatePost(selectedPost.postID)" class="btn-lux-primary" style="background: linear-gradient(135deg, #0284c7, #0ea5e9); box-shadow: 0 10px 20px -5px rgba(2, 132, 199, 0.4);">
                   <RotateCcw :size="18" /> Khôi phục bài viết
                 </button>
               </div>
@@ -482,8 +482,31 @@ const confirmRejectAction = async () => {
 }
 
 const reactivatePost = async (id) => {
-  if (!confirm('Bạn có chắc muốn khôi phục bài viết này lên hệ thống?')) return
-  await approvePost(id);
+  if (!confirm('Bạn có chắc muốn khôi phục bài viết này lên hệ thống?')) return;
+  
+  try {
+    const payload = {
+      adminId: authStore.user?.accountID || authStore.user?.id || 0,
+      adminName: authStore.user?.username || authStore.user?.fullName || 'Admin'
+    };
+    
+    await api.put(`/api/admin/posts/${id}/restore`, payload);
+    
+    const p = posts.value.find(post => post.postID === id);
+    if (p) {
+      p.isActive = 1;
+      p.isApproved = 1;
+      p.rejectReason = null;
+      p.rejectedAt = null;
+      p._status = getStatus(p);
+    }
+    
+    if (selectedPost.value?.postID === id) closeDetail();
+    
+    showToast('Đã khôi phục bài viết bị gỡ thành công!');
+  } catch (e) {
+    showToast('Lỗi: ' + (e.response?.data?.message || e.message), 'error');
+  }
 }
 
 const openDetail = async (post) => { 

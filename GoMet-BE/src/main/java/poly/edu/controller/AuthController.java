@@ -36,13 +36,20 @@ public class AuthController {
     private final BCryptPasswordEncoder passwordEncoder;
     private final GoogleAuthService googleAuthService;
     private final JwtUtils jwtUtils;
+    private final poly.edu.service.AccountService accountService;
 
-    // Helper tạo Response khi bị khóa
-    private Map<String, Object> buildBannedResponse(Account acc) {
+    // Helper tạo Response khi bị khóa hoặc xóa mềm
+    private Map<String, Object> buildErrorResponse(Account acc, String type) {
         Map<String, Object> errorResponse = new HashMap<>();
-        errorResponse.put("message", "ACCOUNT_BANNED");
-        errorResponse.put("banReason", acc.getBanReason());
-        errorResponse.put("bannedAt", acc.getBannedAt() != null ? acc.getBannedAt().toString() : null);
+        errorResponse.put("message", type); // ACCOUNT_BANNED hoặc ACCOUNT_DEACTIVATED
+        errorResponse.put("email", acc.getEmail());
+        
+        if ("ACCOUNT_BANNED".equals(type)) {
+            errorResponse.put("banReason", acc.getBanReason());
+            errorResponse.put("bannedAt", acc.getBannedAt() != null ? acc.getBannedAt().toString() : null);
+        } else {
+            errorResponse.put("deletedAt", acc.getDeletedAt() != null ? acc.getDeletedAt().toString() : null);
+        }
         return errorResponse;
     }
 
@@ -65,8 +72,13 @@ public class AuthController {
 
             if (opt.isPresent()) {
                 acc = opt.get();
-                if (acc.getIsActive() != null && acc.getIsActive() == 0) {
-                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(buildBannedResponse(acc));
+                if (acc.getIsActive() != null) {
+                    if (acc.getIsActive() == -1) {
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(buildErrorResponse(acc, "ACCOUNT_BANNED"));
+                    }
+                    if (acc.getIsActive() == 0) {
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(buildErrorResponse(acc, "ACCOUNT_DEACTIVATED"));
+                    }
                 }
                 String role = (acc.getIsAdmin() != null && acc.getIsAdmin() == 1) ? "ADMIN" : "USER";
                 String jwtToken = jwtUtils.generateJwtToken(acc.getEmail(), acc.getAccountID(), role);
@@ -124,8 +136,13 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Mật khẩu không chính xác"));
         }
 
-        if (acc.getIsActive() != null && acc.getIsActive() == 0) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(buildBannedResponse(acc));
+        if (acc.getIsActive() != null) {
+            if (acc.getIsActive() == -1) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(buildErrorResponse(acc, "ACCOUNT_BANNED"));
+            }
+            if (acc.getIsActive() == 0) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(buildErrorResponse(acc, "ACCOUNT_DEACTIVATED"));
+            }
         }
 
         String role = (acc.getIsAdmin() != null && acc.getIsAdmin() == 1) ? "ADMIN" : "USER";
@@ -242,11 +259,53 @@ public class AuthController {
         if (opt.isEmpty()) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Không tìm thấy User"));
 
         Account acc = opt.get();
-        if (acc.getIsActive() != null && acc.getIsActive() == 0) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(buildBannedResponse(acc));
+        if (acc.getIsActive() != null) {
+            if (acc.getIsActive() == -1) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(buildErrorResponse(acc, "ACCOUNT_BANNED"));
+            }
+            if (acc.getIsActive() == 0) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(buildErrorResponse(acc, "ACCOUNT_DEACTIVATED"));
+            }
         }
 
         return ResponseEntity.ok(buildResponse(acc, token));
+    }
+
+    // ─── ACCOUNT RESTORATION (KHÔI PHỤC TÀI KHOẢN) ──────────────────────────────
+    
+    /** Bước 1: Gửi OTP khôi phục */
+    @PostMapping("/send-restore-otp")
+    public ResponseEntity<?> sendRestoreOtp(@RequestBody Map<String, String> req) {
+        String email = req.get("email");
+        try {
+            accountService.sendRestoreOTP(email);
+            return ResponseEntity.ok(Map.of("message", "Mã xác thực đã được gửi về Email của bạn."));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    /** Bước 2: Xác nhận Password + OTP để khôi phục */
+    @PostMapping("/restore-account")
+    public ResponseEntity<?> restoreAccount(@RequestBody Map<String, String> req) {
+        String email = req.get("email");
+        String password = req.get("password");
+        String otp = req.get("otp");
+        
+    try {
+        accountService.verifyAndRestore(email, password, otp);
+        
+        // 🔥 Lấy lại tài khoản vừa khôi phục để tạo token đăng nhập luôn
+        Account acc = accountDAO.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản sau khi khôi phục"));
+        
+        String role = (acc.getIsAdmin() != null && acc.getIsAdmin() == 1) ? "ADMIN" : "USER";
+        String jwtToken = jwtUtils.generateJwtToken(acc.getEmail(), acc.getAccountID(), role);
+        
+        return ResponseEntity.ok(buildResponse(acc, jwtToken));
+    } catch (Exception e) {
+        return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+    }
     }
 
     // ─── HELPERS ─────────────────────────────────────────────────────────────

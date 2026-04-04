@@ -146,7 +146,7 @@ const startLoadingAnimation = () => {
   });
 };
 
-// --- CÁC TRẠNG THÁI CŨ ---
+// --- CÁC TRẠNG THÁI ---
 const showAuthModal = ref(false); 
 const showPremium = ref(false); 
 const showExpired = ref(false); 
@@ -169,7 +169,19 @@ const handleOpenMealplan = (event) => {
   // Lấy data truyền tới (nếu có, ví dụ post chi tiết)
   mealplanData.value = event.detail?.post || null;
   showMealplanModal.value = true;
-}
+};
+
+// --- HÀM XỬ LÝ KHÔI PHỤC TÀI KHOẢN ---
+const handleRestorePrompt = (e) => {
+  modalTab.value = 'restore-account';
+  showAuthModal.value = true;
+  // 🔥 Đã FIX: Gửi ngược dữ liệu vào AuthModal sau khi nó được Mount (v-if)
+  nextTick(() => {
+    window.dispatchEvent(new CustomEvent('auth:restore-login-data', { detail: e.detail }));
+  });
+};
+
+
 
 onMounted(() => {
   if (sessionStorage.getItem('just_logged_in') === 'true') startLoadingAnimation();
@@ -177,8 +189,9 @@ onMounted(() => {
   /* Global Event Listeners */
   window.addEventListener('ui:open-premium', () => { showPremium.value = true; })
   
-  // 🔥 LẮNG NGHE SỰ KIỆN MỞ MEALPLAN TỪ BẤT KỲ ĐÂU
+  // 🔥 LẮNG NGHE CÁC SỰ KIỆN TỪ HỆ THỐNG
   window.addEventListener('ui:open-mealplan', handleOpenMealplan)
+  window.addEventListener('auth:restore-login-prompt', handleRestorePrompt)
 })
 
 watch(() => route.fullPath, () => {
@@ -193,9 +206,9 @@ watch(() => route.fullPath, () => {
 onUnmounted(() => {
   clearTimeout(safetyTimer);
   if (ctx) ctx.revert();
-  
   // 🔥 DỌN DẸP EVENT LISTENER
   window.removeEventListener('ui:open-mealplan', handleOpenMealplan);
+  window.removeEventListener('auth:restore-login-prompt', handleRestorePrompt);
 })
 
 // --- LOGIC LOCK PREMIUM CHO NÚT GOMET ASSISTANT ---

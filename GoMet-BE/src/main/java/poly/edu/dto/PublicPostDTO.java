@@ -16,10 +16,6 @@ public class PublicPostDTO {
     private Integer cookingTime;
     private Integer views;
     private LocalDateTime createdAt;
-    private Integer isApproved;
-    private Integer isActive;
-
-    // Author
     private Integer authorID;
     private String authorName;
     private String authorAvatar;
@@ -34,6 +30,7 @@ public class PublicPostDTO {
     private Long ratingCount;
     private Long commentCount;
     private Long favoriteCount;
-    // Thêm vào trong file PublicPostDTO.java
-    private Boolean isLiked; // Nhớ dùng Boolean (chữ B hoa) sếp nhé
+    private Boolean isLiked; 
+    private Integer isActive;   // 🔥 Trạng thái ẩn/hiện
+    private Integer isApproved; // 🔥 Trạng thái duyệt
 }

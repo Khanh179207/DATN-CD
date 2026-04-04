@@ -2,6 +2,7 @@ package poly.edu.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -93,9 +94,13 @@ public class PostController {
             @RequestParam(required = false) Integer accountId) {
 
         return postDAO.findById(id).map(post -> {
+            // 🛡️ BẢO VỆ RIÊNG TƯ: Nếu tác giả đã xóa tài khoản thì bài viết cũng phải ẩn
+            if (post.getAccount() != null && post.getAccount().getIsActive() != 1) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Bài viết không tồn tại hoặc đã bị ẩn"));
+            }
             PostDetailDTO dto = toDetailDTO(post, accountId);
             return ResponseEntity.ok(dto);
-        }).orElse(ResponseEntity.notFound().build());
+        }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Bài viết không tồn tại")));
     }
 
     @PostMapping("/{id}/view")
@@ -161,7 +166,8 @@ public class PostController {
     public ResponseEntity<List<PublicPostDTO>> getByUser(
             @PathVariable Integer accountID,
             @RequestParam(required = false) Integer currentUserId) {
-        List<Post> posts = postDAO.findByAccount_AccountIDAndIsApprovedAndIsActive(accountID, 1, 1);
+        // 🔥 TRẢ VỀ TẤT CẢ: Để Frontend tự lọc (Sếp yêu cầu bài ẩn vẫn phải hiện cho chủ sở hữu)
+        List<Post> posts = postDAO.findByAccount_AccountIDOrderByCreatedAtDesc(accountID);
         return ResponseEntity.ok(posts.stream().map(p -> toPublicDTO(p, currentUserId)).collect(Collectors.toList()));
     }
 
@@ -196,9 +202,9 @@ public class PostController {
         dto.setLevel(p.getLevel());
         dto.setCookingTime(p.getCookingTime());
         dto.setViews(p.getViews());
-        dto.setCreatedAt(p.getCreatedAt()); // 🔥 Sẽ tự map LocalDateTime
-        dto.setIsActive(p.getIsActive());
-        dto.setIsApproved(p.getIsApproved());
+        dto.setCreatedAt(p.getCreatedAt()); 
+        dto.setIsActive(p.getIsActive());   // 🔥 TRẠNG THÁI ẨN/HIỆN
+        dto.setIsApproved(p.getIsApproved()); // 🔥 TRẠNG THÁI DUYỆT
 
         if (p.getAccount() != null) {
             dto.setAuthorID(p.getAccount().getAccountID());
@@ -421,6 +427,26 @@ public class PostController {
         }
 
         return ResponseEntity.ok(resultMap);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> updatePost(@PathVariable Integer id, @RequestBody PostDTO postDTO) {
+        try {
+            return ResponseEntity.ok(postService.updatePost(id, postDTO));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PatchMapping("/{id}/toggle-active")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> toggleActive(@PathVariable Integer id) {
+        try {
+            return ResponseEntity.ok(postService.toggleActive(id));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 
 }

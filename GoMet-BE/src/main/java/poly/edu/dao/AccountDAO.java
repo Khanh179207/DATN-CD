@@ -24,6 +24,10 @@ public interface AccountDAO extends JpaRepository<Account, Integer> {
 
     List<Account> findByUsernameContainingIgnoreCase(String keyword);
 
+    List<Account> findByIsActive(Integer isActive);
+
+    List<Account> findByUsernameContainingIgnoreCaseAndIsActive(String keyword, Integer isActive);
+
     // ==========================================
     // THÊM CÁC HÀM CHO ADMIN STATS CONTROLLER
     // ==========================================

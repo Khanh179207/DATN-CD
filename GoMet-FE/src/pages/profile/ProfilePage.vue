@@ -1,25 +1,27 @@
 <template>
   <div>
     <div class="gomet-profile-full">
-      
       <div class="bg-layer">
         <div class="grid-mesh"></div>
         <div class="noise-texture"></div>
       </div>
 
       <div class="profile-layout-wide">
-        
         <aside class="col-left">
           <div class="sticky-wrapper">
-            <div class="id-card">
+            <div class="id-card" :class="{ 'is-premium-profile': user.isPremium === 1 }">
               <div class="avatar-box">
                 <img :src="user.avatar" class="avatar-img" alt="Chef">
-                <div class="verify-badge">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <div class="verify-badge" :class="{ 'is-premium': user.isPremium === 1 }">
+                  <svg v-if="user.isPremium === 1" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="crown-icon"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"></path><path d="M5 20h14"></path></svg>
+                  <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
                 </div>
               </div>
               
-              <h1 class="user-name">{{ user.name }}</h1>
+              <div class="name-badge-row">
+                <h1 class="user-name">{{ user.name }}</h1>
+                <span v-if="user.isPremium === 1" class="luxury-badge-vip">PREMIUM</span>
+              </div>
               <p class="user-handle">@{{ user.handle }}</p>
               
               <div class="bio-box">
@@ -28,15 +30,18 @@
               </div>
 
               <div class="action-stack">
-                <button v-if="isOwnProfile" class="btn-primary" @click="openEditModal">{{ $t('profile.edit') }}</button>
-                <button v-else class="btn-follow" :class="{ following: isFollowing }" @click="toggleFollow" :disabled="followLoading">
-                  <span v-if="followLoading">...</span>
-                  <span v-else-if="isFollowing">✓ Following</span>
-                  <span v-else>+ Follow</span>
-                </button>
-                <button class="btn-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-                </button>
+                <template v-if="isOwnProfile">
+                  <button class="btn-primary" @click="openEditModal">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    {{ $t('profile.edit') }}
+                  </button>
+                </template>
+                <template v-else>
+                  <ProfileActions 
+                    :targetUser="{ ...user, id: route.params.id }" 
+                    v-model:isFollowing="isFollowing"
+                  />
+                </template>
               </div>
 
               <div class="social-links">
@@ -49,7 +54,6 @@
         </aside>
 
         <main class="col-center">
-          
           <div class="content-header">
             <h2 class="section-title">{{ $t('profile.masterpieces') }} <span class="count">{{ filteredPosts.length }}</span></h2>
             <div class="filter-tabs">
@@ -64,13 +68,16 @@
           </div>
 
           <div class="recipe-feed">
-            <RecipeCard 
-              v-if="!postsLoading"
-              v-for="post in filteredPosts" 
-              :key="post.id" 
-              :post="post" 
-              class="feed-item"
-            />
+            <div v-if="!postsLoading" v-for="post in filteredPosts" :key="post.id" class="recipe-item-wrapper">
+              <RecipeCard 
+                :post="post" 
+                :isManagement="isOwnProfile"
+                class="feed-item"
+                @manage-edit="openPostEditModal"
+                @manage-toggle-visibility="togglePostVisibility"
+              />
+            </div>
+
             <RecipeCard 
               v-if="postsLoading"
               v-for="n in 6" 
@@ -80,12 +87,10 @@
               class="feed-item"
             />
           </div>
-
         </main>
 
         <aside class="col-right">
           <div class="sticky-wrapper">
-            
             <div class="widget-box">
               <h3 class="w-title">{{ $t('profile.stats') }}</h3>
               <div class="stat-grid">
@@ -93,11 +98,11 @@
                   <span class="val">{{ user.postsCount }}</span>
                   <span class="lbl">{{ $t('profile.posts') }}</span>
                 </div>
-                <div class="stat-cell">
+                <div class="stat-cell clickable" @click="openFollowList('followers')">
                   <span class="val">{{ user.followers }}</span>
                   <span class="lbl">{{ $t('profile.followers') }}</span>
                 </div>
-                <div class="stat-cell">
+                <div class="stat-cell clickable" @click="openFollowList('following')">
                   <span class="val">{{ user.following }}</span>
                   <span class="lbl">{{ $t('profile.following') }}</span>
                 </div>
@@ -107,248 +112,156 @@
                 </div>
               </div>
             </div>
-
           </div>
         </aside>
 
       </div>
     </div>
 
-    <teleport to="body">
-      <transition name="modal-fade">
-        <div v-if="showEditModal" class="edit-modal-overlay" @click.self="showEditModal = false">
-          <div class="edit-modal-card">
-            <div class="edit-modal-header">
-              <h2>Edit Profile</h2>
-              <button class="btn-close" @click="showEditModal = false">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-              </button>
-            </div>
+    <ProfileEditModal 
+      :show="showEditModal" :form="editForm" :user="user" :saving="editSaving"
+      @close="showEditModal = false" @save="saveProfile" @avatar-change="onAvatarChange" @open-deactivate="showDeactivateModal = true"
+    />
 
-            <div class="edit-modal-body">
-              <div class="edit-avatar-section">
-                <div class="edit-avatar-wrap">
-                  <img :src="editForm.avatarPreview || user.avatar" class="edit-avatar-img" alt="Avatar">
-                  <label class="edit-avatar-overlay" title="Change photo">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-                    <input type="file" accept="image/*" class="file-hidden" @change="onAvatarChange">
-                  </label>
-                </div>
-                <p class="avatar-hint">Click to change photo</p>
-              </div>
+    <PostEditModal 
+      :show="showPostEditModal" :form="postEditForm" :categories="categories" :saving="postSaving"
+      @close="showPostEditModal = false" @save="savePostInfo" @media-change="onPostMediaChange"
+    />
 
-              <div class="edit-field">
-                <label>Username</label>
-                <input v-model="editForm.username" type="text" placeholder="Your display name" maxlength="50">
-              </div>
+    <FollowListModal 
+      :show="showFollowModal" :type="followModalType" :list="followList" :loading="followLoadingList"
+      @close="showFollowModal = false" @go-to-profile="goToUserProfile"
+    />
 
-              <div class="edit-field">
-                <label>Bio</label>
-                <textarea v-model="editForm.bio" placeholder="Tell others about yourself..." rows="4" maxlength="300"></textarea>
-                <span class="char-count">{{ editForm.bio.length }} / 300</span>
-              </div>
-            </div>
+    <DeactivateAccountModal v-model="showDeactivateModal" />
 
-            <div class="edit-modal-footer">
-              <button class="btn-cancel" @click="showEditModal = false">Cancel</button>
-              <button class="btn-save" :disabled="editSaving" @click="saveProfile">
-                <span v-if="editSaving" class="spinner-sm"></span>
-                <span>{{ editSaving ? 'Saving...' : 'Save Changes' }}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </transition>
-    </teleport>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import RecipeCard from '@/components/common/RecipeCard.vue'
+import ProfileActions from '@/components/profile/ProfileActions.vue'
+import DeactivateAccountModal from '@/components/modals/DeactivateAccountModal.vue'
+
+// Import 3 Modal vừa tách (Sửa đường dẫn nếu sếp lưu ở thư mục khác)
+import ProfileEditModal from '@/components/profile/ProfileEditModal.vue'
+import PostEditModal from '@/components/profile/PostEditModal.vue'
+import FollowListModal from '@/components/profile/FollowListModal.vue'
+
 import { getUserProfile, updateUserProfile } from '@/services/userService'
-import { getPostsByUser, normalizePost } from '@/services/postService'
+import { getPostsByUser, normalizePost, togglePostActive, updatePost } from '@/services/postService'
 import { useAuthStore } from '@/stores/auth'
-import { checkFollow, follow, unfollow } from '@/services/socialService'
+import { checkFollow } from '@/services/socialService'
 import { uploadMedia } from '@/services/uploadService'
 import { toast } from '@/composables/useToast'
+import api from '@/services/api'
 
 const route = useRoute()
+const router = useRouter()
 const authStore = useAuthStore()
 
-const user = ref({
-  name: '', handle: '', avatar: '', bio: '',
-  postsCount: 0, followers: '0', following: 0, point: 0, totalLikes: 0
-})
-const allPosts = ref([])
-const postsLoading = ref(true)
-const activeCategory = ref('All')
-const isFollowing = ref(false)
-const followLoading = ref(false)
+// State
+const user = ref({ name: '', handle: '', avatar: '', bio: '', postsCount: 0, followers: '0', following: 0, point: 0, totalLikes: 0, isPremium: 0 })
+const allPosts = ref([]); const postsLoading = ref(true); const activeCategory = ref('All'); const isFollowing = ref(false);
+const showPostEditModal = ref(false); const postSaving = ref(false); const postEditForm = ref({ id: null, title: '', description: '', ingredients: '', categoryID: null, level: 1, cookingTime: 30, mediaFile: null, mediaPreview: '' })
+const categories = ref([])
+const showFollowModal = ref(false); const followModalType = ref('followers'); const followList = ref([]); const followLoadingList = ref(false)
+const showDeactivateModal = ref(false)
+const showEditModal = ref(false); const editSaving = ref(false); const editForm = ref({ username: '', bio: '', avatarFile: null, avatarPreview: '' })
 
-// Derived: unique categories from loaded posts
-const postCategories = computed(() => {
-  const cats = new Set(allPosts.value.map(p => p.category).filter(Boolean))
-  return ['All', ...Array.from(cats)]
-})
-
-// Filtered posts based on active category tab
+// Computed
+const isOwnProfile = computed(() => !route.params.id || String(route.params.id) === String(authStore.user?.accountID || authStore.user?.id))
+const postCategories = computed(() => ['All', ...Array.from(new Set(allPosts.value.map(p => p.category).filter(Boolean)))])
 const filteredPosts = computed(() => {
-  if (activeCategory.value === 'All') return allPosts.value
-  return allPosts.value.filter(p => p.category === activeCategory.value)
+  let list = allPosts.value
+  if (!isOwnProfile.value) list = list.filter(p => p.isActive === 1 && p.isApproved === 1)
+  if (activeCategory.value === 'All') return list
+  return list.filter(p => p.category === activeCategory.value)
 })
 
-// Edit modal state
-const showEditModal = ref(false)
-const editSaving = ref(false)
-const editForm = ref({ username: '', bio: '', avatarFile: null, avatarPreview: '' })
-
-const isOwnProfile = computed(() => {
-  const myId = authStore.user?.accountID || authStore.user?.id
-  const paramId = route.params.id
-  return !paramId || String(paramId) === String(myId)
-})
-
-async function loadProfile() {
-  // Use route param id if present, otherwise use logged-in user
-  const targetId = route.params.id || authStore.user?.accountID
+// Methods
+async function loadProfile(forcedId = null) {
+  postsLoading.value = true
+  const targetId = forcedId || route.params.id || authStore.user?.accountID
   if (!targetId) return
   try {
-    const [profile, userPosts] = await Promise.all([
-      getUserProfile(targetId),
-      getPostsByUser(targetId)
-    ])
+    const [profile, userPosts] = await Promise.all([getUserProfile(targetId), getPostsByUser(targetId)])
     user.value = {
-      name:       profile.username || 'Chef',
-      handle:     (profile.username || 'chef').toLowerCase().replace(/\s+/g, '_'),
-      avatar:     profile.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.username||'G')}&background=EA580C&color=fff`,
-      bio:        profile.bio || '',
-      postsCount: profile.postCount || 0,
-      followers:  profile.followerCount > 999
-                    ? `${(profile.followerCount/1000).toFixed(1)}k`
-                    : `${profile.followerCount || 0}`,
-      following:  profile.followingCount || 0,
-      point:      profile.point || 0
+      name: profile.username || 'Chef', handle: (profile.username || 'chef').toLowerCase().replace(/\s+/g, '_'),
+      avatar: profile.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.username||'G')}&background=EA580C&color=fff`,
+      bio: profile.bio || '', postsCount: profile.postCount || 0,
+      followers: profile.followerCount > 999 ? `${(profile.followerCount/1000).toFixed(1)}k` : `${profile.followerCount || 0}`,
+      following: profile.followingCount || 0, point: profile.point || 0, isPremium: profile.isPremium || 0
     }
     allPosts.value = userPosts.map(normalizePost)
     postsLoading.value = false
     const rawLikes = allPosts.value.reduce((s, p) => s + (p.likes || 0), 0)
-    user.value.totalLikes = rawLikes > 999999
-      ? `${(rawLikes / 1000000).toFixed(1)}M`
-      : rawLikes > 999
-        ? `${(rawLikes / 1000).toFixed(1)}k`
-        : `${rawLikes}`
+    user.value.totalLikes = rawLikes > 999999 ? `${(rawLikes / 1000000).toFixed(1)}M` : rawLikes > 999 ? `${(rawLikes / 1000).toFixed(1)}k` : `${rawLikes}`
         
-    // Check follow status if viewing someone else's profile
-    const myId = authStore.user?.accountID || authStore.user?.id
-    if (!isOwnProfile.value && myId) {
-      try {
-        const status = await checkFollow(myId, targetId)
-        isFollowing.value = status === true || status?.following === true
-      } catch { isFollowing.value = false }
+    try { const catRes = await api.get('/api/categories'); categories.value = catRes.data } catch {}
+    
+    if (!isOwnProfile.value && authStore.user) {
+      try { const status = await checkFollow(authStore.user?.accountID, targetId); isFollowing.value = status === true || status?.following === true } catch { isFollowing.value = false }
     }
   } catch (err) {
-    console.warn('ProfilePage: API error', err)
+    if (err.response?.status === 404) { toast.error('Tài khoản không tồn tại.'); router.push('/') }
     postsLoading.value = false
   }
 }
 
-async function toggleFollow() {
-  const myId = authStore.user?.accountID || authStore.user?.id
-  const targetId = route.params.id
-  if (!myId || !targetId || followLoading.value) return
-  followLoading.value = true
+watch(() => route.params.id, (newID) => { showFollowModal.value = false; loadProfile(newID) }, { immediate: false });
+watch(() => authStore.user, (newVal) => { if (newVal && !route.params.id) loadProfile() }, { immediate: true })
+
+async function openFollowList(type) {
+  const targetId = route.params.id || authStore.user?.accountID; if (!targetId) return
+  followModalType.value = type; showFollowModal.value = true; followLoadingList.value = true; followList.value = []
   try {
-    if (isFollowing.value) {
-      await unfollow(myId, targetId)
-      isFollowing.value = false
-      if (user.value.followers) {
-        const n = parseInt(String(user.value.followers).replace('k', '')) || 0
-        user.value.followers = String(Math.max(0, n - 1))
-      }
-    } else {
-      await follow(myId, targetId)
-      isFollowing.value = true
-      const n = parseInt(String(user.value.followers).replace('k', '')) || 0
-      user.value.followers = String(n + 1)
-    }
-  } catch (err) {
-    toast.error('Action failed, please try again.')
-  } finally {
-    followLoading.value = false
-  }
+    const endpoint = type === 'followers' ? '/api/follows/followers-list' : '/api/follows/following-list'
+    const paramKey = type === 'followers' ? 'followeeID' : 'followerID'
+    const res = await api.get(endpoint, { params: { [paramKey]: targetId } }); followList.value = res.data
+  } catch (err) { toast.error('Lỗi tải danh sách.') } finally { followLoadingList.value = false }
 }
 
-function openEditModal() {
-  editForm.value = {
-    username: user.value.name,
-    bio: user.value.bio || '',
-    avatarFile: null,
-    avatarPreview: ''
-  }
-  showEditModal.value = true
+function goToUserProfile(id) { showFollowModal.value = false; router.push({ name: 'Profile', params: { id } }) }
+
+async function togglePostVisibility(post) {
+  try { const res = await togglePostActive(post.id); post.isActive = res.isActive; toast.success(post.isActive === 1 ? 'Đã hiển thị!' : 'Đã ẩn.') } catch { toast.error('Lỗi.') }
 }
 
-function onAvatarChange(e) {
-  const file = e.target.files[0]
-  if (!file) return
-  editForm.value.avatarFile = file
-  editForm.value.avatarPreview = URL.createObjectURL(file)
+function openPostEditModal(post) {
+  postEditForm.value = { id: post.id, title: post.title, description: post.description, ingredients: post.ingredients || '', categoryID: post.categoryID || null, level: post.difficulty === 'Easy' ? 1 : (post.difficulty === 'Hard' ? 3 : 2), cookingTime: parseInt(post.time) || 30, mediaFile: null, mediaPreview: post.image }
+  showPostEditModal.value = true
 }
+
+function onPostMediaChange(e) { const file = e.target.files[0]; if (!file) return; postEditForm.value.mediaFile = file; postEditForm.value.mediaPreview = URL.createObjectURL(file) }
+
+async function savePostInfo() {
+  if (postSaving.value) return; postSaving.value = true
+  try {
+    let finalMediaUrl = postEditForm.value.mediaPreview
+    if (postEditForm.value.mediaFile) finalMediaUrl = await uploadMedia(postEditForm.value.mediaFile, 'posts')
+    await updatePost(postEditForm.value.id, { ...postEditForm.value, media: finalMediaUrl, accountID: authStore.user?.accountID })
+    toast.success('Đã cập nhật bài viết!'); showPostEditModal.value = false; loadProfile() 
+  } catch { toast.error('Lỗi.') } finally { postSaving.value = false }
+}
+
+function openEditModal() { editForm.value = { username: user.value.name, bio: user.value.bio || '', avatarFile: null, avatarPreview: '' }; showEditModal.value = true }
+
+function onAvatarChange(e) { const file = e.target.files[0]; if (!file) return; editForm.value.avatarFile = file; editForm.value.avatarPreview = URL.createObjectURL(file) }
 
 async function saveProfile() {
-  if (editSaving.value) return
-  
-  // Lấy ID người dùng (Ưu tiên ID từ route, nếu không có lấy từ store)
-  const targetId = route.params.id || authStore.user?.accountID || authStore.user?.id
-  if (!targetId) return
-
+  if (editSaving.value) return; const targetId = route.params.id || authStore.user?.accountID; if (!targetId) return
   editSaving.value = true
   try {
-    let finalAvatarUrl = user.value.avatar; // Giữ avatar cũ làm mặc định
-
-    // 1. Nếu có file mới, đẩy lên thư mục 'avatars' của Cloudinary
-    if (editForm.value.avatarFile) {
-      try {
-        // 🔥 QUAN TRỌNG: Thêm chữ 'avatars' vào tham số thứ 2
-        finalAvatarUrl = await uploadMedia(editForm.value.avatarFile, 'avatars')
-      } catch (uploadErr) { 
-        toast.error('Lỗi khi tải ảnh lên mây!');
-        editSaving.value = false;
-        return; // Dừng luôn nếu upload ảnh tạch
-      }
-    }
-
-    // 2. Gom dữ liệu thành Object JSON sạch sẽ
-    const payload = { 
-      username: editForm.value.username, 
-      bio: editForm.value.bio,
-      avatar: finalAvatarUrl // Gửi cái Link HTTPS xịn
-    }
-    
-    // 3. Gửi lên Backend (Đảm bảo backend dùng @RequestBody để nhận)
-    await updateUserProfile(targetId, payload)
-    
-    // 4. Refresh lại dữ liệu và giao diện
+    let finalAvatarUrl = user.value.avatar
+    if (editForm.value.avatarFile) finalAvatarUrl = await uploadMedia(editForm.value.avatarFile, 'avatars')
+    await updateUserProfile(targetId, { username: editForm.value.username, bio: editForm.value.bio, avatar: finalAvatarUrl })
     await loadProfile()
-    
-    // 🔥 Cập nhật AuthStore & LocalStorage để Header ăn theo
-    if (authStore.user) {
-        authStore.user.avatar = finalAvatarUrl;
-        authStore.user.name = editForm.value.username; // Hoặc username
-        
-        // DÒNG QUAN TRỌNG NHẤT: Lưu đè xuống LocalStorage để F5 không bị cũ
-        localStorage.setItem('user', JSON.stringify(authStore.user));
-    }
-
-    showEditModal.value = false
-    toast.success('Hồ sơ đã được lưu lên mây! ☁️')
-  } catch (err) {
-    toast.error('Có lỗi xảy ra khi lưu trữ.')
-  } finally {
-    editSaving.value = false
-  }
+    if (authStore.user) { authStore.user.avatar = finalAvatarUrl; authStore.user.name = editForm.value.username; localStorage.setItem('user', JSON.stringify(authStore.user)) }
+    showEditModal.value = false; toast.success('Đã lưu hồ sơ!')
+  } catch { toast.error('Lỗi lưu trữ.') } finally { editSaving.value = false }
 }
 
 onMounted(loadProfile)

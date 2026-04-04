@@ -11,11 +11,27 @@ export const useChatStore = defineStore('chat', () => {
   // Tổng số tin nhắn chưa đọc (Hiển thị badge đỏ ở Header)
   const totalUnreadCount = ref(0)
 
+  // Hàng chờ tin nhắn đặc biệt (VD: Chia sẻ bài viết) để tránh Race Condition
+  const specialMessageQueue = ref([])
+
   // Hàm mở khung chat nhỏ
   const openChat = (user) => {
     // Đảm bảo user truyền vào có ID để MiniChatBox gọi API chính xác
     activeChat.value = user
     isMessengerOpen.value = false 
+  }
+
+  // Thêm tin nhắn vào hàng chờ để MiniChatBox bốc đi xử lý
+  const addSpecialMessage = (msg) => {
+    specialMessageQueue.value.push({
+      ...msg,
+      timestamp: Date.now() // Để định danh duy nhất
+    })
+  }
+
+  // Xóa tin nhắn khỏi hàng chờ sau khi đã xử lý xong
+  const clearSpecialMessage = (timestamp) => {
+    specialMessageQueue.value = specialMessageQueue.value.filter(m => m.timestamp !== timestamp)
   }
 
   // Hàm đóng khung chat
@@ -32,8 +48,11 @@ export const useChatStore = defineStore('chat', () => {
     activeChat, 
     isMessengerOpen, 
     totalUnreadCount, 
+    specialMessageQueue,
     openChat, 
     closeChat,
-    setUnreadCount 
+    setUnreadCount,
+    addSpecialMessage,
+    clearSpecialMessage
   }
 })
