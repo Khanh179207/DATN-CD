@@ -66,11 +66,6 @@
                       <span class="item-name-text">{{ item.name }}</span>
                       <span class="item-qty-text">Bài viết: {{ item.quantity }}</span>
                     </div>
-                    <button class="btn-remove-item" @click.stop="shoppingStore.removeItem(idx)"><svg width="14"
-                        height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                      </svg></button>
                   </div>
                 </div>
               </div>
@@ -262,9 +257,20 @@ const toggleShopping = () => {
     return;
   }
   
-  const role = String(authStore.user?.role || '').toUpperCase();
-  const isPremiumUser = authStore.user?.isPremium === true || authStore.user?.IsPremium === true || role === 'PREMIUM';
-  const isAdmin = authStore.user?.isAdmin === true || role === 'ADMIN';
+  // 🔥 FIX: Kiểm tra "nhẹ tay" hơn, chấp nhận các giá trị 1, "true", "1", true
+  const role = String(authStore.user?.role || '').toLowerCase();
+  
+  const isPremiumUser = (
+    role === 'premium' || 
+    ['true', '1', 1, true].includes(authStore.user?.isPremium) ||
+    ['true', '1', 1, true].includes(authStore.user?.IsPremium)
+  );
+
+  const isAdmin = (
+    role === 'admin' || 
+    ['true', '1', 1, true].includes(authStore.user?.isAdmin) ||
+    ['true', '1', 1, true].includes(authStore.user?.IsAdmin)
+  );
   
   if (!isPremiumUser && !isAdmin) {
     toast.warn('Tính năng Giỏ đi chợ là đặc quyền chỉ dành cho tài khoản Premium sếp nhé!');
@@ -272,8 +278,11 @@ const toggleShopping = () => {
     return;
   }
   
-  showNoti.value = false; showShopping.value = !showShopping.value; if (showShopping.value) shoppingStore.fetchCart(); 
+  showNoti.value = false; 
+  showShopping.value = !showShopping.value; 
+  if (showShopping.value) shoppingStore.fetchCart(); 
 }
+
 const toggleNoti = () => { showShopping.value = false; showNoti.value = !showNoti.value; if (showNoti.value) loadNotifications(); }
 const toggleChat = () => { chatStore.isMessengerOpen = !chatStore.isMessengerOpen; closeAllDropdowns(); }
 const closeAllDropdowns = () => { showNoti.value = false; showShopping.value = false; }

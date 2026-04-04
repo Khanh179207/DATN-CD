@@ -31,10 +31,13 @@
 
     .btn-action {
       opacity: 1;
-      transform: translateX(0);
+      transform: translate(0);
 
+      &:nth-child(1) { transition-delay: 0ms; }
       &:nth-child(2) { transition-delay: 55ms; }
       &:nth-child(3) { transition-delay: 110ms; }
+      &.btn-manage-edit { transition-delay: 55ms; }
+      &.btn-manage-hide { transition-delay: 110ms; }
     }
   }
 
@@ -293,12 +296,10 @@
   top: 12px;
   right: 12px;
   z-index: 2;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 }
 
 .btn-action {
+  position: absolute;
   width: 36px;
   height: 36px;
   border-radius: 50%;
@@ -312,8 +313,24 @@
   color: var(--color-neutral-600, #475569);
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   opacity: 0;
-  transform: translateX(12px);
   transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* --- NHÓM DỌC (Các nút cơ bản chìa xuống dưới) - Trượt từ trên xuống --- */
+  &:nth-child(1) {
+    top: 0;
+    right: 0;
+    transform: translateY(-12px);
+  }
+  &:nth-child(2) {
+    top: 44px; // 36px + 8px
+    right: 0;
+    transform: translateY(-12px);
+  }
+  &:nth-child(3) {
+    top: 88px; // 44px + 44px
+    right: 0;
+    transform: translateY(-12px);
+  }
 
   &:hover {
     background: $primary-600;
@@ -329,21 +346,27 @@
 
   &.btn-compare.active {
     opacity: 1;
-    transform: translateX(0);
+    transform: translate(0);
     background: #1C1917;
     color: $primary-500;
   }
 
-  /* Management Specific Styles */
+  /* --- NHÓM NGANG (Các nút quản lý chìa sang trái) - Trượt từ phải sang --- */
   &.btn-manage-edit {
+    top: 0;
+    right: 44px; // 36px + 8px
+    transform: translateX(12px);
     &:hover { background: #0EA5E9; box-shadow: 0 4px 14px rgba(14, 165, 233, 0.4); }
   }
 
   &.btn-manage-hide {
+    top: 0;
+    right: 88px; // 44px + 44px
+    transform: translateX(12px);
     &:hover { background: #F59E0B; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4); }
     &.is-hidden-active {
       opacity: 1;
-      transform: translateX(0);
+      transform: translate(0);
       background: #F1F5F9;
       color: #F59E0B;
       border: 1px solid #FED7AA;
@@ -605,3 +628,163 @@
 /* Transitions */
 .pop-in-enter-active, .pop-in-leave-active { transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
 .pop-in-enter-from, .pop-in-leave-to { opacity: 0; transform: scale(0.95) translateY(10px); }
+
+/* ==========================================
+   📱 TỐI ƯU RESPONSIVE & MOBILE TOUCH
+   ========================================== */
+
+// 1. DÀNH CHO MÀN HÌNH CẢM ỨNG (Điện thoại, Tablet không có chuột)
+@media (hover: none) and (pointer: coarse) {
+  .recipe-card-wrapper {
+    // Ép các nút thao tác nhanh (Tim, Bookmark...) luôn hiện mờ mờ trên Mobile
+    // Tránh việc người dùng không biết có nút bấm vì không thể Hover
+    .btn-action {
+      opacity: 0.9;
+      transform: translate(0);
+      background: rgba(255, 255, 255, 0.85);
+      
+      &:active {
+        transform: scale(0.9);
+        background: $primary-500;
+        color: white;
+      }
+    }
+
+    // Tắt hiệu ứng scale ảnh giật cục khi chạm trên mobile
+    &:active .main-img {
+      transform: scale(1.02);
+    }
+    
+    // Tắt tooltip trên mobile để tránh bị kẹt màn hình
+    .beautiful-tooltip {
+      display: none !important;
+    }
+  }
+}
+
+// 2. BREAKPOINT TABLET (Dưới 1024px)
+@media (max-width: 1024px) {
+  .card-content {
+    padding: 14px 14px 12px; // Giảm nhẹ padding
+  }
+  
+  .card-title {
+    font-size: 1rem; // Chữ nhỏ lại 1 xíu
+  }
+  
+  .btn-action {
+    width: 32px;
+    height: 32px;
+    svg { width: 16px; height: 16px; } // Thu nhỏ icon action
+  }
+}
+
+// 3. BREAKPOINT ĐIỆN THOẠI (Dưới 768px)
+@media (max-width: 768px) {
+  .recipe-card-wrapper {
+    border-radius: 16px; // Bo góc nhẹ lại cho hợp màn hình nhỏ
+  }
+
+  .card-media {
+    aspect-ratio: 4 / 3; // Chuyển tỉ lệ ảnh vuông hơn 1 xíu để hiển thị to rõ trên Mobile
+  }
+
+  .quick-actions {
+    top: 8px;
+    right: 8px;
+  }
+
+  .btn-action {
+    width: 30px;
+    height: 30px;
+    opacity: 0.9;
+    transform: translate(0); // Luôn luôn hiển thị vị trí chuẩn trên Mobile
+    svg { width: 14px; height: 14px; } // Thu nhỏ icon cho cân đối với nút 30px
+
+    /* Căn chỉnh lại vị trí L-shape cho kích thước 30px, gap 4px */
+    &:nth-child(1) { top: 0; right: 0; }
+    &:nth-child(2) { top: 34px; right: 0; }
+    &:nth-child(3) { top: 68px; right: 0; }
+
+    &.btn-manage-edit {
+      top: 0; right: 34px;
+    }
+    &.btn-manage-hide {
+      top: 0; right: 68px;
+    }
+  }
+
+  .meta-top {
+    margin-bottom: 6px;
+  }
+
+  .rating-box {
+    padding: 3px 8px;
+    font-size: 0.75rem;
+    .count { font-size: 0.75rem; }
+  }
+
+  .time-badge {
+    padding: 3px 8px;
+    font-size: 0.75rem;
+  }
+
+  .category-tag {
+    font-size: 0.6rem;
+    padding: 3px 10px;
+    top: 8px;
+    left: 8px;
+  }
+
+  // Ép Footer không bị vỡ bố cục khi tên tác giả quá dài
+  .card-footer {
+    gap: 8px;
+    padding-top: 10px;
+  }
+
+  .author-avt {
+    width: 26px;
+    height: 26px;
+  }
+
+  .author-name {
+    font-size: 0.8rem;
+  }
+
+  .card-stats-wrapper {
+    gap: 10px;
+  }
+
+  .stats-group .stat-text {
+    font-size: 0.75rem; // Nhỏ chữ số lượt xem/like
+  }
+}
+
+// 4. BREAKPOINT ĐIỆN THOẠI NHỎ (iPhone SE, Galaxy Fold - Dưới 380px)
+@media (max-width: 380px) {
+  .card-content {
+    padding: 10px;
+  }
+  
+  .card-title {
+    font-size: 0.9rem;
+  }
+
+  .author-name-group {
+    max-width: 80px; // Ép cắt tên tác giả thành "..." nếu quá dài
+  }
+}
+
+// 5. TỐI ƯU CÁC POPUP TOÀN CỤC TRÊN MOBILE
+@media (max-width: 640px) {
+  .likes-popup-container {
+    width: 90%; // Chuyển từ fix cứng 300px sang linh hoạt 90%
+    max-width: 340px;
+    max-height: 70vh; // Không để popup tràn quá màn hình đt
+    border-radius: 20px;
+  }
+  
+  .popup-header {
+    padding: 14px 16px;
+  }
+}

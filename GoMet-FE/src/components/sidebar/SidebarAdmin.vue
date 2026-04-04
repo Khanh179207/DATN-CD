@@ -154,7 +154,7 @@
           </router-link>
         </div>
 
-        <div v-if="isSuperAdmin" class="nav-section anim-stagger" style="--d: 0.4s">
+        <div class="nav-section anim-stagger" style="--d: 0.4s">
           <label class="section-tag" v-if="!isCollapsed">HỆ THỐNG & BẢO MẬT</label>
           <div class="section-divider" v-else></div>
 
@@ -168,15 +168,6 @@
             <span class="link-text" v-if="!isCollapsed">Quản lý Giao dịch</span>
           </router-link>
 
-          <router-link to="/admin/blacklist" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Bộ lọc Từ khóa' : ''">
-            <div class="icon-orb">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                <line x1="2" y1="2" x2="22" y2="22"></line>
-              </svg>
-            </div>
-            <span class="link-text" v-if="!isCollapsed">Bộ lọc Từ khóa</span>
-          </router-link>
 
           <router-link to="/admin/system-logs" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Nhật ký Hệ thống' : ''">
             <div class="icon-orb">
@@ -221,17 +212,13 @@
   </aside>
 </template>
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 
 // Khai báo sự kiện để báo cho Layout cha (AdminLayout) biết Sidebar đang ở trạng thái nào
 const emit = defineEmits(['toggle-collapse']);
 
 const authStore = useAuthStore();
-
-const isSuperAdmin = computed(() => {
-  return authStore.user && (String(authStore.user.accountID) === '1' || String(authStore.user.id) === '1');
-});
 
 // Đọc trạng thái từ LocalStorage để giữ nguyên khi F5 trang
 const isCollapsed = ref(localStorage.getItem('gomet_admin_sidebar_collapsed') === 'true');

@@ -180,7 +180,7 @@ router.beforeEach((to, from, next) => {
     ['true', '1', 1, true].includes(user?.isAdmin)
   );
 
-  // 1. Admin-only routes
+// 1. Admin-only routes
   if (to.matched.some(r => r.meta?.requiresAdmin)) {
     if (!isLoggedIn) {
       toast.error('Vui lòng đăng nhập để truy cập trang này')
@@ -190,8 +190,18 @@ router.beforeEach((to, from, next) => {
       toast.error('Bạn không có quyền truy cập trang quản trị')
       return next({ path: '/home' })
     }
-  }
 
+    // 🔥 BỨC TƯỜNG LỬA SUPER ADMIN (Chỉ ID = 1 mới qua được)
+    // Danh sách các trang tuyệt mật: Doanh thu, Nhật ký hệ thống, Cài đặt hệ thống
+    const superAdminRoutes = ['AdminTransactions', 'AdminSystemLogs', 'AdminSystemSettings'];
+    
+    // Kiểm tra tên route hiện tại có nằm trong danh sách cấm không, và ID có phải là 1 không
+    // (Dùng Number() để đề phòng trường hợp ID lưu dưới dạng chuỗi '1')
+    if (superAdminRoutes.includes(to.name) && Number(user?.accountID) !== 1 && Number(user?.id) !== 1) {
+      toast.error('Cấm truy cập! Chỉ Giám đốc hệ thống mới có quyền xem khu vực này.');
+      return next({ path: '/admin/dashboard' }); // Đá văng về trang Dashboard chung của Admin
+    }
+  }
   // 2. Auth-required routes
   if (to.matched.some(r => r.meta?.requiresAuth)) {
     if (to.name === 'PaymentSuccess') {

@@ -1,5 +1,16 @@
+	-- Bước 1: Trở về database master (Bắt buộc)
+	USE master;
+	GO
 
-	
+
+-- Bước 2: Đá đít toàn bộ các kết nối đang cắm vào Database này
+IF EXISTS(select * from sys.databases where name='DATN_CD')
+BEGIN
+    ALTER DATABASE DATN_CD SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE DATN_CD;
+END
+GO
+
 	-- Bước 3: Khởi tạo lại Database
 	CREATE DATABASE DATN_CD;
 	GO

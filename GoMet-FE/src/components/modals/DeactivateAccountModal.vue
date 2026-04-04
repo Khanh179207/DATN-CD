@@ -1,64 +1,69 @@
 <template>
   <transition name="modal-fade">
-    <div v-if="modelValue" class="deactivate-overlay" @click.self="close">
-      <div class="deactivate-card">
-        <div class="header">
-          <div class="icon-box warning">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-              <line x1="12" y1="9" x2="12" y2="13"></line>
-              <line x1="12" y1="17" x2="12.01" y2="17"></line>
-            </svg>
+    <div v-if="modelValue" class="edit-modal-overlay" @click.self="close">
+      <div class="edit-modal-card deactivate-card-lux">
+        <div class="edit-modal-header">
+          <div class="header-left-icon">
+            <div class="icon-box-danger">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+            </div>
           </div>
-          <h2>Xác nhận xóa tài khoản</h2>
-          <p class="subtitle">Hành động này sẽ ẩn tài khoản và tất cả bài viết của bạn. Bạn có thể khôi phục lại bất kỳ lúc nào bằng cách đăng nhập lại.</p>
+          <button class="btn-close" @click="close">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
         </div>
 
-        <div class="body">
-          <!-- Chỉ một bước duy nhất: Nhập OTP -->
-          <div class="form-step">
-            <div class="otp-hint">
+        <div class="edit-modal-body">
+          <h2 class="danger-title">Xác nhận xóa tài khoản</h2>
+          <p class="danger-subtitle">Hành động này sẽ ẩn tài khoản và tất cả bài viết của bạn. Bạn có thể khôi phục lại bất kỳ lúc nào bằng cách đăng nhập lại.</p>
+
+          <div class="form-step mt-4">
+            <div class="otp-hint-box">
               Mã xác thực đã được gửi tự động đến Email của bạn. <br>
-              Vui lòng nhập mã gồm 6 chữ số để xác nhận xóa.
+              Vui lòng nhập mã gồm <strong>6 chữ số</strong> để xác nhận.
             </div>
             
-            <div class="otp-input-container">
+            <div class="otp-group-lux">
               <input 
-                v-model="otp" 
+                v-for="(n, i) in 6" 
+                :key="i"
+                v-model="otpDigits[i]" 
                 type="text" 
-                placeholder="000000" 
-                maxlength="6" 
-                class="otp-input-lux"
-                @keyup.enter="handleDeactivate"
-                autofocus
-              >
-              <div class="input-focus-glow"></div>
-            </div>
-
-            <div class="actions">
-              <button class="btn-cancel-lux" @click="close">Hủy bỏ</button>
-              <button class="btn-confirm-delete-lux" :disabled="otp.length < 6 || loading" @click="handleDeactivate">
-                <span v-if="loading" class="spinner-sm"></span>
-                <span>Xác nhận Xóa tài khoản</span>
-              </button>
-            </div>
+                inputmode="numeric"
+                maxlength="1" 
+                class="otp-input-box"
+                @input="focusNext($event, i)"
+                @keydown="handleKeyDown($event, i)"
+                @paste="handlePaste($event)" 
+              />
+              </div>
 
             <div class="resend-section">
-              <button class="btn-resend" :disabled="loading" @click="handleRequestOTP">
+              <button class="btn-resend-text" :disabled="loading" @click="handleRequestOTP">
                 Chưa nhận được mã? <span>Gửi lại ngay</span>
               </button>
             </div>
           </div>
         </div>
 
-        <button class="btn-close-abs" @click="close">✕</button>
+        <div class="edit-modal-footer">
+          <button class="btn-cancel" @click="close">Hủy bỏ</button>
+          <button class="btn-danger-fill" :disabled="otpCode.length < 6 || loading" @click="handleDeactivate">
+            <span v-if="loading" class="spinner-sm"></span>
+            <span>{{ loading ? 'Đang xử lý...' : 'Xóa tài khoản' }}</span>
+          </button>
+        </div>
       </div>
     </div>
   </transition>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed, nextTick } from 'vue'
 import { sendDeactivateOtp } from '@/services/authService'
 import { useAuthStore } from '@/stores/auth'
 import { toast } from '@/composables/useToast'
@@ -67,8 +72,9 @@ const props = defineProps(['modelValue'])
 const emit = defineEmits(['update:modelValue'])
 
 const authStore = useAuthStore()
-const otp = ref('')
 const loading = ref(false)
+const otpDigits = ref(['', '', '', '', '', ''])
+const otpCode = computed(() => otpDigits.value.join(''))
 
 // 🔥 TỰ ĐỘNG GỬI OTP KHI MỞ MODAL
 watch(() => props.modelValue, (isOpen) => {
@@ -77,10 +83,51 @@ watch(() => props.modelValue, (isOpen) => {
   }
 })
 
+const focusNext = (e, index) => {
+  const val = e.target.value.replace(/[^0-9]/g, '')
+  otpDigits.value[index] = val
+
+  if (val && index < 5) {
+    // Nhảy sang ô tiếp theo
+    const nextInput = e.target.nextElementSibling
+    if (nextInput) nextInput.focus()
+  }
+}
+
+const handlePaste = (e) => {
+  e.preventDefault() // Chặn hành vi dán mặc định của trình duyệt
+  const pasteData = e.clipboardData.getData('text').slice(0, 6).replace(/[^0-9]/g, '')
+  if (!pasteData) return
+
+  const digits = pasteData.split('')
+  digits.forEach((char, index) => {
+    if (index < 6) otpDigits.value[index] = char
+  })
+
+  // Tự động focus vào ô cuối cùng sau khi paste
+  nextTick(() => {
+    const inputs = e.target.parentElement.querySelectorAll('.otp-input-box')
+    const nextIdx = Math.min(digits.length, 5)
+    inputs[nextIdx].focus()
+  })
+}
+
+const handleKeyDown = (e, index) => {
+  if (e.key === 'Backspace') {
+    if (!otpDigits.value[index] && index > 0) {
+      // Nếu ô hiện tại trống, quay về ô trước đó
+      const prevInput = e.target.previousElementSibling
+      if (prevInput) prevInput.focus()
+    }
+  } else if (e.key === 'Enter' && otpCode.value.length === 6) {
+    handleDeactivate()
+  }
+}
+
 const close = () => {
   if (loading.value) return
   emit('update:modelValue', false)
-  otp.value = ''
+  otpDigits.value = ['', '', '', '', '', '']
 }
 
 const handleRequestOTP = async () => {
@@ -97,10 +144,10 @@ const handleRequestOTP = async () => {
 }
 
 const handleDeactivate = async () => {
-  if (otp.value.length < 6) return
+  if (otpCode.value.length < 6) return
   loading.value = true
   try {
-    await authStore.deactivateAccount(otp.value)
+    await authStore.deactivateAccount(otpCode.value)
     toast.success('Tài khoản đã được xóa mềm. Hẹn gặp lại sếp!')
     close()
   } catch (err) {
@@ -112,228 +159,232 @@ const handleDeactivate = async () => {
 </script>
 
 <style scoped lang="scss">
-.deactivate-overlay {
+.edit-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.8);
-  backdrop-filter: blur(15px);
-  z-index: 9999;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  z-index: 9000;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
 }
 
-.deactivate-card {
-  background: #121212;
-  border: 1px solid rgba(234, 88, 12, 0.2);
-  border-radius: 32px;
+.edit-modal-card {
+  background: #fff;
+  border-radius: 24px;
   width: 100%;
-  max-width: 460px;
-  padding: 48px;
-  position: relative;
-  box-shadow: 0 40px 100px -20px rgba(0,0,0,0.8), 0 0 40px -10px rgba(234, 88, 12, 0.1);
-  animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  max-width: 480px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   overflow: hidden;
-
-  &::before {
-    content: "";
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(234, 88, 12, 0.05) 0%, transparent 70%);
-    pointer-events: none;
-  }
+  border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
-@keyframes slideUp {
-  from { transform: translateY(40px) scale(0.95); opacity: 0; }
-  to { transform: translateY(0) scale(1); opacity: 1; }
+.edit-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 24px 32px 10px;
+  flex-shrink: 0;
 }
 
-.header {
-  text-align: center;
-  margin-bottom: 40px;
-  position: relative;
-
-  .icon-box {
-    width: 80px;
-    height: 80px;
-    border-radius: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 24px;
-    background: linear-gradient(135deg, rgba(234, 88, 12, 0.2) 0%, rgba(239, 68, 68, 0.1) 100%);
-    color: #EA580C;
-    border: 1px solid rgba(234, 88, 12, 0.3);
-    box-shadow: 0 10px 20px rgba(234, 88, 12, 0.1);
-    
-    svg {
-      filter: drop-shadow(0 0 8px rgba(234, 88, 12, 0.4));
-    }
-  }
-
-  h2 {
-    color: #fff;
-    font-size: 28px;
-    font-weight: 900;
-    margin-bottom: 16px;
-    letter-spacing: -1px;
-    background: linear-gradient(to right, #fff, #A8A29E);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-
-  .subtitle {
-    color: #78716C;
-    font-size: 15px;
-    line-height: 1.6;
-    margin: 0 auto;
-    max-width: 320px;
-  }
+.icon-box-danger {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  background: #FEF2F2;
+  color: #DC2626;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #FEE2E2;
 }
 
-.body {
-  position: relative;
-  
-  .form-step {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-
-    .otp-input-container {
-      position: relative;
-      
-      .otp-input-lux {
-        background: rgba(255,255,255,0.03);
-        border: 2px solid rgba(255,255,255,0.08);
-        border-radius: 20px;
-        padding: 24px;
-        text-align: center;
-        font-size: 40px;
-        font-weight: 900;
-        letter-spacing: 16px;
-        color: #EA580C;
-        width: 100%;
-        transition: all 0.3s;
-        text-shadow: 0 0 15px rgba(234, 88, 12, 0.3);
-
-        &:focus {
-          border-color: #EA580C;
-          outline: none;
-          background: rgba(255,255,255,0.06);
-          box-shadow: 0 0 0 8px rgba(234, 88, 12, 0.05);
-        }
-      }
-
-      .input-focus-glow {
-        position: absolute;
-        inset: -2px;
-        border-radius: 22px;
-        background: linear-gradient(90deg, #EA580C, #EF4444);
-        opacity: 0;
-        transition: opacity 0.3s;
-        z-index: -1;
-      }
-      
-      .otp-input-lux:focus + .input-focus-glow {
-        opacity: 0.3;
-      }
-    }
-
-    .otp-hint {
-      background: rgba(234, 88, 12, 0.08);
-      border-radius: 16px;
-      color: #FDBA74;
-      padding: 18px;
-      font-size: 14px;
-      text-align: center;
-      line-height: 1.6;
-      border: 1px solid rgba(234, 88, 12, 0.15);
-    }
-
-    .btn-confirm-delete-lux {
-      width: 100%;
-      height: 60px;
-      border-radius: 20px;
-      font-weight: 800;
-      font-size: 17px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      cursor: pointer;
-      transition: all 0.3s;
-      background: linear-gradient(135deg, #EF4444 0%, #B91C1C 100%);
-      color: #fff;
-      border: none;
-      box-shadow: 0 15px 30px rgba(239, 68, 68, 0.2);
-
-      &:hover:not(:disabled) {
-        transform: translateY(-2px);
-        box-shadow: 0 20px 40px rgba(239, 68, 68, 0.3);
-      }
-
-      &:disabled { opacity: 0.4; cursor: not-allowed; }
-    }
-
-    .btn-cancel-lux {
-      background: rgba(255,255,255,0.05);
-      color: #A8A29E;
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 20px;
-      font-weight: 700;
-      font-size: 16px;
-      height: 60px;
-      cursor: pointer;
-      &:hover { background: rgba(255,255,255,0.1); color: #fff; }
-    }
-
-    .actions {
-      display: grid;
-      grid-template-columns: 1fr 2fr;
-      gap: 16px;
-    }
-
-    .resend-section {
-      text-align: center;
-      .btn-resend {
-        background: none;
-        border: none;
-        color: #78716C;
-        font-size: 14px;
-        cursor: pointer;
-        span { color: #EA580C; font-weight: 700; &:hover { text-decoration: underline; } }
-      }
-    }
-  }
-}
-
-.btn-close-abs {
-  position: absolute;
-  top: 24px;
-  right: 24px;
-  background: rgba(255,255,255,0.05);
+.btn-close {
+  background: #F1F5F9;
   border: none;
-  color: #78716C;
   width: 36px;
   height: 36px;
-  border-radius: 12px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  color: #64748B;
   transition: all 0.2s;
-  &:hover { background: rgba(255,255,255,0.1); color: #fff; transform: rotate(90deg); }
+
+  &:hover {
+    background: #E2E8F0;
+    color: #1E293B;
+  }
+}
+
+.edit-modal-body {
+  padding: 10px 32px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  text-align: center;
+  
+  &::-webkit-scrollbar { width: 6px; }
+  &::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+}
+
+.danger-title {
+  font-size: 1.4rem;
+  margin: 0 0 8px;
+  color: #0F172A;
+  font-weight: 800;
+}
+
+.danger-subtitle {
+  font-size: 0.95rem;
+  color: #64748B;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.form-step {
+  margin-top: 10px;
+}
+
+.otp-hint-box {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 16px;
+  font-size: 0.9rem;
+  color: #475569;
+  line-height: 1.5;
+  margin-bottom: 20px;
+  
+  strong { color: #0F172A; }
+}
+
+.otp-group-lux {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  margin-top: 10px;
+}
+
+.otp-input-box {
+  width: 54px;
+  height: 64px;
+  background: #F8FAFC;
+  border: 2px solid #E2E8F0;
+  border-radius: 14px;
+  text-align: center;
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #0F172A;
+  transition: all 0.3s ease;
+  font-family: monospace;
+
+  &:focus {
+    border-color: #EA580C;
+    background: #fff;
+    outline: none;
+    box-shadow: 0 4px 20px -5px rgba(234, 88, 12, 0.2), 0 0 0 4px rgba(234, 88, 12, 0.1);
+    transform: translateY(-2px);
+  }
+}
+
+.resend-section {
+  .btn-resend-text {
+    background: none;
+    border: none;
+    color: #64748B;
+    font-size: 0.9rem;
+    cursor: pointer;
+    font-weight: 500;
+    
+    span {
+      color: #EA580C;
+      font-weight: 700;
+      transition: 0.2s;
+    }
+    
+    &:hover span {
+      text-decoration: underline;
+    }
+    
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.edit-modal-footer {
+  display: flex;
+  gap: 12px;
+  padding: 20px 32px 24px;
+  border-top: 1px solid #F1F5F9;
+  background: #F8FAFC;
+  flex-shrink: 0;
+}
+
+.btn-cancel {
+  flex: 1;
+  background: #fff;
+  border: 1.5px solid #E2E8F0;
+  padding: 14px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #475569;
+  cursor: pointer;
+  transition: 0.3s;
+
+  &:hover {
+    background: #F1F5F9;
+    color: #0F172A;
+  }
+}
+
+.btn-danger-fill {
+  flex: 1.5;
+  background: linear-gradient(135deg, #EF4444, #DC2626);
+  border: none;
+  padding: 14px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 8px 20px -6px rgba(220, 38, 38, 0.4);
+  transition: 0.3s;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 25px -6px rgba(220, 38, 38, 0.5);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    filter: grayscale(50%);
+    box-shadow: none;
+    transform: none;
+  }
 }
 
 .spinner-sm {
-  width: 20px;
-  height: 20px;
-  border: 3px solid rgba(255,255,255,0.3);
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
   border-top-color: #fff;
   border-radius: 50%;
   animation: rotate 0.8s linear infinite;
@@ -341,6 +392,32 @@ const handleDeactivate = async () => {
 
 @keyframes rotate { to { transform: rotate(360deg); } }
 
-.modal-fade-enter-active, .modal-fade-leave-active { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-.modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; backdrop-filter: blur(0); }
+/* --- Animations --- */
+.modal-fade-enter-active, .modal-fade-leave-active {
+  transition: opacity 0.25s ease;
+  .edit-modal-card { transition: transform 0.25s, opacity 0.25s; }
+}
+
+.modal-fade-enter-from, .modal-fade-leave-to {
+  opacity: 0;
+  .edit-modal-card { transform: scale(0.94) translateY(16px); opacity: 0; }
+}
+
+/* --- Mobile Responsive --- */
+@media (max-width: 576px) {
+  .edit-modal-overlay { padding: 16px; }
+  .edit-modal-card { border-radius: 20px; }
+  .edit-modal-header { padding: 20px 24px 10px; }
+  .edit-modal-body { padding: 10px 24px 20px; }
+  .edit-modal-footer { padding: 16px 24px 20px; flex-direction: column-reverse; gap: 10px; }
+  .btn-cancel, .btn-danger-fill { width: 100%; flex: none; }
+  
+  .otp-group-lux { gap: 6px; }
+  .otp-input-box {
+    width: 44px;
+    height: 54px;
+    font-size: 1.4rem;
+    border-radius: 10px;
+  }
+}
 </style>

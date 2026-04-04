@@ -208,7 +208,6 @@ import { getCategories } from '@/services/categoryService'
 import { createPost } from '@/services/postService'
 import { uploadMedia } from '@/services/uploadService'
 import api from '@/services/api'
-import axios from 'axios'
 import { toast } from '@/composables/useToast'
 
 const route = useRoute()

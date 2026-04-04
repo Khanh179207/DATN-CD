@@ -98,4 +98,23 @@ public class AdminPostController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
+    // ♻️ KHÔI PHỤC BÀI VIẾT (RESTORE - Dùng chung logic với Approve)
+    @PutMapping("/{id}/restore")
+    public ResponseEntity<?> restore(@PathVariable Integer id, @RequestBody(required = false) Map<String, Object> payload) {
+        try {
+            Integer adminId = 0;
+            String adminName = "Hệ Thống";
+
+            if (payload != null) {
+                adminId = Integer.valueOf(payload.getOrDefault("adminId", 0).toString());
+                adminName = (String) payload.getOrDefault("adminName", "Admin Ẩn Danh");
+            }
+
+            // Gọi hàm approvePost vì Service đã gộp logic khôi phục vào chung
+            adminpostService.approvePost(id, adminId, adminName);
+            return ResponseEntity.ok(Map.of("message", "Đã khôi phục bài viết thành công!"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Lỗi: " + e.getMessage()));
+        }
+    }
 }

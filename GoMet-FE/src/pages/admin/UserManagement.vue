@@ -108,8 +108,8 @@
               </span>
             </td>
             <td>
-              <span class="status-pill" :class="user.isActive ? 'active' : 'banned'">
-                <span class="status-dot"></span> {{ user.isActive ? 'Hoạt động' : 'Bị khóa' }}
+              <span class="status-pill" :class="user.isActive === 1 ? 'active' : (user.isActive === 0 ? 'hidden' : 'banned')">
+                <span class="status-dot"></span> {{ user.isActive === 1 ? 'Hoạt động' : (user.isActive === 0 ? 'Tạm ẩn' : 'Bị khóa') }}
               </span>
             </td>
             <td class="text-center">
@@ -122,10 +122,10 @@
                 </button>
                 
                 <button @click="askBanAction(user)" class="btn-action" 
-                        :class="[user.isActive ? 'ban' : 'unban', { 'disabled': !canBanUser(user) }]" 
+                        :class="[user.isActive !== -1 ? 'ban' : 'unban', { 'disabled': !canBanUser(user) }]" 
                         :disabled="!canBanUser(user)"
-                        :title="!canBanUser(user) ? 'Không thể khóa tài khoản này' : (user.isActive ? 'Khóa tài khoản' : 'Mở khóa')">
-                  <Lock v-if="user.isActive" :size="16" />
+                        :title="!canBanUser(user) ? 'Không thể khóa tài khoản này' : (user.isActive !== -1 ? 'Khóa tài khoản' : 'Mở khóa')">
+                  <Lock v-if="user.isActive !== -1" :size="16" />
                   <Unlock v-else :size="16" />
                 </button>
                 
@@ -161,8 +161,8 @@
 
           <template v-else-if="detailModal.user">
             <div class="profile-cover" :class="getCoverClass(detailModal.user)">
-              <span class="absolute-status" :class="detailModal.user.isActive ? 'bg-green' : 'bg-red'">
-                {{ detailModal.user.isActive ? 'Đang hoạt động' : 'Bị khóa' }}
+              <span class="absolute-status" :class="detailModal.user.isActive === 1 ? 'bg-green' : (detailModal.user.isActive === 0 ? 'bg-gray' : 'bg-red')">
+                {{ detailModal.user.isActive === 1 ? 'Đang hoạt động' : (detailModal.user.isActive === 0 ? 'Tạm ẩn' : 'Bị khóa') }}
               </span>
             </div>
 
@@ -206,7 +206,7 @@
                   <strong class="val">{{ detailModal.user.createdAt ? new Date(detailModal.user.createdAt).toLocaleDateString('vi-VN') : '—' }}</strong>
                 </div>
                 
-                <div v-if="!detailModal.user.isActive" class="p-detail-ban-reason">
+                <div v-if="detailModal.user.isActive === -1" class="p-detail-ban-reason">
                   <div class="ban-header">
                     <AlertTriangle :size="16" /> 
                     <span>Thông tin khóa tài khoản</span>
@@ -233,10 +233,10 @@
 
                 <button v-if="canBanUser(detailModal.user)" 
                         @click="askBanAction(detailModal.user); detailModal.show = false" 
-                        class="btn-lux-ban" :class="detailModal.user.isActive ? 'warn' : 'ok'">
-                  <Lock v-if="detailModal.user.isActive" :size="18" />
+                        class="btn-lux-ban" :class="detailModal.user.isActive !== -1 ? 'warn' : 'ok'">
+                  <Lock v-if="detailModal.user.isActive !== -1" :size="18" />
                   <Unlock v-else :size="18" />
-                  {{ detailModal.user.isActive ? 'Khóa tài khoản' : 'Khôi phục tài khoản' }}
+                  {{ detailModal.user.isActive !== -1 ? 'Khóa tài khoản' : 'Khôi phục tài khoản' }}
                 </button>
 
                 <div v-else class="admin-protect-msg full-width">
@@ -317,6 +317,7 @@ const filterTabs = [
   { label: 'Tất cả', value: 'ALL' },
   { label: 'Quản trị viên', value: 'ADMIN' },
   { label: 'Premium', value: 'PREMIUM' },
+  { label: 'Tạm ẩn', value: 'HIDDEN' },
   { label: 'Bị khóa', value: 'BANNED' }
 ]
 
@@ -344,13 +345,14 @@ const getCoverClass = (user) => {
 }
 
 const premiumCount = computed(() => users.value.filter(u => u.isPremium === 1 || u.isPremium === true).length)
-const bannedCount = computed(() => users.value.filter(u => u.isActive === 0 || u.isActive === false).length)
+const bannedCount = computed(() => users.value.filter(u => u.isActive === -1).length)
 
 const filteredUsers = computed(() => {
   let result = users.value
   if (currentFilter.value === 'ADMIN') result = result.filter(u => u.role === 'ADMIN')
   if (currentFilter.value === 'PREMIUM') result = result.filter(u => u.isPremium === 1 || u.isPremium === true)
-  if (currentFilter.value === 'BANNED') result = result.filter(u => u.isActive === 0 || u.isActive === false)
+  if (currentFilter.value === 'HIDDEN') result = result.filter(u => u.isActive === 0)
+  if (currentFilter.value === 'BANNED') result = result.filter(u => u.isActive === -1)
 
   if (searchQuery.value.trim()) {
     const q = searchQuery.value.toLowerCase()
@@ -370,7 +372,7 @@ const fetchUsers = async () => {
     users.value = res.data.map(u => ({
       ...u,
       role: u.role ? String(u.role).toUpperCase() : (u.isAdmin ? 'ADMIN' : 'USER'),
-      isActive: u.isActive === 1 || u.isActive === true,
+      isActive: Number(u.isActive ?? 1),
       isPremium: u.isPremium === 1 || u.isPremium === true
     }))
   } catch (err) {
@@ -383,13 +385,14 @@ const fetchUsers = async () => {
 // --- HÀM GỌI MODAL THAO TÁC ---
 const askBanAction = (user) => {
   if (!canBanUser(user)) return;
+  const isBanned = user.isActive === -1;
   actionModal.value = {
-    show: true, type: user.isActive ? 'ban' : 'unban', accountID: user.accountID, userRef: user,
-    title: user.isActive ? 'Khóa tài khoản?' : 'Mở khóa tài khoản?',
-    message: `Xác nhận ${user.isActive ? 'khóa' : 'khôi phục'} quyền truy cập của <strong>${user.username}</strong>?`,
-    icon: user.isActive ? markRaw(Lock) : markRaw(Unlock),
-    styleClass: user.isActive ? 'bg-red-light text-red' : 'bg-green-light text-green',
-    btnClass: user.isActive ? 'btn-danger' : 'btn-success',
+    show: true, type: !isBanned ? 'ban' : 'unban', accountID: user.accountID, userRef: user,
+    title: !isBanned ? 'Khóa tài khoản?' : 'Mở khóa tài khoản?',
+    message: `Xác nhận ${!isBanned ? 'khóa' : 'khôi phục'} quyền truy cập của <strong>${user.username}</strong>?`,
+    icon: !isBanned ? markRaw(Lock) : markRaw(Unlock),
+    styleClass: !isBanned ? 'bg-red-light text-red' : 'bg-green-light text-green',
+    btnClass: !isBanned ? 'btn-danger' : 'btn-success',
     reason: '', showError: false
   }
 }
@@ -423,10 +426,10 @@ const executeAction = async () => {
       };
       if (type === 'ban') {
         await api.patch(`/admin/accounts/${accountID}/ban`, payload);
-        userRef.isActive = false;
+        userRef.isActive = -1;
       } else {
         await api.patch(`/admin/accounts/${accountID}/unban`, payload);
-        userRef.isActive = true;
+        userRef.isActive = 1;
       }
       toast.success('Cập nhật trạng thái thành công!')
     } 
@@ -458,7 +461,7 @@ const openDetail = async (user) => {
     detailModal.value.user = {
       ...u,
       role: u.role ? String(u.role).toUpperCase() : (u.isAdmin ? 'ADMIN' : 'USER'),
-      isActive: u.isActive === 1 || u.isActive === true,
+      isActive: Number(u.isActive ?? 1),
       isPremium: u.isPremium === 1 || u.isPremium === true
     }
   } catch {
@@ -545,6 +548,7 @@ onMounted(fetchUsers)
 .status-dot { width: 8px; height: 8px; border-radius: 50%; }
 .status-pill.active { background: #F0FDF4; color: #16A34A; } .status-pill.active .status-dot { background: #16A34A; }
 .status-pill.banned { background: #FEF2F2; color: #DC2626; } .status-pill.banned .status-dot { background: #DC2626; }
+.status-pill.hidden { background: #F8FAFC; color: #64748B; } .status-pill.hidden .status-dot { background: #94A3B8; }
 
 .point-badge { font-weight: 700; color: #475569; font-size: 0.95rem; }
 .icon-star { color: #F59E0B; }
@@ -572,7 +576,7 @@ onMounted(fetchUsers)
 .cover-premium { background: linear-gradient(135deg, #F59E0B, #EA580C); }
 .cover-admin { background: linear-gradient(135deg, #3B82F6, #8B5CF6); }
 .absolute-status { position: absolute; top: 16px; left: 16px; padding: 6px 14px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-.bg-green { background: #16A34A; } .bg-red { background: #DC2626; }
+.bg-green { background: #16A34A; } .bg-red { background: #DC2626; } .bg-gray { background: #64748B; }
 
 .profile-body { padding: 0 32px 32px; text-align: center; margin-top: -50px; position: relative; z-index: 2; }
 .profile-avatar-wrapper { display: flex; justify-content: center; margin-bottom: 12px; }

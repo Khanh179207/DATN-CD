@@ -35,7 +35,7 @@ public class AppealServiceImpl implements AppealService {
         Account account = accountDAO.findByEmail(trimEmail)
                 .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại trong hệ thống."));
 
-        if (account.getIsActive() != 0) {
+        if (account.getIsActive() != -1) {
             throw new RuntimeException("Tài khoản của bạn đang hoạt động bình thường, vui lòng dùng tính năng phiếu hỗ trợ trong web để được hỗ trợ!");
         }
 
