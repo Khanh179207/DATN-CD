@@ -120,7 +120,10 @@ const loadConversations = async () => {
       lastMessage: item.lastMessage,
       time: item.time || "vừa xong",
       read: item.read === true,
-      online: item.online === true
+      online: item.online === true,
+      partnerID: item.partnerID,
+      following: item.following === true,
+      followed: item.followed === true
     }));
   } catch (err) {
     console.error("Lỗi tải danh sách chat:", err);
