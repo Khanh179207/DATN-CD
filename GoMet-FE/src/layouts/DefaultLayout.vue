@@ -66,13 +66,19 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
         </span>
       </div>
-      <span class="label">GoMet Assistant</span>
+      <span class="label">GOMET AI</span>
     </button>
 
     <Teleport to="body">
        <AuthModal v-if="showAuthModal" :initial-view="modalTab" @close="showAuthModal = false" />
        <PremiumModal :is-open="showPremium" @close="handleClosePremium" @upgraded="handleUpgraded" @start-test-timer="handleStartTestTimer" />
        <ExpiredModal :is-open="showExpired" @renew="handleRenew" @cancel="handleCancel" />
+       
+       <MealplanModal 
+         v-if="showMealplanModal" 
+         :post-data="mealplanData" 
+         @close="showMealplanModal = false" 
+       />
     </Teleport>
   </div>
 </template>
@@ -90,6 +96,9 @@ import Header from '@/components/topbar/Header.vue'
 import AuthModal from '@/components/modals/AuthModal.vue'
 import PremiumModal from '@/components/modals/PremiumModal.vue'
 import ExpiredModal from '@/components/modals/ExpiredModal.vue'
+// 🔥 IMPORT MEALPLAN MODAL
+import MealplanModal from '@/components/modals/MealplanModal.vue'
+
 import MiniChatBox from '@/components/chat/MiniChatBox.vue'
 import ChatSidebar from '@/components/chat/ChatSidebar.vue'
 import TheFooter from '@/components/footer/TheFooter.vue'
@@ -137,14 +146,52 @@ const startLoadingAnimation = () => {
   });
 };
 
+// --- CÁC TRẠNG THÁI ---
+const showAuthModal = ref(false); 
+const showPremium = ref(false); 
+const showExpired = ref(false); 
+const isEnforcingRenewal = ref(false); 
+const modalTab = ref('login'); 
+const aiChatRef = ref(null);
+
+// 🔥 TRẠNG THÁI CHO MEALPLAN MODAL
+const showMealplanModal = ref(false);
+const mealplanData = ref(null);
+
+const handleStartTestTimer = () => { setTimeout(() => { showExpired.value = true; isEnforcingRenewal.value = true; }, 12000); };
+const handleRenew = () => { showExpired.value = false; showPremium.value = true; };
+const handleClosePremium = () => { showPremium.value = false; if (isEnforcingRenewal.value) { showExpired.value = true; toast.error("Bạn cần gia hạn Premium để tiếp tục sử dụng các tính năng cao cấp!"); } };
+const handleUpgraded = () => { isEnforcingRenewal.value = false; showPremium.value = false; showExpired.value = false; };
+const handleCancel = () => { showExpired.value = false; isEnforcingRenewal.value = false; };
+
+// --- HÀM XỬ LÝ SỰ KIỆN MỞ MEALPLAN ---
+const handleOpenMealplan = (event) => {
+  // Lấy data truyền tới (nếu có, ví dụ post chi tiết)
+  mealplanData.value = event.detail?.post || null;
+  showMealplanModal.value = true;
+};
+
+// --- HÀM XỬ LÝ KHÔI PHỤC TÀI KHOẢN ---
+const handleRestorePrompt = (e) => {
+  modalTab.value = 'restore-account';
+  showAuthModal.value = true;
+  // 🔥 Đã FIX: Gửi ngược dữ liệu vào AuthModal sau khi nó được Mount (v-if)
+  nextTick(() => {
+    window.dispatchEvent(new CustomEvent('auth:restore-login-data', { detail: e.detail }));
+  });
+};
+
+
+
 onMounted(() => {
   if (sessionStorage.getItem('just_logged_in') === 'true') startLoadingAnimation();
   
-  /* START: Daily View Limit - Global Event Listener */
-  window.addEventListener('ui:open-premium', () => {
-    showPremium.value = true
-  })
-  /* END */
+  /* Global Event Listeners */
+  window.addEventListener('ui:open-premium', () => { showPremium.value = true; })
+  
+  // 🔥 LẮNG NGHE CÁC SỰ KIỆN TỪ HỆ THỐNG
+  window.addEventListener('ui:open-mealplan', handleOpenMealplan)
+  window.addEventListener('auth:restore-login-prompt', handleRestorePrompt)
 })
 
 watch(() => route.fullPath, () => {
@@ -159,16 +206,36 @@ watch(() => route.fullPath, () => {
 onUnmounted(() => {
   clearTimeout(safetyTimer);
   if (ctx) ctx.revert();
+  // 🔥 DỌN DẸP EVENT LISTENER
+  window.removeEventListener('ui:open-mealplan', handleOpenMealplan);
+  window.removeEventListener('auth:restore-login-prompt', handleRestorePrompt);
 })
 
-// --- CÁC TRẠNG THÁI CŨ GIỮ NGUYÊN ---
-const showAuthModal = ref(false); const showPremium = ref(false); const showExpired = ref(false); const isEnforcingRenewal = ref(false); const modalTab = ref('login'); const aiChatRef = ref(null);
-const handleStartTestTimer = () => { setTimeout(() => { showExpired.value = true; isEnforcingRenewal.value = true; }, 12000); };
-const handleRenew = () => { showExpired.value = false; showPremium.value = true; };
-const handleClosePremium = () => { showPremium.value = false; if (isEnforcingRenewal.value) { showExpired.value = true; toast.error("Bạn cần gia hạn Premium để tiếp tục sử dụng các tính năng cao cấp!"); } };
-const handleUpgraded = () => { isEnforcingRenewal.value = false; showPremium.value = false; showExpired.value = false; };
-const handleCancel = () => { showExpired.value = false; isEnforcingRenewal.value = false; };
-const openAiChat = () => { if (aiChatRef.value) aiChatRef.value.openChat() };
+// --- LOGIC LOCK PREMIUM CHO NÚT GOMET ASSISTANT ---
+const openAiChat = () => { 
+  const userStr = localStorage.getItem('user');
+  let isPremiumUser = false;
+  
+  if (userStr) {
+    try {
+      const user = JSON.parse(userStr);
+      const isPremium = user?.isPremium || user?.IsPremium || user?.role === 'PREMIUM' || user?.role === 'premium';
+      const isAdmin = user?.isAdmin || user?.IsAdmin || user?.role === 'ADMIN' || user?.role === 'admin';
+      isPremiumUser = isPremium || isAdmin; 
+    } catch (e) {
+      console.error('Lỗi parse user data', e);
+    }
+  }
+
+  if (!isPremiumUser) {
+    showPremium.value = true;
+    toast.warn("Gomet Assistant là tính năng đặc quyền dành riêng cho tài khoản Premium sếp nhé!");
+    return;
+  }
+
+  if (aiChatRef.value) aiChatRef.value.openChat();
+};
+
 const openAuth = (tab) => { modalTab.value = tab; showAuthModal.value = true; };
 const handleLogout = async () => { localStorage.removeItem('user'); localStorage.removeItem('token'); sessionStorage.removeItem('just_logged_in'); await router.push('/'); };
 </script>
@@ -223,7 +290,7 @@ const handleLogout = async () => { localStorage.removeItem('user'); localStorage
 @keyframes breathe { 0% { opacity: 0.5; } 100% { opacity: 1; } }
 .fade-loader-leave-to { opacity: 0; transform: scale(1.1); }
 
-/* --- CSS CŨ GIỮ NGUYÊN --- */
+/* --- CSS CŨ --- */
 .app-container { display: flex; height: 100vh; overflow: hidden; background-color: var(--color-neutral-0); font-family: var(--font-body); color: var(--color-neutral-900); position: relative; transition: background-color 0.4s ease; }
 .app-container.is-dark-theme { background-color: #000000 !important; }
 .fixed-sidebar { flex-shrink: 0; z-index: var(--z-toast); }
@@ -233,8 +300,38 @@ const handleLogout = async () => { localStorage.removeItem('user'); localStorage
 .page-fade-enter-active, .page-fade-leave-active { transition: opacity var(--duration-normal) var(--ease-out), transform var(--duration-normal) var(--ease-out); }
 .page-fade-enter-from { opacity: 0; transform: translateY(10px); }
 .page-fade-leave-to   { opacity: 0; transform: translateY(-10px); }
-.float-ai-btn { position: fixed; bottom: var(--space-8); right: var(--space-8); z-index: 99; display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-5) var(--space-2) var(--space-2); background: var(--color-neutral-0); border: 1px solid var(--color-neutral-200); border-radius: var(--radius-full); box-shadow: var(--shadow-lg); cursor: pointer; transition: var(--transition-spring); }
+
+.float-ai-btn { 
+  position: fixed; bottom: var(--space-8); right: var(--space-8); z-index: 99; 
+  display: flex; align-items: center; 
+  gap: 0; 
+  padding: var(--space-2); 
+  background: var(--color-neutral-0); border: 1px solid var(--color-neutral-200); 
+  border-radius: var(--radius-full); box-shadow: var(--shadow-lg); cursor: pointer; 
+  transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1); 
+}
+.float-ai-btn:hover {
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-5) var(--space-2) var(--space-2);
+}
+
 .is-dark-theme .float-ai-btn { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px); }
-.ai-icon-bg { width: 44px; height: 44px; background: linear-gradient(135deg, var(--color-primary-600), var(--color-warning)); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; color: var(--color-neutral-0); font-size: var(--text-lg); box-shadow: var(--shadow-primary-md); }
-.label { font-weight: var(--font-extrabold); font-size: var(--text-base); color: var(--color-primary-700); }
+
+.ai-icon-bg { width: 44px; height: 44px; background: linear-gradient(135deg, var(--color-primary-600), var(--color-warning)); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; color: var(--color-neutral-0); font-size: var(--text-lg); box-shadow: var(--shadow-primary-md); flex-shrink: 0; }
+
+.label { 
+  font-weight: var(--font-extrabold); 
+  font-size: var(--text-base); 
+  color: var(--color-primary-700); 
+  max-width: 0; 
+  opacity: 0; 
+  white-space: nowrap; 
+  overflow: hidden; 
+  transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1); 
+}
+
+.float-ai-btn:hover .label { 
+  max-width: 200px; 
+  opacity: 1; 
+}
 </style>

@@ -124,7 +124,7 @@
 <script setup>
 import { ref, watch, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import axios from 'axios'
+import api from '@/services/api'
 import { useShoppingStore } from '@/stores/shopping'
 import { useAuthStore } from '@/stores/auth'
 import { toast } from '@/composables/useToast'
@@ -158,21 +158,30 @@ const parsedVideo = computed(() => {
 const fetchNote = async () => {
   if (!authStore.isAuthenticated) return
   try {
-    const res = await axios.get('http://localhost:8080/api/notes', { params: { accountId: authStore.user.accountID, postId: props.post.id } })
+    const res = await api.get('/api/notes', { params: { accountId: authStore.user.accountID, postId: props.post.id } })
     if (res.data) userNote.value = res.data
   } catch (e) { /* ignore */ }
 }
 
 const handleSaveNote = async () => {
-  if (!authStore.isAuthenticated) return toast.warn('Đăng nhập để lưu ghi chú nhé!');
+  if (!authStore.isAuthenticated) {
+    window.dispatchEvent(new CustomEvent('ui:open-login'))
+    return
+  }
   isSavingNote.value = true
   try {
-    await axios.post('http://localhost:8080/api/notes/save', { accountId: authStore.user.accountID, postId: props.post.id, content: userNote.value })
+    // ✅ CHUẨN XỊN: Dùng api.post (Đã tự động đính kèm Token)
+    await api.post('/api/notes/save', { 
+      accountId: authStore.user.accountID, 
+      postId: props.post.id, 
+      content: userNote.value 
+    })
     toast.success('Bí quyết đã được lưu!');
-  } catch (e) { toast.error('Lỗi hệ thống!'); } 
+  } catch (e) { 
+    toast.error('Lỗi hệ thống!'); 
+  } 
   finally { isSavingNote.value = false }
 }
-
 const selectAllIngredients = () => { ingredientsList.value.forEach(item => item.selectedForShopping = true) }
 
 watch(() => props.post.ingredientsRaw, (newVal) => {
@@ -181,6 +190,23 @@ watch(() => props.post.ingredientsRaw, (newVal) => {
 }, { immediate: true })
 
 const handleGoShopping = () => {
+  if (!authStore.isAuthenticated) {
+    window.dispatchEvent(new CustomEvent('ui:open-login'))
+    return
+  }
+
+  // Kiểm tra quyền Premium
+  const role = String(authStore.user?.role || '').toUpperCase();
+  const isPremiumUser = authStore.user?.isPremium === true || authStore.user?.IsPremium === true || role === 'PREMIUM';
+  const isAdmin = authStore.user?.isAdmin === true || role === 'ADMIN';
+  const hasPremiumAccess = isPremiumUser || isAdmin;
+
+  if (!hasPremiumAccess) {
+    toast.warn('Tính năng Giỏ đi chợ là đặc quyền chỉ dành cho tài khoản Premium sếp nhé!');
+    window.dispatchEvent(new CustomEvent('ui:open-premium'));
+    return;
+  }
+
   const selected = ingredientsList.value.filter(i => i.selectedForShopping)
   if (!selected.length) return toast.warn('Sếp chưa chọn nguyên liệu nào!');
   shoppingStore.addItems(selected, props.post.id)

@@ -34,13 +34,16 @@ public class AdminTransactionServiceImpl implements AdminTransactionService {
         dto.setCreatedAt(txn.getCreatedAt());
         dto.setPaidAt(txn.getPaidAt());
 
-        // Dịch PlanType thành Tên Gói cho đồng bộ với FE
-        String planName = "Nâng cấp Premium";
+// Dịch PlanType thành Tên Gói cho đồng bộ với FE (Gói 1 Tháng, 1 Năm, Trọn Đời)
+        String planName = "Premium";
         if (txn.getPlanType() != null) {
-            if (txn.getPlanType() == 0) planName = "Gói Test 10s";
-            else if (txn.getPlanType() == 1) planName = "Gói Tháng";
-            else if (txn.getPlanType() == 2) planName = "Gói Năm";
-            else if (txn.getPlanType() == 3) planName = "Trọn Đời";
+            switch (txn.getPlanType()) {
+                case 0: planName = "Gói Test 10s"; break;
+                case 1: planName = "Premium 1 Tháng"; break;
+                case 2: planName = "Premium 1 Năm"; break;
+                case 3: planName = "Premium Vĩnh Viễn"; break; // Đã đổi từ Trọn Đời sang Vĩnh Viễn cho sang
+                default: planName = "Nâng cấp Premium";
+            }
         }
         dto.setPlanName(planName);
 

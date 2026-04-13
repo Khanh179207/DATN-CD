@@ -1,7 +1,10 @@
 package poly.edu.service;
 
 import poly.edu.dto.PostDTO;
+import poly.edu.entity.Post;
+
 import java.util.List;
+import java.util.Map;
 
 public interface PostService {
     // 🔥 Tạo bài viết: Sẽ có logic tự động gán CategoryID = 1 nếu User để trống
@@ -16,6 +19,11 @@ public interface PostService {
     // Lấy chi tiết bài viết
     PostDTO getPostById(Integer postId);
 
-    // Xóa hoặc Ẩn bài viết
+    // Xả hoặc Ẩn bài viết
     void deletePost(Integer postId);
+
+    // Ẩn/Hiện bài viết (is_active)
+    PostDTO toggleActive(Integer postId);
+
+    List<Map<String, Object>> getLeaderboard(String timeframe, int limit);
 }

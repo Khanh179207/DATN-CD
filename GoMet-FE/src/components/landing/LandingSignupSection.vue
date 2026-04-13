@@ -6,53 +6,53 @@
       
       <div class="bg-column col-slow">
         <div class="scroll-track">
-          <img src="@/assets/images/intro/bun.jpg" alt="Food">
-          <img src="@/assets/images/intro/bunbo.jpg" alt="Food">
-          <img src="@/assets/images/intro/banhmi.jpg" alt="Food">
-          <img src="@/assets/images/intro/com.jpg" alt="Food">
-          <img src="@/assets/images/intro/bun.jpg" alt="Food">
-          <img src="@/assets/images/intro/bunbo.jpg" alt="Food">
-          <img src="@/assets/images/intro/banhmi.jpg" alt="Food">
-          <img src="@/assets/images/intro/com.jpg" alt="Food">
+          <img src="@/assets/images/intro/bun.webp" alt="Food">
+          <img src="@/assets/images/intro/bunbo.webp" alt="Food">
+          <img src="@/assets/images/intro/banhmi.webp" alt="Food">
+          <img src="@/assets/images/intro/com.webp" alt="Food">
+          <img src="@/assets/images/intro/bun.webp" alt="Food">
+          <img src="@/assets/images/intro/bunbo.webp" alt="Food">
+          <img src="@/assets/images/intro/banhmi.webp" alt="Food">
+          <img src="@/assets/images/intro/com.webp" alt="Food">
         </div>
       </div>
 
       <div class="bg-column col-fast offset-down">
         <div class="scroll-track reverse">
-          <img src="@/assets/images/intro/banh.jpg" alt="Food">
-          <img src="@/assets/images/intro/goi.jpg" alt="Food">
-          <img src="@/assets/images/intro/bun.jpg" alt="Food">
-          <img src="@/assets/images/intro/bunbo.jpg" alt="Food">
-          <img src="@/assets/images/intro/banh.jpg" alt="Food">
-          <img src="@/assets/images/intro/goi.jpg" alt="Food">
-          <img src="@/assets/images/intro/bun.jpg" alt="Food">
-          <img src="@/assets/images/intro/bunbo.jpg" alt="Food">
+          <img src="@/assets/images/intro/banh.webp" alt="Food">
+          <img src="@/assets/images/intro/goi.webp" alt="Food">
+          <img src="@/assets/images/intro/bun.webp" alt="Food">
+          <img src="@/assets/images/intro/bunbo.webp" alt="Food">
+          <img src="@/assets/images/intro/banh.webp" alt="Food">
+          <img src="@/assets/images/intro/goi.webp" alt="Food">
+          <img src="@/assets/images/intro/bun.webp" alt="Food">
+          <img src="@/assets/images/intro/bunbo.webp" alt="Food">
         </div>
       </div>
 
       <div class="bg-column col-medium">
         <div class="scroll-track">
-          <img src="@/assets/images/intro/banhmi.jpg" alt="Food">
-          <img src="@/assets/images/intro/com.jpg" alt="Food">
-          <img src="@/assets/images/intro/banh.jpg" alt="Food">
-          <img src="@/assets/images/intro/goi.jpg" alt="Food">
-          <img src="@/assets/images/intro/banhmi.jpg" alt="Food">
-          <img src="@/assets/images/intro/com.jpg" alt="Food">
-          <img src="@/assets/images/intro/banh.jpg" alt="Food">
-          <img src="@/assets/images/intro/goi.jpg" alt="Food">
+          <img src="@/assets/images/intro/banhmi.webp" alt="Food">
+          <img src="@/assets/images/intro/com.webp" alt="Food">
+          <img src="@/assets/images/intro/banh.webp" alt="Food">
+          <img src="@/assets/images/intro/goi.webp" alt="Food">
+          <img src="@/assets/images/intro/banhmi.webp" alt="Food">
+          <img src="@/assets/images/intro/com.webp" alt="Food">
+          <img src="@/assets/images/intro/banh.webp" alt="Food">
+          <img src="@/assets/images/intro/goi.webp" alt="Food">
         </div>
       </div>
 
       <div class="bg-column col-fast mobile-hidden">
         <div class="scroll-track reverse">
-          <img src="@/assets/images/intro/bun.jpg" alt="Food">
-          <img src="@/assets/images/intro/goi.jpg" alt="Food">
-          <img src="@/assets/images/intro/banh.jpg" alt="Food">
-          <img src="@/assets/images/intro/com.jpg" alt="Food">
-          <img src="@/assets/images/intro/bun.jpg" alt="Food">
-          <img src="@/assets/images/intro/goi.jpg" alt="Food">
-          <img src="@/assets/images/intro/banh.jpg" alt="Food">
-          <img src="@/assets/images/intro/com.jpg" alt="Food">
+          <img src="@/assets/images/intro/bun.webp" alt="Food">
+          <img src="@/assets/images/intro/goi.webp" alt="Food">
+          <img src="@/assets/images/intro/banh.webp" alt="Food">
+          <img src="@/assets/images/intro/com.webp" alt="Food">
+          <img src="@/assets/images/intro/bun.webp" alt="Food">
+          <img src="@/assets/images/intro/goi.webp" alt="Food">
+          <img src="@/assets/images/intro/banh.webp" alt="Food">
+          <img src="@/assets/images/intro/com.webp" alt="Food">
         </div>
       </div>
     </div>
@@ -112,34 +112,34 @@
 
             <form @submit.prevent="handleSubmit">
               
-<div v-if="activeTab === 'register'" class="fade-in-anim">
-  <div class="input-group">
-    <label>Tên đăng nhập</label>
-    <input v-model="registerForm.username" type="text" placeholder="VD: masterchef_vn" class="input-field" required />
-  </div>
-  <div class="input-group">
-    <label>Email</label>
-    <input v-model="registerForm.email" type="email" placeholder="name@example.com" class="input-field" required />
-  </div>
-  <div class="input-group">
-    <label>Mật khẩu</label>
-    <input v-model="registerForm.password" type="password" placeholder="Tối thiểu 6 ký tự" class="input-field" required />
-  </div>
-  <div class="input-group">
-    <label>Xác nhận mật khẩu</label>
-    <input v-model="registerForm.confirmPassword" type="password" placeholder="Nhập lại mật khẩu" class="input-field" required />
-  </div>
+              <div v-if="activeTab === 'register'" class="fade-in-anim">
+                <div class="input-group">
+                  <label>Tên đăng nhập</label>
+                  <input v-model="registerForm.username" type="text" placeholder="VD: masterchef_vn" class="input-field" required />
+                </div>
+                <div class="input-group">
+                  <label>Email</label>
+                  <input v-model="registerForm.email" type="email" placeholder="name@example.com" class="input-field" required />
+                </div>
+                <div class="input-group">
+                  <label>Mật khẩu</label>
+                  <input v-model="registerForm.password" type="password" placeholder="Tối thiểu 6 ký tự" class="input-field" required />
+                </div>
+                <div class="input-group">
+                  <label>Xác nhận mật khẩu</label>
+                  <input v-model="registerForm.confirmPassword" type="password" placeholder="Nhập lại mật khẩu" class="input-field" required />
+                </div>
 
-<div class="input-group-checkbox">
-  <label class="checkbox-container">
-    <input type="checkbox" v-model="registerForm.agreeTerms" required>
-    <span class="checkmark"></span>
-    <span class="label-text">
-      Tôi đồng ý với <router-link to="/terms-and-policy">Điều khoản</router-link> và <router-link to="/terms-and-policy">Chính sách bảo mật</router-link>
-    </span>
-  </label>
-</div>
-</div>
+                <div class="input-group-checkbox">
+                  <label class="checkbox-container">
+                    <input type="checkbox" v-model="registerForm.agreeTerms" required>
+                    <span class="checkmark"></span>
+                    <span class="label-text">
+                      Tôi đồng ý với <router-link to="/terms-and-policy">Điều khoản</router-link> và <router-link to="/terms-and-policy">Chính sách bảo mật</router-link>
+                    </span>
+                  </label>
+                </div>
+              </div>
 
               <div v-else-if="activeTab === 'login'" class="fade-in-anim">
                 <div class="input-group">
@@ -155,7 +155,6 @@
                   <a href="#" class="forgot-pass" @click.prevent="activeTab = 'forgot-password'; forgotState = 'idle'; forgotError = ''; forgotIdentifier = '';">Quên mật khẩu?</a>
                 </div>
 
-                <!-- BANNED ALERT BOX LUXURY -->
                 <transition name="fade-slide" mode="out-in">
                   <div v-if="isBannedBoxVisible" key="banned-local" class="banned-alert-box">
                     <button type="button" class="btn-close-alert" @click="closeBannedAlert" title="Đóng">
@@ -180,14 +179,36 @@
                       </button>
                     </div>
                   </div>
+
+                  <div v-else-if="isDeactivatedBoxVisible" key="deactivated-local" class="deactivated-alert-box">
+                    <button type="button" class="btn-close-alert" @click="closeDeactivatedAlert" title="Đóng">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                    <div class="deactivated-header">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 6L5 20"></path><path d="M5 6l14 14"></path></svg>
+                      <h4>TÀI KHOẢN ĐÃ XÓA MỀM</h4>
+                    </div>
+                    <div class="deactivated-body">
+                      <p class="deactivated-msg">
+                        Tài khoản này đã được yêu cầu xóa vào ngày <b>{{ deactivatedDetails?.time }}</b>. 
+                        Bạn vẫn có thể khôi phục lại toàn bộ dữ liệu trước khi tài khoản bị xóa vĩnh viễn.
+                      </p>
+                    </div>
+                    <div class="deactivated-footer">
+                      <button type="button" class="btn-restore-lux" @click="triggerRestoration">
+                        Khôi phục tài khoản ngay
+                      </button>
+                    </div>
+                  </div>
+
                   <div v-else-if="loginError" key="error-local" class="auth-error-msg">
                     {{ loginError }}
                   </div>
                 </transition>
                 <transition name="fade-slide">
-                  <div v-if="loginError && !isBannedBoxVisible && wrongPasswordCount >= 3" class="appeal-hint">
-                    <button type="button" class="btn-appeal-link" @click="openAppealAction">
-                      Bạn nghĩ mình bị ban nhầm? → Nộp khiếu nại
+                  <div v-if="!isBannedBoxVisible && wrongPasswordCount >= 3" class="appeal-hint">
+                    <button type="button" class="btn-appeal-link" @click.prevent="activeTab = 'forgot-password'; forgotState = 'idle'; forgotError = ''; forgotIdentifier = '';">
+                      Quên mật khẩu? → Lấy lại mật khẩu
                     </button>
                   </div>
                 </transition>
@@ -203,7 +224,7 @@
                     </svg>
                   </div>
                   <h3 class="form-title" style="margin-top: 15px">Đã gửi Email</h3>
-                  <p class="description" style="text-align: center; margin-bottom: 20px; font-size: 0.9rem; color: #1C1917">Vui lòng kiểm tra email của bạn để lấy link đặt lại mật khẩu.</p>
+                  <p class="description" style="text-align: center; margin-bottom: 20px; font-size: 0.9rem; color: #1C1917">Nếu tài khoản có tồn tại thì chúng tôi sẽ gửi link đặt lại mật khẩu.</p>
                   <button type="button" class="btn-submit" @click="activeTab = 'login'">Quay lại Đăng nhập</button>
                 </div>
 
@@ -229,14 +250,16 @@
                 </div>
               </div>
 
-<button 
-  type="submit" 
-  class="btn-submit" 
-  :disabled="isLoading || (activeTab === 'register' && !registerForm.agreeTerms)"
->
-  <span v-if="isLoading" class="spinner-border" role="status" aria-hidden="true"></span>
-  <span v-else>{{ activeTab === 'login' ? 'Đăng Nhập Ngay' : 'Đăng Ký Miễn Phí' }}</span>
-</button>
+              <button 
+                v-if="activeTab !== 'forgot-password'"
+                type="submit" 
+                class="btn-submit" 
+                :disabled="isLoading || (activeTab === 'register' && !registerForm.agreeTerms)"
+              >
+                <span v-if="isLoading" class="spinner-border" role="status" aria-hidden="true"></span>
+                <span v-else>{{ activeTab === 'login' ? 'Đăng Nhập Ngay' : 'Đăng Ký Miễn Phí' }}</span>
+              </button>
+
               <div class="divider" v-if="activeTab !== 'forgot-password'"><span>Hoặc tiếp tục với</span></div>
               
               <div class="social-buttons custom-google-wrapper" v-if="activeTab !== 'forgot-password'">
@@ -296,7 +319,10 @@ const isLoading = ref(false)
 const signupSection = ref(null)
 const showAppealModal = ref(false)
 const isBannedBoxVisible = ref(false)
+const isDeactivatedBoxVisible = ref(false)
 const bannedDetails = ref(null)
+const deactivatedDetails = ref(null)
+const loginEmailForRestore = ref('')
 const loginError = ref('')
 const wrongPasswordCount = ref(0)
 
@@ -320,6 +346,11 @@ const switchTab = (tab) => {
   isBannedBoxVisible.value = false;
   bannedDetails.value = null;
   forgotError.value = '';
+  
+  // 🔥 Đã FIX: Reset đếm lỗi sai pass khi chuyển tab
+  if (tab === 'login') {
+    wrongPasswordCount.value = 0;
+  }
 }
 
 const switchTabListener = (event) => {
@@ -349,6 +380,7 @@ onUnmounted(() => {
   window.removeEventListener('switch-auth-tab', switchTabListener)
 })
 
+// Tự dọn dẹp lỗi khi khách hàng gõ chữ mới
 watch([() => loginForm.email, () => loginForm.password], () => {
   if (loginError.value || isBannedBoxVisible.value) {
     loginError.value = ''
@@ -363,26 +395,59 @@ const closeBannedAlert = () => {
   bannedDetails.value = null;
 }
 
+const closeDeactivatedAlert = () => {
+  isDeactivatedBoxVisible.value = false;
+  loginError.value = '';
+  deactivatedDetails.value = null;
+}
+
 const openAppealAction = () => {
   showAppealModal.value = true;
-  closeBannedAlert(); // Chủ động dọn dẹp lỗi đỏ để UI thông thoáng khi mở Modal
+  closeBannedAlert(); 
+}
+
+const triggerRestoration = () => {
+  window.dispatchEvent(new CustomEvent('auth:restore-login-prompt', {
+    detail: { 
+      email: loginEmailForRestore.value,
+      deletedAt: deactivatedDetails.value?.rawDate 
+    }
+  }));
+  closeDeactivatedAlert();
 }
 
 const processBannedError = (errData, errorMessage) => {
   isBannedBoxVisible.value = true;
+  isDeactivatedBoxVisible.value = false;
+  loginError.value = ''; 
+
   const banReason = errData.banReason || 'Vi phạm chính sách và tiêu chuẩn cộng đồng GOMET.';
   const bannedBy = errData.bannedByName || 'Quản trị viên hệ thống';
-  let timeStr = '';
   let rawTimeStr = '';
   
   if (errData.bannedAt) {
      const d = new Date(errData.bannedAt);
      rawTimeStr = `${d.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})} ngày ${d.toLocaleDateString('vi-VN')}`;
-     timeStr = ` vào lúc ${rawTimeStr}`;
   }
   bannedDetails.value = { reason: banReason, by: bannedBy, time: rawTimeStr };
-  loginError.value = `Tài khoản bị khóa${timeStr}. Lý do: ${banReason}`;
   toast.error(`🚨 Đăng nhập thất bại do tài khoản đã bị khóa!`, { timeout: 8000 })
+}
+
+const processDeactivatedError = (errData) => {
+  isDeactivatedBoxVisible.value = true;
+  isBannedBoxVisible.value = false;
+  loginEmailForRestore.value = errData.email || loginForm.email;
+  
+  let timeStr = 'Vừa qua';
+  if (errData.deletedAt) {
+    const d = new Date(errData.deletedAt);
+    timeStr = d.toLocaleDateString('vi-VN');
+    deactivatedDetails.value = { time: timeStr, rawDate: errData.deletedAt };
+  } else {
+    deactivatedDetails.value = { time: timeStr };
+  }
+  
+  toast.info('Tài khoản này đang trong trạng thái xóa mềm.');
 }
 
 const handleSubmit = async () => {
@@ -397,7 +462,8 @@ const handleSubmit = async () => {
       toast.success('Đã gửi Email khôi phục!')
     } catch (err) {
       forgotState.value = 'idle'
-      forgotError.value = err.response?.data?.message || 'Có lỗi xảy ra khi gửi yêu cầu.'
+      // 🔥 Đã FIX: Móc đúng fullData
+      forgotError.value = err.fullData?.message || err.response?.data?.message || 'Có lỗi xảy ra khi gửi yêu cầu.'
       toast.error(forgotError.value)
     }
     return
@@ -406,21 +472,24 @@ const handleSubmit = async () => {
   // Xử lý Đăng Nhập
   if (activeTab.value === 'login') {
     isLoading.value = true
+    isBannedBoxVisible.value = false // 🔥 Đã FIX: Đảm bảo dọn hộp cũ trước khi gọi API mới
+    
     try {
       const role = await authStore.login(loginForm.email, loginForm.password)
       toast.success('Đăng nhập thành công!')
-      
-      // 🔥 BẮT BUỘC THÊM DÒNG NÀY: Báo cho MainLayout biết là tao vừa login xong, hiện Loading đi!
+      wrongPasswordCount.value = 0 // 🔥 Đã FIX: Đăng nhập thành công thì reset đếm
       sessionStorage.setItem('just_logged_in', 'true')
-      
       router.push(role === 'admin' ? '/admin' : '/home')
     } catch (err) {
-      const errData = err.response?.data || {}
+      // 🔥 Đã FIX: Móc đúng fullData
+      const errData = err.fullData || err.response?.data || {}
       const backendMsg = errData.message || err.message || ''
       const errorString = backendMsg.toUpperCase()
       
       if (errorString.includes('ACCOUNT_BANNED')) {
         processBannedError(errData, backendMsg)
+      } else if (errorString.includes('ACCOUNT_DEACTIVATED')) {
+        processDeactivatedError(errData)
       } else {
         wrongPasswordCount.value++
         loginError.value = backendMsg || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.'
@@ -433,9 +502,9 @@ const handleSubmit = async () => {
   // Xử lý Đăng Ký
   } else if (activeTab.value === 'register') {
     if (!registerForm.agreeTerms) {
-    toast.warn('Vui lòng đồng ý với điều khoản dịch vụ!')
-    return
-  }
+      toast.warn('Vui lòng đồng ý với điều khoản dịch vụ!')
+      return
+    }
     if (registerForm.password !== registerForm.confirmPassword) {
       toast.warn('Mật khẩu xác nhận không khớp!')
       return
@@ -447,7 +516,8 @@ const handleSubmit = async () => {
       otpCode.value = ''
       showOtpModal.value = true
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Có lỗi xảy ra khi gửi OTP.')
+      // 🔥 Đã FIX: Móc đúng fullData
+      toast.error(err.fullData?.message || err.response?.data?.message || 'Có lỗi xảy ra khi gửi OTP.')
     } finally {
       isLoading.value = false
     }
@@ -465,19 +535,18 @@ const handleVerifyOtp = async () => {
     
     toast.success('Đăng ký thành công! Chào mừng bạn đến với GoMet.')
     showOtpModal.value = false
-    
-    // 🔥 THÊM Ở ĐÂY LUÔN CHO CHẮC: Đăng ký thành công cũng coi như vừa login
     sessionStorage.setItem('just_logged_in', 'true')
-    
     router.push('/home')
   } catch (err) {
-    toast.error(err.response?.data?.message || 'Mã xác nhận không đúng hoặc đã hết hạn.')
+    // 🔥 Đã FIX: Móc đúng fullData
+    toast.error(err.fullData?.message || err.response?.data?.message || 'Mã xác nhận không đúng hoặc đã hết hạn.')
   }
 }
 
 const handleGoogleCallback = async (response) => {
   loginError.value = ''
-  isBannedBoxVisible.value = false
+  isBannedBoxVisible.value = false // 🔥 Đã FIX: Dọn dẹp trước khi gọi
+  
   try {
     if (!response || !response.credential) {
       throw new Error("Không nhận được token từ Google");
@@ -488,20 +557,21 @@ const handleGoogleCallback = async (response) => {
     authStore.setUser(data);
 
     toast.success('Đăng nhập Google thành công!')
-    
-    // 🔥 VÀ THÊM Ở ĐÂY NỮA (Google Login)
     sessionStorage.setItem('just_logged_in', 'true')
-    
     router.push(authStore.user.role === 'admin' ? '/admin' : '/home')
 
   } catch (err) {
     console.error("Google Login Error:", err)
-    const errData = err.response?.data || err?.data || err || {}
+    
+    // 🔥 Đã FIX: Móc đúng fullData
+    const errData = err.fullData || err.response?.data || err?.data || err || {}
     const errorMessage = errData.message || err.message || String(err)
     const errorString = errorMessage.toUpperCase()
 
-    if (errorString.includes('ACCOUNT_BANNED') || errorString.includes('BANNED') || errData.status === 403) {
+    if (errorString.includes('ACCOUNT_BANNED')) {
       processBannedError(errData, errorMessage);
+    } else if (errorString.includes('ACCOUNT_DEACTIVATED')) {
+      processDeactivatedError(errData);
     } else {
       loginError.value = errorMessage || 'Lỗi đăng nhập bằng Google. Vui lòng thử lại.'
       toast.error(loginError.value)
@@ -532,6 +602,21 @@ const handleGoogleCallback = async (response) => {
 .btn-appeal-lux { background: #dc2626; color: white; border: none; padding: 12px 20px; border-radius: 100px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: 0.3s; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3); }
 .btn-appeal-lux span { font-weight: 800; text-decoration: underline; }
 .btn-appeal-lux:hover { background: #b91c1c; transform: translateY(-2px); box-shadow: 0 6px 15px rgba(220, 38, 38, 0.4); }
+
+/* --- DEACTIVATED ALERT BOX LUXURY (LOCAL) --- */
+.deactivated-alert-box {
+  background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 16px; padding: 16px; margin: 15px 0 20px;
+  text-align: left; box-shadow: 0 8px 20px rgba(12, 74, 110, 0.08); animation: fadeIn 0.4s ease-out; position: relative;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.deactivated-header { display: flex; align-items: center; gap: 10px; color: #0369a1; margin-bottom: 12px; border-bottom: 1px dashed #bae6fd; padding-bottom: 12px; }
+.deactivated-header h4 { margin: 0; font-size: 0.95rem; font-weight: 800; letter-spacing: 0.5px; }
+.deactivated-body { margin-bottom: 16px; }
+.deactivated-msg { color: #0c4a6e; font-size: 0.9rem; line-height: 1.5; margin: 0; font-weight: 500; }
+.deactivated-msg b { color: #0369a1; text-decoration: underline; }
+.deactivated-footer { text-align: center; }
+.btn-restore-lux { background: #0369a1; color: white; border: none; padding: 12px 20px; border-radius: 100px; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: 0.3s; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(3, 105, 161, 0.3); }
+.btn-restore-lux:hover { background: #075985; transform: translateY(-2px); box-shadow: 0 6px 15px rgba(3, 105, 161, 0.4); }
 
 .auth-error-msg { background: #FEF2F2; color: #DC2626; border: 1px solid #FCA5A5; border-radius: 8px; padding: 10px; font-size: 0.85rem; font-weight: 600; margin-bottom: 15px; text-align: center; }
 

@@ -64,13 +64,8 @@
                     </div>
                     <div class="card-info-area" @click="shoppingStore.toggleItem(idx)">
                       <span class="item-name-text">{{ item.name }}</span>
-                      <span class="item-qty-text">Số lượng: {{ item.quantity }}</span>
+                      <span class="item-qty-text">Bài viết: {{ item.quantity }}</span>
                     </div>
-                    <button class="btn-remove-item" @click.stop="shoppingStore.removeItem(idx)"><svg width="14"
-                        height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                      </svg></button>
                   </div>
                 </div>
               </div>
@@ -174,6 +169,7 @@ import FeedbackModal from '@/components/modals/FeedbackModal.vue'
 import SearchBox from '@/components/common/SearchBox.vue'
 import { getNotifications, markNotificationRead, markAllNotificationsRead as apiMarkAllRead } from '@/services/notificationService'
 import webSocketService from '@/services/webSocketService'
+import { toast } from '@/composables/useToast'
 
 const emit = defineEmits(['open-login', 'open-register', 'open-premium'])
 
@@ -258,7 +254,38 @@ const handleMarkAllRead = async () => {
   } catch (err) { }
 }
 
-const toggleShopping = () => { showNoti.value = false; showShopping.value = !showShopping.value; if (showShopping.value) shoppingStore.fetchCart(); }
+const toggleShopping = () => { 
+  if (!authStore.isAuthenticated) {
+    emit('open-login');
+    return;
+  }
+  
+  // 🔥 FIX: Kiểm tra "nhẹ tay" hơn, chấp nhận các giá trị 1, "true", "1", true
+  const role = String(authStore.user?.role || '').toLowerCase();
+  
+  const isPremiumUser = (
+    role === 'premium' || 
+    ['true', '1', 1, true].includes(authStore.user?.isPremium) ||
+    ['true', '1', 1, true].includes(authStore.user?.IsPremium)
+  );
+
+  const isAdmin = (
+    role === 'admin' || 
+    ['true', '1', 1, true].includes(authStore.user?.isAdmin) ||
+    ['true', '1', 1, true].includes(authStore.user?.IsAdmin)
+  );
+  
+  if (!isPremiumUser && !isAdmin) {
+    toast.warn('Tính năng Giỏ đi chợ là đặc quyền chỉ dành cho tài khoản Premium sếp nhé!');
+    window.dispatchEvent(new CustomEvent('ui:open-premium'));
+    return;
+  }
+  
+  showNoti.value = false; 
+  showShopping.value = !showShopping.value; 
+  if (showShopping.value) shoppingStore.fetchCart(); 
+}
+
 const toggleNoti = () => { showShopping.value = false; showNoti.value = !showNoti.value; if (showNoti.value) loadNotifications(); }
 const toggleChat = () => { chatStore.isMessengerOpen = !chatStore.isMessengerOpen; closeAllDropdowns(); }
 const closeAllDropdowns = () => { showNoti.value = false; showShopping.value = false; }
@@ -388,3 +415,31 @@ const requestNotificationPermission = () => {
 </script>
 
 <style scoped lang="scss" src="./Header.scss"></style>
+
+<style scoped>
+/* --- FIX LỆCH LAYOUT KHI GIỎ HÀNG TRỐNG --- */
+.empty-state-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  min-height: 200px;
+}
+.empty-cart-icon {
+  font-size: 3rem;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+.empty-state-container p {
+  color: #64748b;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+.btn-go-shop {
+  padding: 10px 24px; background: #f8fafc; border: 1px solid #e2e8f0;
+  border-radius: 100px; font-weight: 700; color: #0f172a; cursor: pointer; transition: all 0.2s ease;
+}
+.btn-go-shop:hover { background: #ea580c; color: white; border-color: #ea580c; }
+</style>

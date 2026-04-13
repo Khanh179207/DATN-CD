@@ -311,9 +311,7 @@
     followers:    'Người theo dõi',
     following:    'Đang theo dõi',
     total_likes:  'Lượt thích',
-    achievements: 'THÀNH TÍCH',
     masterpieces: 'Tác phẩm',
-    no_achievements: 'Chưa có thành tích nào — tiếp tục nấu nhé!',
   },
   mealplan: {
     shopping_list:    'Danh sách đi chợ',
@@ -391,7 +389,7 @@
     status_ongoing:'Đang diễn ra',
     status_ended:  '🏁 Đã kết thúc',
     participants:  'người tham gia',
-    tab_info:      'Thông tin & Quỳ tắc',
+    tab_info:      'Thông tin sự kiện',
     tab_entries:   'Bài dự thi',
     intro:         '📖 Giới thiệu',
     rules:         '📜 Quỳ tắc dự thi',

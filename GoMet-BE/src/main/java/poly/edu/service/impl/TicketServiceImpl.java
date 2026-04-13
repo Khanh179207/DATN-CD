@@ -30,38 +30,28 @@ public class TicketServiceImpl implements TicketService {
     private final SimpMessagingTemplate messagingTemplate;
     private final NotificationService notificationService;
 
-    /**
-     * 🔥 HÀM ĐỒNG BỘ: Lưu Ticket từ DTO (FE up ảnh lấy link trước)
-     */
     @Override
     public Ticket saveTicket(TicketDTO dto) {
         Ticket ticket = new Ticket();
         ticket.setTicketType(dto.getTicketType());
         ticket.setTitle(dto.getTitle());
         ticket.setDescription(dto.getDescription());
-        ticket.setAttachment(dto.getAttachment()); // Link secure_url từ FE gửi về
-        ticket.setStatus(0); // Chờ xử lý
+        ticket.setAttachment(dto.getAttachment());
+        ticket.setStatus(0);
         ticket.setCreatedAt(LocalDateTime.now());
 
-        // 🔥 Logic của sếp: Tìm và gán Account (Sử dụng accountId từ DTO)
         if (dto.getAccountId() != null) {
-            accountDAO.findById(dto.getAccountId())
-                    .ifPresent(ticket::setAccount);
+            accountDAO.findById(dto.getAccountId()).ifPresent(ticket::setAccount);
         }
 
         // 🔥 Logic của sếp: Tìm và gán bài viết bị báo cáo (Sử dụng targetPostId từ
         // DTO)
         if (dto.getTargetPostId() != null) {
-            postDAO.findById(dto.getTargetPostId())
-                    .ifPresent(ticket::setTargetPost);
+            postDAO.findById(dto.getTargetPostId()).ifPresent(ticket::setTargetPost);
         }
 
-        // 🔥 Lưu ticket trước
         Ticket savedTicket = ticketDAO.save(ticket);
-
-        // 🔥 Logic của develop: Send admin alert for new ticket
         sendAdminAlert(savedTicket);
-
         return savedTicket;
     }
 
@@ -79,23 +69,27 @@ public class TicketServiceImpl implements TicketService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 🔥 HÀM ĐÃ NÂNG CẤP: Lưu chủ quyền của sếp (Admin)
+     */
     @Override
-    public Ticket updateTicketStatus(Integer ticketId, Integer newStatus) {
+    public Ticket updateTicketStatus(Integer ticketId, Integer newStatus, Integer adminId, String adminName, String adminNote) {
         Ticket ticket = ticketDAO.findById(ticketId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy Ticket!"));
 
         Integer oldStatus = ticket.getStatus();
 
+        // 1. Cập nhật trạng thái và thông tin người xử lý
         ticket.setStatus(newStatus);
+        ticket.setAdminId(adminId);
+        ticket.setAdminName(adminName);
+        ticket.setAdminNote(adminNote);
 
-        // 🔥 1. NẾU LÀ TIẾP NHẬN (Status = 1) -> Lưu giờ bắt đầu xử lý
-        // Dùng điều kiện == null để lỡ sếp có bấm lại nút này nó cũng không bị ghi đè
-        // giờ cũ (Giữ comment của develop)
+        // 2. Logic thời gian
         if (newStatus == 1 && ticket.getProcessedAt() == null) {
             ticket.setProcessedAt(LocalDateTime.now());
         }
 
-        // 2. NẾU LÀ GIẢI QUYẾT XONG (2) HOẶC TỪ CHỐI (3) -> Lưu giờ đóng Ticket
         if (newStatus == 2 || newStatus == 3) {
             ticket.setResolvedAt(LocalDateTime.now());
         }
@@ -128,13 +122,16 @@ public class TicketServiceImpl implements TicketService {
             } catch (Exception e) {
                 System.err.println("Failed to send ticket status notification: " + e.getMessage());
             }
+        // 3. Gửi thông báo Real-time cho User
+        if (oldStatus != null && !oldStatus.equals(newStatus)) {
+            sendUserStatusNotification(savedTicket, newStatus);
         }
 
         return savedTicket;
     }
 
     /**
-     * Hàm helper chuyển đổi Entity sang DTO cho Admin xem
+     * Helper: Chuyển đổi Entity sang DTO (Đã thêm thông tin Admin xử lý để FE hiển thị)
      */
     private AdminTicketDTO convertToAdminDTO(Ticket ticket) {
         AdminTicketDTO dto = new AdminTicketDTO();
@@ -147,6 +144,11 @@ public class TicketServiceImpl implements TicketService {
         dto.setCreatedAt(ticket.getCreatedAt());
         dto.setResolvedAt(ticket.getResolvedAt());
         dto.setProcessedAt(ticket.getProcessedAt());
+
+        // 🔥 GỬI THÔNG TIN ADMIN XỬ LÝ VỀ CHO FRONTEND
+        dto.setAdminId(ticket.getAdminId());
+        dto.setAdminName(ticket.getAdminName());
+        dto.setAdminNote(ticket.getAdminNote());
 
         if (ticket.getAccount() != null) {
             dto.setAccountID(ticket.getAccount().getAccountID());
@@ -161,15 +163,33 @@ public class TicketServiceImpl implements TicketService {
         return dto;
     }
 
-    /**
-     * Send admin alert for new ticket using NotificationService
-     */
+    private void sendUserStatusNotification(Ticket ticket, Integer newStatus) {
+        try {
+            String title, content, type;
+            if (newStatus == 1) {
+                title = "Ticket accepted";
+                content = "Your support ticket #" + ticket.getTicketID() + " is now being processed.";
+                type = "TICKET_ACCEPTED";
+            } else if (newStatus == 2) {
+                title = "Ticket resolved";
+                content = "Your support ticket #" + ticket.getTicketID() + " has been resolved.";
+                type = "TICKET_RESOLVED";
+            } else {
+                title = "Ticket rejected";
+                content = "Your support ticket #" + ticket.getTicketID() + " has been rejected.";
+                type = "TICKET_REJECTED";
+            }
+            notificationService.createNotification(title, content, type, ticket.getAccount().getAccountID(), null, null);
+        } catch (Exception e) {
+            System.err.println("Failed to send notification: " + e.getMessage());
+        }
+    }
+
     private void sendAdminAlert(Ticket ticket) {
         try {
             String userUsername = ticket.getAccount() != null ? ticket.getAccount().getUsername() : "Unknown User";
             notificationService.notifyAdminTicket(userUsername, ticket.getTicketID());
         } catch (Exception e) {
-            System.err.println("Failed to notify admin about ticket: " + e.getMessage());
             e.printStackTrace();
         }
     }

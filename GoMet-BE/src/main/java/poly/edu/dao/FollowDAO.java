@@ -1,5 +1,7 @@
 package poly.edu.dao;
 
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import poly.edu.entity.Follow;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -18,4 +20,13 @@ public interface FollowDAO extends JpaRepository<Follow, Integer> {
     long countByFollowee_AccountIDAndStatus(Integer followeeID, Integer status);
 
     long countByFollower_AccountIDAndStatus(Integer followerID, Integer status);
+
+    Optional<Follow> findByFollower_AccountIDAndFollowee_AccountID(Integer followerID, Integer followeeID);
+
+    @Query("SELECT f.followee.accountID FROM Follow f WHERE f.follower.accountID = :followerID AND f.status = :status")
+    List<Integer> findFolloweeIdsByFollowerIdAndStatus(
+            @Param("followerID") Integer followerID,
+            @Param("status") Integer status
+    );
+
 }

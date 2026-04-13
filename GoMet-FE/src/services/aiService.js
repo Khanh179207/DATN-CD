@@ -1,59 +1,81 @@
 import axios from 'axios';
 
-const GROQ_API_KEY = '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'; 
+// 🔥 API_BASE_URL: Trỏ về Backend của sếp
+const API_BASE_URL = 'http://localhost:8080/api/ai/chef-chat'; 
 
 export const chatWithAIChef = async (chatHistory, newText, dbContext = []) => {
   try {
-    // 1. Chuẩn bị "Bộ nhớ tạm" từ Database
+    // 1. LẤY TOKEN: Kiểm tra kỹ cả 2 trường hợp lưu 'token' lẻ hoặc lưu trong 'user'
+    let token = localStorage.getItem('token'); 
+
+    if (!token) {
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        try {
+          const parsed = JSON.parse(userData);
+          token = parsed.token;
+        } catch (e) {
+          console.error("Lỗi parse user data:", e);
+        }
+      }
+    }
+
+    // 🛑 CHẶN ĐỨNG NẾU KHÔNG CÓ TOKEN: Để tránh lỗi 403/401
+    if (!token || token === 'null' || token === 'undefined') {
+      return "Sếp ơi, sếp chưa đăng nhập nên tôi không biết sếp là ai để phục vụ rồi! 👨‍🍳";
+    }
+
+    // 2. Chuẩn bị ngữ cảnh từ Database
     const recipesFound = dbContext.map(r => `- ID: ${r.id}, TÊN: ${r.title}`).join('\n');
 
     const systemPrompt = {
       role: "system",
-      content: `Bạn là Gomet AI - Siêu đầu bếp có tư duy phản biện.
+      content: `Bạn là Gomet AI - Siêu đầu bếp thân thiện.
       
-      DỮ LIỆU THỰC TẾ TỪ HỆ THỐNG GOMET:
-      ${recipesFound || "Hiện tại chưa có bài viết nào khớp hoàn toàn."}
+      DỮ LIỆU THỰC TẾ:
+      ${recipesFound || "Không có món nào khớp."}
 
-      QUY TẮC THÔNG MINH (BẮT BUỘC):
-      1. PHÂN TÍCH Ý ĐỊNH: Nếu user hỏi câu dài (vd: "vậy món phở bò"), hãy tự lọc lấy từ khóa "phở bò" để đối chiếu với danh sách TÊN ở trên.
-      2. GỢI Ý LIÊN QUAN: Nếu không có món khớp 100%, hãy tìm món có nguyên liệu tương tự. 
-         Vd: User hỏi "phở bò" nhưng DB chỉ có "bún bò", hãy nói: "Tôi chưa có phở bò, nhưng sếp thử Bún Bò [LINK:ID] này nhé!".
-      3. CẤU TRÚC PHẢN HỒI:
-         - Bước 1: Trả lời ngắn gọn ý định của user.
-         - Bước 2: Trình bày công thức bằng Markdown (Dùng **in đậm**, *nghiêng*, danh sách có dấu chấm).
-         - Bước 3: Luôn gắn [LINK:ID] ngay sau tên món ăn nếu món đó có trong danh sách DỮ LIỆU THỰC TẾ phía trên.
-      4. PHONG CÁCH: Thân thiện, dùng emoji, xưng "Tôi" và gọi người dùng là "Sếp".
-      5. GIỚI HẠN: Tuyệt đối không bịa ra ID. Nếu món không có trong DB, không được dùng tag [LINK:xx].`
+      QUY TẮC:
+      - Xưng "Tôi", gọi người dùng là "Sếp".
+      - Dùng Markdown và Emoji.
+      - Gắn [LINK:ID] ngay sau tên món có trong danh sách.`
     };
 
-    // 2. Lọc lịch sử chat (Chỉ lấy 6 câu gần nhất để AI không bị loãng ngữ cảnh)
+    // 3. Lọc lịch sử chat (lấy 6 câu gần nhất)
     const formattedHistory = chatHistory.slice(-6).map(msg => ({
       role: msg.isMine ? "user" : "assistant",
       content: msg.text
     }));
 
-    // 3. Gọi Groq với Model Llama 3.3 70B (Đỉnh cao về suy luận)
-    const response = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
+    // 4. Gửi yêu cầu với đầy đủ 'model' để fix lỗi 400 Bad Request
+    const response = await axios.post(API_BASE_URL, {
+      // 🔥 QUAN TRỌNG: Thêm model vào đây thì Groq mới chạy được
       model: "llama-3.3-70b-versatile", 
       messages: [
         systemPrompt, 
         ...formattedHistory, 
         { role: "user", content: newText }
       ],
-      temperature: 0.4, // Giảm xuống 0.4 để AI cực kỳ tập trung vào dữ liệu DB, bớt "bay bổng"
-      max_tokens: 1500, // Cho phép trả lời dài hơn để viết công thức chi tiết
-      top_p: 0.9
+      temperature: 0.5,
+      max_tokens: 1000
     }, {
       headers: { 
-        'Authorization': `Bearer ${GROQ_API_KEY}`, 
-        'Content-Type': 'application/json' 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}` 
       }
     });
 
+    // 5. Trả về nội dung tin nhắn
     return response.data.choices[0].message.content;
 
   } catch (error) {
-    console.error("AI Error:", error.response?.data || error.message);
-    return "Đầu bếp AI đang đi chợ mua thêm gia vị, sếp nhắn lại sau 1 phút nhé! 👨‍🍳";
+    // Xử lý lỗi 403 (Token lỏ)
+    if (error.response?.status === 403 || error.response?.status === 401) {
+      return "Sếp ơi, Token bị lỗi rồi, sếp đăng nhập lại để tôi nhận diện nhé! 👨‍🍳";
+    }
+    
+    // Xử lý lỗi 400 (Nếu Groq vẫn báo thiếu gì đó)
+    console.error("AI Proxy Error:", error.response?.data || error.message);
+    return "Đầu bếp AI đang bị nghẹn, sếp thử lại sau vài giây nhé! 👨‍🍳";
   }
 }

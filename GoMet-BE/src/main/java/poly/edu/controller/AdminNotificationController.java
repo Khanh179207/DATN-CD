@@ -2,6 +2,7 @@ package poly.edu.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dao.NotificationDAO;
 import poly.edu.dto.AdminNotificationDTO;
@@ -14,7 +15,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/admin/notifications")
 @RequiredArgsConstructor
-@CrossOrigin
+@PreAuthorize("hasRole('ADMIN')")
+
 public class AdminNotificationController {
 
     private final AdminNotificationService adminNotificationService;

@@ -3,6 +3,7 @@ package poly.edu.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize; // 🔥 IMPORT THẺ BẢO VỆ
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import poly.edu.service.CloudinaryService;
@@ -13,15 +14,15 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/upload")
 @RequiredArgsConstructor
-@CrossOrigin("*")
 public class UploadController {
 
     private final CloudinaryService cloudinaryService;
 
     /**
+     * 🟡 USER/ADMIN ONLY: Phải đăng nhập mới có quyền sử dụng tài nguyên upload.
      * CHỐT: Dùng @PostMapping không có path phụ để đồng bộ với Frontend hiện tại trên Develop.
-     * Sử dụng phương thức uploadMedia từ CloudinaryService (bản mới nhất của team).
      */
+    @PreAuthorize("isAuthenticated()") // 🔥 CHỐT CHẶN VÀNG: Ngăn chặn khách vãng lai và bot spam kho ảnh
     @PostMapping
     public ResponseEntity<Map<String, Object>> uploadImage(
             @RequestParam("file") MultipartFile file,

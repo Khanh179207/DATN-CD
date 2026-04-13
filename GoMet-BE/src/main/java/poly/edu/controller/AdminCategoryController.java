@@ -2,15 +2,18 @@ package poly.edu.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dto.AdminCategoryDTO;
 import poly.edu.service.CategoryService;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin/categories")
 @RequiredArgsConstructor
-@CrossOrigin("*")
+@PreAuthorize("hasRole('ADMIN')")
+
 public class AdminCategoryController {
 
     private final CategoryService categoryService;
@@ -49,10 +52,23 @@ public class AdminCategoryController {
         return ResponseEntity.ok(categoryService.save(dto));
     }
 
-    // 6. Xóa danh mục (Service đã có chặn xóa ID 1 và danh mục có bài viết)
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Integer id) {
-        categoryService.delete(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> delete(@PathVariable Integer id) {
+        try {
+            // Gọi hàm Xóa an toàn từ Service
+            categoryService.delete(id);
+
+            // Trả về JSON để Frontend đọc được success = true
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Đã xóa danh mục và chuyển các bài viết cũ về danh mục Mặc định!"
+            ));
+        } catch (RuntimeException e) {
+            // Nếu dính lỗi (như xóa ID 1), trả về JSON kèm lỗi để Vue.js đọc và hiện Toast đỏ
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+        }
     }
 }

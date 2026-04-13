@@ -15,14 +15,10 @@ public class AdminEventDTO {
     private Integer postCount;
     private Integer totalVotes;
     private String description;
-    private String rules;
     private String reward;
     private Integer maxVotes;
-
     private Integer isActive;
     private Integer isForceEnded;
-
-    // Đổi sang kiểu String để nhận dữ liệu từ Vue và truyền lại cho Vue một cách an toàn
     private String startAt;
     private String endAt;
     private String voteStartAt;

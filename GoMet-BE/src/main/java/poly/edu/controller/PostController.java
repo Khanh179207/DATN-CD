@@ -1,25 +1,27 @@
 package poly.edu.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dao.*;
 import poly.edu.dto.*;
 import poly.edu.entity.*;
 import poly.edu.service.NotificationService;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime; // 🔥 Đã đổi sang LocalDateTime
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/posts")
 @RequiredArgsConstructor
-@CrossOrigin("*")
+
 public class PostController {
 
     private final PostDAO postDAO;
@@ -33,6 +35,8 @@ public class PostController {
     private final LikesDAO likesDAO;
     private final NotificationService notificationService;
     private final poly.edu.service.PostService postService;
+    @Autowired
+    private InteractionLogDAO interactionLogDAO;
 
     @GetMapping("/search-mini")
     public ResponseEntity<List<Map<String, Object>>> searchMini(@RequestParam String q) {
@@ -88,12 +92,26 @@ public class PostController {
     public ResponseEntity<?> getDetail(
             @PathVariable Integer id,
             @RequestParam(required = false) Integer accountId) {
+
         return postDAO.findById(id).map(post -> {
-            post.setViews(post.getViews() + 1);
-            postDAO.save(post);
+            // 🛡️ BẢO VỆ RIÊNG TƯ: Nếu tác giả đã xóa tài khoản thì bài viết cũng phải ẩn
+            if (post.getAccount() != null && post.getAccount().getIsActive() != 1) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Bài viết không tồn tại hoặc đã bị ẩn"));
+            }
             PostDetailDTO dto = toDetailDTO(post, accountId);
             return ResponseEntity.ok(dto);
-        }).orElse(ResponseEntity.notFound().build());
+        }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Bài viết không tồn tại")));
+    }
+
+    @PostMapping("/{id}/view")
+    public ResponseEntity<?> recordView(@PathVariable Integer id) {
+        try {
+            interactionLogDAO.save(new InteractionLog(id, "VIEW", 1));
+            return ResponseEntity.ok().body("Đã ghi nhận lượt xem");
+        } catch (Exception e) {
+            System.err.println("Lỗi lưu InteractionLog VIEW: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Lỗi hệ thống");
+        }
     }
 
     @GetMapping("/search")
@@ -148,7 +166,8 @@ public class PostController {
     public ResponseEntity<List<PublicPostDTO>> getByUser(
             @PathVariable Integer accountID,
             @RequestParam(required = false) Integer currentUserId) {
-        List<Post> posts = postDAO.findByAccount_AccountIDAndIsApprovedAndIsActive(accountID, 1, 1);
+        // 🔥 TRẢ VỀ TẤT CẢ: Để Frontend tự lọc (Sếp yêu cầu bài ẩn vẫn phải hiện cho chủ sở hữu)
+        List<Post> posts = postDAO.findByAccount_AccountIDOrderByCreatedAtDesc(accountID);
         return ResponseEntity.ok(posts.stream().map(p -> toPublicDTO(p, currentUserId)).collect(Collectors.toList()));
     }
 
@@ -172,23 +191,6 @@ public class PostController {
                 .collect(Collectors.toList()));
     }
 
-    @GetMapping("/trending")
-    public ResponseEntity<List<PublicPostDTO>> getTrending(
-            @RequestParam(defaultValue = "10") int limit,
-            @RequestParam(required = false) Integer accountId) {
-        List<Post> posts = postDAO.findByIsApprovedAndIsActive(1, 1);
-        List<PublicPostDTO> result = posts.stream().map(p -> toPublicDTO(p, accountId))
-                .sorted(Comparator.comparingDouble((PublicPostDTO p) -> {
-                    double views = p.getViews() != null ? p.getViews() / 1000.0 : 0;
-                    double rating = p.getAvgRating() != null ? p.getAvgRating() : 0;
-                    double fav = p.getFavoriteCount() != null ? p.getFavoriteCount() / 10.0 : 0;
-                    return views + rating + fav;
-                }).reversed())
-                .limit(limit)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(result);
-    }
-
     public PublicPostDTO toPublicDTO(Post p, Integer accountId) {
         PublicPostDTO dto = new PublicPostDTO();
         dto.setPostID(p.getPostID());
@@ -200,12 +202,15 @@ public class PostController {
         dto.setLevel(p.getLevel());
         dto.setCookingTime(p.getCookingTime());
         dto.setViews(p.getViews());
-        dto.setCreatedAt(p.getCreatedAt()); // 🔥 Sẽ tự map LocalDateTime
+        dto.setCreatedAt(p.getCreatedAt()); 
+        dto.setIsActive(p.getIsActive());   // 🔥 TRẠNG THÁI ẨN/HIỆN
+        dto.setIsApproved(p.getIsApproved()); // 🔥 TRẠNG THÁI DUYỆT
 
         if (p.getAccount() != null) {
             dto.setAuthorID(p.getAccount().getAccountID());
             dto.setAuthorName(p.getAccount().getUsername());
             dto.setAuthorAvatar(p.getAccount().getAvatar());
+            dto.setIsPremium(p.getAccount().getIsPremium() == 1);
         }
         if (p.getCategory() != null) {
             dto.setCategoryID(p.getCategory().getCategoryID());
@@ -339,6 +344,7 @@ public class PostController {
 
         return dto;
     }
+    @PreAuthorize("isAuthenticated()")
     @PostMapping
     public ResponseEntity<?> createPost(@RequestBody PostDTO postDTO) {
         try {
@@ -365,6 +371,81 @@ public class PostController {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("message", "Lỗi server: " + e.getMessage()));
+        }
+    }
+
+    // === API BẢNG XẾP HẠNG MÓN ĂN (TOP DISHES) ===
+    @GetMapping("/trending")
+    public ResponseEntity<?> getTrending(
+            @RequestParam(defaultValue = "month") String timeframe,
+            @RequestParam(defaultValue = "10") int limit) {
+        try {
+            // Gọi Service - lúc này Service đã trả về Map chứa đầy đủ: id, title, image, pts...
+            List<Map<String, Object>> result = postService.getLeaderboard(timeframe, limit);
+
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/top-comments-batch")
+    public ResponseEntity<?> getTopCommentsBatch(@RequestParam List<Integer> postIds) {
+        // Nếu không truyền ID nào thì trả về mảng rỗng luôn cho an toàn
+        if (postIds == null || postIds.isEmpty()) {
+            return ResponseEntity.ok(Collections.emptyMap());
+        }
+
+        List<Comment> topComments = commentDAO.findTopCommentsByPostIds(postIds);
+
+        // Tạo một Map để map PostID -> Dữ liệu Top Comment
+        Map<Integer, Object> resultMap = new HashMap<>();
+
+        for (Comment cmt : topComments) {
+            Map<String, Object> dto = new HashMap<>();
+
+            // Xử lý cắt chuỗi
+            String content = cmt.getContent();
+            if (content.length() > 75) {
+                content = content.substring(0, 72) + "...";
+            }
+            dto.put("content", content);
+
+            // Xử lý Tác giả
+            String author = cmt.getAccount().getUsername();
+            dto.put("author", author);
+
+            // Xử lý Avatar
+            String avatar = cmt.getAccount().getAvatar();
+            if (avatar == null || avatar.isEmpty()) {
+                avatar = "https://ui-avatars.com/api/?name=" + URLEncoder.encode(author, StandardCharsets.UTF_8) + "&background=EA580C&color=fff";
+            }
+            dto.put("avatar", avatar);
+
+            // Gắn vào Map với Key là PostID (Sửa getPost() thành cách gọi tương ứng trong Entity của sếp nếu cần)
+            resultMap.put(cmt.getPost().getPostID(), dto);
+        }
+
+        return ResponseEntity.ok(resultMap);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> updatePost(@PathVariable Integer id, @RequestBody PostDTO postDTO) {
+        try {
+            return ResponseEntity.ok(postService.updatePost(id, postDTO));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PatchMapping("/{id}/toggle-active")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> toggleActive(@PathVariable Integer id) {
+        try {
+            return ResponseEntity.ok(postService.toggleActive(id));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
 

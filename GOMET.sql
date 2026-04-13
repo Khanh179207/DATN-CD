@@ -1,4 +1,4 @@
--- Bước 1: Trở về database master (Bắt buộc)
+	-- Bước 1: Trở về database master (Bắt buộc)
 	USE master;
 	GO
 
@@ -11,7 +11,6 @@ BEGIN
 END
 GO
 
-	
 	-- Bước 3: Khởi tạo lại Database
 	CREATE DATABASE DATN_CD;
 	GO
@@ -28,7 +27,6 @@ CREATE TABLE Account (
     Email NVARCHAR(255) NOT NULL,
     Password NVARCHAR(255) NOT NULL,
     Avatar NVARCHAR(255),
-    Token NVARCHAR(255) NULL, 
     Bio NVARCHAR(MAX) NULL,
     Point INT DEFAULT 0,
     isAdmin INT DEFAULT 0,
@@ -59,7 +57,6 @@ GO
 		BannerImage NVARCHAR(MAX),
     
 		Description NVARCHAR(MAX),
-		Rules NVARCHAR(MAX),
 		Reward NVARCHAR(255),
     
 		StartAt DATETIME NOT NULL,
@@ -77,13 +74,6 @@ GO
 	);
 	GO
 
-	CREATE TABLE Achievement (
-		AchievementID INT IDENTITY(1,1) PRIMARY KEY,
-		AchievementName NVARCHAR(255) NOT NULL,
-		Description NVARCHAR(MAX) NOT NULL,
-		Icon NVARCHAR(255)
-	);
-	GO
 
 	-- ==========================================
 	-- 2. NHÓM BẢNG CHÍNH (POSTS & SỰ KIỆN)
@@ -103,6 +93,7 @@ CREATE TABLE Post (
     CookingTime INT DEFAULT 30,
     Views INT DEFAULT 0,
     LikeCount INT DEFAULT 0,
+	TotalPts INT DEFAULT 0,
     isActive INT DEFAULT 1,
     isApproved INT DEFAULT 0,
     CreatedAt DATETIME DEFAULT GETDATE(),
@@ -200,18 +191,19 @@ GO
 	);
 	GO
 
-	CREATE TABLE Follow (
-		FollowID INT IDENTITY(1,1) PRIMARY KEY,
-		FollowerID INT NOT NULL,
-		FolloweeID INT NOT NULL,
-		Status INT DEFAULT 0,
-		FollowedAt DATETIME DEFAULT GETDATE(),
-		UnFollowedAt DATETIME,
+CREATE TABLE Follow (
+    FollowID INT IDENTITY(1,1) PRIMARY KEY,
+    FollowerID INT NOT NULL,
+    FolloweeID INT NOT NULL,
+    Status INT DEFAULT 0,
+    FollowedAt DATETIME DEFAULT GETDATE(),
 
-		CONSTRAINT FK_Follow_Follower FOREIGN KEY (FollowerID) REFERENCES Account(AccountID),
-		CONSTRAINT FK_Follow_Followee FOREIGN KEY (FolloweeID) REFERENCES Account(AccountID)
-	);
-	GO
+    CONSTRAINT FK_Follow_Follower FOREIGN KEY (FollowerID) REFERENCES Account(AccountID),
+    CONSTRAINT FK_Follow_Followee FOREIGN KEY (FolloweeID) REFERENCES Account(AccountID),
+    -- RÀNG BUỘC: Đảm bảo một cặp (Follower, Followee) chỉ xuất hiện 1 lần duy nhất
+    CONSTRAINT UQ_Follower_Followee UNIQUE (FollowerID, FolloweeID)
+);
+GO
 
 	-- ==========================================
 	-- 4. NHÓM CHỨC NĂNG NGƯỜI DÙNG & TIỆN ÍCH
@@ -306,6 +298,7 @@ CREATE TABLE Notification (
 	CONSTRAINT FK_Notification_Actor FOREIGN KEY (ActorID) REFERENCES Account(AccountID),
 	CONSTRAINT FK_Notification_Post FOREIGN KEY (PostID) REFERENCES Post(PostID)
 );
+GO
 
 	CREATE TABLE History (
 		HistoryID INT IDENTITY(1,1) PRIMARY KEY,
@@ -318,17 +311,6 @@ CREATE TABLE Notification (
 	);
 	GO
 
-	-- Bảng trung gian nối Account với Achievement
-	CREATE TABLE UserAchievement (
-		UAID INT IDENTITY(1,1) PRIMARY KEY,
-		AccountID INT NOT NULL,
-		AchievementID INT NOT NULL,
-		ReceivedAt DATETIME DEFAULT GETDATE(),
-
-		CONSTRAINT FK_UA_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
-		CONSTRAINT FK_UA_Achievement FOREIGN KEY (AchievementID) REFERENCES Achievement(AchievementID)
-	);
-	GO
 
 	-- Bảng lưu lịch sử giao dịch thanh toán
 	CREATE TABLE PaymentTransaction (
@@ -400,24 +382,35 @@ CREATE TABLE Notification (
 		CreatedAt DATETIME DEFAULT GETDATE(),
 		ResolvedAt DATETIME NULL,
 		ProcessedAt DATETIME NULL,  
+		-- Thêm cột lưu thông tin Admin xử lý vào bảng Ticket
+		AdminID INT NULL,
+		AdminName NVARCHAR(255) NULL,
+		AdminNote NVARCHAR(MAX) NULL, -- Để Admin phản hồi Bug/Góp ý
     
 		CONSTRAINT FK_Ticket_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
 		CONSTRAINT FK_Ticket_Post FOREIGN KEY (TargetPostID) REFERENCES Post(PostID)
 	);
 	GO
 
-	CREATE TABLE dbo.Appeals (
-  		AppealID        INT IDENTITY(1,1) PRIMARY KEY,
-  		Email           NVARCHAR(254) NOT NULL,
-  		Reason          NVARCHAR(MAX) NOT NULL,
-  		Status          NVARCHAR(50) NOT NULL DEFAULT 'Pending', -- Pending, Review, Resolved, Rejected
-  		CreatedAt       DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
-  		UpdatedAt       DATETIME2 NULL,
-  		CreatedByIP     NVARCHAR(45) NULL,
-  		Note            NVARCHAR(MAX) NULL
-	);
 
-	GO
+
+CREATE TABLE dbo.Appeals (
+    AppealID        INT IDENTITY(1,1) PRIMARY KEY,
+    Email           NVARCHAR(254) NOT NULL,    -- Email User nhập vào form
+    AccountID       INT NULL,                  -- Backend tự tìm qua Email và nhét ID vào đây
+    
+    Reason          NVARCHAR(MAX) NOT NULL,    -- Lý do User xin gỡ Ban
+    Status          NVARCHAR(50) NOT NULL DEFAULT 'Pending', -- 3 trạng thái: Pending, Resolved, Rejected
+    Note            NVARCHAR(MAX) NULL,        -- Lời nhắn của Admin từ chối/duyệt (Sẽ gửi thông báo cho user)
+    
+    CreatedAt       DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+    ResolvedAt      DATETIME2 NULL,            -- Thời gian Admin đóng đơn (Đồng bộ với Ticket)
+	AdminID INT NULL,
+	AdminName NVARCHAR(255) NULL,
+    CONSTRAINT FK_Appeals_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID)
+);
+GO
+
 
 CREATE TABLE BlacklistWord (
     WordID INT IDENTITY(1,1) PRIMARY KEY,
@@ -446,21 +439,42 @@ CREATE TABLE ModerationLog (
     CreatedAt DATETIME DEFAULT GETDATE()
 );
 GO
+
+CREATE TABLE InteractionLog (
+    LogID INT PRIMARY KEY IDENTITY(1,1),
+    PostID INT NOT NULL,
+	ReferenceID INT,
+    Type NVARCHAR(10), -- 'VIEW', 'LIKE', 'RATE'
+    Value INT,         -- View/Like: 1, Rate: số sao (1-5)
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (PostID) REFERENCES Post(PostID)
+);
+GO
+
+CREATE TABLE PasswordResetToken (
+    id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    accountId INT NOT NULL,
+    tokenHash VARCHAR(64) NOT NULL,
+    expiresAt DATETIMEOFFSET NOT NULL,
+    usedAt DATETIMEOFFSET NULL,
+    createdAt DATETIMEOFFSET NOT NULL,
+    requestIp VARCHAR(45) NULL,
+    
+    -- Ràng buộc khóa ngoại để đảm bảo dữ liệu chuẩn
+    CONSTRAINT FK_PasswordReset_Account FOREIGN KEY (accountId) 
+    REFERENCES Account(AccountID) ON DELETE CASCADE
+);
+GO
+
+-- Tạo Index để tìm kiếm Token nhanh hơn
+CREATE INDEX IX_PasswordResetToken_Hash ON PasswordResetToken(tokenHash);
+CREATE INDEX IX_PasswordResetToken_Ip ON PasswordResetToken(requestIp, createdAt);
+CREATE INDEX IX_InteractionLog_Post_Time ON InteractionLog (PostID, CreatedAt) INCLUDE (Type, Value); 
+GO
+
 	-- ==========================================
 	-- 6. TRIGGERS TỰ ĐỘNG CẬP NHẬT
 	-- ==========================================
-
-	GO
-	CREATE TRIGGER TRG_UpdateLikeCount_Insert ON Likes AFTER INSERT AS
-	BEGIN
-		UPDATE Post SET LikeCount = LikeCount + 1 FROM Post p JOIN inserted i ON p.PostID = i.PostID;
-	END;
-	GO
-	CREATE TRIGGER TRG_UpdateLikeCount_Delete ON Likes AFTER DELETE AS
-	BEGIN
-		UPDATE Post SET LikeCount = LikeCount - 1 FROM Post p JOIN deleted d ON p.PostID = d.PostID;
-	END;
-	GO
 
 	-- Trigger khi có người Vote
 	CREATE TRIGGER TRG_UpdateVoteCount_Insert ON Votes AFTER INSERT AS
@@ -480,20 +494,96 @@ GO
 	END;
 	GO
 
-	-- ==========================================
-	-- 7. DỮ LIỆU MẪU (MOCK DATA) ĐÃ CẬP NHẬT
-	-- ==========================================
+	-- TRIGGER CHUẨN ĐỂ QUẢN LÝ ĐIỂM SỐ
+CREATE OR ALTER TRIGGER trg_UpdatePostStats
+ON InteractionLog
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
 
--- ==========================================================
--- BỘ DỮ LIỆU MẪU ĐỒ SỘ CHO DỰ ÁN GOMET KITCHEN (DATN_CD)
--- Thiết kế: Dành cho Review dự án (Demo Ready)
--- ==========================================================
+    -- 1. XỬ LÝ LƯỢT LIKE / UNLIKE (1 Like = 5 Điểm)
+    UPDATE p
+    SET p.LikeCount = p.LikeCount + i.Value,
+        p.TotalPts = p.TotalPts + (i.Value * 5)
+    FROM Post p
+    INNER JOIN inserted i ON p.PostID = i.PostID
+    WHERE i.Type = 'LIKE';
 
-USE DATN_CD;
+    -- 2. XỬ LÝ LƯỢT VIEW (1 View = 1 Điểm)
+    UPDATE p
+    SET p.Views = p.Views + i.Value,
+        p.TotalPts = p.TotalPts + (i.Value * 1)
+    FROM Post p
+    INNER JOIN inserted i ON p.PostID = i.PostID
+    WHERE i.Type = 'VIEW';
+
+    -- 3. XỬ LÝ LƯỢT RATING (Ví dụ: 1 sao = 10 Điểm)
+    UPDATE p
+    SET p.TotalPts = p.TotalPts + (i.Value * 10)
+    FROM Post p
+    INNER JOIN inserted i ON p.PostID = i.PostID
+    WHERE i.Type = 'RATING';
+
+END;
 GO
 
--- Xóa dữ liệu cũ để tránh trùng lặp nếu chạy lại (Tùy chọn)
--- DELETE FROM Ticket; DELETE FROM Message; DELETE FROM Conversation; ...
+---- TRIGGER xóa điểm rating của tổng điểm
+CREATE OR ALTER TRIGGER trg_HandleCommentDeletion_UpdatePts
+ON Comment
+AFTER UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Kiểm tra xem có thao tác cập nhật cột IsActive hay không
+    IF UPDATE(IsActive)
+    BEGIN
+        -- 1. TRỪ ĐIỂM khi comment bị XÓA (từ trạng thái Bình thường -> Xóa)
+        -- (1/NULL biến thành 0/-1)
+        UPDATE p
+        SET p.TotalPts = p.TotalPts - (ISNULL(d.Rating, 0) * 10)
+        FROM Post p
+        INNER JOIN deleted d ON p.PostID = d.PostID
+        INNER JOIN inserted i ON d.CommentID = i.CommentID
+        WHERE (d.IsActive IS NULL OR d.IsActive = 1)  -- Trạng thái cũ là đang sống
+          AND (i.IsActive = 0 OR i.IsActive = -1)     -- Trạng thái mới là đã chết/xóa
+          AND ISNULL(d.Rating, 0) > 0;                -- Chỉ trừ khi comment đó thực sự có rating
+
+        -- 2. (Tùy chọn) CỘNG LẠI ĐIỂM nếu Admin KHÔI PHỤC comment
+        -- (0/-1 biến thành 1/NULL)
+        UPDATE p
+        SET p.TotalPts = p.TotalPts + (ISNULL(i.Rating, 0) * 10)
+        FROM Post p
+        INNER JOIN deleted d ON p.PostID = d.PostID
+        INNER JOIN inserted i ON d.CommentID = i.CommentID
+        WHERE (d.IsActive = 0 OR d.IsActive = -1)     -- Trạng thái cũ là đã xóa
+          AND (i.IsActive IS NULL OR i.IsActive = 1)  -- Trạng thái mới là khôi phục
+          AND ISNULL(i.Rating, 0) > 0;
+    END
+END;
+GO
+
+	-- ==========================================
+	-- 7. Stored Procedure
+	-- ==========================================
+
+	-- PROCEDURE xóa các log có lượt VIEW và LIKE đã cũ hơn 1 năm
+	CREATE OR ALTER PROCEDURE CleanupOldInteractionLogs
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DISABLE TRIGGER ALL ON InteractionLog;
+    -- 2. DỌN RÁC: Xóa các lượt VIEW và LIKE đã cũ hơn 1 năm (365 ngày)
+    DELETE FROM InteractionLog 
+    WHERE CreatedAt < DATEADD(year, -1, GETDATE())
+      AND Type IN ('VIEW', 'LIKE');
+    ENABLE TRIGGER ALL ON InteractionLog;
+    -- In ra thông báo (dùng để check log hệ thống)
+    PRINT 'Đã dọn dẹp thành công Log VIEW và LIKE cũ hơn 1 năm và BẢO TOÀN View/Like tổng!';
+END;
+GO
+
 
 -- 1. DỮ LIỆU TÀI KHOẢN (Đa dạng phân quyền)
 -- ==========================================================
@@ -515,17 +605,11 @@ INSERT INTO Category (CategoryName, CategoryImage, IsActive) VALUES
 (N'Món Chay', 'https://cdn-icons-png.flaticon.com/512/2918/2918148.png', 1),
 (N'Tráng Miệng', 'https://cdn-icons-png.flaticon.com/512/2550/2550300.png', 1);
 
-INSERT INTO Achievement (AchievementName, Description, Icon) VALUES
-(N'Tân binh bếp núc', N'Đăng bài viết đầu tiên thành công.', 'https://img.icons8.com/color/96/seedling.png'),
-(N'Siêu đầu bếp', N'Có bài viết đạt trên 100 lượt thích.', 'https://img.icons8.com/color/96/chef-hat.png'),
-(N'Người truyền cảm hứng', N'Có 50 người theo dõi.', 'https://img.icons8.com/color/96/star--v1.png');
-GO
-
 -- 3. SỰ KIỆN (Trạng thái: Đang diễn ra và Đã kết thúc)
 -- ==========================================================
-INSERT INTO Event (EventName, BannerImage, Description, Rules, Reward, StartAt, EndAt, VoteStartAt, VoteEndAt, MaxVotes, Winner, IsActive) VALUES
-(N'Vua Bếp Việt 2026', 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1', N'Tìm kiếm công thức món Việt sáng tạo.', N'Ít nhất 5 bước thực hiện.', N'Huy hiệu Vàng & 1.000.000đ', '2026-03-01', '2026-04-01', '2026-04-02', '2026-04-10', 3, NULL, 1),
-(N'Giải Cứu Món Chay', 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd', N'Thử thách nấu món chay ngon.', N'Chỉ nguyên liệu thực vật.', N'Gói Premium 1 năm', '2026-02-01', '2026-03-15', '2026-03-16', '2026-03-20', 1, 2, 1);
+INSERT INTO Event (EventName, BannerImage, Description, Reward, StartAt, EndAt, VoteStartAt, VoteEndAt, MaxVotes, Winner, IsActive) VALUES
+(N'Vua Bếp Việt 2026', 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1', N'Tìm kiếm công thức món Việt sáng tạo.', N'Huy hiệu Vàng & 1.000.000đ', '2026-03-01', '2026-04-01', '2026-04-02', '2026-04-10', 3, NULL, 1),
+(N'Giải Cứu Món Chay', 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd', N'Thử thách nấu món chay ngon.', N'Gói Premium 1 năm', '2026-02-01', '2026-03-15', '2026-03-16', '2026-03-20', 1, 2, 1);
 GO
 
 -- 4. BÀI VIẾT (Gồm bài đã duyệt, chưa duyệt và bài tham gia sự kiện)
@@ -563,7 +647,7 @@ GO
 INSERT INTO Likes (AccountID, PostID) VALUES (1, 1), (3, 1), (4, 1), (5, 1), (2, 2);
 INSERT INTO CommentLike (AccountID, CommentID) VALUES (1, 1), (2, 1);
 INSERT INTO Favorite (AccountID, PostID) VALUES (3, 1), (4, 2), (3, 3);
-INSERT INTO Follow (FollowerID, FolloweeID, Status) VALUES (3, 2, 1), (4, 2, 1), (5, 3, 1);
+
 
 -- Bài tham gia sự kiện
 INSERT INTO EventPosts (EventID, PostID, VoteCount) VALUES (1, 2, 15), (2, 4, 10);
@@ -621,6 +705,29 @@ GO
 
 
 
+INSERT INTO SystemConfig (ConfigKey, ConfigValue, ConfigGroup, Description, UpdatedAt)
+VALUES 
+-- Bài viết nổi bật
+('HERO_POST_1', '9', 'SYSTEM', N'ID bài viết nổi bật vị trí 1', GETDATE()),
+('HERO_POST_2', '12', 'SYSTEM', N'ID bài viết nổi bật vị trí 2', GETDATE()),
+('HERO_POST_3', '1', 'SYSTEM', N'ID bài viết nổi bật vị trí 3', GETDATE()),
+
+-- Bảng giá Premium
+('PREMIUM_PRICE_1_MONTH', '50000', 'PRICING', N'Giá gói Premium 1 Tháng', GETDATE()),
+('PREMIUM_PRICE_12_MONTHS', '500000', 'PRICING', N'Giá gói Premium 1 Năm', GETDATE()),
+('PREMIUM_PRICE_LIFETIME', '999000', 'PRICING', N'Giá gói Premium Vĩnh Viễn', GETDATE()),
+
+-- Vận hành & Sự kiện (Hybrid)
+('FREE_ACCESS_EVENT', 'FALSE', 'SYSTEM', N'Nút gạt cưỡng bức: TRUE để mở khóa MIỄN PHÍ ngay lập tức', GETDATE()),
+('HOLIDAY_START', '2026-04-30T00:00', 'SYSTEM', N'Thời gian bắt đầu tự động mở khóa (YYYY-MM-DDTHH:mm)', GETDATE()),
+('HOLIDAY_END', '2026-05-01T23:59', 'SYSTEM', N'Thời gian kết thúc tự động mở khóa (YYYY-MM-DDTHH:mm)', GETDATE()),
+
+-- Quảng cáo Popup
+('ADS_BANNER_IMG', 'https://res.cloudinary.com/drblrjxan/image/upload/v1/system/ads_default.jpg', 'ADS', N'Link ảnh Banner quảng cáo Popup', GETDATE()),
+('ADS_TARGET_URL', 'https://gomet.id.vn/premium-info', 'ADS', N'Đường dẫn khi User click vào ảnh quảng cáo', GETDATE());
+GO
+
+
 	SELECT * FROM Post;
 
 	SELECT * FROM Cookingsteps;
@@ -640,6 +747,8 @@ GO
 	SELECT * FROM Follow;
 
 	SELECT * FROM Paymenttransaction;
+
+	SELECT * FROM Subscription;
 
 	SELECT * FROM Appeals;
 	

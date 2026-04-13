@@ -49,7 +49,7 @@
             </div>
             <div class="stat-info">
               <span class="s-label">ĐÁNH GIÁ</span>
-              <span class="s-val">{{ post.avgRating > 0 ? Number(post.avgRating).toFixed(1) : 'Mới' }} ({{ post.ratingCount || 0 }})</span>
+              <span class="s-val">{{ displayAvgRating }} ({{ displayRatingCount }})</span>
             </div>
           </div>
         </div>
@@ -75,11 +75,11 @@
                 <span>{{ isLiked ? 'Đã thích' : 'Thích' }}</span>
               </button>
 
-              <button class="btn-save-clean" :class="{ 'active': isFavorite }" @click="toggleFavorite">
+              <button class="btn-save-clean" :class="{ 'active': isFavorite }" @click="toggleFavorite" :disabled="isSaving">
                 <svg width="18" height="18" viewBox="0 0 24 24" :fill="isFavorite ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
               </button>
 
-              <button class="btn-share-clean" @click="copyLink" title="Chia sẻ">
+              <button class="btn-share-clean" @click="openShareModal" title="Chia sẻ">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
               </button>
             </div>
@@ -144,30 +144,45 @@
     </Teleport>
 
     <FeedbackModal v-if="showReportModal" :form="reportForm" @close="showReportModal = false" />
+    <SharePostModal v-if="showShareModal" :post="post" :show="showShareModal" @close="showShareModal = false" />
   </section>
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, onMounted, onUnmounted, watch, computed } from 'vue' // Đã bổ sung onUnmounted
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { toast } from '@/composables/useToast'
-import axios from 'axios'
-import { addFavorite, removeFavorite, checkFavorite } from '@/services/socialService'
+import api from '@/services/api'
+// 🔥 ĐÃ BỔ SUNG getFavorites VÀO IMPORT
+import { addFavorite, removeFavorite, checkFavorite, getFavorites } from '@/services/socialService'
 import { togglePostLike, checkPostLiked } from '@/services/likeService' 
 import FeedbackModal from '@/components/modals/FeedbackModal.vue'
+import SharePostModal from '@/components/modals/SharePostModal.vue'
 
-const props = defineProps({ post: { type: Object, required: true } })
+const props = defineProps({ 
+  post: { type: Object, required: true },
+  displayAvgRating: {
+    type: [String, Number],
+    default: 'Mới'
+  },
+  displayRatingCount: {
+    type: Number,
+    default: 0
+  }
+})
 const router = useRouter()
 const authStore = useAuthStore()
 
 // --- STATES CƠ BẢN ---
 const isFavorite = ref(false)
+const isSaving = ref(false) // State chống spam click lúc đang lưu
 const isLiked = ref(false)
 const isLikeLoading = ref(false)
 const isLikeAnimating = ref(false)
 const localLikeCount = ref(0)
 const showReportModal = ref(false)
+const showShareModal = ref(false)
 const reportForm = ref({ ticketType: 'REPORT', title: '', description: '', attachment: null, targetPostID: null })
 
 // --- STATES MODAL LIKE ---
@@ -189,9 +204,21 @@ const isNewToday = computed(() => {
 const formatNumber = (n) => n >= 1000 ? (n / 1000).toFixed(1) + 'k' : (n || 0)
 
 // --- ACTIONS ---
-const copyLink = () => { navigator.clipboard.writeText(window.location.href); toast.success("Đã sao chép liên kết!"); }
+const openShareModal = () => {
+    if (!authStore.isAuthenticated) {
+        window.dispatchEvent(new CustomEvent('ui:open-login'))
+        return
+    }
+    showShareModal.value = true
+}
 const goToProfile = (id) => { showLikesModal.value = false; router.push(`/profile/${id}`); }
-const openReportModal = () => { if (!authStore.isAuthenticated) return toast.warn("Vui lòng đăng nhập!"); showReportModal.value = true; }
+const openReportModal = () => {
+  if (!authStore.isAuthenticated) {
+    window.dispatchEvent(new CustomEvent('ui:open-login'))
+    return
+  }
+  showReportModal.value = true
+}
 
 // --- API LẤY DANH SÁCH LIKE THẬT ---
 const fetchLikesList = async () => {
@@ -199,9 +226,7 @@ const fetchLikesList = async () => {
   if (!pid) return;
   isFetchingLikes.value = true;
   try {
-    // SẾP THAY ĐỔI ENDPOINT NÀY THEO BACKEND CỦA SẾP NHÉ
-    // VD: API trả về mảng [{ accountID, fullName, avatar }, ...]
-    const response = await axios.get(`http://localhost:8080/api/likes/post/${pid}`);
+    const response = await api.get(`/api/likes/post/${pid}`);
     
     if (response.data && Array.isArray(response.data)) {
       likedUsersList.value = response.data.map(u => ({
@@ -209,12 +234,10 @@ const fetchLikesList = async () => {
         name: u.fullName || u.username || u.name || 'Người dùng',
         avatar: u.avatar || `https://ui-avatars.com/api/?name=${u.fullName || 'U'}&background=ea580c&color=fff`
       }));
-      // Đồng bộ số lượng thực tế từ DB
       localLikeCount.value = likedUsersList.value.length;
     }
   } catch (error) {
     console.log("Không thể tải danh sách Like:", error);
-    // Fallback: Nếu API chưa viết xong, giữ nguyên số lượng cũ
     localLikeCount.value = Math.max(0, Number(props.post.LikeCount || props.post.likes || 0));
   } finally {
     isFetchingLikes.value = false;
@@ -225,7 +248,6 @@ const fetchLikesList = async () => {
 const initData = async () => {
   reportForm.value.targetPostID = props.post.postID || props.post.id;
   
-  // Tải danh sách những người đã thả tim
   await fetchLikesList();
 
   if (authStore.isAuthenticated) {
@@ -239,9 +261,28 @@ const initData = async () => {
   }
 }
 
-// --- XỬ LÝ NÚT LIKE (TỐI ƯU GIAO DIỆN & LOGIC) ---
+// --- ĐỒNG BỘ NÚT LƯU TRÊN TOÀN APP ---
+const handleSyncFavorite = (e) => {
+  const pid = props.post.postID || props.post.id;
+  if (e.detail.id === pid) {
+    isFavorite.value = e.detail.status;
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('sync-favorite', handleSyncFavorite);
+})
+
+onUnmounted(() => {
+  window.removeEventListener('sync-favorite', handleSyncFavorite);
+})
+
+// --- XỬ LÝ NÚT LIKE ---
 const handleLike = async () => {
-  if (!authStore.isAuthenticated) return toast.warn("Vui lòng đăng nhập!");
+  if (!authStore.isAuthenticated) {
+    window.dispatchEvent(new CustomEvent('ui:open-login'))
+    return
+  }
   if (isLikeLoading.value) return;
   
   const pid = props.post.postID || props.post.id; 
@@ -252,10 +293,8 @@ const handleLike = async () => {
   const prevLiked = isLiked.value; 
   isLiked.value = !prevLiked;
   
-  // Cập nhật giao diện (Optimistic Update)
   if (isLiked.value) {
     localLikeCount.value += 1;
-    // Tự nhét mình vào đầu danh sách
     likedUsersList.value.unshift({
       id: myId,
       name: currentUser.fullName || currentUser.name || 'Bạn',
@@ -263,7 +302,6 @@ const handleLike = async () => {
     });
   } else {
     localLikeCount.value = Math.max(0, localLikeCount.value - 1);
-    // Rút mình ra khỏi danh sách
     likedUsersList.value = likedUsersList.value.filter(u => u.id !== myId);
   }
 
@@ -271,10 +309,8 @@ const handleLike = async () => {
   setTimeout(() => isLikeAnimating.value = false, 300);
   
   try { 
-    // Gọi API lưu vào Database
     await togglePostLike(myId, pid);
   } catch (e) { 
-    // Rollback nếu thất bại
     isLiked.value = prevLiked; 
     if (prevLiked) {
       localLikeCount.value += 1;
@@ -289,13 +325,61 @@ const handleLike = async () => {
   }
 }
 
+// 🔥 XỬ LÝ NÚT LƯU ĐÃ FIX LỖI BYPASS
 const toggleFavorite = async () => {
-  if (!authStore.isAuthenticated) return toast.warn("Vui lòng đăng nhập!");
-  const pid = props.post.postID || props.post.id
+  if (!authStore.isAuthenticated) {
+    window.dispatchEvent(new CustomEvent('ui:open-login'))
+    return
+  }
+  if (isSaving.value) return;
+
+  const uid = authStore.user.accountID || authStore.user.id;
+  const pid = props.post.postID || props.post.id;
+  if (!pid) return;
+
+  // Ép kiểu an toàn để nhận diện đúng VIP
+  const role = String(authStore.user?.role || '').toUpperCase();
+  const isPremiumUser = authStore.user?.isPremium === true || authStore.user?.IsPremium === true || role === 'PREMIUM';
+  const isAdmin = authStore.user?.isAdmin === true || role === 'ADMIN';
+  const hasUnlimitedSave = isPremiumUser || isAdmin;
+
+  isSaving.value = true;
   try {
-    if (isFavorite.value) { await removeFavorite(authStore.user.accountID, pid); isFavorite.value = false; } 
-    else { await addFavorite(authStore.user.accountID, pid); isFavorite.value = true; toast.success("Đã lưu vào bộ sưu tập!"); }
-  } catch (e) { toast.error("Lỗi hệ thống!"); }
+    if (isFavorite.value) {
+      // Bỏ lưu: Chạy luôn không cần check
+      await removeFavorite(uid, pid); 
+      isFavorite.value = false;
+      toast.success("Đã bỏ lưu công thức!");
+      window.dispatchEvent(new CustomEvent('sync-favorite', { detail: { id: pid, status: false } }));
+    } else {
+      // Lưu mới: Kiểm tra nếu là User thường
+      if (!hasUnlimitedSave) {
+        const res = await getFavorites(uid);
+        
+        // Bóc tách API an toàn tuyệt đối
+        const favData = res?.data?.data || res?.data || res || [];
+        const currentCount = Array.isArray(favData) ? favData.length : (favData.totalElements || 0);
+
+        if (currentCount >= 5) {
+          toast.warn("Bộ sưu tập đã đầy (5/5)! Nâng cấp Premium để lưu không giới hạn sếp nhé.");
+          window.dispatchEvent(new CustomEvent('ui:open-premium'));
+          isSaving.value = false;
+          return; // Chặn đứng tại đây
+        }
+      }
+      
+      // Vượt qua cửa ải -> Cho phép lưu
+      await addFavorite(uid, pid); 
+      isFavorite.value = true; 
+      toast.success("Đã lưu vào bộ sưu tập!");
+      window.dispatchEvent(new CustomEvent('sync-favorite', { detail: { id: pid, status: true } }));
+    }
+  } catch (e) { 
+    console.error("Lỗi khi lưu bài:", e);
+    toast.error("Lỗi hệ thống!"); 
+  } finally {
+    isSaving.value = false;
+  }
 }
 
 watch(() => props.post.postID || props.post.id, initData, { immediate: true })

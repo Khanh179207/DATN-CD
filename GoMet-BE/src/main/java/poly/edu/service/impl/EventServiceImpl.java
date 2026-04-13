@@ -4,10 +4,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import poly.edu.dao.EventDAO;
 import poly.edu.dto.EventDTO;
+import poly.edu.dto.RewardedUserDTO;
 import poly.edu.entity.Event;
 import poly.edu.service.EventService;
-
-import java.time.LocalDateTime; // 🔥 Nhớ dùng LocalDateTime
+import poly.edu.service.EventRewardService;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -15,6 +16,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class EventServiceImpl implements EventService {
     private final EventDAO eventDAO;
+    private final EventRewardService eventRewardService;
 
     @Override
     public List<EventDTO> getAllEvents() {
@@ -36,6 +38,18 @@ public class EventServiceImpl implements EventService {
                 .collect(Collectors.toList());
     }
 
+    // 🔥 NEW: Reward top 3 users for an event
+    @Override
+    public List<RewardedUserDTO> rewardTopUsersForEvent(Integer eventId) {
+        return eventRewardService.rewardTopUsersForEvent(eventId);
+    }
+
+    // 🔥 NEW: Check if event is eligible for reward
+    @Override
+    public boolean isEventEligibleForReward(Integer eventId) {
+        return eventRewardService.isEventEligibleForReward(eventId);
+    }
+
     private EventDTO toDTO(Event e) {
         EventDTO dto = new EventDTO();
         dto.setEventID(e.getEventID());
@@ -49,11 +63,11 @@ public class EventServiceImpl implements EventService {
         dto.setVoteStartAt(e.getVoteStartAt());
         dto.setVoteEndAt(e.getVoteEndAt());
         dto.setDescription(e.getDescription()); // 🔥 Thiếu dòng này là nó null ngay!
-        dto.setRules(e.getRules());             // 🔥 Thiếu dòng này là nó null ngay!
         dto.setReward(e.getReward());
         // Lúc map từ Entity sang DTO, sếp nhớ thêm 2 dòng này:
         dto.setIsActive(e.getIsActive());
         dto.setIsForceEnded(e.getIsForceEnded());
+        dto.setMaxVotes(e.getMaxVotes());
 
         long count = (e.getEventPosts() != null) ? e.getEventPosts().size() : 0;
         dto.setPostCount(count);

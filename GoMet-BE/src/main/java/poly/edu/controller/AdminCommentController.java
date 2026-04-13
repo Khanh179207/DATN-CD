@@ -2,6 +2,7 @@ package poly.edu.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dto.AdminCommentDTO;
 import poly.edu.service.CommentService;
@@ -12,7 +13,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/admin/comments") // ĐƯỜNG DẪN RIÊNG CHO ADMIN
 @RequiredArgsConstructor
-@CrossOrigin("*")
+@PreAuthorize("hasRole('ADMIN')")
+
 public class AdminCommentController {
 
     private final CommentService commentService;

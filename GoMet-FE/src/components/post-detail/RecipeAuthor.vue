@@ -16,10 +16,6 @@
           </div>
 
           <div class="action-buttons">
-            <button class="btn-icon-monochrome" :class="{ 'is-saved': isFavorite }" @click="toggleFavorite" :title="isFavorite ? 'Bỏ lưu' : 'Lưu bài viết'">
-              <svg width="18" height="18" viewBox="0 0 24 24" :fill="isFavorite ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
-            </button>
-
             <button class="btn-icon-monochrome" @click="handleContactChef" title="Nhắn tin cho tác giả">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
             </button>
@@ -56,14 +52,15 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch } from 'vue' 
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useChatStore } from '@/stores/chat'
-import axios from 'axios'
+import api from '@/services/api'
 import { toast } from '@/composables/useToast'
-import { checkFollow, follow, unfollow, checkFavorite, addFavorite, removeFavorite } from '@/services/socialService'
+// Đã xóa các hàm checkFavorite, addFavorite, removeFavorite, getFavorites
+import { checkFollow, follow, unfollow } from '@/services/socialService'
 import { getUserStats } from '@/services/userService'
 
 const props = defineProps({ post: { type: Object, required: true } })
@@ -73,17 +70,13 @@ const authStore = useAuthStore()
 const chatStore = useChatStore()
 
 const isFollowing = ref(false)
-const isFavorite = ref(false)
 const authorStats = ref({ posts: 0, followers: 0, totalLikes: 0 })
-
-// Biến lưu Bio thật
 const realBio = ref('')
 
 const loadSocialState = async (postData) => {
   if (!postData) return
   
   realBio.value = postData.authorBio || postData.bio || ''
-
   const uid = authStore.user?.accountID || authStore.user?.id
   const authorID = postData.authorID || postData.authorId
 
@@ -101,14 +94,15 @@ const loadSocialState = async (postData) => {
     } catch { /* ignore */ }
   }
 
-  if (uid && uid !== authorID) {
+  if (uid) {
     try {
-      const [followRes, favRes] = await Promise.allSettled([
-        checkFollow(uid, authorID), 
-        checkFavorite(uid, postData.postID || postData.id)
-      ])
-      if (followRes.status === 'fulfilled') isFollowing.value = !!followRes.value
-      if (favRes.status === 'fulfilled') isFavorite.value = !!favRes.value
+      // Chỉ check Follow nếu người đang xem KHÔNG PHẢI là tác giả
+      if (uid !== authorID) {
+        const isFoll = await checkFollow(uid, authorID)
+        isFollowing.value = !!isFoll
+      } else {
+        isFollowing.value = false // Tác giả thì không tự follow chính mình
+      }
     } catch { /* ignore */ }
   }
 }
@@ -125,7 +119,7 @@ const handleContactChef = async () => {
   }
   
   try {
-    const res = await axios.post('http://localhost:8080/api/conversations/access', { user1Id: currentUserId, user2Id: chefId })
+    const res = await api.post('/api/conversations/access', { user1Id: currentUserId, user2Id: chefId })
     chatStore.openChat({ id: res.data.conversationID, name: props.post.author, avatar: props.post.authorAvatar, online: true })
     chatStore.isMessengerOpen = true
     toast.success(`Đang kết nối với ${props.post.author}...`)
@@ -141,7 +135,6 @@ const toggleFollow = async () => {
   if (!authStore.isAuthenticated) { toast.warn(t('toast.need_login') || 'Vui lòng đăng nhập!'); return }
   const uid = authStore.user.accountID || authStore.user.id
   const authorID = props.post?.authorID || props.post?.authorId
-
   if (!authorID || uid === authorID) return
   
   try {
@@ -155,24 +148,6 @@ const toggleFollow = async () => {
       authorStats.value.followers++;
     }
   } catch (err) { toast.error('Lỗi Follow!') }
-}
-
-const toggleFavorite = async () => {
-  if (!authStore.isAuthenticated) { toast.warn(t('toast.need_login') || 'Vui lòng đăng nhập!'); return }
-  const uid = authStore.user.accountID || authStore.user.id
-  const postID = props.post?.postID || props.post?.id
-
-  if (!postID) return
-  
-  try {
-    if (isFavorite.value) {
-      await removeFavorite(uid, postID); 
-      isFavorite.value = false
-    } else {
-      await addFavorite(uid, postID); 
-      isFavorite.value = true
-    }
-  } catch (err) { toast.error('Lỗi yêu thích!') }
 }
 </script>
 
@@ -248,7 +223,6 @@ const toggleFavorite = async () => {
   cursor: pointer; transition: 0.2s;
 
   &:hover { border-color: var(--color-neutral-900, #0f172a); color: var(--color-neutral-900, #0f172a); background: var(--color-neutral-50, #f8fafc); }
-  &.is-saved { color: var(--color-primary-500, #ea580c); border-color: var(--color-primary-500, #ea580c); background: var(--color-primary-50, #fff4ed); }
 }
 
 /* Nút Theo dõi chuẩn X/Threads */

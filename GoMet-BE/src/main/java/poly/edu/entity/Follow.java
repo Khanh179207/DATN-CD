@@ -31,5 +31,4 @@ public class Follow {
     @Column(nullable = false)
     private LocalDate followedAt;
 
-    private LocalDate unFollowedAt;
 }

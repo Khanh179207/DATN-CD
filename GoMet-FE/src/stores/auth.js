@@ -158,6 +158,33 @@ async function login(email, password) {
     router.push('/')
   }
 
+  // ─── NEW: ACCOUNT LIFECYCLE ACTIONS ──────────────────────────
+
+  async function deactivateAccount(otp, password = '') {
+    const userId = user.value?.accountID || user.value?.id
+    if (!userId) throw new Error('User not identified')
+    
+    try {
+      await authService.deactivateAccount(userId, password, otp)
+      logout()
+      return true
+    } catch (err) {
+      throw err
+    }
+  }
+
+  async function restoreAccount(email, otp, password = '') {
+    try {
+      const data = await authService.restoreAccount(email, password, otp)
+      // Sau khi khôi phục thành công, backend đã trả về luôn Token + User
+      // Chúng ta chỉ việc nạp vào state và vào thẳng trang chủ!
+      setUser(data)
+      return user.value.role
+    } catch (err) {
+      throw err
+    }
+  }
+
   // 🌟 NEW ACTION: Reset views for demo purposes
   function resetViews() {
     if (!user.value) return
@@ -186,5 +213,9 @@ async function login(email, password) {
     toast.success('Đã reset lượt xem (Demo Mode)')
   }
 
-  return { user, isAuthenticated, isAdmin, currentUser, login, register, logout, refreshProfile, setUser, resetViews }
+  return { 
+    user, isAuthenticated, isAdmin, currentUser, 
+    login, register, logout, refreshProfile, setUser, resetViews,
+    deactivateAccount, restoreAccount 
+  }
 })

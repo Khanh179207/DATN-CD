@@ -208,7 +208,6 @@ import { getCategories } from '@/services/categoryService'
 import { createPost } from '@/services/postService'
 import { uploadMedia } from '@/services/uploadService'
 import api from '@/services/api'
-import axios from 'axios'
 import { toast } from '@/composables/useToast'
 
 const route = useRoute()
@@ -303,7 +302,7 @@ const checkContentPolicy = async (text) => {
   if (!text) return false;
   try {
     // Chỉ gửi text lên Backend để hỏi, Frontend không hề biết blacklist là gì
-    const res = await axios.post('http://localhost:8080/api/blacklist/check', { content: text });
+    const res = await api.post('/api/blacklist/check', { content: text });
     return res.data.hasBadWord; // Backend sẽ trả về true nếu vi phạm, false nếu an toàn
   } catch (error) {
     console.warn("Lỗi server khi kiểm duyệt, cho phép qua để Backend lớp 2 tự chặn:", error);
@@ -316,7 +315,14 @@ const checkContentPolicy = async (text) => {
 // ==========================================
 const handlePublish = async () => {
   if (!post.value.title.trim()) return toast.warn('Vui lòng nhập tên món ăn!')
+  if (!post.value.description.trim()) return toast.warn('Vui lòng nhập mô tả cho món ăn!')
   if (!coverImageFile.value && !post.value.image) return toast.warn('Vui lòng thêm ảnh bìa cho bài viết!')
+
+  const validIngredients = post.value.ingredients.filter(i => i.name.trim() !== '')
+  if (validIngredients.length === 0) return toast.warn('Vui lòng nhập ít nhất 1 nguyên liệu!')
+
+  const validSteps = post.value.steps.filter(s => s.desc.trim() !== '')
+  if (validSteps.length === 0) return toast.warn('Vui lòng nhập ít nhất 1 bước chế biến!')
 
   const accID = currentUser.value.accountID || currentUser.value.id || currentUser.value.accountId;
   if (!accID) return toast.error('Lỗi phiên đăng nhập!');

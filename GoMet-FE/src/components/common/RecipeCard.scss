@@ -4,20 +4,20 @@
 // ─── RECIPE CARD — Design System v2 (SCSS) ───
 
 .recipe-card-wrapper {
-  background: var(--color-neutral-0);
-  border-radius: var(--radius-xl);
+  background: var(--color-neutral-0, #ffffff);
+  border-radius: var(--radius-xl, 20px);
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.03); // Bóng đổ cơ bản nhẹ nhàng
   cursor: pointer;
   position: relative;
-  font-family: var(--font-ui);
+  font-family: var(--font-ui, 'Mulish', sans-serif);
   border: 1px solid transparent;
   display: flex;
   flex-direction: column;
   height: 100%;
   transition:
-    transform var(--duration-slow) var(--ease-spring),
-    box-shadow var(--duration-slow) var(--ease-out),
+    transform var(--duration-slow, 0.3s) var(--ease-spring, cubic-bezier(0.2, 0.8, 0.2, 1)),
+    box-shadow var(--duration-slow, 0.3s) var(--ease-out, ease),
     border-color 0.2s ease;
 
   &:hover {
@@ -28,23 +28,25 @@
     .main-img       { transform: scale(1.07); }
     .media-overlay  { opacity: 0.7; }
     .card-title     { color: $primary-600; }
-    .stats-like     { color: #ef4444; }
 
     .btn-action {
       opacity: 1;
-      transform: translateX(0);
+      transform: translate(0);
 
+      &:nth-child(1) { transition-delay: 0ms; }
       &:nth-child(2) { transition-delay: 55ms; }
       &:nth-child(3) { transition-delay: 110ms; }
+      &.btn-manage-edit { transition-delay: 55ms; }
+      &.btn-manage-hide { transition-delay: 110ms; }
     }
   }
 
   &:active {
     transform: translateY(-2px) scale(0.98);
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-md, 0 4px 15px rgba(0,0,0,0.1));
     transition:
-      transform var(--duration-instant) var(--ease-out),
-      box-shadow var(--duration-instant) var(--ease-out);
+      transform var(--duration-instant, 0.1s) var(--ease-out, ease),
+      box-shadow var(--duration-instant, 0.1s) var(--ease-out, ease);
   }
 
   &:focus-visible {
@@ -52,12 +54,12 @@
     outline-offset: 3px;
   }
 
-  // ─── SKELETON STATE ───
+  /* --- SKELETON STATE --- */
   &.is-skeleton {
     pointer-events: none;
 
     .card-media {
-      background: var(--color-neutral-200);
+      background: var(--color-neutral-200, #E5E7EB);
     }
 
     .card-media,
@@ -65,18 +67,118 @@
     .author-name,
     .time-badge,
     .rating-box,
-    .stats-like {
+    .stats-like,
+    .stats-group {
       background: linear-gradient(
         90deg,
-        var(--color-neutral-200) 25%,
-        var(--color-neutral-100) 50%,
-        var(--color-neutral-200) 75%
+        var(--color-neutral-200, #E5E7EB) 25%,
+        var(--color-neutral-100, #F3F4F6) 50%,
+        var(--color-neutral-200, #E5E7EB) 75%
       );
       background-size: 200% 100%;
       animation: shimmer 1.4s ease-in-out infinite;
-      border-radius: var(--radius-sm);
+      border-radius: var(--radius-sm, 6px);
       color: transparent !important;
       border-color: transparent !important;
+    }
+  }
+
+  /* ==========================================
+     PREMIUM CARD DESIGN - THE HERO MOVE
+     ========================================== */
+  &.is-premium-card {
+    border: 1px solid rgba(217, 119, 6, 0.4) !important; 
+    box-shadow: 
+      0 12px 30px rgba(245, 158, 11, 0.1), 
+      0 4px 8px rgba(0,0,0,0.02); 
+    background: linear-gradient(180deg, rgba(255, 252, 246, 0.8) 0%, #ffffff 40%);
+    backdrop-filter: blur(4px);
+
+    /* Ruy-băng "PREMIUM" tinh tế hơn */
+    &::after {
+      content: 'PREMIUM';
+      position: absolute;
+      top: -1px;
+      right: 15px;
+      left: auto;
+      transform: none;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #fff;
+      font-size: 0.55rem;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      padding: 3px 12px;
+      border-radius: 0 0 6px 6px;
+      box-shadow: 0 4px 10px rgba(217, 119, 6, 0.25);
+      z-index: 10;
+    }
+
+    .card-title {
+      color: #78350f !important;
+      font-weight: 800;
+      transition: color 0.3s ease;
+    }
+
+    .author-name {
+      color: #b45309 !important;
+      font-weight: 800;
+    }
+
+    .crown-icon-mini {
+      color: #f59e0b;
+      filter: drop-shadow(0 0 3px rgba(245, 158, 11, 0.4));
+      margin-left: 4px;
+      animation: crown-float 2s ease-in-out infinite;
+    }
+
+    &:hover {
+      transform: translateY(-12px);
+      box-shadow: 
+        0 24px 48px rgba(245, 158, 11, 0.18),
+        0 8px 16px rgba(0,0,0,0.04);
+      border-color: rgba(245, 158, 11, 0.8) !important;
+
+      .card-media::after {
+        content: '';
+        position: absolute;
+        top: 0; left: -150%;
+        width: 100%; height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+        transform: skewX(-25deg);
+        animation: glass-reflection 0.8s ease-out forwards;
+        z-index: 5;
+      }
+    }
+  }
+
+  @keyframes crown-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-2px); }
+  }
+
+  /* --- HIDDEN STATE (MANAGEMENT) --- */
+  &.is-hidden-p {
+    border: 2px solid #94A3B8 !important;
+    background: #F1F5F9 !important;
+    transform: scale(0.98);
+    box-shadow: none !important;
+
+    .main-img {
+      filter: grayscale(1) blur(1.5px) brightness(0.6);
+      transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .card-title {
+      color: #64748B !important;
+      text-decoration: line-through;
+      opacity: 0.7;
+    }
+
+    &:hover {
+      transform: scale(0.98); // Lock scale when hidden
+      .main-img {
+        filter: grayscale(0.8) blur(0.5px) brightness(0.7);
+      }
     }
   }
 }
@@ -86,19 +188,24 @@
   100% { background-position:  200% 0; }
 }
 
+@keyframes glass-reflection {
+  0% { left: -150%; }
+  100% { left: 200%; }
+}
+
 // ─── MEDIA ───
 .card-media {
   position: relative;
   aspect-ratio: 16 / 10;
   overflow: hidden;
-  background: var(--color-neutral-100);
+  background: var(--color-neutral-100, #F3F4F6);
 }
 
 .main-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform var(--duration-slower) var(--ease-out);
+  transition: transform var(--duration-slower, 0.5s) var(--ease-out, ease);
   user-select: none;
   -webkit-user-drag: none;
   pointer-events: none;
@@ -113,6 +220,49 @@
   pointer-events: none;
 }
 
+.hidden-overlay-badge {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  padding: 20px;
+
+  .glass-inner {
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(12px) saturate(150%);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    animation: badge-pulse 2s infinite ease-in-out;
+
+    svg { 
+      color: #FBBF24;
+      filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.5));
+    }
+
+    span {
+      font-size: 0.75rem;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+  }
+}
+
+@keyframes badge-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.9; }
+}
+
 // ─── CATEGORY TAG ───
 .category-tag {
   position: absolute;
@@ -122,7 +272,7 @@
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   padding: 4px 12px;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-full, 99px);
   font-size: 0.68rem;
   font-weight: 900;
   color: $primary-600;
@@ -131,8 +281,8 @@
   z-index: 2;
   letter-spacing: 0.9px;
   text-transform: uppercase;
-  transition: transform var(--duration-fast) var(--ease-spring),
-              background var(--duration-fast) var(--ease-out);
+  transition: transform var(--duration-fast, 0.2s) var(--ease-spring, cubic-bezier(0.2,0.8,0.2,1)),
+              background var(--duration-fast, 0.2s) var(--ease-out, ease);
 }
 
 .recipe-card-wrapper:hover .category-tag {
@@ -146,12 +296,10 @@
   top: 12px;
   right: 12px;
   z-index: 2;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 }
 
 .btn-action {
+  position: absolute;
   width: 36px;
   height: 36px;
   border-radius: 50%;
@@ -162,11 +310,27 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: var(--color-neutral-600);
+  color: var(--color-neutral-600, #475569);
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   opacity: 0;
-  transform: translateX(12px);
   transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* --- NHÓM DỌC (Các nút cơ bản chìa xuống dưới) - Trượt từ trên xuống --- */
+  &:nth-child(1) {
+    top: 0;
+    right: 0;
+    transform: translateY(-12px);
+  }
+  &:nth-child(2) {
+    top: 44px; // 36px + 8px
+    right: 0;
+    transform: translateY(-12px);
+  }
+  &:nth-child(3) {
+    top: 88px; // 44px + 44px
+    right: 0;
+    transform: translateY(-12px);
+  }
 
   &:hover {
     background: $primary-600;
@@ -182,9 +346,31 @@
 
   &.btn-compare.active {
     opacity: 1;
-    transform: translateX(0);
+    transform: translate(0);
     background: #1C1917;
     color: $primary-500;
+  }
+
+  /* --- NHÓM NGANG (Các nút quản lý chìa sang trái) - Trượt từ phải sang --- */
+  &.btn-manage-edit {
+    top: 0;
+    right: 44px; // 36px + 8px
+    transform: translateX(12px);
+    &:hover { background: #0EA5E9; box-shadow: 0 4px 14px rgba(14, 165, 233, 0.4); }
+  }
+
+  &.btn-manage-hide {
+    top: 0;
+    right: 88px; // 44px + 44px
+    transform: translateX(12px);
+    &:hover { background: #F59E0B; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4); }
+    &.is-hidden-active {
+      opacity: 1;
+      transform: translate(0);
+      background: #F1F5F9;
+      color: #F59E0B;
+      border: 1px solid #FED7AA;
+    }
   }
 }
 
@@ -197,105 +383,408 @@
   gap: 8px;
 }
 
+/* Meta Top (Rating & Time) */
 .meta-top {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  font-size: 0.75rem;
+  justify-content: space-between;
+  margin-bottom: 8px;
 }
 
 .rating-box {
   display: flex;
   align-items: center;
-  gap: 3px;
-  font-weight: 700;
-  color: #f59e0b;
+  gap: 4px;
+  background: #fff7ed;
+  color: #ea580c;
+  padding: 4px 10px;
+  border-radius: 100px;
+  font-weight: 800;
+  font-size: 0.85rem;
 
-  .star  { font-size: 0.9rem; margin-top: -1px; }
-  .count { color: var(--color-neutral-400); font-weight: 500; }
+  .star { display: flex; align-items: center; margin-top: -1px; }
+  .count { color: #fdba74; font-size: 0.8rem; font-weight: 600; margin-left: 2px; }
+
+  &.is-new {
+    background: #f1f5f9;
+    color: #64748b;
+    .star { display: none; }
+  }
 }
 
 .time-badge {
   display: flex;
   align-items: center;
-  gap: 4px;
-  color: var(--color-neutral-500);
-  font-weight: 600;
-  background: var(--color-neutral-100);
-  padding: 3px 9px;
-  border-radius: var(--radius-sm);
-  font-size: 0.75rem;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #94a3b8;
+  background: #f8fafc;
+  padding: 4px 10px;
+  border-radius: 100px;
 }
 
+/* Card Title */
 .card-title {
   font-size: 1.05rem;
   font-weight: 800;
-  color: var(--color-neutral-900);
+  color: var(--color-neutral-900, #111827);
   margin: 2px 0 4px;
   line-height: 1.38;
   display: -webkit-box;
+  line-clamp: 2;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   transition: color 0.2s ease;
 }
 
+/* Card Footer (Author & Stats) */
 .card-footer {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-top: auto;
+  justify-content: space-between; 
+  gap: 12px;
+  margin-top: auto; 
   padding-top: 14px;
-  border-top: 1px solid var(--color-neutral-100);
+  border-top: 1px solid #f1f5f9; 
 }
 
+/* Author Info */
 .author-info {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex: 1; 
+  min-width: 0; 
 }
 
 .author-avt {
-  width: 28px;
-  height: 28px;
+  flex-shrink: 0;
+  width: 32px; 
+  height: 32px;
   border-radius: 50%;
   overflow: hidden;
-  background: var(--color-neutral-200);
-  border: 2px solid #fff;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-  flex-shrink: 0;
-
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   img { width: 100%; height: 100%; object-fit: cover; }
+  .avt-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #ea580c; font-size: 0.85rem;}
 }
 
-.avt-placeholder {
-  width: 100%;
-  height: 100%;
+.author-name-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 0.65rem;
-  font-weight: 800;
-  color: var(--color-neutral-400);
-  background: linear-gradient(135deg, #F5F5F4, #E7E5E4);
 }
 
-.author-name {
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--color-neutral-600);
-  max-width: 100px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.stats-like {
+.author-name-group {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 0.82rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.author-name {
   font-weight: 700;
-  color: var(--color-neutral-400);
-  transition: color 0.2s ease;
+  font-size: 0.88rem;
+  color: #334155;
+  white-space: nowrap; 
+  overflow: hidden;    
+  text-overflow: ellipsis; 
+  cursor: default;
+  transition: color 0.2s;
+}
+
+.crown-icon-mini {
+  flex-shrink: 0;
+  color: #94a3b8;
+  transition: color 0.2s;
+}
+
+/* Tooltip UI */
+.beautiful-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px); 
+  left: 0;
+  background: #1e293b; 
+  color: white; 
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none; 
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+  z-index: 50;
+}
+
+.beautiful-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 16px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #EA580C transparent transparent transparent; 
+}
+
+.author-name-wrapper:hover .beautiful-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* Stats Right */
+.card-stats-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 14px; 
+  flex-shrink: 0; 
+}
+
+.stats-group {
+  display: flex;
+  align-items: center;
+  gap: 4px; 
+  color: #94a3b8;
+  
+  .stat-icon { color: #cbd5e1; }
+  .stat-text { font-size: 0.85rem; font-weight: 700; color: #64748b; }
+}
+
+.like-action {
+  .clickable {
+    cursor: pointer;
+    &:hover { color: #0f172a; }
+  }
+}
+
+.btn-icon-like {
+  background: none; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0;
+  color: #cbd5e1; transition: all 0.2s;
+
+  &:hover:not(:disabled) { color: #ea580c; }
+  &.is-liked { color: #ea580c; }
+  &.animating svg { animation: heartPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+}
+
+@keyframes heartPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+
+// ─── POPUP LIKES (Giao diện toàn cục) ───
+.likes-popup-overlay {
+  position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(4px); z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.likes-popup-container {
+  background: white; width: 300px; max-height: 400px;
+  border-radius: 24px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+
+.popup-header {
+  padding: 16px 20px; border-bottom: 1px solid #f1f5f9;
+  display: flex; justify-content: space-between; align-items: center;
+  span { font-weight: 800; font-size: 1rem; color: #0f172a; }
+  .btn-close-mini { 
+    background: #f1f5f9; border: none; width: 28px; height: 28px; 
+    border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+    color: #64748b; cursor: pointer; font-size: 0.8rem; font-weight: bold; 
+    &:hover { background: #e2e8f0; color: #0f172a; } 
+  }
+}
+
+.popup-scroll-area {
+  flex: 1; overflow-y: auto; padding: 12px;
+  &::-webkit-scrollbar { width: 6px; }
+  &::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+}
+
+.liker-item-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px; border-radius: 12px; transition: 0.2s;
+  &:hover { background: #f8fafc; }
+  
+  .liker-avt-mini { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+  .liker-name-mini { font-size: 0.9rem; font-weight: 700; color: #334155; }
+}
+
+.popup-state { padding: 30px; text-align: center; color: #94a3b8; font-size: 0.9rem; font-weight: 600; }
+
+/* Transitions */
+.pop-in-enter-active, .pop-in-leave-active { transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+.pop-in-enter-from, .pop-in-leave-to { opacity: 0; transform: scale(0.95) translateY(10px); }
+
+/* ==========================================
+   📱 TỐI ƯU RESPONSIVE & MOBILE TOUCH
+   ========================================== */
+
+// 1. DÀNH CHO MÀN HÌNH CẢM ỨNG (Điện thoại, Tablet không có chuột)
+@media (hover: none) and (pointer: coarse) {
+  .recipe-card-wrapper {
+    // Ép các nút thao tác nhanh (Tim, Bookmark...) luôn hiện mờ mờ trên Mobile
+    // Tránh việc người dùng không biết có nút bấm vì không thể Hover
+    .btn-action {
+      opacity: 0.9;
+      transform: translate(0);
+      background: rgba(255, 255, 255, 0.85);
+      
+      &:active {
+        transform: scale(0.9);
+        background: $primary-500;
+        color: white;
+      }
+    }
+
+    // Tắt hiệu ứng scale ảnh giật cục khi chạm trên mobile
+    &:active .main-img {
+      transform: scale(1.02);
+    }
+    
+    // Tắt tooltip trên mobile để tránh bị kẹt màn hình
+    .beautiful-tooltip {
+      display: none !important;
+    }
+  }
+}
+
+// 2. BREAKPOINT TABLET (Dưới 1024px)
+@media (max-width: 1024px) {
+  .card-content {
+    padding: 14px 14px 12px; // Giảm nhẹ padding
+  }
+  
+  .card-title {
+    font-size: 1rem; // Chữ nhỏ lại 1 xíu
+  }
+  
+  .btn-action {
+    width: 32px;
+    height: 32px;
+    svg { width: 16px; height: 16px; } // Thu nhỏ icon action
+  }
+}
+
+// 3. BREAKPOINT ĐIỆN THOẠI (Dưới 768px)
+@media (max-width: 768px) {
+  .recipe-card-wrapper {
+    border-radius: 16px; // Bo góc nhẹ lại cho hợp màn hình nhỏ
+  }
+
+  .card-media {
+    aspect-ratio: 4 / 3; // Chuyển tỉ lệ ảnh vuông hơn 1 xíu để hiển thị to rõ trên Mobile
+  }
+
+  .quick-actions {
+    top: 8px;
+    right: 8px;
+  }
+
+  .btn-action {
+    width: 30px;
+    height: 30px;
+    opacity: 0.9;
+    transform: translate(0); // Luôn luôn hiển thị vị trí chuẩn trên Mobile
+    svg { width: 14px; height: 14px; } // Thu nhỏ icon cho cân đối với nút 30px
+
+    /* Căn chỉnh lại vị trí L-shape cho kích thước 30px, gap 4px */
+    &:nth-child(1) { top: 0; right: 0; }
+    &:nth-child(2) { top: 34px; right: 0; }
+    &:nth-child(3) { top: 68px; right: 0; }
+
+    &.btn-manage-edit {
+      top: 0; right: 34px;
+    }
+    &.btn-manage-hide {
+      top: 0; right: 68px;
+    }
+  }
+
+  .meta-top {
+    margin-bottom: 6px;
+  }
+
+  .rating-box {
+    padding: 3px 8px;
+    font-size: 0.75rem;
+    .count { font-size: 0.75rem; }
+  }
+
+  .time-badge {
+    padding: 3px 8px;
+    font-size: 0.75rem;
+  }
+
+  .category-tag {
+    font-size: 0.6rem;
+    padding: 3px 10px;
+    top: 8px;
+    left: 8px;
+  }
+
+  // Ép Footer không bị vỡ bố cục khi tên tác giả quá dài
+  .card-footer {
+    gap: 8px;
+    padding-top: 10px;
+  }
+
+  .author-avt {
+    width: 26px;
+    height: 26px;
+  }
+
+  .author-name {
+    font-size: 0.8rem;
+  }
+
+  .card-stats-wrapper {
+    gap: 10px;
+  }
+
+  .stats-group .stat-text {
+    font-size: 0.75rem; // Nhỏ chữ số lượt xem/like
+  }
+}
+
+// 4. BREAKPOINT ĐIỆN THOẠI NHỎ (iPhone SE, Galaxy Fold - Dưới 380px)
+@media (max-width: 380px) {
+  .card-content {
+    padding: 10px;
+  }
+  
+  .card-title {
+    font-size: 0.9rem;
+  }
+
+  .author-name-group {
+    max-width: 80px; // Ép cắt tên tác giả thành "..." nếu quá dài
+  }
+}
+
+// 5. TỐI ƯU CÁC POPUP TOÀN CỤC TRÊN MOBILE
+@media (max-width: 640px) {
+  .likes-popup-container {
+    width: 90%; // Chuyển từ fix cứng 300px sang linh hoạt 90%
+    max-width: 340px;
+    max-height: 70vh; // Không để popup tràn quá màn hình đt
+    border-radius: 20px;
+  }
+  
+  .popup-header {
+    padding: 14px 16px;
+  }
 }

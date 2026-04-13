@@ -1,69 +1,96 @@
 package poly.edu.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dto.AdminEventDTO;
 import poly.edu.dto.AdminEventPostDTO;
 import poly.edu.service.AdminEventService;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin/events")
 @RequiredArgsConstructor
-@CrossOrigin("*") // Mở khóa CORS hoàn toàn cho FE gọi
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminEventController {
 
     private final AdminEventService adminEventService;
 
-    // ĐÃ XÓA @InitBinder VÌ BÂY GIỜ DÙNG @RequestBody (JSON)
-    // Mọi convert ngày tháng sẽ do Jackson tự động làm!
+    // ===== Event CRUD =====
 
     @GetMapping
-    public List<AdminEventDTO> getAll() {
-        return adminEventService.findAllEvents();
+    public ResponseEntity<List<AdminEventDTO>> getAll() {
+        return ResponseEntity.ok(adminEventService.findAllEvents());
     }
 
     @GetMapping("/{id}")
-    public AdminEventDTO getOne(@PathVariable Integer id) {
-        return adminEventService.findEventById(id);
+    public ResponseEntity<AdminEventDTO> getOne(@PathVariable Integer id) {
+        AdminEventDTO dto = adminEventService.findEventById(id);
+        return dto != null ? ResponseEntity.ok(dto) : ResponseEntity.notFound().build();
     }
 
     @PostMapping
-    public AdminEventDTO create(@RequestBody AdminEventDTO dto) {
-        // Cả Event mới và ảnh Cloudinary đều đã nằm gọn trong DTO
-        return adminEventService.saveEvent(dto);
+    public ResponseEntity<AdminEventDTO> create(@RequestBody AdminEventDTO dto) {
+        return ResponseEntity.ok(adminEventService.saveEvent(dto));
     }
 
+    // 🔥 HÀM UPDATE ĐÃ ĐƯỢC DỌN SẠCH, CHUẨN MVC
     @PutMapping("/{id}")
-    public AdminEventDTO update(@PathVariable Integer id, @RequestBody AdminEventDTO dto) {
-        dto.setEventID(id);
-        // Khi Vue gửi lệnh Kết thúc nhanh, dto.getIsForceEnded() sẽ là TRUE
-        // Cập nhật lại thời gian EndAt, VoteEndAt về hiện tại
-        return adminEventService.saveEvent(dto);
+    public ResponseEntity<?> update(@PathVariable Integer id, @RequestBody AdminEventDTO dto) {
+        try {
+            // Ép ID từ URL vào DTO để Service biết là đang Update chứ không phải Create mới
+            dto.setEventID(id);
+
+            // Gọi Service xử lý (Logic kiểm duyệt chặn sửa Luật/Thưởng đã nằm gọn trong Service)
+            AdminEventDTO saved = adminEventService.saveEvent(dto);
+
+            return ResponseEntity.ok(saved);
+
+        } catch (RuntimeException e) {
+            // Hứng lỗi "Sự kiện đã bắt đầu..." từ Service ném ra (nếu vi phạm)
+            // Trả về HTTP 400 kèm message để Frontend hiển thị thông báo đỏ
+            return ResponseEntity.badRequest().body(Map.of(
+                    "message", e.getMessage()
+            ));
+        }
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Integer id) {
-        // TÍNH NĂNG XÓA MỀM (SOFT DELETE)
-        // Lưu ý: Bên trong AdminEventService sếp phải đổi logic hàm này thành UPDATE isActive = 0 nhé!
+    public ResponseEntity<?> delete(@PathVariable Integer id) {
+        // Soft delete (isActive = 0)
         adminEventService.deleteEvent(id);
+        return ResponseEntity.ok().build();
     }
 
-    // ===== Event Detail (Quản lý bài thi trong sự kiện) =====
+    // ===== Event Detail (Posts in Event) =====
+
     @GetMapping("/{id}/posts")
-    public List<AdminEventPostDTO> getPosts(@PathVariable Integer id) {
-        return adminEventService.getPostsOfEvent(id);
+    public ResponseEntity<List<AdminEventPostDTO>> getPosts(@PathVariable Integer id) {
+        return ResponseEntity.ok(adminEventService.getPostsOfEvent(id));
     }
 
     @DeleteMapping("/posts/{eventPostID}")
-    public void removePost(@PathVariable Integer eventPostID) {
+    public ResponseEntity<?> removePost(@PathVariable Integer eventPostID) {
         adminEventService.removePostFromEvent(eventPostID);
+        return ResponseEntity.ok().build();
     }
-    // ===== TÍNH NĂNG KHÔI PHỤC (RESTORE) =====
+
+    // ===== Restore Event =====
+
     @PutMapping("/{id}/restore")
-    public void restoreEvent(@PathVariable Integer id) {
-        // Gọi sang Service để update trực tiếp isActive = 1
+    public ResponseEntity<?> restoreEvent(@PathVariable Integer id) {
         adminEventService.restoreEvent(id);
+        return ResponseEntity.ok().build();
+    }
+
+    // ===== Force End Event + Auto Reward =====
+
+    @PostMapping("/{id}/force-end")
+    public ResponseEntity<?> forceEndEvent(@PathVariable Integer id) {
+        adminEventService.forceEndEventWithReward(id);
+        return ResponseEntity.ok(Map.of("message", "Đã đóng sự kiện và phát thưởng thành công!"));
     }
 }
