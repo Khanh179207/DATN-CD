@@ -458,15 +458,138 @@ $shadow-lux: 0 25px 60px rgba(15, 23, 42, 0.15);
 .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-/* --- RESPONSIVE --- */
+/* =======================================================
+   🔥 HỆ THỐNG RESPONSIVE (TỐI ƯU MỌI THIẾT BỊ)
+   ======================================================= */
+
+/* --- 1. Màn hình Laptop nhỏ & Tablet ngang (Dưới 1200px) --- */
+@media (max-width: 1200px) {
+  .cook-modal-lux { width: 98vw; height: 96vh; }
+  .content-grid-lux { gap: 24px; padding: 24px; }
+  .instruction-container { padding: 30px; }
+  .modal-header-lux { padding: 20px 24px; }
+  .modal-footer-lux { padding: 20px 24px; }
+}
+
+/* --- 2. Màn hình Tablet dọc & Mobile ngang (Dưới 1024px) --- */
 @media (max-width: 1024px) {
-  .content-grid-lux { grid-template-columns: 1fr; overflow-y: auto; padding: 25px; gap: 25px; }
-  .cook-modal-lux { height: 95vh; }
-  .image-card-luxury { max-height: 40vh; }
-  .modal-header-lux { flex-direction: column; align-items: flex-start; gap: 15px; padding: 20px 25px; }
-  .header-right { width: 100%; justify-content: space-between; }
+  .content-grid-lux { 
+    grid-template-columns: 1fr; /* Gập 2 cột thành 1 cột dọc */
+    overflow-y: auto; 
+    padding: 20px; 
+    gap: 20px; 
+  }
+  
+  .image-section { 
+    height: auto; 
+  }
+  .image-card-luxury { 
+    max-height: 40vh; 
+    border-radius: 20px;
+  }
+  
+  .modal-header-lux { 
+    flex-direction: column; 
+    align-items: flex-start; 
+    gap: 16px; 
+    padding: 16px 20px; 
+  }
+  
+  .header-left, .header-right { 
+    width: 100%; 
+    justify-content: space-between; 
+  }
+  
+  /* Ẩn dấu gạch dọc phân cách trên Tablet/Mobile */
   .divider-v { display: none; }
-  .modal-footer-lux { padding: 20px 25px; flex-wrap: wrap; gap: 15px; justify-content: center; }
-  .voice-status { order: -1; width: 100%; justify-content: center; }
+  
+  .modal-footer-lux { 
+    padding: 16px 20px; 
+    flex-wrap: wrap; 
+    gap: 12px; 
+    justify-content: center; 
+  }
+  
+  /* Đẩy khối trạng thái giọng nói lên trên cùng của Footer */
+  .voice-status { 
+    order: -1; 
+    width: 100%; 
+    justify-content: center; 
+  }
+}
+
+/* --- 3. Màn hình Mobile Lớn (Dưới 768px) --- */
+@media (max-width: 768px) {
+  .cook-modal-lux { 
+    width: 100vw; 
+    height: 100vh; /* Mobile mặc định full màn hình cho dễ nhìn */
+    border-radius: 0; 
+    border: none;
+  }
+
+  .modal-header-lux { padding: 12px 16px; gap: 12px; }
+  
+  /* Thanh công cụ cuộn ngang trên Mobile để tiết kiệm chỗ */
+  .header-right {
+    overflow-x: auto;
+    justify-content: flex-start;
+    gap: 12px;
+    padding-bottom: 4px;
+    -ms-overflow-style: none; scrollbar-width: none;
+    
+    &::-webkit-scrollbar { display: none; }
+    
+    /* Ép các nút không rớt dòng */
+    .tool-btn-lux, .btn-close-lux { flex-shrink: 0; }
+  }
+
+  /* Thu nhỏ size chữ và nút */
+  .step-pill { padding: 6px 16px; }
+  .step-label { font-size: 10px; }
+  .step-current { font-size: 20px; }
+  .step-total { font-size: 14px; }
+  
+  .tool-btn-lux { padding: 8px 16px; font-size: 11px; }
+  .btn-close-lux { width: 36px; height: 36px; }
+
+  /* Khu vực Nội dung */
+  .content-grid-lux { padding: 16px; gap: 16px; }
+  .image-card-luxury { max-height: 30vh; /* Giảm chiều cao ảnh trên Mobile */ border-radius: 16px; }
+  
+  .instruction-container { padding: 20px; border-radius: 16px; }
+  .instruction-title { margin-bottom: 16px; font-size: 12px; }
+  
+  /* Footer (Nút Trước/Tiếp) */
+  .modal-footer-lux { 
+    padding: 12px 16px; 
+    justify-content: space-between; /* Ép 2 nút ra 2 góc */
+  }
+  .nav-btn { 
+    padding: 12px 20px; 
+    font-size: 12px; 
+    gap: 8px; 
+    flex: 1; /* Hai nút chia đều màn hình ngang */
+    justify-content: center;
+    max-width: 48%; /* Đảm bảo có khoảng cách ở giữa */
+  }
+}
+
+/* --- 4. Màn hình Mobile Cực Nhỏ (Dưới 400px - Vd: iPhone SE) --- */
+@media (max-width: 400px) {
+  .header-left { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .size-controls { width: 100%; justify-content: space-between; }
+  
+  .instruction-container { padding: 16px; }
+  
+  .nav-btn { padding: 10px 12px; font-size: 11px; }
+  
+  .voice-status { padding: 8px; }
+  .voice-command-text { font-size: 11px; }
+}
+
+/* Fix cuộn ngang nếu người dùng xoay điện thoại (Landscape Mobile) */
+@media (max-height: 500px) and (orientation: landscape) {
+  .content-grid-lux { grid-template-columns: 1fr 1fr; /* Trả về 2 cột nếu xoay ngang */ }
+  .image-card-luxury { max-height: 100%; }
 }
 </style>

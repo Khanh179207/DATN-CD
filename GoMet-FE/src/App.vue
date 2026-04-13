@@ -7,17 +7,25 @@
 
 <script setup>
 import { onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import ToastContainer from '@/components/common/ToastContainer.vue'
 
 const authStore = useAuthStore()
+const route = useRoute()
+const router = useRouter()
 
 onMounted(() => {
-  // 🔥 LƯỚI TRỜI: Mỗi khi User mở web hoặc nhấn F5
-  // Hàm này sẽ tự động chạy ngầm API /api/auth/me để kiểm tra Token
-  // Nếu Backend phát hiện acc đã bị BAN (isActive = 0), nó sẽ ném lỗi 403
-  // Và Interceptor của sếp sẽ tự động làm nốt phần việc: Xóa data + Đá văng ra Login + Báo lỗi đỏ!
   authStore.refreshProfile()
+
+  // 🚀 LOGIC ĐIỀU HƯỚNG THÔNG MINH
+  // Ngưỡng 1024px bao gồm cả Mobile và các dòng Tablet (iPad Air/Pro...)
+  const isMobileOrTablet = window.innerWidth < 1024
+
+  // Nếu đang ở trang Landing (/) mà dùng thiết bị nhỏ -> Vào thẳng Home
+  if (isMobileOrTablet && route.path === '/') {
+    router.push('/home')
+  }
 })
 </script>
 

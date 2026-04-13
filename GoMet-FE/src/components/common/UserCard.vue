@@ -15,7 +15,7 @@
     </div>
 
     <div class="user-actions">
-      <button class="btn-icon-chat" @click.stop="handleContactUser" title="Nhắn tin">
+      <button class="btn-icon-chat hide-on-mobile" @click.stop="handleContactUser" title="Nhắn tin">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
         </svg>
@@ -97,6 +97,12 @@ const goToProfile = () => {
 }
 
 const handleContactUser = async () => {
+  // 🔥 CHẶN TÍNH NĂNG NHẮN TIN TRÊN MOBILE/TABLET (Theo đúng yêu cầu của sếp)
+  if (window.innerWidth <= 1024) {
+    toast.info('Tính năng nhắn tin hiện chỉ hỗ trợ trên Máy tính!')
+    return
+  }
+
   if (!authStore.isAuthenticated) { 
     window.dispatchEvent(new CustomEvent('ui:open-login'))
     return
@@ -156,6 +162,7 @@ const toggleFollow = async () => {
 </script>
 
 <style scoped lang="scss">
+/* --- CORE STYLES (GIỮ NGUYÊN GỐC CỦA SẾP) --- */
 .user-card {
   display: flex;
   flex-direction: column;
@@ -171,7 +178,6 @@ const toggleFollow = async () => {
   position: relative;
   overflow: hidden;
 
-  // Hiệu ứng khi hover
   &:hover {
     transform: translateY(-5px);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
@@ -197,7 +203,7 @@ const toggleFollow = async () => {
   position: absolute;
   bottom: 0;
   right: 0;
-  background: #3B82F6; // Màu xanh dương
+  background: #3B82F6; 
   color: white;
   width: 24px;
   height: 24px;
@@ -229,7 +235,6 @@ const toggleFollow = async () => {
   margin: 0;
 }
 
-/* --- NHÓM NÚT ACTION MỚI --- */
 .user-actions {
   display: flex;
   align-items: center;
@@ -238,7 +243,6 @@ const toggleFollow = async () => {
   width: 100%;
 }
 
-/* Nút Chat (Icon vuông bo viền mỏng giống ảnh) */
 .btn-icon-chat {
   width: 40px; 
   height: 40px; 
@@ -260,7 +264,6 @@ const toggleFollow = async () => {
   }
 }
 
-/* Nút Follow Đen Bo Góc */
 .btn-follow-black {
   flex: 1;
   padding: 10px 0; 
@@ -269,7 +272,7 @@ const toggleFollow = async () => {
   font-size: 0.9rem; 
   cursor: pointer; 
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  background: #1C1917; /* Màu đen */
+  background: #1C1917; 
   color: #fff; 
   border: 1.5px solid #1C1917;
   
@@ -279,19 +282,95 @@ const toggleFollow = async () => {
     box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
   }
   
-  /* Trạng thái đã follow */
   &.is-following {
     background: transparent; 
     color: #1C1917;
     
     &:hover { 
-      background: #FEE2E2; /* Nền đỏ nhạt */
-      color: #DC2626;      /* Chữ đỏ đậm */
+      background: #FEE2E2; 
+      color: #DC2626;      
       border-color: #DC2626; 
     }
     
     &:hover span { display: none; }
     &:hover::after { content: "Hủy theo dõi"; }
+  }
+}
+
+/* =======================================================
+   🔥 HỆ THỐNG RESPONSIVE (TỐI ƯU MỌI THIẾT BỊ)
+   ======================================================= */
+
+/* --- 1. Màn hình Tablet dọc & Mobile ngang (Dưới 1024px) --- */
+@media (max-width: 1024px) {
+  /* Ẩn nút chat theo yêu cầu của sếp */
+  .hide-on-mobile {
+    display: none !important;
+  }
+  
+  .user-card {
+    padding: 24px 16px; /* Giảm độ phồng của card */
+    border-radius: 16px;
+  }
+
+  .user-avatar {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .user-info { margin-bottom: 20px; }
+  .user-name { font-size: 1.05rem; }
+  
+  .btn-follow-black {
+    padding: 8px 0; /* Thu nhỏ padding trên / dưới */
+    font-size: 0.85rem;
+  }
+}
+
+/* --- 2. Màn hình Mobile lớn (Dưới 600px) --- */
+@media (max-width: 600px) {
+  .user-card {
+    padding: 20px 12px;
+    border-radius: 12px;
+  }
+  
+  .user-avatar {
+    width: 65px;
+    height: 65px;
+    border-width: 2px;
+  }
+
+  .verify-badge {
+    width: 18px;
+    height: 18px;
+    border-width: 1.5px;
+    svg { width: 10px; height: 10px; }
+  }
+  
+  .user-name { font-size: 1rem; margin-bottom: 2px; }
+  .user-handle { font-size: 0.8rem; }
+  
+  .user-info { margin-bottom: 16px; }
+
+  .btn-follow-black {
+    padding: 8px 0;
+    font-size: 0.8rem;
+  }
+}
+
+/* --- 3. Màn hình Mobile nhỏ (Dưới 400px - Vd iPhone SE) --- */
+@media (max-width: 400px) {
+  .user-card {
+    padding: 16px 10px;
+  }
+  .user-avatar {
+    width: 55px;
+    height: 55px;
+  }
+  .user-name { font-size: 0.95rem; }
+  .btn-follow-black {
+    font-size: 0.75rem;
+    padding: 6px 0;
   }
 }
 </style>

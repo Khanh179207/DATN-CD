@@ -115,7 +115,6 @@ $font-serif: 'Playfair Display', serif;
   }
 }
 
-// ================= HỒI 2: COMMUNITY (THIẾT KẾ LẠI THẺ) =================
 .section-community {
   .community-layout { text-align: center; width: 100%; }
   .community-title { font-family: $font-serif; font-size: 4.8rem; font-weight: 900; margin: 15px 0; color: $text-dark; line-height: 1.1;}
@@ -133,12 +132,11 @@ $font-serif: 'Playfair Display', serif;
       box-shadow: 0 15px 40px rgba(0,0,0,0.06); 
       border: 1px solid #f5f5f4; 
       
-      // Xóa hover ở thẻ side, chỉ nằm im làm nền
       &.card-side { 
         opacity: 1; 
         z-index: 1; 
         transform: scale(0.95); 
-        pointer-events: none; // Vô hiệu hóa tương tác chuột vào thẻ phụ
+        pointer-events: none;
       }
       
       &.card-center { 
@@ -171,7 +169,6 @@ $font-serif: 'Playfair Display', serif;
   }
 }
 
-// ================= HỒI 3: PLANNER =================
 .section-plan {
   .plan-layout { display: flex; align-items: center; gap: 100px; }
   .plan-visual { flex: 0.45; position: relative; display: flex; justify-content: center; }
@@ -246,19 +243,150 @@ $font-serif: 'Playfair Display', serif;
 @keyframes rotateHologram { 100% { transform: rotate(360deg); } }
 @keyframes shine { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 
-// ================= RESPONSIVE =================
+@media (max-width: 1366px) {
+  .container { padding: 0 50px; }
+  .idea-title, .plan-title { font-size: 4rem; }
+  .idea-layout { gap: 40px; }
+}
+
 @media (max-width: 1200px) {
-  .horizontal-track { flex-direction: column; width: 100vw; height: auto; }
-  .slide-section { width: 100vw; height: auto; padding: 100px 0; }
-  .container { padding: 0 40px; }
-  .idea-layout, .plan-layout { flex-direction: column; text-align: center; gap: 60px; }
-  .idea-text, .plan-content { min-width: 100%; white-space: normal; padding-right: 0; }
-  .idea-title, .plan-title { white-space: normal; font-size: 3.5rem; }
-  .idea-grid-wrapper { width: 100%; max-width: 600px; }
-  .cards-container { flex-direction: column; align-items: center; }
-  .plan-visual { width: 100%; margin-bottom: 50px; }
-  .image-wrapper { width: 320px; height: 420px; margin: 0 auto; }
-  .calendar-card { right: -20px; }
-  .calories-card { left: -20px; }
-  .features-list { text-align: left; }
+  .master-pinned-wrapper {
+    height: auto;
+    overflow: visible;
+    border-radius: 30px 30px 0 0;
+    margin-top: -3vh;
+  }
+
+  .horizontal-track {
+    flex-direction: column;
+    width: 100vw;
+    height: auto;
+  }
+
+  .slide-section {
+    width: 100vw;
+    height: auto;
+    padding: 80px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+  }
+
+  .container {
+    padding: 0 30px;
+    max-width: 800px;
+  }
+
+  .section-idea {
+    .idea-layout {
+      flex-direction: column;
+      text-align: center;
+      gap: 50px;
+    }
+    .idea-text {
+      padding-right: 0;
+      .idea-title { white-space: normal; }
+      .idea-desc { margin: 20px auto 40px; }
+    }
+    .idea-stats {
+      justify-content: center;
+      gap: 30px;
+    }
+    .idea-grid-wrapper {
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+  }
+
+  .section-community {
+    .community-title { font-size: 3.5rem; }
+    .cards-container {
+      height: 400px;
+      .card-side { display: none; }
+      .user-card.card-center { position: relative; margin: 0 auto; }
+    }
+  }
+
+  .section-plan {
+    .plan-layout {
+      flex-direction: column-reverse;
+      gap: 60px;
+    }
+    .plan-content {
+      text-align: center;
+      padding-right: 0;
+      .plan-title { font-size: 3.5rem; white-space: normal; }
+    }
+    .features-list {
+      text-align: left;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    .btn-plan-action { width: 100%; }
+    
+    .plan-visual {
+      width: 100%;
+      .image-wrapper { width: 280px; height: 380px; }
+      .calendar-card { right: -30px; transform: scale(0.9); }
+      .calories-card { left: -30px; transform: scale(0.9); }
+    }
+  }
+}
+@media (max-width: 768px) {
+  .sub-tag { font-size: 0.8rem; letter-spacing: 2px; padding-left: 40px; }
+  .idea-title, .plan-title, .community-title { font-size: 2.8rem !important; }
+  
+  .idea-stats {
+    flex-wrap: wrap;
+    .stat-sep { display: none; }
+    .stat-item { width: 40%; }
+  }
+
+  .bento-gallery {
+    grid-template-rows: 200px 200px !important;
+    .bento-main h3 { font-size: 1.5rem; }
+    .bento-float { display: none; } 
+  }
+}
+
+@media (max-width: 480px) {
+  .slide-section { padding: 60px 0; }
+  .container { padding: 0 20px; }
+  
+  .idea-title, .plan-title, .community-title { 
+    font-size: 2.2rem !important; 
+    line-height: 1.2;
+  }
+
+  .idea-desc, .community-desc, .plan-desc {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  .idea-stats .stat-num { font-size: 2rem; }
+
+  .bento-gallery {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto !important;
+    .bento-main { grid-row: auto; height: 250px; }
+    .bento-tr, .bento-br { grid-column: auto; height: 180px; }
+  }
+  .cards-container .user-card {
+    width: 280px;
+    .card-body { padding: 0 15px 20px; }
+  }
+  .plan-visual {
+    .image-wrapper { 
+      width: 240px; height: 320px; 
+      .circle-bg { width: 200px; height: 200px; }
+    }
+    .calendar-card, .calories-card { 
+      position: static;
+      margin: 10px auto;
+      transform: none;
+      width: 90%;
+    }
+    .img-container { box-shadow: 15px 15px 0px $primary; }
+  }
+
+  .floating-deco { display: none; }
 }

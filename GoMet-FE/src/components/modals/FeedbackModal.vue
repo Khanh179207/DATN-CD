@@ -437,4 +437,89 @@ $text-sub: #64748b;
 .custom-scroll-orange::-webkit-scrollbar-track { background: transparent; }
 .custom-scroll-orange::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 .custom-scroll-orange::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* =======================================================
+   🔥 HỆ THỐNG RESPONSIVE (TỐI ƯU MỌI THIẾT BỊ)
+   ======================================================= */
+
+/* --- 1. Màn hình Tablet dọc & Mobile ngang (Dưới 768px) --- */
+@media (max-width: 768px) {
+  .gomet-modal-overlay {
+    padding: 16px;
+  }
+  .gomet-modal-card {
+    max-width: 100%;
+    border-radius: 20px;
+  }
+  
+  .gomet-modal-header {
+    padding: 16px 20px;
+    .icon-orb { 
+      width: 38px; height: 38px; 
+      svg { width: 18px; height: 18px; }
+    }
+    .header-text h3 { font-size: 1.05rem; margin-bottom: 2px; }
+  }
+  
+  .gomet-modal-body {
+    padding: 20px;
+    max-height: 70vh; /* Nới rộng không gian cuộn một chút trên mobile */
+  }
+  
+  .gomet-field { margin-bottom: 18px; }
+  .gomet-input { padding: 10px 14px; font-size: 0.9rem; }
+  
+  .upload-zone { min-height: 100px; padding: 14px; }
+  .upload-preview-wrap .img-thumb { width: 50px; height: 50px; }
+  
+  .gomet-modal-footer {
+    padding: 16px 20px;
+  }
+}
+
+/* --- 2. Màn hình Mobile Cực Nhỏ (Dưới 480px - Vd: iPhone SE) --- */
+@media (max-width: 480px) {
+  .gomet-modal-overlay { padding: 10px; }
+  .gomet-modal-card { border-radius: 16px; }
+  
+  .gomet-modal-header {
+    padding: 14px 16px;
+    .header-text p { font-size: 0.7rem; }
+    .btn-close-minimal { width: 28px; height: 28px; font-size: 1.2rem; }
+  }
+  
+  .gomet-modal-body { 
+    padding: 16px; 
+    max-height: 65vh; 
+  }
+  
+  .user-menu-notice { padding: 10px 12px; gap: 8px; }
+  .report-info-box { padding: 10px 14px; }
+  .report-info-box .info-content .info-text .info-value { font-size: 0.9rem; }
+  
+  /* Ép 2 nút (Gửi / Đóng) xếp chồng lên nhau và full width để dễ bấm */
+  .gomet-modal-footer {
+    padding: 16px;
+    flex-direction: column-reverse; /* Nút Hủy rớt xuống dưới, nút Gửi ưu tiên lên trên */
+    gap: 10px;
+  }
+  
+  .btn-cancel-text, .btn-submit-orange {
+    width: 100%;
+    justify-content: center;
+    padding: 12px;
+    font-size: 0.95rem;
+  }
+  .btn-cancel-text { background: #f8fafc; border: 1px solid #e2e8f0; }
+  
+  .combobox-list li { font-size: 0.8rem; padding: 10px 12px; }
+}
+
+/* --- 3. Xử lý khi xoay ngang điện thoại (Landscape) --- */
+@media (max-height: 500px) and (orientation: landscape) {
+  .gomet-modal-body { 
+    max-height: 50vh; /* Tránh form bị lấp khi bàn phím ảo đẩy lên ở chế độ ngang */
+  }
+  .gomet-modal-header, .gomet-modal-footer { padding: 10px 20px; }
+}
 </style>

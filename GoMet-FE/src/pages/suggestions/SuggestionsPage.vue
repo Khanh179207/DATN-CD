@@ -181,7 +181,6 @@ $orange: #EA580C;
 /* ================== TỔNG THỂ TRANG (KHẮC PHỤC LỖI HEADER) ================== */
 .gomet-vault-premium {
   width: 100%; 
-  /* Chuyển từ height cứng sang min-height để nội dung có thể cuộn nếu màn hình quá nhỏ */
   min-height: 100vh; 
   background: radial-gradient(circle at 50% -10%, #1c1a17 0%, #0a0908 40%, #000000 100%);
   color: $cream;
@@ -189,10 +188,8 @@ $orange: #EA580C;
   position: relative; 
   display: flex; 
   flex-direction: column;
-  
-  /* 🔥 TĂNG KHOẢNG CÁCH AN TOÀN VỚI HEADER TỔNG (Từ 40px lên 80px hoặc hơn tùy header của bạn) */
   padding-top: 80px; 
-  padding-bottom: 40px; /* Thêm khoảng trống dưới cùng để không dính viền */
+  padding-bottom: 40px; 
   overflow-x: hidden;
 }
 
@@ -247,15 +244,15 @@ $orange: #EA580C;
   width: 100%; max-width: 1200px; margin: 0 auto; 
   padding: 0 40px; 
   z-index: 10;
-  position: relative; /* Đảm bảo nằm trên lớp nền */
+  position: relative;
 }
 
 /* Header Nội Bộ */
 .vault-header {
   display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 40px; /* Tăng margin để thoáng hơn */
+  margin-bottom: 40px;
   padding-bottom: 20px; 
-  border-bottom: 1px solid rgba($gold, 0.15); /* Chuyển màu viền sang tông vàng nhẹ */
+  border-bottom: 1px solid rgba($gold, 0.15);
 }
 .brand-sub { 
   font-size: 0.75rem; letter-spacing: 5px; font-weight: 900; 
@@ -355,7 +352,7 @@ $orange: #EA580C;
 
 /* ================== MODAL KẾT QUẢ ================== */
 .modal-overlay { 
-  position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 2000; /* Nâng z-index lên cao nhất */
+  position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 2000;
   display: flex; align-items: center; justify-content: center; backdrop-filter: blur(15px); 
 }
 .modal-card-premium { 
@@ -411,4 +408,103 @@ $orange: #EA580C;
 .fade-up-leave-to { opacity: 0; transform: translateY(-30px); }
 .modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.4s; }
 .modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
+
+/* =========================================================================
+   🔥 HỆ THỐNG RESPONSIVE (ĐẢM BẢO HOÀN HẢO CHO MỌI THIẾT BỊ)
+========================================================================= */
+
+/* --- 1. MÀN HÌNH NHỎ & TABLET NGANG (MAX 1024px) --- */
+@media (max-width: 1024px) {
+  .cards-wrapper { gap: 20px; }
+  .modal-card-premium { width: 90vw; height: 600px; }
+  .modal-info-col { padding: 30px; }
+  .modal-info-col h2 { font-size: 2.4rem; }
+}
+
+/* --- 2. TABLET DỌC & MOBILE NGANG (MAX 992px) --- */
+@media (max-width: 992px) {
+  .vault-interface { padding: 0 30px; }
+  
+  /* Lưới Thẻ: 2 cột, thẻ thứ 3 canh giữa */
+  .cards-wrapper { 
+    grid-template-columns: repeat(2, 1fr); 
+  }
+  .flip-card:last-child { 
+    grid-column: 1 / -1; 
+    max-width: 400px; 
+    justify-self: center; 
+    width: 100%; 
+  }
+  
+  /* Xoay Dọc Modal Kết Quả */
+  .modal-card-premium {
+    height: auto; 
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal-body { flex-direction: column; }
+  .modal-img-col { width: 100%; height: 350px; flex-shrink: 0; }
+  
+  /* Đổi hướng đổ bóng Vignette */
+  .img-vignette { background: linear-gradient(to bottom, transparent, $dark-gray); }
+  
+  .modal-info-col { width: 100%; padding: 30px; }
+}
+
+/* --- 3. MOBILE LỚN (MAX 768px) --- */
+@media (max-width: 768px) {
+  .gomet-vault-premium { padding-top: 40px; }
+  .vault-interface { padding: 0 20px; }
+  
+  .vault-header {
+    flex-direction: column; 
+    align-items: flex-start; 
+    gap: 15px; 
+    margin-bottom: 30px;
+  }
+  .brand-main { font-size: 2.2rem; }
+  
+  /* Đưa lưới thẻ về 1 cột trên Mobile */
+  .cards-wrapper { grid-template-columns: 1fr; }
+  .flip-card:last-child { max-width: 100%; }
+  
+  .flip-card { height: 380px; }
+  .flip-card-front h3 { font-size: 1.8rem; }
+}
+
+/* --- 4. MOBILE NHỎ (MAX 480px) --- */
+@media (max-width: 480px) {
+  .flip-card { height: 320px; }
+  .brand-main { font-size: 1.8rem; }
+  .hub-intro p { font-size: 0.95rem; }
+  
+  /* Nút Play Now thu gọn */
+  .flip-card-back .back-content .btn-play-now {
+    padding: 12px 30px !important;
+    font-size: 0.8rem !important;
+  }
+  .flip-card-back .back-content p { font-size: 0.9rem; margin-bottom: 25px; }
+
+  /* Modal tối ưu diện tích cho điện thoại nhỏ */
+  .modal-img-col { height: 220px; }
+  .modal-info-col { padding: 25px 20px; }
+  .modal-info-col h2 { font-size: 1.8rem; }
+  .modal-info-col p { font-size: 0.95rem; margin-bottom: 25px; }
+  
+  /* Dàn lưới thông tin món ăn dọc */
+  .info-grid {
+    grid-template-columns: 1fr; 
+    gap: 10px; 
+    margin-bottom: 25px;
+  }
+  
+  /* Dàn dọc cụm nút bấm */
+  .info-actions { flex-direction: column; gap: 10px; }
+  .btn-premium-action, .btn-outline-action {
+    width: 100%; 
+    padding: 14px; 
+    font-size: 0.75rem; 
+    text-align: center;
+  }
+}
 </style>

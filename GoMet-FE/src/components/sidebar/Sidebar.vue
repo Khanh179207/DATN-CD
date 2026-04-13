@@ -362,4 +362,13 @@ const toggleSidebar = () => { isCollapsed.value = !isCollapsed.value }
 .gomet-sovereign-sidebar.theme-dark .text p {
   color: #9CA3AF;
 }
+@media (max-width: 1024px) {
+  .gomet-sovereign-sidebar {
+    display: none !important; 
+  }
+}
+.gomet-sovereign-sidebar.theme-dark {
+  background: rgba(3, 7, 18, 0.95);
+  border-right-color: rgba(255, 255, 255, 0.05);
+}
 </style>

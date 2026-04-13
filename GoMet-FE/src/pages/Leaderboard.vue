@@ -18,7 +18,7 @@
       />
     </template>
     
-    <div v-else class="empty-state" style="color: white; text-align: center; padding-top: 20vh;">
+    <div v-else class="empty-state">
        <h2>Chưa có dữ liệu xếp hạng 🏆</h2>
        <p>Hãy là người đầu tiên tương tác để đưa các Tuyệt tác lên Top!</p>
     </div>
@@ -138,10 +138,80 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* =======================================================
+   🔥 CORE WRAPPER & RESPONSIVE
+======================================================= */
+
 .gomet-hall-master {
   background-color: #050505;
   min-height: 100vh;
-  overflow-x: hidden;
+  width: 100%;
+  overflow-x: hidden; /* Chặn tràn ngang tuyệt đối */
   overflow-y: auto; 
+  position: relative;
+}
+
+/* --- EMPTY STATE STYLING --- */
+.empty-state {
+  color: white;
+  text-align: center;
+  padding: 20vh 20px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Mulish', sans-serif;
+}
+
+.empty-state h2 {
+  font-size: 2.2rem;
+  margin-bottom: 15px;
+  font-family: 'Playfair Display', serif;
+  color: #EA580C;
+}
+
+.empty-state p {
+  font-size: 1.1rem;
+  color: #A8A29E;
+}
+
+/* =======================================================
+   🌟 HỆ THỐNG RESPONSIVE CHO EMPTY STATE VÀ WRAPPER
+======================================================= */
+
+/* Tablet & Mobile Ngang (Dưới 992px) */
+@media (max-width: 992px) {
+  .empty-state h2 {
+    font-size: 1.8rem;
+  }
+  .empty-state p {
+    font-size: 1rem;
+  }
+}
+
+/* Mobile Lớn (Dưới 768px) */
+@media (max-width: 768px) {
+  .empty-state {
+    padding-top: 15vh;
+  }
+  .empty-state h2 {
+    font-size: 1.5rem;
+  }
+  .empty-state p {
+    font-size: 0.95rem;
+  }
+}
+
+/* Mobile Nhỏ (Dưới 480px) */
+@media (max-width: 480px) {
+  .empty-state {
+    padding-top: 12vh;
+  }
+  .empty-state h2 {
+    font-size: 1.3rem;
+  }
+  .empty-state p {
+    font-size: 0.85rem;
+  }
 }
 </style>

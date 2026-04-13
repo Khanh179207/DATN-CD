@@ -127,3 +127,127 @@ $ease-premium: cubic-bezier(0.19, 1, 0.22, 1);
     }
   }
 }
+/* =======================================================
+   🔥 HỆ THỐNG RESPONSIVE (TỐI ƯU MỌI THIẾT BỊ)
+   ======================================================= */
+
+.hero-cinematic-supreme {
+  // Laptop vừa & Tablet ngang (Dưới 1200px)
+  @media (max-width: 1200px) {
+    .cinematic-layout { padding: 0 5%; }
+    .hero-info .content-wrapper .hero-title-main { font-size: clamp(3rem, 6vw, 5rem); }
+    .hero-visual .rank-overlay-huge { font-size: 18rem; }
+    .leaderboard-toggle { right: 5%; }
+  }
+
+  // Tablet dọc & Mobile ngang (Dưới 992px)
+  @media (max-width: 992px) {
+    padding-top: 80px;
+    height: auto; // Cho phép nội dung đẩy chiều cao
+    min-height: 100vh;
+
+    .cinematic-layout {
+      grid-template-columns: 1fr; // Chuyển thành 1 cột
+      gap: 40px;
+      padding: 100px 5% 50px;
+      text-align: center; // Căn giữa nội dung
+    }
+
+    // Đẩy cụm hình ảnh/số rank mờ lên trên hoặc làm nền
+    .hero-visual {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: -1; // Đẩy ra sau làm nền
+      
+      .rank-overlay-huge { 
+        font-size: 35vw; // To theo chiều rộng màn hình
+        opacity: 0.05; 
+      }
+    }
+
+    // Tinh chỉnh nội dung hiển thị
+    .hero-info {
+      display: flex; flex-direction: column; align-items: center;
+      
+      .content-wrapper {
+        .hero-title-main { margin-bottom: 15px; }
+        
+        .hero-desc { 
+          border-left: none; 
+          padding-left: 0; 
+          margin-bottom: 30px; 
+          font-size: 1.1rem; 
+        }
+
+        .author-block-premium {
+          justify-content: center; // Căn giữa khối tác giả
+          &:hover { transform: translateY(-5px); } // Đổi hướng hover
+        }
+      }
+
+      .hero-meta-grid { 
+        justify-content: center; 
+        gap: 30px; 
+      }
+    }
+
+    // Căn giữa Toggle Leaderboard
+    .leaderboard-toggle {
+      top: 85px; left: 50%; right: auto;
+      transform: translateX(-50%);
+      width: 100%; justify-content: center;
+    }
+  }
+
+  // Mobile lớn (Dưới 768px)
+  @media (max-width: 768px) {
+    .cinematic-layout { padding-top: 130px; }
+
+    .hero-info .content-wrapper {
+      .hero-title-main { font-size: clamp(2.5rem, 10vw, 3.5rem); letter-spacing: -1px; }
+      .hero-desc { font-size: 1rem; }
+    }
+
+    .hero-meta-grid {
+      flex-direction: row; flex-wrap: wrap; // Rớt dòng nếu chật
+      gap: 20px;
+      .meta-value { font-size: 1.2rem; }
+    }
+
+    .btn-premium-cta { padding: 16px 40px; }
+  }
+
+  // Mobile nhỏ (Dưới 480px - Vd: iPhone SE)
+  @media (max-width: 480px) {
+    .cinematic-layout { padding-top: 140px; }
+
+    .leaderboard-toggle {
+      flex-wrap: wrap; // Cho phép rớt dòng nút toggle
+      gap: 5px;
+      button { padding: 8px 16px; font-size: 0.75rem; }
+    }
+
+    .hero-info .content-wrapper {
+      .rank-label .rank-num-main { font-size: 1.8rem; }
+      .author-block-premium {
+        .avatar-wrapper { width: 50px; height: 50px; }
+        .author-info .author-name { font-size: 1.3rem; }
+      }
+    }
+
+    .hero-meta-grid { 
+      flex-direction: column; // Trải dọc các chỉ số meta
+      gap: 15px; 
+    }
+
+    .btn-premium-cta { width: 100%; display: flex; justify-content: center; }
+  }
+
+  // Xử lý các màn hình quá thấp (Landscape mobile)
+  @media (max-height: 600px) and (orientation: landscape) {
+    min-height: auto;
+    .cinematic-layout { padding-top: 80px; padding-bottom: 40px; }
+    .leaderboard-toggle { top: 60px; }
+  }
+}

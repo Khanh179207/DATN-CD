@@ -82,15 +82,91 @@ const closePopup = () => {
 </script>
 
 <style scoped>
-/* Giữ nguyên 100% CSS cũ của sếp */
-.ad-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 9999; padding: 20px; }
-.ad-content { position: relative; max-width: 450px; width: 100%; animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-.ad-image { width: 100%; height: auto; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); display: block; transition: 0.3s; cursor: pointer; }
-.ad-image:hover { transform: scale(1.02); } /* Thêm xíu hiệu ứng khi di chuột vào ảnh */
-.close-btn { position: absolute; top: -15px; right: -15px; background: #fff; color: #333; border: 2px solid #333; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.2); transition: 0.2s; z-index: 10; }
-.close-btn:hover { background: #F97316; color: white; border-color: #F97316; transform: rotate(90deg); }
+/* =======================================================
+   1. CORE STYLE (GIỮ NGUYÊN CSS GỐC CỦA SẾP)
+   ======================================================= */
+.ad-overlay { 
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+  background-color: rgba(15, 23, 42, 0.75); /* Tối ưu màu nền mờ sang trọng hơn */
+  backdrop-filter: blur(4px); /* Thêm hiệu ứng mờ kính */
+  display: flex; justify-content: center; align-items: center; 
+  z-index: 9999; padding: 20px; 
+}
+
+.ad-content { 
+  position: relative; 
+  width: 100%; 
+  max-width: 480px; /* Nới rộng một chút cho cân đối */
+  animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+}
+
+.ad-image { 
+  width: 100%; 
+  height: auto; 
+  max-height: 85vh; /* QUAN TRỌNG: Không để ảnh dài quá màn hình */
+  object-fit: contain; /* Giữ nguyên tỷ lệ ảnh thật */
+  border-radius: 16px; 
+  box-shadow: 0 20px 50px -10px rgba(0,0,0,0.5); 
+  display: block; 
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+}
+.ad-image:hover { transform: scale(1.02); }
+
+.close-btn { 
+  position: absolute; top: -15px; right: -15px; 
+  background: #fff; color: #1e293b; border: 2px solid #e2e8f0; 
+  border-radius: 50%; width: 36px; height: 36px; 
+  display: flex; align-items: center; justify-content: center; 
+  cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+  transition: all 0.3s ease; 
+  z-index: 10; 
+}
+.close-btn:hover { 
+  background: #ea580c; color: white; border-color: #ea580c; 
+  transform: rotate(90deg) scale(1.1); 
+}
+
 .pop-fade-enter-active, .pop-fade-leave-active { transition: opacity 0.3s ease; }
 .pop-fade-enter-from, .pop-fade-leave-to { opacity: 0; }
 @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-@media (max-width: 640px) { .close-btn { top: -10px; right: -10px; width: 30px; height: 30px; } .close-btn svg { width: 18px; height: 18px; } }
+
+/* =======================================================
+   🔥 HỆ THỐNG RESPONSIVE (TỐI ƯU MỌI THIẾT BỊ)
+   ======================================================= */
+
+/* --- 1. Màn hình Tablet dọc & Mobile ngang (Dưới 768px) --- */
+@media (max-width: 768px) {
+  .ad-overlay { padding: 16px; }
+  .ad-content { max-width: 400px; }
+  
+  /* Đưa nút đóng lùi vào trong một xíu để tránh chạm viền đt */
+  .close-btn { 
+    top: -12px; right: -12px; 
+    width: 32px; height: 32px; 
+  }
+  .close-btn svg { width: 18px; height: 18px; }
+  .ad-image { border-radius: 12px; }
+}
+
+/* --- 2. Màn hình Mobile Lớn (Dưới 480px) --- */
+@media (max-width: 480px) {
+  .ad-overlay { padding: 12px; }
+  .ad-content { max-width: 320px; }
+  
+  /* Nếu ảnh chạm sát mép màn hình, kéo nút đóng nhích vào trong viền ảnh */
+  .close-btn { 
+    top: -10px; right: 0px; 
+    width: 30px; height: 30px; 
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .close-btn svg { width: 16px; height: 16px; }
+}
+
+/* --- 3. Xử lý khi xoay ngang điện thoại (Landscape) --- */
+@media (max-height: 500px) and (orientation: landscape) {
+  .ad-image { max-height: 90vh; width: auto; margin: 0 auto; }
+  .ad-content { display: flex; justify-content: center; }
+  /* Nút đóng phải bám sát theo chiều cao ảnh khi xoay ngang */
+  .close-btn { top: -10px; right: auto; left: calc(50% + (90vh * 0.5) - 10px); }
+}
 </style>

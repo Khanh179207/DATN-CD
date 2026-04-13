@@ -389,4 +389,81 @@ const vFocus = { mounted: (el) => el.focus() }
 .sk-name { width: 140px; height: 16px; border-radius: 8px; background: #f1f5f9; position: relative; overflow: hidden; }
 .sk-text { width: 100%; height: 14px; border-radius: 8px; background: #f1f5f9; position: relative; overflow: hidden; &.short { width: 65%; } }
 .sk-avatar::after, .sk-name::after, .sk-text::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent); animation: shimmer 1.5s infinite; }
+
+/* =======================================================
+   🔥 HỆ THỐNG RESPONSIVE (TỐI ƯU MỌI THIẾT BỊ)
+   ======================================================= */
+
+/* --- 1. Màn hình Tablet dọc & Mobile ngang (Dưới 768px) --- */
+@media (max-width: 768px) {
+  .review-item-luxury { padding: 20px 0; }
+  
+  /* Avatar & Header */
+  .review-header { gap: 10px; }
+  .review-avatar { width: 40px; height: 40px; }
+  .is-child .review-avatar { width: 32px; height: 32px; }
+  
+  .review-author { font-size: 0.95rem; }
+  .review-stars-pill { font-size: 0.7rem; padding: 2px 6px; }
+  
+  /* Text Content */
+  .review-text { margin-left: 50px; font-size: 0.95rem; margin-bottom: 12px; }
+  .is-child .review-text { margin-left: 42px; font-size: 0.9rem; }
+  
+  /* Hình ảnh đính kèm */
+  .review-images { margin-left: 50px; }
+  .is-child .review-images { margin-left: 42px; }
+  .image-grid-premium { max-width: 100%; gap: 6px; }
+  
+  /* Action Bar (Thích, Phản hồi) */
+  .review-actions-bar { margin-left: 50px; gap: 12px; }
+  .is-child .review-actions-bar { margin-left: 42px; }
+  .action-btn { padding: 4px 8px; font-size: 0.8rem; gap: 4px; }
+  .action-btn .icon-wrapper svg { width: 16px; height: 16px; }
+  
+  /* Box nhập Reply */
+  .inline-reply-luxury { padding-left: 50px; flex-direction: column; gap: 10px; }
+  .inline-reply-luxury.is-child { padding-left: 42px; }
+  .reply-avatar { display: none; /* Ẩn avatar người nhập để lấy chỗ trên mobile */ }
+  .reply-input-wrapper textarea { padding: 10px; font-size: 0.9rem; min-height: 40px; }
+  
+  /* Tránh thụt lề quá sâu đối với bình luận con */
+  .nested-replies-container { padding-left: 12px; margin-left: 16px; margin-top: 12px; }
+  .thread-line-premium { width: 2px; }
+}
+
+/* --- 2. Màn hình Mobile lớn (Dưới 600px) --- */
+@media (max-width: 600px) {
+  .empty-state-luxury, .error-state-luxury { padding: 40px 15px; }
+  
+  /* Căn chỉnh lại grid ảnh 1x2 hoặc 2x2 trên mobile */
+  .image-grid-premium { grid-template-columns: repeat(2, 1fr) !important; }
+  
+  /* Modal ảnh thu gọn nút đóng */
+  .modal-close-glass { top: 15px; right: 15px; padding: 8px; }
+  .modal-close-glass svg { width: 20px; height: 20px; }
+}
+
+/* --- 3. Màn hình Mobile nhỏ (Dưới 400px - Vd: iPhone SE) --- */
+@media (max-width: 400px) {
+  .review-avatar { width: 36px; height: 36px; }
+  .is-child .review-avatar { width: 28px; height: 28px; }
+  
+  .review-author { font-size: 0.9rem; }
+  
+  /* Thụt lề (Indentation) chỉ còn rất nhỏ để tránh ép chữ thành 1 cột */
+  .review-text, .review-images, .review-actions-bar { margin-left: 46px; }
+  .is-child .review-text, .is-child .review-images, .is-child .review-actions-bar { margin-left: 38px; }
+  .inline-reply-luxury { padding-left: 46px; }
+  .inline-reply-luxury.is-child { padding-left: 38px; }
+  
+  .nested-replies-container { padding-left: 8px; margin-left: 12px; }
+  
+  /* Action bar */
+  .review-actions-bar { gap: 8px; flex-wrap: wrap; }
+  .action-btn { padding: 4px; }
+  .like-count { font-size: 0.85rem; }
+  
+  .btn-submit-glow { padding: 6px 16px; font-size: 0.85rem; }
+}
 </style>
