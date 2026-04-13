@@ -1,0 +1,47 @@
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.0.2)
+
+2026-02-24T16:30:58.231+07:00  INFO 32112 --- [GoMet-BE] [           main] poly.edu.GoMetBeApplication              : Starting GoMetBeApplication v0.0.1-SNAPSHOT using Java 17.0.11 with PID 32112 (C:\Users\ADMIN\Documents\GitHub\DATN-CD\GoMet-BE\target\GoMet-0.0.1-SNAPSHOT.jar started by ADMIN in C:\Users\ADMIN\Documents\GitHub\DATN-CD\GoMet-BE)
+2026-02-24T16:30:58.287+07:00  INFO 32112 --- [GoMet-BE] [           main] poly.edu.GoMetBeApplication              : No active profile set, falling back to 1 default profile: "default"
+2026-02-24T16:31:06.752+07:00  INFO 32112 --- [GoMet-BE] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-02-24T16:31:07.942+07:00  INFO 32112 --- [GoMet-BE] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 1119 ms. Found 16 JPA repository interfaces.
+2026-02-24T16:31:17.250+07:00  INFO 32112 --- [GoMet-BE] [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8080 (http)
+2026-02-24T16:31:17.324+07:00  INFO 32112 --- [GoMet-BE] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-02-24T16:31:17.326+07:00  INFO 32112 --- [GoMet-BE] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.15]
+2026-02-24T16:31:17.522+07:00  INFO 32112 --- [GoMet-BE] [           main] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 18635 ms
+2026-02-24T16:31:18.877+07:00  INFO 32112 --- [GoMet-BE] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-02-24T16:31:24.656+07:00  INFO 32112 --- [GoMet-BE] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection ConnectionID:1 ClientConnectionId: a6f6ed7c-07e7-4db4-9908-3207f339d53e
+2026-02-24T16:31:24.668+07:00  INFO 32112 --- [GoMet-BE] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-02-24T16:31:24.869+07:00  INFO 32112 --- [GoMet-BE] [           main] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-02-24T16:31:25.572+07:00  INFO 32112 --- [GoMet-BE] [           main] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.2.1.Final
+2026-02-24T16:31:29.501+07:00  INFO 32112 --- [GoMet-BE] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-02-24T16:31:30.004+07:00  INFO 32112 --- [GoMet-BE] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:sqlserver://localhost:1433;concatNullYieldsNull=ON;quotedIdentifier=ON;connectRetryInterval=10;connectRetryCount=1;maxResultBuffer=-1;sendTemporalDataTypesAsStringForBulkCopy=true;delayLoadingLobs=true;useFmtOnly=false;vectorTypeSupport=v1;cacheBulkCopyMetadata=false;bulkCopyForBatchInsertAllowEncryptedValueModifications=false;bulkCopyForBatchInsertTableLock=false;bulkCopyForBatchInsertKeepNulls=false;bulkCopyForBatchInsertKeepIdentity=false;bulkCopyForBatchInsertFireTriggers=false;bulkCopyForBatchInsertCheckConstraints=false;bulkCopyForBatchInsertBatchSize=0;useBulkCopyForBatchInsert=false;cancelQueryTimeout=-1;sslProtocol=TLS;calcBigDecimalPrecision=false;useDefaultJaasConfig=false;jaasConfigurationName=SQLJDBCDriver;statementPoolingCacheSize=0;serverPreparedStatementDiscardThreshold=10;enablePrepareOnFirstPreparedStatementCall=false;fips=false;socketTimeout=0;authentication=NotSpecified;authenticationScheme=nativeAuthentication;xopenStates=false;datetimeParameterType=datetime2;sendTimeAsDatetime=true;replication=false;trustStoreType=JKS;trustServerCertificate=true;TransparentNetworkIPResolution=true;iPAddressPreference=IPv4First;serverNameAsACE=false;sendStringParametersAsUnicode=true;selectMethod=direct;responseBuffering=adaptive;queryTimeout=-1;packetSize=8000;multiSubnetFailover=false;loginTimeout=30;lockTimeout=-1;lastUpdateCount=true;useDefaultGSSCredential=false;prepareMethod=prepexec;encrypt=true;disableStatementPooling=true;databaseName=DATN_CD;columnEncryptionSetting=Disabled;applicationName=Microsoft JDBC Driver for SQL Server;applicationIntent=readwrite;]
+	Database driver: Microsoft JDBC Driver 13.2 for SQL Server
+	Database dialect: SQLServerDialect
+	Database version: 16.0
+	Default catalog/schema: DATN_CD/dbo
+	Autocommit mode: undefined/unknown
+	Isolation level: READ_COMMITTED [default READ_COMMITTED]
+	JDBC fetch size: 128
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-02-24T16:31:33.046+07:00  INFO 32112 --- [GoMet-BE] [           main] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-02-24T16:31:33.142+07:00  INFO 32112 --- [GoMet-BE] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-02-24T16:31:33.436+07:00  INFO 32112 --- [GoMet-BE] [           main] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-02-24T16:31:40.206+07:00  WARN 32112 --- [GoMet-BE] [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-02-24T16:31:42.112+07:00  INFO 32112 --- [GoMet-BE] [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8080 (http) with context path '/'
+2026-02-24T16:31:42.157+07:00  INFO 32112 --- [GoMet-BE] [ionShutdownHook] o.s.boot.tomcat.GracefulShutdown         : Commencing graceful shutdown. Waiting for active requests to complete
+2026-02-24T16:31:42.204+07:00  INFO 32112 --- [GoMet-BE] [           main] poly.edu.GoMetBeApplication              : Started GoMetBeApplication in 47.552 seconds (process running for 53.29)
+2026-02-24T16:31:43.826+07:00  INFO 32112 --- [GoMet-BE] [tomcat-shutdown] o.s.boot.tomcat.GracefulShutdown         : Graceful shutdown complete
+2026-02-24T16:31:43.839+07:00  INFO 32112 --- [GoMet-BE] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-02-24T16:31:43.849+07:00  INFO 32112 --- [GoMet-BE] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-02-24T16:31:43.870+07:00  INFO 32112 --- [GoMet-BE] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.

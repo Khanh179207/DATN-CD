@@ -1,0 +1,184 @@
+/* ============================================================
+   🎨 GOMET DESIGN SYSTEM — Design Tokens v1.0
+   ============================================================
+   Centralized CSS Custom Properties for consistency.
+   Every component must reference these tokens.
+   ============================================================ */
+
+:root {
+
+  /* ─── COLOR PALETTE ─── */
+
+  /* Primary (Orange) */
+  --color-primary-50:  #FFF7ED;
+  --color-primary-100: #FFEDD5;
+  --color-primary-200: #FED7AA;
+  --color-primary-300: #FDBA74;
+  --color-primary-400: #FB923C;
+  --color-primary-500: #F97316;   /* Main brand color */
+  --color-primary-600: #EA580C;   /* Hover / Active */
+  --color-primary-700: #C2410C;   /* Pressed */
+  --color-primary-800: #9A3412;
+  --color-primary-900: #7C2D12;
+
+  /* Neutral (Stone) */
+  --color-neutral-0:   #FFFFFF;
+  --color-neutral-50:  #FAFAF9;
+  --color-neutral-100: #F5F5F4;
+  --color-neutral-200: #E7E5E4;
+  --color-neutral-300: #D6D3D1;
+  --color-neutral-400: #A8A29E;
+  --color-neutral-500: #78716C;
+  --color-neutral-600: #57534E;
+  --color-neutral-700: #44403C;
+  --color-neutral-800: #292524;
+  --color-neutral-900: #1C1917;   /* Primary text */
+
+  /* Semantic */
+  --color-success:     #16A34A;
+  --color-success-bg:  #DCFCE7;
+  --color-error:       #DC2626;
+  --color-error-bg:    #FEF2F2;
+  --color-warning:     #F59E0B;
+  --color-warning-bg:  #FEF3C7;
+  --color-info:        #3B82F6;
+  --color-info-bg:     #EFF6FF;
+
+
+  /* ─── TYPOGRAPHY ─── */
+
+
+  /* Font Families (Đã chuẩn hóa) */
+  --font-heading: 'Playfair Display', serif;
+  --font-body:    'Mulish', sans-serif;
+  --font-accent:  'Quicksand', sans-serif;
+
+
+  /* Font Scale (Major Third — 1.250 ratio, base 16px) */
+  --text-xs:     0.75rem;   /* 12px */
+  --text-sm:     0.875rem;  /* 14px */
+  --text-base:   1rem;      /* 16px */
+  --text-lg:     1.125rem;  /* 18px */
+  --text-xl:     1.25rem;   /* 20px */
+  --text-2xl:    1.5rem;    /* 24px */
+  --text-3xl:    2rem;      /* 32px */
+  --text-4xl:    2.5rem;    /* 40px */
+  --text-5xl:    3.5rem;    /* 56px */
+  --text-6xl:    4.5rem;    /* 72px */
+
+  /* Line Heights */
+  --leading-none:    1;
+  --leading-tight:   1.15;
+  --leading-snug:    1.3;
+  --leading-normal:  1.5;
+  --leading-relaxed: 1.625;
+
+  /* Font Weights */
+  --font-normal:     400;
+  --font-medium:     500;
+  --font-semibold:   600;
+  --font-bold:       700;
+  --font-extrabold:  800;
+
+
+  /* ─── SPACING (8pt Grid) ─── */
+
+  --space-0:   0;
+  --space-1:   4px;
+  --space-2:   8px;
+  --space-3:   12px;
+  --space-4:   16px;
+  --space-5:   20px;
+  --space-6:   24px;
+  --space-8:   32px;
+  --space-10:  40px;
+  --space-12:  48px;
+  --space-16:  64px;
+  --space-20:  80px;
+  --space-24:  96px;
+
+
+  /* ─── BORDER RADIUS ─── */
+
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   16px;
+  --radius-xl:   24px;
+  --radius-2xl:  32px;
+  --radius-full: 9999px;
+
+
+  /* ─── SHADOW ELEVATION ─── */
+
+  --shadow-xs:   0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm:   0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-md:   0 4px 16px rgba(0, 0, 0, 0.06);
+  --shadow-lg:   0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-xl:   0 16px 40px rgba(0, 0, 0, 0.10);
+  --shadow-2xl:  0 24px 56px rgba(0, 0, 0, 0.14);
+
+  /* Colored shadows (for CTA / brand elements) */
+  --shadow-primary-sm: 0 4px 12px rgba(249, 115, 22, 0.15);
+  --shadow-primary-md: 0 8px 24px rgba(249, 115, 22, 0.20);
+  --shadow-primary-lg: 0 16px 40px rgba(249, 115, 22, 0.30);
+
+
+  /* ─── TRANSITIONS (Eased, never linear) ─── */
+
+  /* Easing curves */
+  --ease-out:       cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out:    cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring:    cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-bounce:    cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --ease-exit:      cubic-bezier(0.22, 0.61, 0.36, 1);  /* Quick exit */
+
+  /* Duration scale (120 / 180 / 240 / 400 / 600ms) */
+  --duration-instant: 120ms;  /* Icon toggles, tooltips */
+  --duration-fast:    180ms;  /* Hover states, small feedback */
+  --duration-normal:  240ms;  /* Most transitions */
+  --duration-slow:    400ms;  /* Modals, page transitions */
+  --duration-slower:  600ms;  /* Hero, ken-burns, large panels */
+
+  /* Pre-composed transition shorthands */
+  --transition-instant: all var(--duration-instant) var(--ease-out);
+  --transition-fast:    all var(--duration-fast) var(--ease-in-out);
+  --transition-base:    all var(--duration-normal) var(--ease-in-out);
+  --transition-smooth:  all var(--duration-slow) var(--ease-out);
+  --transition-spring:  all var(--duration-slow) var(--ease-spring);
+
+  /* GPU-composited-only shorthands (safe for 60fps) */
+  --transition-transform: transform var(--duration-normal) var(--ease-out);
+  --transition-opacity:   opacity  var(--duration-fast) var(--ease-in-out);
+
+  /* Focus ring */
+  --focus-ring: 0 0 0 3px rgba(249, 115, 22, 0.4);
+
+
+  /* ─── Z-INDEX SCALE ─── */
+
+  --z-base:      1;
+  --z-dropdown:  100;
+  --z-sticky:    200;
+  --z-fixed:     500;
+  --z-overlay:   1000;
+  --z-modal:     1500;
+  --z-toast:     2000;
+
+
+  /* ─── LAYOUT ─── */
+
+  --sidebar-width:       260px;
+  --sidebar-collapsed:   72px;
+  --header-height:       64px;
+  --content-max-width:   1300px;
+  --content-padding:     var(--space-10);
+}
+
+/* ─── DARK MODE READY (unused for now, but structured) ─── */
+/* @media (prefers-color-scheme: dark) {
+  :root {
+    --color-neutral-0:   #1C1917;
+    --color-neutral-50:  #292524;
+    --color-neutral-900: #FAFAF9;
+  }
+} */

@@ -1,0 +1,56 @@
+// ============================================================
+//   IMAGE PROTECTION — Global styles
+//   Prevents: drag, text selection overlay, right-click save UX
+//   Import this in main SCSS or App.vue
+// ============================================================
+
+// All img tags: non-draggable, non-selectable
+img {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none; // Blocks right-click context menu
+  -webkit-touch-callout: none;
+
+  // Allow pointer-events only on explicitly interactive images (wrapped in a link)
+  a & {
+    pointer-events: auto;
+  }
+}
+
+// Class for images that need click but NOT drag/select
+.img-protected {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
+  // Thin overlay trick: a 1px transparent pseudo-element blocks right-click save
+  position: relative;
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: transparent;
+    pointer-events: auto;
+  }
+}
+
+// Card images — block selection highlight while keeping click
+.recipe-image,
+.post-image,
+.card-image,
+.stage-img,
+.feed-img {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+  draggable: false;
+}
+
+// Prevent blue highlight on touch devices
+* {
+  -webkit-tap-highlight-color: transparent;
+}

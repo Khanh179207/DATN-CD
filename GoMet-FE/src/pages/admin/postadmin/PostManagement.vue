@@ -1,0 +1,713 @@
+<template>
+  <div class="page-container">
+    
+    <div class="page-header anim-fade-down">
+      <div class="header-content">
+        <div class="title-wrapper">
+          <div class="icon-box">
+            <FileText :size="24" stroke-width="2.5" />
+          </div>
+          <div>
+            <h2 class="title">{{ t('admin.posts.title') }}</h2>
+            <p class="subtitle">{{ t('admin.posts.subtitle') }}</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="header-actions">
+         <div class="sort-box-lux">
+          <select v-model="sortOption" class="sort-select" :title="t('admin.posts.sort_title')">
+            <option value="newest">{{ t('admin.posts.sort_newest') }}</option>
+            <option value="oldest">{{ t('admin.posts.sort_oldest') }}</option>
+            <option value="views_desc">{{ t('admin.posts.sort_views') }}</option>
+            <option value="alphabetical">{{ t('admin.posts.sort_alpha') }}</option>
+          </select>
+        </div>
+
+        <div class="search-box-lux">
+          <Search :size="18" class="search-icon" />
+          <input v-model="searchQuery" type="text" :placeholder="t('admin.posts.search_placeholder')" />
+        </div>
+        <router-link to="/admin/blacklist" class="btn-open-blacklist">
+          <ShieldAlert :size="18" />
+          <span>{{ t('admin.posts.blacklist') }}</span>
+        </router-link>
+      </div>
+    </div>
+
+    <div class="tabs-lux-wrapper anim-fade-up">
+      <div class="tabs-filter">
+        <button 
+          v-for="tab in tabs" :key="tab.key"
+          :class="['tab-btn-lux', currentTab === tab.key ? 'active' : '']"
+          @click="currentTab = tab.key"
+        >
+          {{ tab.label }}
+          <span v-if="tab.key === 'pending' && pendingCount > 0" class="badge-pulse">{{ pendingCount }}</span>
+        </button>
+      </div>
+    </div>
+
+    <div v-if="loading" class="empty-state-lux"><Loader2 :size="32" class="spin-icon" /> <p>{{ t('admin.posts.loading') }}</p></div>
+    <div v-else-if="error" class="empty-state-lux error"><AlertTriangle :size="32" /> <p>{{ error }}</p></div>
+
+    <div v-else class="table-lux-wrapper anim-fade-up" style="--delay: 0.2s">
+      <table class="data-table-lux">
+        <thead>
+          <tr>
+            <th width="8%">{{ t('admin.posts.col_id') }}</th>
+            <th width="24%">{{ t('admin.posts.col_post') }}</th>
+            <th width="15%">{{ t('admin.posts.col_category') }}</th>
+            <th width="15%">{{ t('admin.posts.col_author') }}</th>
+            <th width="10%">{{ t('admin.posts.col_views') }}</th>
+            <th width="13%">{{ t('admin.posts.col_status') }}</th>
+            <th width="15%" class="text-right">{{ t('admin.posts.col_actions') }}</th>
+          </tr>
+        </thead>
+        <TransitionGroup tag="tbody" name="list-anim">
+          <tr v-for="post in filteredPosts" :key="post.postID" class="table-row-lux">
+            <td class="font-bold text-gray-500">#{{ post.postID }}</td>
+            <td>
+              <div class="post-info">
+                <div class="thumb-wrapper">
+                  <img :src="post.media || 'https://placehold.co/100x100?text=Food'" class="thumb" :alt="t('common.food_image')">
+                </div>
+                <div class="info-text">
+                  <h4 @click="openDetail(post)" class="post-title">{{ post.title }}</h4>
+                  <small class="time-text">{{ formatDate(post.createdAt) }}</small>
+                </div>
+              </div>
+            </td>
+            <td><span class="cat-tag">{{ post.categoryName || t('admin.posts.uncategorized') }}</span></td>
+            <td>
+              <div class="author-info">
+                <div class="avatar-wrapper-lux">
+                   <img :src="post.accountAvatar || post.authorAvatar || `https://ui-avatars.com/api/?name=${post.username || post.authorName || 'U'}&background=f1f5f9`" 
+                        :class="['avatar-xs', isPostAdmin(post) ? 'border-admin' : (isPostPremium(post) ? 'border-premium' : '')]">
+                   <div v-if="isPostAdmin(post)" class="vip-mini-badge" :title="t('admin.posts.admin_badge')">🛡️</div>
+                   <div v-else-if="isPostPremium(post)" class="vip-mini-badge" :title="t('admin.posts.premium_badge')">👑</div>
+                </div>
+                <span :class="['author-name', isPostAdmin(post) ? 'text-admin' : (isPostPremium(post) ? 'text-premium' : '')]">
+                  {{ post.username || post.authorName || t('admin.posts.anonymous') }}
+                </span>
+              </div>
+            </td>
+            <td>
+              <span class="view-count-badge">
+                👁️ {{ post.views || post.viewCount || 0 }}
+              </span>
+            </td>
+            <td>
+              <span :class="['status-badge', post._status]">
+                <span class="status-dot"></span>
+                {{ getStatusLabel(post._status) }}
+              </span>
+            </td>
+            <td class="text-right">
+              <div class="action-group">
+                <button @click="openDetail(post)" class="btn-action view" :title="t('admin.posts.action_view')"><Eye :size="16" /></button>
+
+                <template v-if="post._status === 'pending'">
+                  <button @click="approvePost(post.postID)" class="btn-action approve" :title="t('admin.posts.action_approve')"><CheckCircle :size="16" /></button>
+                </template>
+
+                <template v-if="post._status === 'active' || post._status === 'pending'">
+                  <button @click="askRejectAction(post)" class="btn-action ban" :title="t('admin.posts.action_reject')"><Ban :size="16" /></button>
+                </template>
+
+                <template v-if="post._status === 'deactivated'">
+                  <button @click="reactivatePost(post.postID)" class="btn-action restore" :title="t('admin.posts.action_restore')"><RotateCcw :size="16" /></button>
+                </template>
+
+                <button @click="deletePost(post.postID)" class="btn-action delete" :title="t('admin.posts.action_delete')"><Trash2 :size="16" /></button>
+              </div>
+            </td>
+          </tr>
+
+          <tr v-if="filteredPosts.length === 0">
+            <td colspan="6">
+              <div class="empty-state-lux">
+                <div class="empty-icon-box"><Search :size="32" /></div>
+                <p>{{ t('admin.posts.empty') }}</p>
+              </div>
+            </td>
+          </tr>
+        </TransitionGroup>
+      </table>
+    </div>
+
+    <Transition name="fade-scale">
+      <div v-if="showModal" class="modal-overlay-lux" @click.self="closeDetail">
+        <div class="modal-card-lux">
+          <button class="btn-close-lux" @click="closeDetail"><XCircle :size="24" /></button>
+          
+          <div class="modal-cover-wrapper">
+            <img :src="selectedPost.media || `https://placehold.co/800x400?text=${encodeURIComponent(t('admin.posts.modal_no_image'))}`" class="modal-cover">
+            <div class="cover-gradient"></div>
+            <span :class="['status-badge absolute-badge', selectedPost._status]">{{ getStatusLabel(selectedPost._status) }}</span>
+          </div>
+
+          <div class="modal-body-lux">
+            <div class="modal-meta-row">
+              <span class="cat-tag">{{ selectedPost.categoryName || t('admin.posts.uncategorized') }}</span>
+              <span class="meta-dot">•</span>
+              <span class="meta-time">{{ formatDate(selectedPost.createdAt) }}</span>
+              <span class="meta-dot">•</span>
+              <div class="author-info">
+                <div class="avatar-wrapper-lux">
+                   <img :src="selectedPost.accountAvatar || selectedPost.authorAvatar || `https://ui-avatars.com/api/?name=${selectedPost.username || selectedPost.authorName || 'U'}`" 
+                        :class="['avatar-xs', isPostAdmin(selectedPost) ? 'border-admin' : (isPostPremium(selectedPost) ? 'border-premium' : '')]">
+                   <div v-if="isPostAdmin(selectedPost)" class="vip-mini-badge" :title="t('admin.posts.admin_badge')">🛡️</div>
+                   <div v-else-if="isPostPremium(selectedPost)" class="vip-mini-badge" :title="t('admin.posts.premium_badge')">👑</div>
+                </div>
+                <b :class="[isPostAdmin(selectedPost) ? 'text-admin' : (isPostPremium(selectedPost) ? 'text-premium' : '')]">
+                  {{ selectedPost.username || selectedPost.authorName || t('admin.posts.anonymous') }}
+                </b>
+              </div>
+            </div>
+            
+            <h1 class="modal-title">{{ selectedPost.title }}</h1>
+            <p class="modal-desc">{{ selectedPost.description || t('admin.posts.modal_no_desc') }}</p>
+
+            <div class="modal-stats-box">
+              <div class="stat-item">
+                <span class="stat-icon">👁️</span>
+                <span class="stat-value">{{ selectedPost.views || selectedPost.viewCount || 0 }}</span>
+                <span class="stat-label">{{ t('admin.posts.stats_views') }}</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-icon">❤️</span>
+                <span class="stat-value">{{ selectedPost.likes || selectedPost.favoriteCount || selectedPost.likeCount || 0 }}</span>
+                <span class="stat-label">{{ t('admin.posts.stats_likes') }}</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-icon">⭐</span>
+                <span class="stat-value">{{ (Number(selectedPost.rating || selectedPost.avgRating || selectedPost.averageRating) || 0).toFixed(1) }}</span>
+                <span class="stat-label">{{ t('admin.posts.stats_rating') }}</span>
+              </div>
+            </div>
+
+            <div v-if="selectedPost._status === 'deactivated' && selectedPost.rejectReason" class="p-detail-ban-reason">
+              <div class="ban-header">
+                <AlertTriangle :size="16" /> {{ t('admin.posts.moderation_info') }}
+              </div>
+              <div class="ban-info-grid">
+                <div class="ban-info-item">
+                  <span class="info-lbl">{{ t('admin.posts.violation_reason') }}</span>
+                  <span class="info-val reason-text">{{ selectedPost.rejectReason }}</span>
+                </div>
+                <div v-if="selectedPost.rejectedAt" class="ban-info-item">
+                  <span class="info-lbl">{{ t('admin.posts.processed_time') }}</span>
+                  <span class="info-val time-text">{{ formatDate(selectedPost.rejectedAt) }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="modal-action-zone" v-if="selectedPost._status === 'pending'">
+              <div class="alert-ribbon">
+                <AlertCircle :size="18" /> {{ t('admin.posts.pending_banner') }}
+              </div>
+              <div class="btn-grid-lux">
+                <button @click="approvePost(selectedPost.postID); closeDetail()" class="btn-lux-primary">
+                  <CheckCircle :size="18" /> {{ t('admin.posts.approve_now') }}
+                </button>
+                <button @click="askRejectAction(selectedPost); closeDetail()" class="btn-lux-secondary">
+                  <Ban :size="18" /> {{ t('admin.posts.reject_now') }}
+                </button>
+              </div>
+            </div>
+
+            <div class="modal-action-zone" v-if="selectedPost._status === 'deactivated'" style="background: #f0f9ff; border-color: #e0f2fe; margin-top: 24px;">
+              <div class="alert-ribbon" style="color: #0369a1;">
+                <AlertCircle :size="18" /> {{ t('admin.posts.deactivated_banner') }}
+              </div>
+              <div class="btn-grid-lux" style="grid-template-columns: 1fr;">
+                <button @click="reactivatePost(selectedPost.postID); closeDetail()" class="btn-lux-primary" style="background: linear-gradient(135deg, #0284c7, #0ea5e9); box-shadow: 0 10px 20px -5px rgba(2, 132, 199, 0.4);">
+                  <RotateCcw :size="18" /> {{ t('admin.posts.restore_now') }}
+                </button>
+              </div>
+            </div>
+
+            <div class="modal-footer-zone">
+              <router-link :to="`/post/${selectedPost.postID}`" target="_blank" class="btn-lux-view-post">
+                <span>{{ t('admin.posts.view_on_site') }}</span>
+                <ExternalLink :size="18" />
+              </router-link>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <Transition name="fade-scale">
+      <div v-if="rejectModal.show" class="modal-overlay-lux" @click.self="rejectModal.show = false">
+        <div class="reject-modal-card">
+          <div class="action-icon">
+            <Ban :size="28" />
+          </div>
+          <h3>{{ t('admin.posts.reject_title') }}</h3>
+          <p>{{ t('admin.posts.reject_confirm', { title: rejectModal.title }) }}</p>
+          
+          <div class="reason-input-group">
+            <label for="rejectReason">{{ t('admin.posts.reject_reason') }}</label>
+            <textarea 
+              id="rejectReason" 
+              v-model="rejectModal.reason" 
+              :placeholder="t('admin.posts.reject_reason_placeholder')" 
+              rows="3" 
+              class="reason-textarea"
+            ></textarea>
+            <span v-if="rejectModal.showError" class="error-msg">{{ t('admin.posts.reject_reason_required') }}</span>
+          </div>
+
+          <div class="action-btns">
+            <button class="btn-cancel" @click="rejectModal.show = false">{{ t('admin.posts.cancel') }}</button>
+            <button class="btn-confirm btn-danger" @click="confirmRejectAction">
+              {{ t('admin.posts.confirm_reject') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <transition name="toast-anim">
+      <div v-if="toast.show" :class="['toast-lux', toast.type]">
+        <CheckCircle v-if="toast.type === 'success'" :size="20" />
+        <AlertTriangle v-else :size="20" />
+        <span>{{ toast.msg }}</span>
+      </div>
+    </transition>
+
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { FileText, Search, Loader2, AlertTriangle, Eye, Trash2, Ban, CheckCircle, XCircle, AlertCircle, ShieldAlert, RotateCcw, ExternalLink } from 'lucide-vue-next'
+import api from '@/services/api'
+import { useAuthStore } from '@/stores/auth' // 🔥 IMPORT STORE
+import { useI18n } from 'vue-i18n'
+import { formatLocaleDateTime } from '@/i18n'
+
+const authStore = useAuthStore() // Khởi tạo AuthStore
+const { t } = useI18n()
+
+// --- STATE ---
+const posts = ref([])
+const loading = ref(false)
+const error = ref('')
+const searchQuery = ref('')
+const sortOption = ref('newest')
+const currentTab = ref('all')
+const showModal = ref(false)
+const selectedPost = ref({})
+
+// 🔥 State cho Popup Từ chối
+const rejectModal = ref({ show: false, postId: null, title: '', reason: '', showError: false })
+
+const tabs = [
+  { key: 'all', label: t('admin.posts.tab_all') },
+  { key: 'pending', label: t('admin.posts.tab_pending') },
+  { key: 'active', label: t('admin.posts.tab_active') },
+  { key: 'deactivated', label: t('admin.posts.tab_deactivated') }
+]
+
+// --- LOGIC PHÂN LOẠI TRẠNG THÁI ---
+const getStatus = (post) => {
+  if (post.isActive === 0) return 'deactivated'
+  if (post.isApproved === 1) return 'active'
+  return 'pending'
+}
+
+const getStatusLabel = (status) => {
+  const map = {
+    pending: t('admin.posts.status_pending'),
+    active: t('admin.posts.status_active'),
+    deactivated: t('admin.posts.status_deactivated'),
+  }
+  return map[status] || status
+}
+
+// --- LOGIC VAI TRÒ ---
+const isPostAdmin = (p) => {
+  if (!p) return false;
+  const r = String(p.role || p.accountRole || p.authorRole || '').toLowerCase();
+  return r === 'admin' || p.isAdmin === true || p.isAdmin === 1;
+}
+const isPostPremium = (p) => {
+  if (!p) return false;
+  const r = String(p.role || p.accountRole || p.authorRole || '').toLowerCase();
+  return r === 'premium' || p.isPremium === true || p.isPremium === 1;
+}
+
+const formatDate = (d) => {
+  if (!d) return ''
+  return formatLocaleDateTime(d, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute:'2-digit' })
+}
+
+// --- FETCH API ---
+const fetchPosts = async () => {
+  loading.value = true
+  error.value = ''
+  try {
+    const res = await api.get('/api/admin/posts')
+    posts.value = res.data.map(p => ({ ...p, _status: getStatus(p) }))
+  } catch (e) {
+    error.value = t('admin.posts.load_failed_prefix').replace(/[:：]\s*$/, '')
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(fetchPosts)
+
+// --- COMPUTED ---
+const pendingCount = computed(() => posts.value.filter(p => p._status === 'pending').length)
+
+const filteredPosts = computed(() => {
+  let result = posts.value.filter(post => {
+    const matchTab = currentTab.value === 'all' || post._status === currentTab.value
+    const q = searchQuery.value.toLowerCase()
+    const matchSearch = !q ||
+      (post.title || '').toLowerCase().includes(q) ||
+      (post.username || '').toLowerCase().includes(q) ||
+      (post.categoryName || '').toLowerCase().includes(q)
+    return matchTab && matchSearch
+  })
+
+  // Áp dụng bộ lọc sắp xếp
+  if (sortOption.value === 'newest') {
+    result.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+  } else if (sortOption.value === 'oldest') {
+    result.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0))
+  } else if (sortOption.value === 'views_desc') {
+    result.sort((a, b) => (b.views || b.viewCount || 0) - (a.views || a.viewCount || 0))
+  } else if (sortOption.value === 'alphabetical') {
+    result.sort((a, b) => (a.title || '').localeCompare(b.title || ''))
+  }
+
+  return result
+})
+
+// --- ACTIONS API ---
+
+// 1. DUYỆT BÀI (CÓ GỬI PAYLOAD ADMIN INFO)
+const approvePost = async (id) => {
+  try {
+    const payload = {
+      adminId: authStore.user?.accountID || authStore.user?.id || 0,
+      adminName: authStore.user?.username || authStore.user?.fullName || 'Admin'
+    };
+    await api.put(`/api/admin/posts/approve/${id}`, payload)
+    
+    const p = posts.value.find(p => p.postID === id)
+    if (p) { p.isApproved = 1; p.isActive = 1; p._status = 'active'; p.rejectReason = null; }
+    showToast(t('admin.posts.approved_ok'))
+  } catch (e) { showToast(t('admin.common.server_error'), 'error') }
+}
+
+// 2. TỪ CHỐI / GỠ BÀI (MỞ POPUP)
+const askRejectAction = (post) => {
+  rejectModal.value = { show: true, postId: post.postID, title: post.title, reason: '', showError: false }
+}
+
+// 3. XÁC NHẬN GỠ BÀI (CÓ GỬI PAYLOAD LÝ DO & ADMIN INFO)
+const confirmRejectAction = async () => {
+  if (!rejectModal.value.reason.trim()) {
+    rejectModal.value.showError = true;
+    return;
+  }
+  
+  try {
+    const payload = {
+      adminId: authStore.user?.accountID || authStore.user?.id || 0,
+      adminName: authStore.user?.username || authStore.user?.fullName || 'Admin',
+      reason: rejectModal.value.reason.trim()
+    };
+    
+    await api.put(`/api/admin/posts/${rejectModal.value.postId}/reject`, payload);
+    
+    const p = posts.value.find(p => p.postID === rejectModal.value.postId)
+    if (p) { 
+      p.isApproved = -1; 
+      p.isActive = 0; 
+      p._status = 'deactivated';
+      p.rejectReason = payload.reason;
+      p.rejectedAt = new Date().toISOString(); 
+    }
+    
+    rejectModal.value.show = false;
+    showToast(t('admin.posts.rejected_ok'))
+  } catch (e) { 
+    showToast(t('admin.common.server_error'), 'error') 
+  }
+}
+
+// 4. KHÔI PHỤC BÀI (Dùng lại hàm Approve)
+const reactivatePost = async (id) => {
+  if (!confirm(t('admin.posts.restore_confirm'))) return
+  await approvePost(id);
+}
+
+// 5. XÓA BÀI
+const deletePost = async (id) => {
+  if (!confirm(t('admin.posts.delete_confirm'))) return
+  try {
+    await api.delete(`/api/admin/posts/${id}`)
+    posts.value = posts.value.filter(p => p.postID !== id)
+    showModal.value = false
+    showToast(t('admin.posts.deleted_ok'))
+  } catch (e) { showToast(t('admin.common.server_error'), 'error') }
+}
+
+// --- MODAL CHI TIẾT ---
+const openDetail = async (post) => { 
+  selectedPost.value = { ...post }
+  showModal.value = true 
+  try {
+    const res = await api.get(`/api/posts/${post.postID}`)
+    if (res.data) {
+      // API PostDetail ở public thường không có rejectReason, nên ta ưu tiên giữ lại rejectReason từ API admin nếu có
+      selectedPost.value = { ...selectedPost.value, ...res.data, rejectReason: selectedPost.value.rejectReason, rejectedAt: selectedPost.value.rejectedAt }
+    }
+  } catch (err) {
+    console.warn(t('admin.posts.detail_load_warn'), err)
+  }
+}
+const closeDetail = () => { showModal.value = false }
+
+// --- TOAST ---
+const toast = ref({ show: false, msg: '', type: 'success' })
+const showToast = (msg, type = 'success') => {
+  toast.value = { show: true, msg, type }
+  setTimeout(() => toast.value.show = false, 3000)
+}
+</script>
+
+<style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@800&display=swap');
+
+/* --- KHUNG CHÍNH --- */
+.page-container {
+  padding: 32px 40px;
+  font-family: 'Inter', sans-serif;
+  background-color: #f8fafc;
+  min-height: 100vh;
+}
+
+/* --- HEADER VIPRO --- */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+}
+.header-content { display: flex; align-items: center; }
+.title-wrapper { display: flex; align-items: center; gap: 16px; }
+.icon-box { 
+  width: 52px; height: 52px; border-radius: 14px; 
+  background: linear-gradient(135deg, #ea580c, #f59e0b); 
+  color: white; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 10px 20px -5px rgba(234, 88, 12, 0.4);
+}
+.title { font-family: 'Playfair Display', serif; font-size: 2.2rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.5px; }
+.subtitle { color: #64748b; margin: 4px 0 0; font-size: 1rem; font-weight: 500; }
+
+.header-actions { display: flex; align-items: center; gap: 16px; }
+
+.search-box-lux {
+  display: flex; align-items: center; background: white; padding: 12px 20px; 
+  border-radius: 100px; border: 1px solid #e2e8f0; width: 320px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.03); transition: 0.3s;
+}
+.search-box-lux:focus-within { border-color: #ea580c; box-shadow: 0 4px 20px rgba(234,88,12,0.1); }
+.search-icon { color: #94a3b8; }
+.search-box-lux input { border: none; outline: none; margin-left: 12px; width: 100%; font-family: inherit; font-size: 0.95rem; color: #0f172a; }
+
+.sort-box-lux { display: flex; align-items: center; background: white; padding: 12px 16px; border-radius: 100px; border: 1px solid #e2e8f0; box-shadow: 0 4px 15px rgba(0,0,0,0.03); transition: 0.3s; }
+.sort-box-lux:focus-within { border-color: #ea580c; box-shadow: 0 4px 20px rgba(234,88,12,0.1); }
+.sort-select { border: none; outline: none; background: transparent; font-family: inherit; font-size: 0.95rem; font-weight: 600; color: #475569; cursor: pointer; }
+.view-count-badge { font-size: 0.85rem; font-weight: 600; color: #64748b; display: flex; align-items: center; gap: 6px; }
+
+/* 🔥 NÚT MỞ BLACKLIST */
+.btn-open-blacklist {
+  display: flex; align-items: center; gap: 8px;
+  background: #fef2f2; color: #dc2626; border: 1px solid #fecaca;
+  padding: 12px 20px; border-radius: 100px; font-weight: 700;
+  text-decoration: none; transition: 0.3s;
+}
+.btn-open-blacklist:hover {
+  background: #dc2626; color: white; box-shadow: 0 8px 20px -5px rgba(220, 38, 38, 0.4);
+}
+
+/* --- TABS BỘ LỌC --- */
+.tabs-lux-wrapper { margin-bottom: 24px; }
+.tabs-filter { display: inline-flex; background: white; padding: 6px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); border: 1px solid #f1f5f9; }
+.tab-btn-lux { 
+  background: transparent; border: none; padding: 10px 20px; font-weight: 600; color: #64748b; 
+  cursor: pointer; border-radius: 8px; transition: 0.3s; position: relative; font-size: 0.95rem;
+}
+.tab-btn-lux:hover { color: #0f172a; }
+.tab-btn-lux.active { background: #fff7ed; color: #ea580c; box-shadow: 0 2px 8px rgba(234,88,12,0.1); }
+.badge-pulse { 
+  position: absolute; top: -6px; right: -6px; background: #ef4444; color: white; 
+  font-size: 0.7rem; font-weight: 800; padding: 2px 8px; border-radius: 100px; 
+  box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); animation: pulseRed 2s infinite;
+}
+@keyframes pulseRed { 70% { box-shadow: 0 0 0 6px rgba(239,68,68,0); } 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); } }
+
+/* --- BẢNG DỮ LIỆU --- */
+.table-lux-wrapper { background: white; border-radius: 20px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.03); overflow: hidden; }
+.data-table-lux { width: 100%; border-collapse: separate; border-spacing: 0; }
+.data-table-lux th { text-align: left; padding: 18px 24px; background: #f8fafc; color: #64748b; font-weight: 700; font-size: 0.8rem; letter-spacing: 1px; border-bottom: 1px solid #e2e8f0; }
+.data-table-lux td { padding: 16px 24px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+.table-row-lux { transition: 0.2s; }
+.table-row-lux:hover { background: #fafafa; }
+
+/* Thành phần trong bảng */
+.post-info { display: flex; gap: 16px; align-items: center; }
+.thumb-wrapper { width: 64px; height: 64px; border-radius: 12px; overflow: hidden; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+.thumb { width: 100%; height: 100%; object-fit: cover; }
+.post-title { margin: 0 0 4px 0; font-size: 1.05rem; font-weight: 700; color: #0f172a; cursor: pointer; transition: 0.2s; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.post-title:hover { color: #ea580c; }
+.time-text { color: #94a3b8; font-size: 0.85rem; font-weight: 500; }
+
+.cat-tag { background: #f1f5f9; padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; color: #475569; }
+.author-info { display: flex; align-items: center; gap: 10px; }
+.avatar-xs { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); object-fit: cover; }
+.avatar-wrapper-lux { position: relative; width: 32px; height: 32px; flex-shrink: 0; }
+.avatar-xs { width: 100%; height: 100%; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); object-fit: cover; transition: 0.3s; }
+.avatar-xs.border-admin { border-color: #3b82f6; box-shadow: 0 0 8px rgba(59, 130, 246, 0.4); }
+.avatar-xs.border-premium { border-color: #f59e0b; box-shadow: 0 0 8px rgba(245, 158, 11, 0.4); }
+.vip-mini-badge { position: absolute; bottom: -4px; right: -6px; font-size: 11px; background: white; border-radius: 50%; padding: 2px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); line-height: 1; z-index: 2; }
+.author-name { font-weight: 600; color: #1e293b; font-size: 0.95rem; }
+.text-admin { color: #2563eb !important; font-weight: 800; }
+.text-premium { color: #d97706 !important; font-weight: 800; }
+
+/* Status Badges */
+.status-badge { padding: 6px 14px; border-radius: 100px; font-size: 0.8rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; }
+.status-badge.pending { background: #fffbeb; color: #d97706; } .status-badge.pending .status-dot { background: #d97706; }
+.status-badge.active { background: #f0fdf4; color: #16a34a; } .status-badge.active .status-dot { background: #16a34a; }
+.status-badge.deactivated { background: #fef2f2; color: #dc2626; } .status-badge.deactivated .status-dot { background: #dc2626; }
+
+/* Action Buttons */
+.action-group { display: flex; justify-content: flex-end; gap: 8px; }
+.btn-action { width: 36px; height: 36px; border-radius: 10px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+.view { background: #f1f5f9; color: #475569; } .view:hover { background: #e2e8f0; color: #0f172a; }
+.approve { background: #dcfce7; color: #16a34a; } .approve:hover { background: #16a34a; color: white; }
+.ban { background: #ffedd5; color: #ea580c; } .ban:hover { background: #ea580c; color: white; }
+.delete { background: #fee2e2; color: #dc2626; } .delete:hover { background: #dc2626; color: white; }
+.restore { background: #e0f2fe; color: #0284c7; } .restore:hover { background: #0284c7; color: white; }
+
+/* --- MODAL LUXURY --- */
+.modal-overlay-lux { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(8px); }
+.modal-card-lux { background: white; width: 700px; max-height: 90vh; overflow-y: auto; border-radius: 24px; position: relative; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
+.modal-card-lux::-webkit-scrollbar { width: 6px; }
+.modal-card-lux::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+.btn-close-lux { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.4); color: white; border: none; border-radius: 50%; padding: 6px; cursor: pointer; z-index: 10; transition: 0.2s; backdrop-filter: blur(4px); }
+.btn-close-lux:hover { background: #ef4444; transform: rotate(90deg); }
+
+.modal-cover-wrapper { position: relative; height: 280px; }
+.modal-cover { width: 100%; height: 100%; object-fit: cover; }
+.cover-gradient { position: absolute; inset: 0; background: linear-gradient(0deg, rgba(255,255,255,1) 0%, transparent 60%); }
+.absolute-badge { position: absolute; top: 20px; left: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+
+.modal-body-lux { padding: 0 32px 32px 32px; position: relative; z-index: 2; margin-top: -20px; }
+.modal-meta-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; color: #64748b; font-size: 0.9rem; font-weight: 500; }
+.meta-dot { color: #cbd5e1; }
+.modal-title { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 800; color: #0f172a; margin: 0 0 16px 0; line-height: 1.3; }
+.modal-desc { color: #475569; line-height: 1.7; font-size: 1.05rem; margin-bottom: 24px; }
+
+.modal-stats-box { display: flex; gap: 16px; margin-bottom: 24px; }
+.stat-item { flex: 1; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.3s; }
+.stat-item:hover { background: #fff7ed; border-color: #ffedd5; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(234, 88, 12, 0.05); }
+.stat-icon { font-size: 1.5rem; margin-bottom: 8px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
+.stat-value { font-size: 1.25rem; font-weight: 800; color: #0f172a; margin-bottom: 4px; line-height: 1; }
+.stat-label { font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+
+.modal-action-zone { background: #fff7ed; border: 1px solid #ffedd5; border-radius: 16px; padding: 24px; margin-bottom: 24px; }
+.alert-ribbon { color: #c2410c; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.btn-grid-lux { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.btn-lux-primary, .btn-lux-secondary { padding: 14px; border-radius: 12px; font-weight: 700; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.3s; border: none; }
+.btn-lux-primary { background: linear-gradient(135deg, #16a34a, #22c55e); color: white; box-shadow: 0 10px 20px -5px rgba(22, 163, 74, 0.4); }
+.btn-lux-primary:hover { transform: translateY(-2px); box-shadow: 0 15px 25px -5px rgba(22, 163, 74, 0.5); }
+.btn-lux-secondary { background: white; color: #ea580c; border: 1px solid #fdba74; }
+.btn-lux-secondary:hover { background: #fff7ed; border-color: #ea580c; }
+
+.modal-footer-zone { text-align: right; border-top: 1px dashed #e2e8f0; padding-top: 24px; }
+.btn-lux-view-post {
+  display: inline-flex; align-items: center; gap: 8px; background: #f8fafc; color: #3b82f6; 
+  border: 1px solid #e2e8f0; padding: 12px 24px; border-radius: 12px; font-weight: 700; 
+  text-decoration: none; transition: 0.3s;
+}
+.btn-lux-view-post:hover {
+  background: #eff6ff; color: #2563eb; border-color: #bfdbfe; 
+  transform: translateY(-2px); box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+/* 🔥 THIẾT KẾ CHO KHUNG HIỂN THỊ LÝ DO VI PHẠM */
+.p-detail-ban-reason { 
+  margin-bottom: 24px; 
+  background: #fff5f5; 
+  border-radius: 12px; 
+  border: 1px solid #fecaca; 
+  overflow: hidden;
+}
+.ban-header { 
+  background: #fef2f2; 
+  padding: 12px 16px; 
+  color: #dc2626; 
+  font-weight: 700; 
+  font-size: 0.9rem; 
+  display: flex; 
+  align-items: center; 
+  gap: 8px; 
+  border-bottom: 1px solid #fee2e2;
+}
+.ban-info-grid { padding: 16px; display: flex; flex-direction: column; gap: 12px; text-align: left; }
+.ban-info-item { display: flex; flex-direction: column; gap: 6px; }
+.info-lbl { font-size: 0.8rem; color: #991b1b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+.info-val { font-size: 0.95rem; color: #7f1d1d; line-height: 1.4; }
+.reason-text { font-style: italic; background: #fff; padding: 10px 14px; border-radius: 8px; border: 1px dashed #fca5a5; }
+.time-text { font-weight: 600; color: #991b1b; font-size: 0.9rem; }
+
+/* 🔥 THIẾT KẾ POPUP TỪ CHỐI BÀI VIẾT */
+.reject-modal-card { background: white; padding: 28px; border-radius: 16px; width: 380px; max-width: 95vw; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.15); }
+.action-icon { width: 56px; height: 56px; border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; background: #fef2f2; color: #dc2626; }
+.reject-modal-card h3 { font-size: 1.2rem; color: #0f172a; margin: 0 0 8px; font-weight: 700; }
+.reject-modal-card p { color: #64748b; font-size: 0.95rem; margin: 0 0 24px; }
+.reason-input-group { text-align: left; margin-bottom: 20px; }
+.reason-input-group label { display: block; font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 6px; }
+.reason-textarea { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; font-family: inherit; font-size: 0.9rem; resize: none; background: #f8fafc; transition: 0.2s; }
+.reason-textarea:focus { border-color: #ef4444; background: white; box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1); }
+.error-msg { display: block; color: #dc2626; font-size: 0.8rem; font-weight: 500; margin-top: 4px; }
+.action-btns { display: flex; gap: 12px; }
+.btn-cancel, .btn-confirm { flex: 1; padding: 10px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; font-size: 0.95rem; }
+.btn-cancel { background: #f1f5f9; color: #475569; }
+.btn-danger { background: #ef4444; color: white; }
+
+/* --- TOAST & EMPTY STATES --- */
+.empty-state-lux { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; color: #94a3b8; font-weight: 500; }
+.empty-icon-box { background: #f1f5f9; padding: 20px; border-radius: 50%; margin-bottom: 16px; color: #cbd5e1; }
+.empty-state-lux.error { color: #ef4444; }
+
+.toast-lux { position: fixed; bottom: 32px; right: 32px; padding: 16px 24px; border-radius: 16px; font-weight: 600; z-index: 10000; box-shadow: 0 20px 40px -10px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 12px; font-size: 1rem; color: white; }
+.toast-lux.success { background: #1f2937; border-left: 4px solid #10b981; }
+.toast-lux.error { background: #7f1d1d; border-left: 4px solid #ef4444; }
+
+/* ANIMATIONS */
+.anim-fade-down { animation: fadeDown 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+.anim-fade-up { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: var(--delay, 0s); }
+@keyframes fadeDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+.list-anim-enter-active, .list-anim-leave-active { transition: all 0.4s ease; }
+.list-anim-enter-from, .list-anim-leave-to { opacity: 0; transform: translateX(-20px); }
+
+.fade-scale-enter-active, .fade-scale-leave-active { transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+.fade-scale-enter-from, .fade-scale-leave-to { opacity: 0; transform: scale(0.95); }
+
+.toast-anim-enter-active, .toast-anim-leave-active { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+.toast-anim-enter-from, .toast-anim-leave-to { opacity: 0; transform: translateY(30px) scale(0.9); }
+</style>

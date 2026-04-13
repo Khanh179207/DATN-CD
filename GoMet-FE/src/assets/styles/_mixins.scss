@@ -1,0 +1,119 @@
+// ============================================================
+//   GOMET MIXINS & HELPERS
+//   Usage: @use '@/assets/styles/mixins' as *;
+// ============================================================
+@use 'variables' as *;
+
+// ── Responsive Breakpoints ───────────────────────────────
+@mixin sm  { @media (min-width: #{$bp-sm})  { @content; } }
+@mixin md  { @media (min-width: #{$bp-md})  { @content; } }
+@mixin lg  { @media (min-width: #{$bp-lg})  { @content; } }
+@mixin xl  { @media (min-width: #{$bp-xl})  { @content; } }
+@mixin max-sm { @media (max-width: #{$bp-sm})  { @content; } }
+@mixin max-md { @media (max-width: #{$bp-md})  { @content; } }
+@mixin max-lg { @media (max-width: #{$bp-lg})  { @content; } }
+
+// ── Layout Helpers ────────────────────────────────────────
+@mixin flex-center  { display: flex; align-items: center; justify-content: center; }
+@mixin flex-between { display: flex; align-items: center; justify-content: space-between; }
+@mixin flex-column  { display: flex; flex-direction: column; }
+
+@mixin container {
+  max-width: $container-max;
+  margin: 0 auto;
+  padding: 0 $space-5;
+}
+
+// ── Card Base ─────────────────────────────────────────────
+@mixin card-base {
+  background: $neutral-0;
+  border-radius: $radius-xl;
+  box-shadow: $shadow-md;
+  transition: $transition-smooth;
+  &:hover { box-shadow: $shadow-xl; transform: translateY(-4px); }
+}
+
+// ── Orange Button ─────────────────────────────────────────
+@mixin btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-2;
+  background: $primary-600;
+  color: $neutral-0;
+  border: none;
+  padding: $space-3 $space-6;
+  border-radius: $radius-full;
+  font-weight: 700;
+  font-family: $font-ui;
+  cursor: pointer;
+  transition: $transition-smooth;
+  &:hover { background: $primary-700; transform: translateY(-2px); box-shadow: $shadow-warm; }
+  &:active { transform: translateY(0); }
+}
+
+@mixin btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-2;
+  background: transparent;
+  color: $primary-600;
+  border: 2px solid $primary-600;
+  padding: $space-3 $space-6;
+  border-radius: $radius-full;
+  font-weight: 700;
+  cursor: pointer;
+  transition: $transition-smooth;
+  &:hover { background: $primary-50; transform: translateY(-2px); }
+}
+
+// ── Typography ────────────────────────────────────────────
+@mixin heading-display($size: $text-4xl) {
+  font-family: $font-display;
+  font-size: $size;
+  font-weight: 800;
+  line-height: 1.1;
+  color: $neutral-900;
+}
+
+@mixin label-uppercase {
+  font-size: $text-xs;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: $primary-600;
+}
+
+// ── Image Protection ─────────────────────────────────────
+@mixin no-select {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+@mixin protected-image {
+  @include no-select;
+  pointer-events: none;
+  -webkit-user-drag: none;
+  draggable: false;
+  -webkit-touch-callout: none;
+}
+
+// ── Skeleton Loading ─────────────────────────────────────
+@mixin skeleton {
+  background: linear-gradient(90deg, $neutral-100 25%, $neutral-50 50%, $neutral-100 75%);
+  background-size: 200% 100%;
+  animation: skeletonPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes skeletonPulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+// ── Section Spacing ───────────────────────────────────────
+@mixin section-padding {
+  padding: $space-20 $space-10;
+  @include max-lg { padding: $space-12 $space-5; }
+  @include max-md { padding: $space-8 $space-4; }
+}
