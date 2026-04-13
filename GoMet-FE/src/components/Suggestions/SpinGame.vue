@@ -183,4 +183,59 @@ $orange: #EA580C;
 
 .fade-enter-active, .fade-leave-active { transition: opacity 0.5s; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+@media (max-width: 1200px) {
+  .dish-frame { width: 300px; height: 300px; margin-bottom: 30px; }
+  .dish-name-display { font-size: 2.5rem; min-height: 3.5rem; margin-bottom: 30px; }
+  .dish-name-display.text-glitch { font-size: 1.8rem; }
+}
+
+@media (max-width: 992px) {
+  .machine-container { padding: 0 20px; }
+  .dish-frame { width: 280px; height: 280px; margin-bottom: 25px; }
+  
+  .dish-name-display { font-size: 2.2rem; min-height: 3rem; margin-bottom: 25px; }
+  .dish-name-display.text-glitch { font-size: 1.5rem; letter-spacing: 3px; }
+  
+  .btn-spin-premium { padding: 18px 45px; font-size: 0.95rem; }
+}
+
+@media (max-width: 768px) {
+  .dish-frame { width: 240px; height: 240px; margin-bottom: 20px; border-width: 1.5px; }
+  
+  /* Giảm khoảng cách cho gọn màn hình */
+  .dish-name-display { font-size: 1.8rem; min-height: 2.5rem; margin-bottom: 20px; }
+  .dish-name-display.text-glitch { font-size: 1.2rem; letter-spacing: 2px; }
+  
+  .dish-tag { padding: 4px 15px; font-size: 0.65rem; bottom: 15px; }
+  
+  .btn-spin-premium { 
+    padding: 16px 35px; 
+    font-size: 0.85rem; 
+    letter-spacing: 2px; 
+    width: 100%; 
+    max-width: 300px; 
+  }
+  
+  .hint-text { font-size: 0.85rem; margin-top: 20px; padding: 0 10px; }
+}
+
+@media (max-width: 480px) {
+  .dish-frame { width: 200px; height: 200px; margin-bottom: 15px; }
+  
+  .dish-name-display { font-size: 1.5rem; min-height: 2rem; margin-bottom: 15px; }
+  .dish-name-display.text-glitch { font-size: 1rem; letter-spacing: 1px; }
+  
+  .btn-spin-premium { padding: 14px 20px; font-size: 0.8rem; border-radius: 30px; }
+  .hint-text { font-size: 0.8rem; margin-top: 15px; }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .machine-container { flex-direction: row; gap: 40px; justify-content: center; }
+  .dish-frame { width: 180px; height: 180px; margin-bottom: 0; }
+  
+  .landscape-content { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; text-align: left; }
+  .dish-name-display { font-size: 1.8rem; min-height: auto; margin: 0 0 15px; }
+  .btn-spin-premium { padding: 12px 30px; }
+  .hint-text { display: none; } /* Ẩn đi cho thoáng màn hình ngang */
+}
 </style>

@@ -537,9 +537,104 @@ watch(() => props.post.postID || props.post.id, initData, { immediate: true })
 .custom-scroll::-webkit-scrollbar { width: 6px; }
 .custom-scroll::-webkit-scrollbar-thumb { background: var(--color-neutral-300, #cbd5e1); border-radius: 10px; }
 
+/* =======================================================
+   🔥 HỆ THỐNG RESPONSIVE (TỐI ƯU MỌI THIẾT BỊ)
+   ======================================================= */
+
+/* --- 1. Màn hình Laptop nhỏ & Tablet ngang (Dưới 1024px) --- */
 @media (max-width: 1024px) {
-  .hero-container-inner { grid-template-columns: 1fr; gap: 40px; }
+  .hero-container-inner { 
+    grid-template-columns: 1fr; /* Ép về 1 cột */
+    gap: 40px; 
+  }
+  
+  /* Đổi thứ tự: Cho ảnh lên trên, thông tin xuống dưới (Tùy chọn, hiện tại giữ text trên) */
   .recipe-title-display { font-size: 2.8rem; }
-  .clean-image-frame { height: 400px; border-radius: var(--radius-xl, 24px); }
+  .clean-image-frame { height: 450px; border-radius: var(--radius-xl, 24px); }
+  .recipe-desc-text { max-width: 100%; }
+}
+
+/* --- 2. Tablet dọc & Mobile ngang (Dưới 768px) --- */
+@media (max-width: 768px) {
+  .hero-section-clean { padding: 20px 0 40px; }
+  .hero-container-inner { gap: 30px; }
+
+  /* Navigation & Title */
+  .top-nav-bar { margin-bottom: 20px; }
+  .recipe-title-display { font-size: 2.2rem; margin-bottom: 12px; line-height: 1.25; }
+  .recipe-desc-text { font-size: 1rem; margin-bottom: 25px; }
+
+  /* Stats Pills (Thời gian, độ khó...) */
+  .recipe-stats-group { gap: 12px; margin-bottom: 30px; }
+  .stat-card-clean { 
+    flex: 1; /* Cho các thẻ stat tự động co giãn đều nhau */
+    min-width: 120px; 
+    padding: 10px 12px; 
+  }
+
+  /* Author & Actions */
+  .hero-footer-actions { padding-top: 20px; gap: 20px; }
+  .social-actions-row { 
+    flex-direction: column; 
+    align-items: flex-start; 
+    gap: 16px; 
+  }
+  
+  /* Cụm nút Like, Save, Share */
+  .action-btn-group { 
+    width: 100%; 
+    display: flex; 
+    gap: 10px; 
+  }
+  .btn-like-clean { 
+    flex: 1; /* Nút Like kéo dài ra cho dễ bấm */
+    justify-content: center; 
+  }
+
+  /* Khối hình ảnh cover */
+  .clean-image-frame { height: 320px; border-radius: 20px; }
+  .badge-new-top-left { top: 16px; left: 16px; padding: 4px 12px; font-size: 0.7rem; }
+  
+  /* Thống kê trên ảnh (Lượt xem, ngày) */
+  .bottom-glass-stats { 
+    bottom: 16px; 
+    width: 90%; 
+    justify-content: center; 
+    padding: 8px 16px; 
+    gap: 12px; 
+    border-radius: 16px;
+  }
+  .bottom-glass-stats .stat-item { font-size: 0.75rem; }
+}
+
+/* --- 3. Mobile nhỏ (Dưới 480px - Vd: iPhone SE) --- */
+@media (max-width: 480px) {
+  .hero-container-inner { padding: 0 16px; }
+  
+  .recipe-title-display { font-size: 1.8rem; }
+  .recipe-desc-text { font-size: 0.95rem; }
+
+  /* Ép các thẻ thống kê thành chiều dọc nếu màn hình quá chật */
+  .recipe-stats-group { flex-direction: column; }
+  .stat-card-clean { width: 100%; justify-content: flex-start; }
+
+  .author-info-block .avatar-container img { width: 38px; height: 38px; }
+  .author-info-block .auth-text .auth-name { font-size: 0.9rem; }
+
+  /* Action Buttons */
+  .action-btn-group { flex-wrap: wrap; }
+  .btn-like-clean { width: 100%; flex: none; } /* Nút Like full 100% width */
+
+  /* Text "Được thích bởi..." */
+  .liked-by-stack { flex-wrap: wrap; padding: 0; background: transparent; }
+  .liked-by-stack .liked-text { font-size: 0.8rem; }
+
+  /* Ảnh Cover Mobile */
+  .clean-image-frame { height: 240px; }
+  .bottom-glass-stats { 
+    flex-direction: column; /* Tràn xuống 2 dòng để không bị che mất chữ */
+    gap: 6px; 
+    padding: 10px;
+  }
 }
 </style>

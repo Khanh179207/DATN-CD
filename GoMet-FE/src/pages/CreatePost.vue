@@ -520,10 +520,116 @@ const handlePublish = async () => {
 .list-anim-enter-active, .list-anim-leave-active { transition: all 0.3s ease; }
 .list-anim-enter-from, .list-anim-leave-to { opacity: 0; transform: translateX(-20px); }
 
+/* =======================================================
+   🔥 HỆ THỐNG RESPONSIVE (TỐI ƯU MỌI THIẾT BỊ)
+   ======================================================= */
+
+/* --- 1. Màn hình Laptop Nhỏ & Tablet Ngang (Dưới 1200px) --- */
+@media (max-width: 1200px) {
+  .hero-container-inner { gap: 40px; }
+  .recipe-title-display-input { font-size: 3rem; }
+  .clean-image-frame { height: 450px; border-radius: 30px; }
+  .dashboard-container-inner { gap: 40px; grid-template-columns: 350px 1fr; }
+}
+
+/* --- 2. Màn hình Tablet Dọc & Mobile Ngang (Dưới 1024px) --- */
 @media (max-width: 1024px) {
-  .hero-container-inner, .dashboard-container-inner { grid-template-columns: 1fr; gap: 40px; }
+  /* Ép tất cả về 1 cột dọc (Stacking) */
+  .hero-container-inner, .dashboard-container-inner { 
+    grid-template-columns: 1fr; 
+    gap: 40px; 
+  }
+  
+  /* Đổi thứ tự hiển thị: Cho phần Nhập chữ lên trước Ảnh bìa */
+  .hero-info-col { order: 1; }
+  .hero-image-col { order: 2; margin-bottom: 20px; }
+  
   .recipe-title-display-input { font-size: 2.8rem; }
   .clean-image-frame { height: 400px; border-radius: 24px; }
+  
   .dashboard-left-col { position: static; }
+  
+  /* Mở rộng ô upload ảnh bước làm */
+  .step-gallery { grid-template-columns: 1fr; }
+}
+
+/* --- 3. Màn hình Mobile Lớn (Dưới 768px) --- */
+@media (max-width: 768px) {
+  .hero-section-clean { padding: 20px 0 40px; }
+  
+  /* Thu nhỏ thanh top bar */
+  .top-nav-bar { margin-bottom: 20px; }
+  .btn-back-clean { font-size: 0.85rem; }
+  .category-badge-selector { padding: 4px 10px; }
+  .category-select-clean { font-size: 0.75rem; }
+
+  /* Typography */
+  .recipe-title-display-input { font-size: 2.2rem; margin-bottom: 12px; }
+  .recipe-desc-text-input { font-size: 1rem; margin-bottom: 25px; }
+
+  /* Stats Group (Thời gian, Độ khó) */
+  .recipe-stats-group { flex-direction: column; gap: 12px; margin-bottom: 25px; }
+  .stat-card-clean { width: 100%; padding: 12px 16px; }
+  .icon-box { width: 30px; height: 30px; }
+  .s-val-input, .s-val-select { font-size: 1rem; width: 100%; }
+
+  /* Ảnh bìa */
+  .clean-image-frame { height: 260px; border-radius: 16px; border-width: 1.5px; }
+  
+  /* Content Body */
+  .cooking-dashboard-premium { padding: 30px 0 100px; }
+  .dashboard-container-inner { padding: 0 16px; gap: 30px; }
+  
+  /* Widget Nguyên liệu */
+  .premium-widget { padding: 20px 16px; }
+  .widget-header .title-with-icon h3 { font-size: 1rem; }
+  .clean-check-row.input-mode { padding: 6px 10px; }
+  .btn-gradient-orange { padding: 12px 20px; font-size: 0.9rem; }
+  
+  /* Quy trình (Steps) */
+  .process-header { flex-direction: column; align-items: flex-start; gap: 10px; margin-bottom: 25px; }
+  .process-header .serif-title { font-size: 2rem; }
+  
+  .timeline-step { gap: 16px; }
+  .timeline-marker { width: 26px; }
+  .timeline-marker .t-circle { width: 26px; height: 26px; font-size: 0.85rem; }
+  
+  .timeline-content { padding-bottom: 30px; }
+  .step-desc-input { font-size: 1rem; margin-bottom: 12px; }
+  
+  /* Nút thêm bước */
+  .btn-add-step-large { padding: 15px; font-size: 1rem; }
+
+  /* Thanh trượt nổi dưới đáy (Action Bar) */
+  .fab-inner { 
+    width: 90%; 
+    padding: 8px 12px; 
+    justify-content: space-between; 
+  }
+  .btn-cancel-lux { padding: 10px 16px; font-size: 0.85rem; }
+  .btn-publish-lux { padding: 10px 20px; font-size: 0.9rem; flex: 1; margin-left: 10px; }
+}
+
+/* --- 4. Màn hình Mobile Cực Nhỏ (Dưới 480px - Vd: iPhone SE) --- */
+@media (max-width: 480px) {
+  .hero-container-inner { padding: 0 16px; }
+  
+  .recipe-title-display-input { font-size: 1.8rem; }
+  .recipe-desc-text-input { font-size: 0.95rem; }
+  
+  .author-info-block .avatar-container img { width: 40px; height: 40px; }
+  .author-info-block .auth-text .auth-name { font-size: 0.9rem; }
+  
+  .clean-image-frame { height: 220px; }
+  .upload-placeholder svg { width: 32px; height: 32px; }
+  .upload-placeholder span { font-size: 0.85rem; }
+  
+  .process-header .serif-title { font-size: 1.7rem; }
+  
+  .btn-add-step-large { font-size: 0.9rem; padding: 12px; }
+  
+  /* Action bar gom gọn chữ */
+  .btn-cancel-lux { display: none; /* Ẩn nút hủy trên màn quá hẹp để lấy chỗ cho nút Đăng */ }
+  .btn-publish-lux { width: 100%; margin-left: 0; padding: 14px; font-size: 0.95rem; }
 }
 </style>

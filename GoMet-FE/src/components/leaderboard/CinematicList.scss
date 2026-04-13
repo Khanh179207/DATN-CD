@@ -308,36 +308,134 @@
   cursor: pointer;
 }
 
-/* Responsive */
-@media (max-width: 1024px) {
+/* =======================================================
+   7. RESPONSIVE SYSTEM (OPTIMIZED FOR ALL DEVICES)
+======================================================= */
+
+/* --- Màn hình lớn (Desktops & TV) --- */
+@media (min-width: 1440px) {
+  .carousel-item {
+    flex: 0 0 400px; /* To hơn một chút trên màn hình lớn */
+  }
+  .carousel-container {
+    padding: 0 calc(50vw - 200px);
+  }
+  .item-image-wrapper {
+    height: 520px;
+  }
+}
+
+/* --- Laptop & Tablet ngang (Dưới 1200px) --- */
+@media (max-width: 1200px) {
+  .cinematic-horizontal-showcase {
+    padding-top: 100px;
+  }
+  .main-heading {
+    font-size: 2.6rem;
+  }
+  .carousel-item {
+    flex: 0 0 320px;
+  }
+  .carousel-container {
+    padding: 0 calc(50vw - 160px);
+    gap: 40px;
+  }
+  .item-image-wrapper {
+    height: 420px;
+  }
+}
+
+/* --- Tablet dọc & Mobile ngang (Dưới 900px) --- */
+@media (max-width: 900px) {
+  .cinematic-header {
+    top: 30px;
+  }
+  .main-heading {
+    font-size: 2.2rem;
+  }
   .carousel-item {
     flex: 0 0 280px;
   }
-
   .carousel-container {
     padding: 0 calc(50vw - 140px);
     gap: 30px;
   }
-
   .item-image-wrapper {
     height: 380px;
+    border-radius: 20px;
   }
-
-  .main-heading {
-    font-size: 2.3rem;
+  .item-title {
+    font-size: 1.6rem;
   }
 }
 
+/* --- Mobile lớn (Dưới 640px) --- */
 @media (max-width: 640px) {
+  .cinematic-horizontal-showcase {
+    padding-top: 80px;
+    min-height: 600px;
+  }
+  .main-heading {
+    font-size: 1.8rem;
+  }
+  .sub-tag {
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+  }
   .carousel-item {
     flex: 0 0 240px;
   }
-
   .carousel-container {
     padding: 0 calc(50vw - 120px);
+    gap: 20px;
   }
-
   .item-image-wrapper {
     height: 320px;
+    border-radius: 18px;
+  }
+  .item-title {
+    font-size: 1.4rem;
+  }
+  
+  /* Panel xem trước trên mobile */
+  .fx-panel {
+    width: 85% !important; /* Ép panel to ra cho dễ đọc */
+    left: 7.5% !important;
+    padding: 18px;
+  }
+  .preview-title {
+    font-size: 1.6rem;
+  }
+}
+
+/* --- Mobile siêu nhỏ (Dưới 380px - Vd: iPhone SE, v.v.) --- */
+@media (max-width: 380px) {
+  .carousel-item {
+    flex: 0 0 200px;
+  }
+  .carousel-container {
+    padding: 0 calc(50vw - 100px);
+  }
+  .item-image-wrapper {
+    height: 280px;
+  }
+  .main-heading {
+    font-size: 1.5rem;
+  }
+  .item-meta {
+    font-size: 0.75rem;
+  }
+}
+
+/* Fix cho các thiết bị có màn hình ngắn (Landscape mobile) */
+@media (max-height: 500px) {
+  .cinematic-horizontal-showcase {
+    padding-top: 60px;
+  }
+  .item-image-wrapper {
+    height: 200px;
+  }
+  .item-top-info, .item-bottom-info {
+    margin: 8px 0;
   }
 }
