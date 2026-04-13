@@ -74,7 +74,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import api from '@/services/api.js' // Đảm bảo sếp đã có file config axios
+import api from '@/services/api.js'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -83,7 +83,6 @@ const activeIndex = ref(0)
 const loading = ref(true)
 const apiCategories = ref([])
 
-// Bộ sưu tập ảnh dự phòng cực đẹp
 const fallbackImages = {
   'dessert': 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=600&fit=crop',
   'drinks': 'https://images.unsplash.com/photo-1544145945-f90425340c7e?q=80&w=600&fit=crop',
@@ -94,7 +93,7 @@ const fallbackImages = {
 }
 
 const getCatImage = (name, apiImg) => {
-  if (apiImg) return apiImg; // Nếu BE có ảnh thì dùng luôn
+  if (apiImg) return apiImg; 
   const key = name.toLowerCase()
   if (key.includes('chay') || key.includes('rau')) return fallbackImages.veg
   if (key.includes('uống') || key.includes('nước')) return fallbackImages.drinks
@@ -105,7 +104,6 @@ const getCatImage = (name, apiImg) => {
 const fetchCategories = async () => {
   loading.value = true
   try {
-    // Gọi API Public (Backend sếp đã xử lý chỉ lấy IsActive = 1)
     const res = await api.get('/api/categories')
     apiCategories.value = res.data
   } catch (error) {
@@ -117,7 +115,6 @@ const fetchCategories = async () => {
 
 onMounted(fetchCategories)
 
-// Mapping dữ liệu Backend sang giao diện sếp cần
 const displayCategories = computed(() => {
   return apiCategories.value.map(c => ({
     id: c.categoryID,
@@ -133,17 +130,25 @@ const handleFilter = (id, name) => {
 
 const goToSearch = () => { router.push({ name: 'Search' }) }
 
+// UPDATED: Logic scroll động theo kích thước thẻ thực tế
 const scroll = (direction) => {
   if (!carouselRef.value) return;
-  const cardWidth = 244; // 220px width + 24px gap
+  const firstCard = carouselRef.value.querySelector('.cat-card');
+  if (!firstCard) return;
+  
+  const cardWidth = firstCard.offsetWidth + 24; // Width + gap
   const scrollAmount = direction === 'left' ? -cardWidth : cardWidth;
   carouselRef.value.scrollBy({ left: scrollAmount, behavior: 'smooth' });
 }
 
 const handleScroll = () => {
   if (!carouselRef.value) return;
+  const firstCard = carouselRef.value.querySelector('.cat-card');
+  if (!firstCard) return;
+  
+  const cardWidth = firstCard.offsetWidth + 24;
   const scrollLeft = carouselRef.value.scrollLeft;
-  activeIndex.value = Math.round(scrollLeft / 244);
+  activeIndex.value = Math.round(scrollLeft / cardWidth);
 }
 </script>
 
@@ -202,7 +207,7 @@ const handleScroll = () => {
 
 .carousel-track { display: flex; gap: 24px; }
 
-/* --- CARD VIP PRO --- */
+/* --- CARD --- */
 .cat-card {
   min-width: 220px; height: 300px;
   position: relative; cursor: pointer;
@@ -307,16 +312,59 @@ const handleScroll = () => {
 }
 
 .view-more-card h3 { font-family: var(--font-ui); font-size: var(--text-base); font-weight: var(--font-extrabold); color: var(--color-primary-700); margin: 0; }
-.view-more-card:hover .view-more-inner {
-  background: var(--color-primary-100); border-color: var(--color-primary-600); 
-  transform: translateY(-5px);
-}
-.view-more-card:hover .icon-pulse-box { background: var(--color-primary-600); color: var(--color-neutral-0); }
 
+/* ==========================================================================
+   HỆ THỐNG RESPONSIVE TOÀN DIỆN (NEW)
+   ========================================================================== */
+
+/* 1. Màn hình máy tính lớn (Dưới 1440px) */
+@media (max-width: 1440px) {
+  .section-header { padding: 0 40px; }
+  .carousel-wrapper { padding: 20px 40px 50px 40px; }
+}
+
+/* 2. Laptop và Tablet ngang (Dưới 1200px) */
+@media (max-width: 1200px) {
+  .cat-card { min-width: 200px; height: 280px; }
+  .section-heading { font-size: var(--text-2xl); }
+  .carousel-track { gap: 20px; }
+}
+
+/* 3. Tablet dọc (Dưới 1024px) */
+@media (max-width: 1024px) {
+  .cat-card { min-width: 180px; height: 260px; }
+  .glass-pill { padding: var(--space-2) var(--space-4); bottom: 15px; }
+  .cat-name { font-size: var(--text-sm); }
+}
+
+/* 4. Điện thoại (Dưới 768px) */
 @media (max-width: 768px) {
-  .section-header { padding: 0 var(--space-5); }
+  .section-header { padding: 0 var(--space-5); align-items: center; }
+  .section-heading { font-size: 1.5rem; }
+  .sub-label { font-size: 0.65rem; letter-spacing: 1px; }
+  
+  /* Ẩn điều hướng trên mobile vì dùng tay vuốt sướng hơn */
+  .nav-controls { display: none; }
+  
   .carousel-wrapper { padding: var(--space-3) var(--space-5) var(--space-8) var(--space-5); }
   .cat-card { min-width: 160px; height: 240px; }
-  .nav-controls { display: none; }
+  
+  /* Tắt hiệu ứng hover nặng để mượt hơn trên mobile */
+  .cat-card:hover .card-inner { transform: translateY(-5px); }
+  
+  .glass-tag { top: 10px; right: 10px; font-size: 0.65rem; padding: 4px 8px; }
+}
+
+/* 5. Điện thoại nhỏ / SE (Dưới 480px) */
+@media (max-width: 480px) {
+  .carousel-track { gap: 16px; }
+  .cat-card { min-width: 145px; height: 210px; }
+  .cat-name { font-size: 0.85rem; }
+  .icon-pulse-box { width: 40px; height: 40px; font-size: 1rem; }
+}
+
+/* 6. Màn hình cực nhỏ (Dưới 360px) */
+@media (max-width: 360px) {
+  .cat-card { min-width: 130px; height: 190px; }
 }
 </style>

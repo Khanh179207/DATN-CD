@@ -24,11 +24,12 @@ import Stomp from 'stompjs'
 const authStore = useAuthStore()
 const router = useRouter()
 const route = useRoute()
+
+// --- 📡 VIDEO CALL STATE & SIGNALLING ---
 const incomingCallData = ref(null)
 let stompClient = null
 let tempCallSub = null
 
-// --- 📡 SIGNALING LISTENER ---
 const initCallSignaling = () => {
   if (stompClient) return;
 
@@ -59,6 +60,14 @@ const initCallSignaling = () => {
 
 onMounted(() => {
   authStore.refreshProfile()
+
+  // 🚀 1. LOGIC ĐIỀU HƯỚNG THÔNG MINH (Giữ lại bản mới của develop)
+  const isMobileOrTablet = window.innerWidth < 1024
+  if (isMobileOrTablet && route.path === '/') {
+    router.push('/home')
+  }
+
+  // 🚀 2. KHỞI TẠO SIGNALING (Giữ lại bản xịn của sếp)
   if (authStore.user) initCallSignaling()
 })
 
@@ -67,7 +76,6 @@ watch(() => authStore.user, (newVal) => {
   if (newVal) {
     initCallSignaling();
   } else {
-    // Ngắt kết nối khi Logout
     if (stompClient) {
       stompClient.disconnect();
       stompClient = null;
@@ -77,7 +85,7 @@ watch(() => authStore.user, (newVal) => {
 
 const handleAcceptCall = () => {
   const roomID = incomingCallData.value.conversationId;
-  const callerName = incomingCallData.value.senderName; // 🚀 LẤY TÊN NGƯỜI GỌI
+  const callerName = incomingCallData.value.senderName;
 
   incomingCallData.value = null;
   if (tempCallSub) { tempCallSub.unsubscribe(); tempCallSub = null; }
@@ -86,7 +94,7 @@ const handleAcceptCall = () => {
     path: `/call/${roomID}`, 
     query: { 
       role: 'receiver',
-      partnerName: callerName // 🚀 THÊM DÒNG NÀY VÀO QUERY
+      partnerName: callerName
     } 
   });
   
@@ -98,13 +106,11 @@ const handleDeclineCall = () => {
     const declineSignal = {
       type: 'decline',
       conversationId: incomingCallData.value.conversationId,
-      // 🚀 THÊM DÒNG NÀY: Bắt buộc phải có để Backend không bị lỗi Null
       senderId: authStore.user?.accountID || authStore.user?.id 
     };
     stompClient.send("/app/call.signaling", { 'Authorization': `Bearer ${authStore.user?.token}` }, JSON.stringify(declineSignal));
   }
   
-  // Tắt popup và dọn dẹp
   incomingCallData.value = null;
   if (tempCallSub) { tempCallSub.unsubscribe(); tempCallSub = null; }
 }

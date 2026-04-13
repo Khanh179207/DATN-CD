@@ -374,3 +374,97 @@ $cream: #F4F0EA;
     }
   }
 }
+/* =======================================================
+   🔥 HỆ THỐNG RESPONSIVE (TỐI ƯU MỌI THIẾT BỊ)
+   ======================================================= */
+
+/* --- 1. Laptop nhỏ & Tablet ngang (Dưới 1200px) --- */
+@media (max-width: 1200px) {
+  .tarot-ritual-master { padding: 10px 15px 15px; }
+  .ritual-header-premium .ritual-main-title { font-size: 2.8rem; }
+  
+  /* Bàn tay nhỏ lại một chút */
+  .oracle-hand-wrap {
+    left: 5%;
+    .hand-inner-float .real-hand-img { width: 280px; }
+  }
+
+  /* Thu nhỏ bài */
+  .tarot-card-v3, .shuffle-deck { width: 180px; height: 280px; }
+  .hand-of-fate { gap: 20px; }
+}
+
+/* --- 2. Tablet dọc & Mobile ngang (Dưới 992px) --- */
+@media (max-width: 992px) {
+  .ritual-header-premium .ritual-main-title { font-size: 2.4rem; }
+  
+  /* Bàn tay dời xuống góc dưới cùng hoặc thu nhỏ hẳn */
+  .oracle-hand-wrap {
+    left: -20px; /* Ép sát lề trái */
+    bottom: -30px;
+    opacity: 0.5; /* Giảm độ rõ để không giành sự chú ý */
+    .hand-inner-float .real-hand-img { width: 200px; }
+  }
+
+  /* Lá bài nhỏ lại tiếp */
+  .tarot-card-v3, .shuffle-deck { width: 150px; height: 240px; }
+  .hand-of-fate { gap: 10px; }
+  .face-3d .symbol { font-size: 3rem; margin-bottom: 10px; }
+  .face-3d .name { font-size: 1.2rem; }
+}
+
+/* --- 3. Mobile Lớn (Dưới 768px) --- */
+@media (max-width: 768px) {
+  .tarot-ritual-master { padding: 10px; }
+  .ritual-header-premium {
+    margin-top: 5px;
+    .ritual-tagline { font-size: 0.65rem; letter-spacing: 4px; }
+    .ritual-main-title { font-size: 2rem; }
+  }
+
+  /* ẨN BÀN TAY TRÊN MOBILE ĐỂ TRÁNH CHE MẤT NÚT BẤM VÀ BÀI */
+  .oracle-hand-wrap { display: none !important; }
+
+  /* Ép bài xếp sát nhau hơn (Xếp quạt hẹp) */
+  .hand-of-fate { gap: -30px; } /* Số âm để các lá bài đè lên nhau một chút */
+  .tarot-card-v3, .shuffle-deck { width: 130px; height: 210px; }
+  
+  .face-3d { padding: 15px; }
+  .face-3d .symbol { font-size: 2.5rem; margin-bottom: 5px; }
+  .face-3d .name { font-size: 1rem; }
+  .face-3d .desc { font-size: 0.7rem; margin-top: 5px; line-height: 1.2; }
+
+  /* Nút bấm gọn lại */
+  .btn-invoke-oracle { padding: 12px 35px; font-size: 0.8rem; width: 80%; max-width: 300px; }
+}
+
+/* --- 4. Mobile Nhỏ (Dưới 480px - Vd: iPhone SE) --- */
+@media (max-width: 480px) {
+  .ritual-header-premium .ritual-main-title { font-size: 1.6rem; }
+  
+  .hand-of-fate { gap: -45px; } /* Đè bài nhiều hơn do màn hình cực hẹp */
+  .tarot-card-v3, .shuffle-deck { width: 110px; height: 180px; }
+  
+  .face-3d { padding: 10px; }
+  .face-3d .inner-frame { inset: 5px; }
+  .face-3d .symbol { font-size: 2rem; }
+  .face-3d .name { font-size: 0.85rem; }
+  .face-3d .desc { display: none; } /* Ẩn mô tả phụ để lá bài không bị rối mắt */
+
+  /* Kích thước nút bấm */
+  .btn-invoke-oracle { padding: 12px 20px; font-size: 0.75rem; width: 90%; }
+}
+
+/* --- 5. Landscape Mobile (Màn hình quá thấp) --- */
+@media (max-height: 500px) and (orientation: landscape) {
+  .tarot-ritual-master { padding-top: 5px; overflow-y: auto; } /* Cho phép cuộn nếu màn hình quá lùn */
+  .ritual-header-premium .ritual-main-title { font-size: 1.5rem; margin: 0; }
+  
+  .the-sacred-stage { min-height: 220px; margin-top: 10px; }
+  .tarot-card-v3, .shuffle-deck { width: 120px; height: 190px; }
+  
+  .oracle-hand-wrap { display: none; } /* Ẩn tay luôn cho gọn */
+  
+  .ritual-actions { margin-bottom: 10px; }
+  .btn-invoke-oracle { padding: 8px 30px; }
+}

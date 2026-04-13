@@ -102,9 +102,77 @@
 .spinner-ring { width: 40px; height: 40px; border: 4px solid #F3F4F6; border-top-color: #EA580C; border-radius: 50%; animation: spin 1s infinite linear; margin: 100px auto; }
 @keyframes spin { 100% { transform: rotate(360deg); } }
 
+@media (max-width: 1024px) {
+  .event-hero { height: 400px; padding-bottom: 40px; }
+  .event-title { font-size: 3rem; }
+  
+  .info-layout { 
+    gap: 30px; 
+    grid-template-columns: 1.5fr 1fr; 
+  }
+}
+
 @media (max-width: 768px) {
+  .event-hero { height: auto; min-height: 380px; padding-top: 100px; padding-bottom: 30px; }
+  .event-title { font-size: 2.4rem; margin-bottom: 15px; }
+  .event-meta { gap: 10px; margin-bottom: 25px; }
+  .meta-pill { font-size: 0.85rem; padding: 6px 12px; }
+
+  /* Ép Grid thành 1 cột */
   .info-layout { grid-template-columns: 1fr; }
-  .event-title { font-size: 2.2rem; }
-  .event-meta { flex-direction: column; gap: 10px; }
-  .btn-submit-entry { width: 100%; justify-content: center; }
+  
+  /* Căn chỉnh lại Tab cho phép cuộn ngang nếu nhiều tab */
+  .sticky-tabs { top: 60px; /* Hạ sticky top xuống một chút trên mobile */ }
+  .tabs-inner { 
+    gap: 20px; 
+    overflow-x: auto; 
+    white-space: nowrap; 
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+    padding-bottom: 2px; /* Tránh cắt viền active */
+  }
+  .tabs-inner::-webkit-scrollbar { display: none; }
+  .tab-item { font-size: 0.95rem; padding: 15px 0; }
+
+  /* Khối thẻ giải thưởng và nội dung */
+  .card-box { padding: 25px 20px; border-radius: 16px; margin-bottom: 20px; }
+  .desc-text { font-size: 1rem; line-height: 1.6; }
+  .prizes-grid { grid-template-columns: 1fr 1fr; gap: 15px; }
+
+  /* Nút tham gia trải dài */
+  .btn-submit-entry { width: 100%; justify-content: center; font-size: 1rem; padding: 14px 20px; }
+  
+  /* Lưới Bài Dự Thi */
+  .entries-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
+}
+
+/* --- 3. Mobile Lớn (Dưới 600px) --- */
+@media (max-width: 600px) {
+  .event-title { font-size: 2rem; }
+  
+  /* Lưới Bài Dự Thi: Chuyển về 1 cột trên Mobile để nhìn ảnh rõ hơn */
+  .entries-grid { grid-template-columns: 1fr; }
+  
+  /* Tối ưu thẻ Bài dự thi cho 1 cột */
+  .entry-image { height: 250px; }
+  .entry-body h4 { font-size: 1.2rem; }
+  
+  /* Giải thưởng xếp dọc */
+  .prizes-grid { grid-template-columns: 1fr; }
+}
+
+/* --- 4. Mobile Nhỏ (Dưới 400px - Vd: iPhone SE) --- */
+@media (max-width: 400px) {
+  .event-hero { padding-top: 80px; }
+  .event-title { font-size: 1.7rem; line-height: 1.2; }
+  
+  .status-badge { padding: 4px 12px; font-size: 0.75rem; }
+  .meta-pill { font-size: 0.8rem; padding: 4px 10px; }
+  
+  .card-box h3 { font-size: 1.2rem; }
+  .rules-list li { font-size: 0.95rem; }
+  
+  .entry-image { height: 200px; }
+  .vote-action { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .btn-vote { width: 100%; justify-content: center; }
 }

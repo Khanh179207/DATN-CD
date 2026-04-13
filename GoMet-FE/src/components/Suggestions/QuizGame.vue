@@ -365,4 +365,79 @@ $cream: #F4F0EA;
   0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
   100% { transform: translate(calc(-50% + cos(var(--angle)) * 100px), calc(-50% + sin(var(--angle)) * 100px)) scale(0); opacity: 0; }
 }
+/* =======================================================
+   🔥 HỆ THỐNG RESPONSIVE (TỐI ƯU MỌI THIẾT BỊ)
+   ======================================================= */
+
+/* Laptop nhỏ & Máy tính bảng ngang (Dưới 1200px) */
+@media (max-width: 1200px) {
+  .quiz-container { max-width: 800px; }
+  .quiz-question { font-size: clamp(2rem, 3.5vw, 3.2rem); }
+}
+
+/* Máy tính bảng dọc & Mobile ngang (Dưới 992px) */
+@media (max-width: 992px) {
+  .quiz-container { max-width: 700px; padding: 0 30px; }
+  
+  .quiz-progress-wrap { margin-bottom: 40px; }
+  
+  .question-wrapper { min-height: 120px; margin-bottom: 30px; }
+  .quiz-question { font-size: clamp(1.8rem, 3vw, 2.8rem); br { display: none; } } /* Bỏ ngắt dòng trên màn hình này */
+  
+  .opt-btn-premium .btn-inner-glass { padding: 30px 15px; }
+  .opt-btn-premium .btn-text { font-size: 1rem; }
+}
+
+/* Mobile Lớn (Dưới 768px) */
+@media (max-width: 768px) {
+  .quiz-container { padding: 0 20px; }
+  
+  .question-wrapper { margin-bottom: 40px; min-height: auto; }
+  .quiz-question { font-size: 2.2rem; line-height: 1.3; }
+  
+  /* Chuyển Grid thành Stack dọc để nút to, dễ bấm */
+  .quiz-options { 
+    grid-template-columns: 1fr; 
+    gap: 20px; 
+    max-width: 400px; 
+    margin: 0 auto; 
+  }
+  
+  .opt-btn-premium .btn-inner-glass { 
+    padding: 25px 20px; 
+    border-radius: 12px;
+  }
+  .opt-btn-premium .btn-text { font-size: 1.1rem; letter-spacing: 1px; }
+
+  /* Giảm kích thước vòng Radar xử lý */
+  .processing-radar { width: 100px; height: 100px; margin: 30px auto 0; }
+  .processing-text { font-size: 2rem !important; }
+}
+
+/* Mobile Nhỏ (Dưới 480px - Vd: iPhone SE) */
+@media (max-width: 480px) {
+  .quiz-progress-wrap { margin-bottom: 30px; gap: 10px; }
+  .step-label { font-size: 0.65rem; letter-spacing: 4px; }
+  .quiz-progress { width: 80px; }
+  
+  .question-wrapper { margin-bottom: 30px; }
+  .quiz-question { font-size: 1.8rem; }
+
+  .quiz-options { gap: 15px; }
+  .opt-btn-premium .btn-inner-glass { padding: 20px 15px; }
+  .opt-btn-premium .btn-text { font-size: 0.95rem; }
+  
+  .processing-text { font-size: 1.6rem !important; }
+}
+
+/* Xử lý cho các thiết bị quá thấp (Landscape Mobile) */
+@media (max-height: 500px) and (orientation: landscape) {
+  .quiz-progress-wrap { margin-bottom: 15px; }
+  .question-wrapper { min-height: 80px; margin-bottom: 20px; }
+  .quiz-question { font-size: 1.6rem; br { display: none; } }
+  
+  /* Giữ 2 cột nhưng làm lùn nút lại */
+  .quiz-options { grid-template-columns: 1fr 1fr; gap: 15px; }
+  .opt-btn-premium .btn-inner-glass { padding: 15px; }
+}
 </style>

@@ -16,7 +16,7 @@
           </div>
 
           <div class="action-buttons">
-            <button class="btn-icon-monochrome" @click="handleContactChef" title="Nhắn tin cho tác giả">
+            <button class="btn-icon-monochrome hide-on-mobile" @click="handleContactChef" title="Nhắn tin cho tác giả">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
             </button>
 
@@ -59,7 +59,6 @@ import { useAuthStore } from '@/stores/auth'
 import { useChatStore } from '@/stores/chat'
 import api from '@/services/api'
 import { toast } from '@/composables/useToast'
-// Đã xóa các hàm checkFavorite, addFavorite, removeFavorite, getFavorites
 import { checkFollow, follow, unfollow } from '@/services/socialService'
 import { getUserStats } from '@/services/userService'
 
@@ -96,12 +95,11 @@ const loadSocialState = async (postData) => {
 
   if (uid) {
     try {
-      // Chỉ check Follow nếu người đang xem KHÔNG PHẢI là tác giả
       if (uid !== authorID) {
         const isFoll = await checkFollow(uid, authorID)
         isFollowing.value = !!isFoll
       } else {
-        isFollowing.value = false // Tác giả thì không tự follow chính mình
+        isFollowing.value = false 
       }
     } catch { /* ignore */ }
   }
@@ -110,6 +108,12 @@ const loadSocialState = async (postData) => {
 watch(() => props.post, (newPost) => { loadSocialState(newPost) }, { immediate: true })
 
 const handleContactChef = async () => {
+  // Ngăn chặn nếu người dùng cố tình click (dù nút đã ẩn CSS) trên thiết bị mobile
+  if (window.innerWidth <= 1024) {
+    toast.info('Chức năng nhắn tin hiện chỉ hỗ trợ trên Máy tính!');
+    return;
+  }
+
   if (!authStore.isAuthenticated) { toast.warn(t('toast.need_login') || 'Vui lòng đăng nhập!'); return }
   const currentUserId = authStore.user?.accountID || authStore.user?.id
   const chefId = props.post?.authorID || props.post?.authorId
@@ -267,11 +271,88 @@ const toggleFollow = async () => {
 .fade-in { animation: fadeIn 0.6s var(--ease-exec, ease-out); }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-/* RESPONSIVE */
+/* =======================================================
+   🔥 HỆ THỐNG RESPONSIVE (TỐI ƯU MỌI THIẾT BỊ)
+   ======================================================= */
+
+/* --- 1. Màn hình Laptop nhỏ & Tablet ngang (Dưới 1024px) --- */
+@media (max-width: 1024px) {
+  .author-flat-container { gap: 20px; }
+  .name-group .auth-name { font-size: 1.4rem; }
+  .auth-bio-text { font-size: 0.95rem; max-width: 100%; }
+  
+  /* ẨN NÚT NHẮN TIN TRÊN TABLET & MOBILE */
+  .hide-on-mobile { display: none !important; }
+}
+
+/* --- 2. Tablet dọc & Mobile ngang (Dưới 768px) --- */
 @media (max-width: 768px) {
-  .author-flat-container { flex-direction: column; gap: 16px; }
-  .auth-top-row { flex-direction: column; align-items: flex-start; }
-  .action-buttons { width: 100%; }
-  .btn-follow-black { flex: 1; }
+  .author-flat-container { 
+    flex-direction: column; 
+    align-items: center; 
+    text-align: center;
+    gap: 16px; 
+  }
+  
+  .auth-avatar-col { width: 80px; height: 80px; margin: 0 auto; }
+  
+  .auth-info-col { width: 100%; align-items: center; }
+  
+  .auth-top-row { 
+    flex-direction: column; 
+    align-items: center; 
+    width: 100%;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  
+  .name-group { justify-content: center; }
+  .name-group .auth-name { font-size: 1.5rem; }
+  
+  .action-buttons { 
+    width: 100%; 
+    justify-content: center; 
+    margin-bottom: 8px;
+  }
+  
+  .btn-follow-black { 
+    flex: 1; 
+    max-width: 250px; 
+    padding: 10px 24px;
+  }
+  
+  .auth-bio-text { margin-bottom: 20px; }
+
+  .auth-stats-inline { 
+    justify-content: center; 
+    gap: 12px;
+  }
+  .s-item { flex-direction: column; align-items: center; gap: 4px; }
+  .s-divider { display: none; }
+}
+
+/* --- 3. Mobile Lớn (Dưới 600px) --- */
+@media (max-width: 600px) {
+  .author-section { padding-bottom: 30px; margin-bottom: 30px; }
+  .auth-bio-text { font-size: 0.9rem; line-height: 1.5; }
+  
+  .auth-stats-inline { gap: 20px; }
+  .s-item .s-val { font-size: 1.2rem; }
+  .s-item .s-label { font-size: 0.7rem; }
+}
+
+/* --- 4. Mobile Nhỏ (Dưới 400px) --- */
+@media (max-width: 400px) {
+  .name-group .auth-name { font-size: 1.3rem; }
+  
+  .auth-stats-inline { 
+    display: grid; 
+    grid-template-columns: 1fr 1fr; 
+    width: 100%; 
+    gap: 15px; 
+  }
+  .s-item.highlight { grid-column: span 2; }
+  
+  .btn-follow-black { max-width: 100%; } 
 }
 </style>

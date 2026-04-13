@@ -91,8 +91,6 @@ import HomeHero from '@/components/home/HomeHero.vue'
 import HomeCategorySection from '@/components/home/HomeCategorySection.vue'
 import HomeLatestRecipes from '@/components/home/HomeLatestRecipes.vue'
 
-// Đã dọn dẹp sạch sẽ mớ tàn dư import ảnh cứng
-
 const router = useRouter()
 const showAdPopup = ref(false)
 const scrollY = ref(0) 
@@ -101,7 +99,6 @@ const goToDetail = (id) => {
   router.push({ name: 'PostDetail', params: { id: id } })
 }
 
-// --- ✨ ANIMATION LOGIC ✨ ---
 const handleScroll = (event) => {
   scrollY.value = event.target.scrollTop
 }
@@ -114,7 +111,6 @@ const setupIntersectionObserver = () => {
     (entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          // respect data-delay attribute for stagger
           const delay = entry.target.dataset.delay || 0
           setTimeout(() => {
             entry.target.classList.add('is-visible')
@@ -136,7 +132,6 @@ const setupIntersectionObserver = () => {
 }
 
 onMounted(() => {
-  // Chờ 2 giây hiện popup. Việc lấy ảnh và hiển thị cứ để thằng AdPopup tự lo.
   setTimeout(() => { showAdPopup.value = true }, 2000)
 
   const scrollContainer = document.getElementById('main-scroll-container')
@@ -146,7 +141,6 @@ onMounted(() => {
     window.addEventListener('scroll', () => { scrollY.value = window.scrollY }, { passive: true })
   }
 
-  // Small delay to allow DOM to paint before attaching observer
   requestAnimationFrame(() => {
     setupIntersectionObserver()
   })
@@ -166,7 +160,6 @@ onUnmounted(() => {
   background-color: #FFFFFF; 
   font-family: 'Mulish', sans-serif;
   color: #1C1917;
-  /* Do not set height/overflow to avoid double scrollbars */
 }
 
 .bg-texture {
@@ -179,11 +172,10 @@ onUnmounted(() => {
 .hero-wrapper { padding-bottom: 0px; }
 
 /* ─────────────────────────────────────────────
-   ANIMATION SYSTEM — smooth, GPU-accelerated
+    ANIMATION SYSTEM 
 ───────────────────────────────────────────── */
 :root { --anim-duration: 0.75s; --anim-ease: cubic-bezier(0.22, 1, 0.36, 1); }
 
-/* Slide up (main reveal) */
 .reveal-up {
   opacity: 0;
   transform: translateY(36px);
@@ -193,7 +185,6 @@ onUnmounted(() => {
 }
 .reveal-up.is-visible { opacity: 1; transform: translateY(0); }
 
-/* Fade only (for marquee, subtle elements) */
 .reveal-fade {
   opacity: 0;
   transition: opacity 0.9s ease;
@@ -201,7 +192,6 @@ onUnmounted(() => {
 }
 .reveal-fade.is-visible { opacity: 1; }
 
-/* Scale (for bold blocks like slogan strip) */
 .reveal-scale {
   opacity: 0;
   transform: scaleY(0.88);
@@ -212,7 +202,6 @@ onUnmounted(() => {
 }
 .reveal-scale.is-visible { opacity: 1; transform: scaleY(1); }
 
-/* Stagger delays */
 .delay-100 { transition-delay: 0.10s; }
 .delay-150 { transition-delay: 0.15s; }
 .delay-200 { transition-delay: 0.20s; }
@@ -285,11 +274,80 @@ onUnmounted(() => {
 
 @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 
+/* ─────────────────────────────────────────────
+    RESPONSIVE SYSTEM (NEW & UPDATED)
+───────────────────────────────────────────── */
+
+/* 1. Màn hình Laptop/Desktop nhỏ (Dưới 1280px) */
+@media (max-width: 1280px) {
+  .section-wrapper { padding: 0 40px; }
+  .nl-heading { font-size: 2.5rem; }
+  .arty-input { width: 380px; }
+}
+
+/* 2. Màn hình Tablet (Dưới 1024px) */
 @media (max-width: 1024px) {
-  .section-title { font-size: 2rem; }
-  .slogan-text { font-size: 1.4rem; }
-  .nl-row { flex-direction: column; text-align: center; }
-  .arty-input { width: 100%; }
-  .bg-typo-decor { font-size: 4rem; top: 10px; }
+  .section-title { font-size: 2.2rem; }
+  .slogan-text { font-size: 1.6rem; padding: 0 20px; }
+  
+  .nl-row { flex-direction: column; text-align: center; gap: 30px; }
+  .nl-desc { margin: 0 auto; }
+  .arty-input { width: 100%; max-width: 500px; margin: 0 auto; }
+  
+  .bg-typo-decor { font-size: 5rem; top: 20px; }
+}
+
+/* 3. Màn hình Mobile lớn (Dưới 768px) */
+@media (max-width: 768px) {
+  .section-wrapper { padding: 0 20px; }
+  .compact-section { padding: 40px 16px; }
+  
+  .section-title { font-size: 1.8rem; }
+  .premium-tag { font-size: 0.6rem; letter-spacing: 2px; }
+  
+  .marquee-item { font-size: 0.9rem; gap: 15px; }
+  .marquee-group { gap: 30px; padding-right: 30px; }
+  
+  .slogan-strip { padding: 40px 16px; margin: 20px 0; }
+  .slogan-text { font-size: 1.25rem; }
+  
+  .nl-heading { font-size: 2.2rem; }
+  .wave-top { height: 40px; }
+  .nl-content { padding-bottom: 60px; }
+  
+  .bg-typo-decor { opacity: 0.01; } /* Ẩn bớt decor chữ để thoáng màn hình mobile */
+}
+
+/* 4. Màn hình Mobile nhỏ (Dưới 480px) */
+@media (max-width: 480px) {
+  .section-title { font-size: 1.6rem; }
+  
+  .nl-heading { font-size: 1.8rem; }
+  .nl-desc { font-size: 0.9rem; }
+  
+  .arty-input {
+    flex-direction: column; /* Chồng input và button lên nhau */
+    border-bottom: none;
+    gap: 15px;
+  }
+  
+  .arty-input input {
+    border-bottom: 2px solid #57534E;
+    width: 100%;
+    text-align: center;
+  }
+  
+  .btn-submit {
+    width: 100%;
+    justify-content: center;
+    background: #EA580C;
+    color: white;
+    padding: 12px;
+    border-radius: 8px;
+  }
+  
+  .btn-submit:hover { color: white; gap: 8px; }
+  
+  .marquee-slim { margin: 10px 0 20px; padding: 10px 0; }
 }
 </style>

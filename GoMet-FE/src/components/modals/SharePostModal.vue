@@ -386,4 +386,94 @@ onMounted(() => {
 
 .fade-scale-enter-active, .fade-scale-leave-active { transition: opacity 0.3s ease; }
 .fade-scale-enter-from, .fade-scale-leave-to { opacity: 0; }
+
+@media (max-width: 768px) {
+  .share-modal-container {
+    width: 90%; 
+    max-width: 500px;
+    border-radius: 28px;
+  }
+  
+  .modal-inner { padding: 24px; }
+  .modal-title { font-size: 1.4rem; margin-bottom: 24px; }
+  
+  .btn-close-abs { top: 16px; right: 16px; }
+
+  /* Top Action Cards */
+  .action-grid { gap: 12px; margin-bottom: 24px; }
+  .action-card { 
+    padding: 16px 10px; border-radius: 20px;
+    .icon-wrap { width: 48px; height: 48px; border-radius: 14px; svg { width: 24px; height: 24px; } }
+    span { font-size: 0.8rem; }
+  }
+
+  /* Gmail Form */
+  .email-form-section {
+    padding: 16px; margin-bottom: 24px; border-radius: 20px;
+    .inputs-stack input, .inputs-stack textarea { font-size: 0.85rem; padding: 10px 12px; }
+    .inputs-stack .btn-send-now { padding: 10px; font-size: 0.9rem; }
+  }
+
+  /* Contact List */
+  .contacts-scroll {
+    max-height: 250px;
+    .contact-row .row-left .avatar-box img { width: 40px; height: 40px; }
+    .contact-row .row-left .names .uname { font-size: 0.9rem; }
+    .contact-row .btn-send-chat { padding: 6px 16px; font-size: 0.8rem; }
+  }
+}
+
+/* --- 2. Màn hình Mobile lớn (Dưới 480px) --- */
+@media (max-width: 480px) {
+  .share-modal-container { width: 95%; border-radius: 24px; }
+  
+  .modal-inner { padding: 20px; }
+  .modal-title { font-size: 1.25rem; margin-bottom: 20px; }
+  
+  .btn-close-abs { 
+    top: 12px; right: 12px; 
+    svg { width: 20px; height: 20px; }
+  }
+
+  /* Chuyển 2 ô chọn (Copy / Email) thành xếp chồng dọc để nút đủ to dễ bấm */
+  .action-grid { grid-template-columns: 1fr; gap: 10px; margin-bottom: 20px; }
+  .action-card { 
+    flex-direction: row; /* Chuyển thành dạng thanh ngang */
+    justify-content: flex-start;
+    padding: 12px 16px; 
+    border-radius: 16px;
+    
+    .icon-wrap { width: 40px; height: 40px; border-radius: 12px; svg { width: 20px; height: 20px; } }
+    span { font-size: 0.9rem; }
+  }
+
+  .email-form-section { padding: 14px; margin-bottom: 20px; border-radius: 16px; }
+
+  /* Thu gọn ô tìm kiếm */
+  .search-wrap { 
+    margin-bottom: 16px;
+    input { padding: 12px 12px 12px 40px; font-size: 0.9rem; border-radius: 12px; }
+    .search-icon { left: 14px; svg { width: 16px; height: 16px; } }
+  }
+
+  /* Thu gọn list bạn bè */
+  .contacts-scroll {
+    max-height: 200px;
+    .contact-row {
+      margin-bottom: 10px;
+      .row-left { gap: 10px; }
+      .row-left .avatar-box img { width: 36px; height: 36px; }
+      .row-left .names .uname { font-size: 0.85rem; }
+      .btn-send-chat { padding: 6px 12px; font-size: 0.75rem; border-radius: 8px; }
+    }
+  }
+}
+
+/* --- 3. Màn hình Mobile siêu nhỏ (Dưới 360px - vd iPhone SE) --- */
+@media (max-width: 360px) {
+  .modal-inner { padding: 16px; }
+  .modal-title { font-size: 1.15rem; }
+  .action-card { padding: 10px 12px; .icon-wrap { width: 36px; height: 36px; } span { font-size: 0.85rem; } }
+  .contacts-scroll .contact-row .row-left .names .uname { font-size: 0.8rem; }
+}
 </style>

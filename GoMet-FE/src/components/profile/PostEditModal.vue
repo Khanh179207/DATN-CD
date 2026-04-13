@@ -118,7 +118,96 @@ defineEmits(['close', 'save', 'media-change'])
 .btn-save-vip { background: linear-gradient(135deg, #1E293B, #0F172A); color: white; border: none; padding: 12px 35px; border-radius: 14px; font-weight: 800; font-size: 0.95rem; cursor: pointer; transition: 0.3s; box-shadow: 0 10px 20px rgba(15, 23, 42, 0.15); &:hover:not(:disabled) { background: #EA580C; transform: translateY(-3px); box-shadow: 0 15px 30px rgba(234, 88, 12, 0.3); } &:disabled { opacity: 0.5; cursor: not-allowed; } }
 .spinner-sm { width: 16px; height: 16px; border: 2px solid rgba(255,255,255, 0.4); border-top-color: white; border-radius: 50%; animation: spin 0.6s linear infinite; display: inline-block; }
 @keyframes spin { to { transform: rotate(360deg); } }
-@media (max-width: 900px) { .vip-body { flex-direction: column; align-items: center; } .vip-col-left { width: 100%; max-width: 320px; } }
+
+/* =======================================================
+   🔥 HỆ THỐNG RESPONSIVE (TỐI ƯU MỌI THIẾT BỊ)
+   ======================================================= */
+
+/* --- 1. Màn hình Tablet & Laptop nhỏ (Dưới 1024px) --- */
+@media (max-width: 1024px) {
+  .vip-body { gap: 20px; padding: 24px; }
+  .vip-col-left { width: 280px; } /* Thu nhỏ cột trái lại một chút */
+  .edit-modal-header { padding: 20px 24px 16px; }
+  .vip-footer { padding: 20px 24px; }
+}
+
+/* --- 2. Màn hình Tablet dọc & Mobile ngang (Dưới 900px) --- */
+@media (max-width: 900px) { 
+  .vip-body { 
+    flex-direction: column; 
+    align-items: center; 
+    max-height: 70vh; /* Giới hạn chiều cao để tránh tràn khi mở bàn phím */
+  } 
+  .vip-col-left { 
+    width: 100%; 
+    max-width: 320px; 
+    margin: 0 auto; 
+  } 
+  .vip-col-right { width: 100%; }
+}
+
+/* --- 3. Màn hình Mobile lớn (Dưới 600px) --- */
+@media (max-width: 600px) {
+  .edit-modal-overlay { padding: 12px; }
+  .vip-post-modal { border-radius: 16px; }
+  
+  .edit-modal-header { 
+    padding: 16px; 
+    h2 { font-size: 1.25rem; }
+  }
+  .btn-close { width: 30px; height: 30px; }
+  
+  .vip-body { padding: 16px; gap: 16px; }
+  
+  .vip-col-left { max-width: 250px; } /* Thu nhỏ ảnh trên điện thoại */
+  .preview-info { padding: 12px; }
+  .preview-label { font-size: 0.85rem; }
+  
+  .premium-input, .premium-select { padding: 10px 14px; font-size: 0.9rem; }
+  .input-with-icon .ps-5 { padding-left: 38px; }
+  .input-with-icon .input-icon { left: 12px; width: 14px; height: 14px; }
+  
+  /* Nếu màn hình điện thoại chật, chia lưới 50% gập lại thành 100% */
+  .row { flex-direction: column; margin: 0; }
+  .col-6 { width: 100%; padding: 0; margin-bottom: 12px; }
+  
+  /* Footer: Hai nút chiếm 50% và dàn đều ngang trên mobile */
+  .vip-footer { 
+    padding: 16px; 
+    justify-content: space-between; 
+    gap: 12px;
+  }
+  .btn-cancel-vip { flex: 1; padding: 12px 10px; background: #F1F5F9; border-radius: 12px; text-align: center; }
+  .btn-save-vip { flex: 1; padding: 12px 10px; }
+}
+
+/* --- 4. Màn hình Mobile siêu nhỏ (Dưới 400px - Vd: iPhone SE) --- */
+@media (max-width: 400px) {
+  .vip-col-left { max-width: 200px; }
+  .edit-field label { font-size: 0.85rem; }
+  .btn-save-vip { font-size: 0.85rem; }
+  .btn-cancel-vip { font-size: 0.85rem; }
+}
+
+/* --- 5. Xoay ngang màn hình điện thoại (Landscape Mobile) --- */
+@media (max-height: 500px) and (orientation: landscape) {
+  .vip-body { 
+    flex-direction: row; /* Dàn lại 2 cột khi xoay ngang */
+    align-items: flex-start;
+    max-height: 60vh;
+  }
+  .vip-col-left { width: 40%; max-width: none; margin: 0; }
+  .vip-col-right { width: 60%; }
+  
+  .post-preview-card {
+    /* Ép khung ảnh không chiếm hết chiều dọc khi xoay ngang */
+    display: flex; flex-direction: row; align-items: center;
+    .preview-img-wrap { width: 120px; flex-shrink: 0; }
+    .preview-info { text-align: left; padding: 10px; }
+  }
+}
+
+/* --- ANIMATION (Giữ nguyên) --- */
 .modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.25s ease; .edit-modal-card { transition: transform 0.25s, opacity 0.25s; } }
 .modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; .edit-modal-card { transform: scale(0.94) translateY(16px); opacity: 0; } }
 </style>

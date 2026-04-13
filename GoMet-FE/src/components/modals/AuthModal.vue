@@ -61,7 +61,6 @@
                     <a href="#" class="forgot-link" @click.prevent="switchView('forgot-password')">{{ $t('auth.forgot', 'Quên mật khẩu?') }}</a>
                   </div>
 
-                  <!-- BANNED ALERT BOX LUXURY -->
                   <transition name="fade-slide" mode="out-in">
                     <div v-if="isBannedError" key="banned-box" class="banned-alert-box stagger-item" style="--delay: 0.45s">
                       <button type="button" class="btn-close-alert" @click="closeBannedAlert" title="Đóng">
@@ -110,7 +109,6 @@
                     </div>
                   </transition>
 
-                  <!-- Gợi ý quên mật khẩu khi sai quá 3 lần -->
                   <transition name="fade-slide">
                     <div v-if="!isBannedError && wrongPasswordCount >= 3" class="appeal-hint stagger-item" style="--delay: 0.45s">
                       <button type="button" class="btn-appeal-link" @click.prevent="switchView('forgot-password')">
@@ -310,7 +308,6 @@
     </div>
   </transition>
 
-  <!-- Appeal Modal Teleport -->
   <Teleport to="body">
     <AppealModal v-if="showAppealModal" @close="handleAppealClose" />
   </Teleport>
@@ -349,16 +346,15 @@ const password = ref('')
 const loginError = ref('')
 const regError = ref('')
 const otpError = ref('')
-const wrongPasswordCount = ref(0) // Counter cho lần nhập sai mật khẩu
-const bannedDetails = ref(null) // Lưu trữ đối tượng thông tin ban
-const deactivatedDetails = ref(null) // Lưu trữ thông tin xóa mềm
+const wrongPasswordCount = ref(0)
+const bannedDetails = ref(null)
+const deactivatedDetails = ref(null)
 const restoreOtpDigits = ref(['', '', '', '', '', ''])
 const sendingRestoreOtp = ref(false)
 const restoring = ref(false)
 const restoreError = ref('')
-const otpSentSuccessfully = ref(false) // Cờ đánh dấu OTP đã gửi thành công
+const otpSentSuccessfully = ref(false)
 
-// 🌟 ĐÃ CẬP NHẬT regForm ĐỂ THÊM agreeTerms 🌟
 const regForm = reactive({ 
   name: '', 
   email: '', 
@@ -372,11 +368,6 @@ const forgotState      = ref('idle')
 const forgotError      = ref('')
 
 watch(() => props.initialView, (val) => { currentView.value = val })
-
-// Debug watch for wrongPasswordCount
-watch(() => wrongPasswordCount.value, (newVal) => {
-  console.log('[Watch] wrongPasswordCount updated:', { newVal, shouldShowAppeal: newVal >= 3 })
-})
 
 const switchView = (name) => {
   currentView.value = name
@@ -393,29 +384,22 @@ const switchView = (name) => {
   }
 }
 
-// 🔥 WATCHER THÔNG MINH: Tự động gửi OTP khi vào màn hình Khôi phục và có đủ Email
 watch([currentView, email, isOpen], ([newView, newEmail, open]) => {
-  console.log('[AuthModal Watcher] Change detected:', { newView, newEmail, open });
-    
   if (open && newView === 'restore-account' && newEmail) {
-    // Chỉ gửi nếu chưa đang gửi, chưa khôi phục xong và CHƯA gửi mã nào trong phiên này
     if (!sendingRestoreOtp.value && !restoring.value && !otpSentSuccessfully.value) {
-       console.log('[Auto-Restore-OTP] 🚀 Đủ điều kiện! Đang gửi OTP cho:', newEmail);
-       handleRequestRestoreOtp();
-    } else {
-       console.log('[Auto-Restore-OTP] ⏭️ Đã gửi hoặc đang bận, bỏ qua auto-trigger.');
+        handleRequestRestoreOtp();
     }
   }
 }, { immediate: true })
 
 const openAppealAction = () => {
-  isOpen.value = false // Ẩn giao diện AuthModal hiện tại mượt mà
-  showAppealModal.value = true // Gọi AppealModal xuất hiện
+  isOpen.value = false
+  showAppealModal.value = true
 }
 
 const handleAppealClose = () => {
   showAppealModal.value = false
-  emit('close') // Đóng Modal khiếu nại xong thì phát lệnh cho component cha đóng hẳn AuthModal
+  emit('close')
 }
 
 const isBannedError = computed(() => {
@@ -430,6 +414,22 @@ const isDeactivatedError = computed(() => {
   return err.includes('XÓA MỀM') || err.includes('DEACTIVATED')
 })
 
+// 🔥 LOGIC ĐIỀU HƯỚNG THÔNG MINH CHO ADMIN
+const handleRedirection = (role) => {
+  const isMobileOrTablet = window.innerWidth < 1024;
+  
+  if (role === 'admin') {
+    if (isMobileOrTablet) {
+      toast.info('Hệ thống chuyển bạn về giao diện người dùng để có trải nghiệm tốt nhất trên di động nhé! 📱');
+      router.push('/home');
+    } else {
+      router.push('/admin');
+    }
+  } else {
+    router.push('/home');
+  }
+}
+
 const handleLogin = async () => {
   loginError.value = ''
   try {
@@ -437,17 +437,16 @@ const handleLogin = async () => {
     toast.success(t('toast.login_ok', 'Đăng nhập thành công!'))
     wrongPasswordCount.value = 0 
     emit('close')
-    router.push(role === 'admin' ? '/admin' : '/home')
+    
+    // 🔥 SỬ DỤNG HÀM ĐIỀU HƯỚNG MỚI
+    handleRedirection(role);
+    
   } catch (err) {
-    // 🔥 Lấy data trực tiếp từ cục lỗi Axios gốc
     const errData = err.response?.data || {}
     const errorMessage = errData.message || err.message || String(err)
     const errorString = errorMessage.toUpperCase()
 
-    console.log('[Login Error]', { errorMessage, errorString, errData })
-
     if (errorString.includes('ACCOUNT_BANNED')) {
-      // 1. Rút trích thông tin khóa từ Backend
       const banReason = errData.banReason || errData.reason || 'Vi phạm tiêu chuẩn cộng đồng GOMET';
       const bannedBy = errData.bannedByName || errData.bannedBy || 'Quản trị viên hệ thống';
       let timeStr = '';
@@ -459,11 +458,8 @@ const handleLogin = async () => {
          timeStr = ` vào lúc ${rawTimeStr}`;
       }
 
-      // 2. NHỒI DATA VÀO BIẾN ĐỂ VẼ BOX LUXURY LÊN
       bannedDetails.value = { reason: banReason, by: bannedBy, time: rawTimeStr };
       loginError.value = `Tài khoản của bạn đã bị khóa${timeStr}. Lý do: ${banReason}`;
-      
-      // 3. Hiện toast bổ trợ
       toast.error(`🚨 TÀI KHOẢN BỊ KHÓA: Đăng nhập thất bại do vi phạm!`, { timeout: 8000 })
       
     } else if (errorString.includes('ACCOUNT_DEACTIVATED')) {
@@ -473,7 +469,6 @@ const handleLogin = async () => {
         timeStr = d.toLocaleDateString('vi-VN');
       }
       deactivatedDetails.value = { time: timeStr };
-      // Đảm bảo email được nạp vào state để Watcher kích hoạt gửi OTP
       if (errData.email) email.value = errData.email;
       loginError.value = 'TÀI KHOẢN ĐÃ XÓA MỀM';
       toast.info('Tài khoản này đang trong trạng thái xóa mềm.')
@@ -488,6 +483,7 @@ const handleLogin = async () => {
     }
   }
 }
+
 const handleGoogleCallback = async (response) => {
   loginError.value = ''
   try {
@@ -498,25 +494,13 @@ const handleGoogleCallback = async (response) => {
     const data = await authService.googleLogin(idToken)
     authStore.setUser(data)
 
-
-
-
-
-
-
-
-
-
-
-
-
     toast.success(t('toast.login_ok', 'Đăng nhập Google thành công!'))
     emit('close')
-    router.push(authStore.user.role === 'admin' ? '/admin' : '/home')
-  } catch (err) {
-    console.error("Google Login Error:", err)
     
-    // 🔥 CHẶN ĐỨNG LỖI TỪ GOOGLE
+    // 🔥 SỬ DỤNG HÀM ĐIỀU HƯỚNG MỚI
+    handleRedirection(authStore.user.role);
+
+  } catch (err) {
     const errorString = String(err.response?.data?.message || err.message || err).toUpperCase()
 
     if (errorString.includes('ACCOUNT_BANNED') || errorString.includes('BANNED')) {
@@ -554,14 +538,11 @@ const handleGoogleCallback = async (response) => {
 
 const handleRegisterRequest = async () => {
   regError.value = ''
-  
-  // 🌟 THÊM VALIDATE NÚT TICK Ở ĐÂY 🌟
   if (!regForm.agreeTerms) {
     regError.value = "Bạn cần đồng ý với điều khoản dịch vụ"
     toast.warn(regError.value)
     return
   }
-
   if (!regForm.name || !regForm.email || !regForm.password) {
     regError.value = t('auth.error_required', 'Vui lòng điền đầy đủ thông tin')
     toast.warn(regError.value)
@@ -597,18 +578,6 @@ const handleOtpVerify = async () => {
   try {
     const data = await authService.verifyOtp(regForm.email, code)
     authStore.setUser(data)
-
-
-
-
-
-
-
-
-
-
-
-
     toast.success(t('toast.register_ok', 'Đăng ký thành công!'))
     emit('close')
     router.push('/home')
@@ -639,21 +608,16 @@ const handleForgotPassword = async () => {
 
 const handleRequestRestoreOtp = async () => {
   if (!email.value) {
-    console.warn('[handleRequestRestoreOtp] Thất bại: Không có email.');
     toast.error('Không tìm thấy Email để gửi mã. Vui lòng thử lại.');
     return;
   }
-  
   sendingRestoreOtp.value = true;
-  otpSentSuccessfully.value = false; // Reset trước khi gửi mới
-  
+  otpSentSuccessfully.value = false;
   try {
-    console.log('[API] Gọi gửi OTP khôi phục cho:', email.value);
     await authService.sendRestoreOtp(email.value)
     otpSentSuccessfully.value = true;
     toast.success('Mã OTP đã được gửi về Email của bạn!')
   } catch (err) {
-    console.error('[API] Lỗi gửi OTP khôi phục:', err);
     toast.error(err.response?.data?.message || 'Không thể gửi OTP.')
   } finally {
     sendingRestoreOtp.value = false
@@ -672,7 +636,10 @@ const handleRestoreVerify = async () => {
     const role = await authStore.restoreAccount(email.value, code)
     toast.success('Khôi phục thành công! Chào mừng sếp trở lại.')
     emit('close')
-    router.push(role === 'admin' ? '/admin' : '/home')
+    
+    // 🔥 SỬ DỤNG HÀM ĐIỀU HƯỚNG MỚI
+    handleRedirection(role);
+    
   } catch (err) {
     restoreError.value = err.response?.data?.message || 'Mã OTP không chính xác hoặc đã hết hạn.'
     toast.error(restoreError.value)
@@ -686,8 +653,6 @@ const focusRestoreNext = (e, index) => {
 }
 
 const handleRestorePrompt = (e) => {
-  // Nếu Modal chưa mở (được gọi từ layout), layout đã set isOpen = true cho v-if
-  // nhưng component nội bộ cũng cần biết trạng thái mở
   isOpen.value = true
   currentView.value = 'restore-account'
   if (e.detail?.email) email.value = e.detail.email
@@ -695,7 +660,6 @@ const handleRestorePrompt = (e) => {
     const d = new Date(e.detail.deletedAt)
     deactivatedDetails.value = { time: d.toLocaleDateString('vi-VN') }
   }
-  // Loại bỏ gọi trực tiếp ở đây, để Watcher (dòng ~391) xử lý cho đồng bộ
 }
 
 const handleBannedPrompt = (e) => {
@@ -719,7 +683,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.body.style.overflow = ''
-  // Reset counter khi modal đóng
   wrongPasswordCount.value = 0
   window.removeEventListener('auth:banned-login-prompt', handleBannedPrompt)
   window.removeEventListener('auth:restore-login-prompt', handleRestorePrompt)
