@@ -28,5 +28,6 @@ public interface FollowDAO extends JpaRepository<Follow, Integer> {
             @Param("followerID") Integer followerID,
             @Param("status") Integer status
     );
+    boolean existsByFollower_AccountIDAndFollowee_AccountIDAndStatus(Integer followerID, Integer followeeID, Integer status);
 
 }

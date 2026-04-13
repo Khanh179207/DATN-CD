@@ -1,99 +1,200 @@
 package poly.edu.controller;
 
+import poly.edu.dao.FollowDAO;
 import poly.edu.dao.MessageDAO;
 import poly.edu.dao.ConversationDAO;
-import poly.edu.dao.AccountDAO; // <-- THÊM MỚI: Import AccountDAO
+import poly.edu.dao.AccountDAO;
 import poly.edu.entity.Message;
 import poly.edu.entity.Conversation;
 import poly.edu.entity.Account;
 import poly.edu.dto.ConversationDTO;
+import poly.edu.service.MessageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.security.access.prepost.PreAuthorize; // 🔥 IMPORT THẺ BẢO VỆ
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
-import java.util.Date; // <-- THÊM MỚI: Import Date để set thời gian
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import org.springframework.http.ResponseEntity;
 
 @RestController
-@PreAuthorize("isAuthenticated()") // 🔥 CHỐT CHẶN VÀNG: Bắt buộc đăng nhập cho TẤT CẢ các hàm bên dưới
+@PreAuthorize("isAuthenticated()")
 public class ChatController {
 
     @Autowired private SimpMessagingTemplate messagingTemplate;
     @Autowired private MessageDAO messageDAO;
     @Autowired private ConversationDAO conversationDAO;
     @Autowired private AccountDAO accountDAO;
+    @Autowired private FollowDAO followDAO;
 
-    // 1. API lấy danh sách cuộc trò chuyện (Sidebar)
+    // Đã tiêm Service vào để dọn dẹp Controller
+    @Autowired private MessageService messageService;
+
+    // Trong ChatController.java
     @GetMapping("/api/conversations/user/{userId}")
     public List<ConversationDTO> getConversations(@PathVariable Integer userId) {
-        // Đảm bảo DAO đã có hàm này (không có dấu gạch dưới _)
         List<Conversation> list = conversationDAO.findByUserOneAccountIDOrUserTwoAccountID(userId, userId);
         List<ConversationDTO> dtos = new ArrayList<>();
 
         for (Conversation c : list) {
-            // Xác định ai là người đang nhắn tin với mình
             Account partner = c.getUserOne().getAccountID().equals(userId) ? c.getUserTwo() : c.getUserOne();
-
-            // Lấy tin nhắn cuối cùng để hiện bản xem trước
             Message lastMsg = messageDAO.findTopByConversation_ConversationIDOrderByCreatedAtDesc(c.getConversationID());
+
+            boolean iFollowThem = followDAO.existsByFollower_AccountIDAndFollowee_AccountIDAndStatus(userId, partner.getAccountID(), 1);
+            boolean theyFollowMe = followDAO.existsByFollower_AccountIDAndFollowee_AccountIDAndStatus(partner.getAccountID(), userId, 1);
+
+            // 🚀 KIỂM TRA ĐÃ ĐỌC:
+            // Nếu tin nhắn cuối là CỦA MÌNH gửi -> Auto đánh dấu là đã đọc (không in đậm Sidebar)
+            // Nếu tin nhắn cuối của NGƯỜI KHÁC -> Lấy trạng thái isRead từ Database
+            boolean isRead = true;
+            if (lastMsg != null) {
+                if (lastMsg.getSender().getAccountID().equals(userId)) {
+                    isRead = true;
+                } else {
+                    isRead = lastMsg.getIsRead() == 1;
+                }
+            }
 
             dtos.add(new ConversationDTO(
                     c.getConversationID(),
+                    partner.getAccountID(),
                     partner.getUsername(),
                     partner.getAvatar(),
                     lastMsg != null ? lastMsg.getContent() : "Chưa có tin nhắn",
-                    lastMsg != null ? "vừa xong" : "", // Sau này có thể dùng Relative Time
-                    lastMsg != null ? (lastMsg.getIsRead() == 1) : true,
-                    true // partnerOnline - Tạm thời để true, sau này dùng WebSocket check
+
+                    // 🚀 THAY ĐỔI: TRẢ VỀ GIỜ THỰC TẾ DƯỚI DẠNG CHUỖI THAY VÌ CHỮ "VỪA XONG"
+                    lastMsg != null && lastMsg.getCreatedAt() != null ? lastMsg.getCreatedAt().toInstant().toString() : "",
+
+                    isRead, // 🚀 TRẠNG THÁI ĐÃ XỬ LÝ LÔGIC Ở TRÊN
+                    true, // isOnline (cái này sếp có vẻ đang fake cứng là true)
+                    iFollowThem,
+                    theyFollowMe
             ));
         }
         return dtos;
     }
 
-    // 2. API lấy lịch sử chat (MiniChatBox)
     @GetMapping("/api/messages/{conversationId}")
     public ResponseEntity<?> getHistory(@PathVariable Integer conversationId) {
         List<Message> history = messageDAO.findByConversation_ConversationIDOrderByCreatedAtAsc(conversationId);
-
-        // Trả về ResponseEntity để kiểm soát dữ liệu tốt hơn
-        // Spring sẽ tự xử lý JSON, nhưng hãy đảm bảo Entity Message đã có @JsonIgnore ở trường conversation
         return ResponseEntity.ok(history);
     }
 
-    // 3. WebSocket xử lý gửi tin nhắn
     @MessageMapping("/chat.sendMessage")
     public void sendMessage(@Payload Message chatMessage) {
         try {
-            // Thiết lập các giá trị mặc định
             chatMessage.setCreatedAt(new Date());
             chatMessage.setIsRead(0);
 
-            // Tìm và gắn Object Conversation thực tế
             if (chatMessage.getConversation() != null) {
-                Integer convId = chatMessage.getConversation().getConversationID();
-                conversationDAO.findById(convId).ifPresent(chatMessage::setConversation);
+                conversationDAO.findById(chatMessage.getConversation().getConversationID())
+                        .ifPresent(chatMessage::setConversation);
             }
-
-            // Tìm và gắn Object Sender thực tế
             if (chatMessage.getSender() != null) {
-                Integer senderId = chatMessage.getSender().getAccountID();
-                accountDAO.findById(senderId).ifPresent(chatMessage::setSender);
+                accountDAO.findById(chatMessage.getSender().getAccountID())
+                        .ifPresent(chatMessage::setSender);
             }
 
-            // Lưu vào DB
             Message savedMessage = messageDAO.save(chatMessage);
 
-            // Bắn tin nhắn qua Socket cho cả 2 người trong phòng
-            // Quan trọng: Gửi savedMessage đã có đầy đủ ID và thông tin Sender
+            // Bắn vào phòng chat chung (cho MiniChatBox)
             messagingTemplate.convertAndSend("/topic/" + savedMessage.getConversation().getConversationID(), savedMessage);
+
+            // 🚀 THÊM MỚI: BẮN TÍN HIỆU "TOÀN CẦU" ĐỂ PHÁT ÂM THANH
+            Integer senderId = savedMessage.getSender().getAccountID();
+            Integer receiverId = savedMessage.getConversation().getUserOne().getAccountID().equals(senderId)
+                    ? savedMessage.getConversation().getUserTwo().getAccountID()
+                    : savedMessage.getConversation().getUserOne().getAccountID();
+
+            // Gửi ra kênh riêng của người nhận
+            messagingTemplate.convertAndSend("/topic/global-chat/" + receiverId, savedMessage);
 
         } catch (Exception e) {
             System.err.println("❌ Lỗi gửi tin nhắn: " + e.getMessage());
+        }
+    }
+
+    @MessageMapping("/call.signaling")
+    public void handleSignaling(@Payload Map<String, Object> signal) {
+        try {
+            String type = String.valueOf(signal.get("type"));
+            Object convIdObj = signal.get("conversationId");
+
+            if (convIdObj != null) {
+                String conversationId = String.valueOf(convIdObj);
+                Integer senderId = Integer.parseInt(signal.get("senderId").toString());
+
+                // 🚀 CASE 1: REACTION
+                if ("reaction".equals(type)) {
+                    Integer msgId = Integer.parseInt(signal.get("messageId").toString());
+                    String emoji = String.valueOf(signal.get("emoji"));
+                    messageService.saveReaction(msgId, senderId, emoji);
+                    messagingTemplate.convertAndSend("/topic/" + conversationId, (Object) signal);
+                    return;
+                }
+
+                // 🚀 CASE 2: UN-SEND (GỠ TIN NHẮN) - LƯU VÀO DB RỒI BÁO CHO MỌI NGƯỜI
+                if ("unsend".equals(type)) {
+                    Integer msgId = Integer.parseInt(signal.get("messageId").toString());
+                    messageService.unsendMessage(msgId);
+                    messagingTemplate.convertAndSend("/topic/" + conversationId, (Object) signal);
+                    return;
+                }
+
+                // 🚀 CASE 3: TYPING & READ RECEIPT
+                if ("typing".equals(type) || "stop_typing".equals(type) || "read_receipt".equals(type)) {
+                    messagingTemplate.convertAndSend("/topic/" + conversationId, (Object) signal);
+                    return;
+                }
+
+                // 🚀 CASE 4: VIDEO CALL INVITE
+                if ("invite".equals(type)) {
+                    Integer cId = Integer.parseInt(conversationId);
+                    boolean canCall = messageService.checkMutualFollowForCall(cId, senderId);
+
+                    if (!canCall) return; // Không đủ điều kiện gọi thì im lặng
+
+                    // Nếu oke, bắn tín hiệu tới đích danh người nhận
+                    Conversation conv = conversationDAO.findById(cId).orElse(null);
+                    if (conv != null) {
+                        Integer receiverId = conv.getUserOne().getAccountID().equals(senderId) ? conv.getUserTwo().getAccountID() : conv.getUserOne().getAccountID();
+                        messagingTemplate.convertAndSend("/topic/user/" + receiverId, (Object) signal);
+                    }
+                    return;
+                }
+
+                // Các tín hiệu WebRTC khác (offer, answer, candidate, hangup)
+                messagingTemplate.convertAndSend("/topic/" + conversationId, (Object) signal);
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Lỗi Signaling: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/api/follows/check-mutual/{partnerId}")
+    public ResponseEntity<?> checkMutualFollow(@PathVariable Integer partnerId, @RequestParam Integer myId) {
+        boolean iFollowThem = followDAO.existsByFollower_AccountIDAndFollowee_AccountIDAndStatus(myId, partnerId, 1);
+        boolean theyFollowMe = followDAO.existsByFollower_AccountIDAndFollowee_AccountIDAndStatus(partnerId, myId, 1);
+
+        return ResponseEntity.ok(Map.of(
+                "following", iFollowThem,
+                "followed", theyFollowMe,
+                "canCall", (iFollowThem && theyFollowMe)
+        ));
+    }
+
+    @PutMapping("/api/messages/read/{conversationId}")
+    public ResponseEntity<?> markMessagesAsRead(@PathVariable Integer conversationId, @RequestParam Integer myId) {
+        try {
+            messageDAO.markAsRead(conversationId, myId);
+            return ResponseEntity.ok(Map.of("status", "success"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("status", "error"));
         }
     }
 }

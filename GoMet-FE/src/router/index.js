@@ -17,6 +17,7 @@ const ProfilePage = () => import('@/pages/profile/ProfilePage.vue')
 const EventList = () => import('@/pages/events/EventPage.vue')
 const EventDetail = () => import('@/pages/events/EventDetail.vue')
 const ComparePage = () => import('@/pages/compare/ComparePage.vue')
+const VideoCall = () => import('@/pages/VideoCall.vue')
 
 // --- 4. PREMIUM FEATURES ---
 const Leaderboard = () => import('@/pages/Leaderboard.vue')
@@ -148,7 +149,12 @@ const routes = [
   // 4. STANDALONE PAGES
   { path: '/verify-email', component: () => import('@/pages/VerifyEmailPage.vue') },
   { path: '/reset-password', component: () => import('@/pages/ResetPasswordPage.vue') },
-
+  { 
+    path: '/call/:roomID', 
+    name: 'VideoCall', 
+    component: VideoCall,
+    meta: { requiresAuth: true } // Bắt buộc đăng nhập mới được gọi
+  },
   // 5. NOT FOUND
   { path: '/:pathMatch(.*)*', name: 'NotFound', component: () => import('@/pages/NotFound.vue') }
 ]
