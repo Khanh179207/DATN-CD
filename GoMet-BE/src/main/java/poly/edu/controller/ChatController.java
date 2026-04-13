@@ -8,6 +8,7 @@ import poly.edu.entity.Message;
 import poly.edu.entity.Conversation;
 import poly.edu.entity.Account;
 import poly.edu.dto.ConversationDTO;
+import poly.edu.service.MessageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -18,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map; // 🔥 Dùng Map để nhận dữ liệu Signaling linh hoạt
+import java.util.Map;
 import org.springframework.http.ResponseEntity;
 
 @RestController
@@ -31,63 +32,88 @@ public class ChatController {
     @Autowired private AccountDAO accountDAO;
     @Autowired private FollowDAO followDAO;
 
+    // Đã tiêm Service vào để dọn dẹp Controller
+    @Autowired private MessageService messageService;
+
+    // Trong ChatController.java
     @GetMapping("/api/conversations/user/{userId}")
     public List<ConversationDTO> getConversations(@PathVariable Integer userId) {
         List<Conversation> list = conversationDAO.findByUserOneAccountIDOrUserTwoAccountID(userId, userId);
         List<ConversationDTO> dtos = new ArrayList<>();
 
         for (Conversation c : list) {
-            // 1. Xác định partner
             Account partner = c.getUserOne().getAccountID().equals(userId) ? c.getUserTwo() : c.getUserOne();
-
-            // 2. Lấy tin nhắn cuối
             Message lastMsg = messageDAO.findTopByConversation_ConversationIDOrderByCreatedAtDesc(c.getConversationID());
 
-            // 3. Check follow chéo
             boolean iFollowThem = followDAO.existsByFollower_AccountIDAndFollowee_AccountIDAndStatus(userId, partner.getAccountID(), 1);
             boolean theyFollowMe = followDAO.existsByFollower_AccountIDAndFollowee_AccountIDAndStatus(partner.getAccountID(), userId, 1);
 
-            // 4. Đổ đúng 10 tham số vào Constructor
+            // 🚀 KIỂM TRA ĐÃ ĐỌC:
+            // Nếu tin nhắn cuối là CỦA MÌNH gửi -> Auto đánh dấu là đã đọc (không in đậm Sidebar)
+            // Nếu tin nhắn cuối của NGƯỜI KHÁC -> Lấy trạng thái isRead từ Database
+            boolean isRead = true;
+            if (lastMsg != null) {
+                if (lastMsg.getSender().getAccountID().equals(userId)) {
+                    isRead = true;
+                } else {
+                    isRead = lastMsg.getIsRead() == 1;
+                }
+            }
+
             dtos.add(new ConversationDTO(
-                    c.getConversationID(),                             // 1. id (ConversationID)
-                    partner.getAccountID(),                            // 2. partnerID (MỚI - Sếp thiếu cái này)
-                    partner.getUsername(),                             // 3. name
-                    partner.getAvatar(),                               // 4. avatar
-                    lastMsg != null ? lastMsg.getContent() : "Chưa có tin nhắn", // 5. lastMessage
-                    lastMsg != null ? "vừa xong" : "",                 // 6. time
-                    lastMsg != null ? (lastMsg.getIsRead() == 1) : true, // 7. read
-                    true,                                              // 8. online
-                    iFollowThem,                                       // 9. isFollowing
-                    theyFollowMe                                       // 10. isFollowed
+                    c.getConversationID(),
+                    partner.getAccountID(),
+                    partner.getUsername(),
+                    partner.getAvatar(),
+                    lastMsg != null ? lastMsg.getContent() : "Chưa có tin nhắn",
+
+                    // 🚀 THAY ĐỔI: TRẢ VỀ GIỜ THỰC TẾ DƯỚI DẠNG CHUỖI THAY VÌ CHỮ "VỪA XONG"
+                    lastMsg != null && lastMsg.getCreatedAt() != null ? lastMsg.getCreatedAt().toInstant().toString() : "",
+
+                    isRead, // 🚀 TRẠNG THÁI ĐÃ XỬ LÝ LÔGIC Ở TRÊN
+                    true, // isOnline (cái này sếp có vẻ đang fake cứng là true)
+                    iFollowThem,
+                    theyFollowMe
             ));
         }
         return dtos;
     }
 
-    // 2. API lấy lịch sử chat
     @GetMapping("/api/messages/{conversationId}")
     public ResponseEntity<?> getHistory(@PathVariable Integer conversationId) {
         List<Message> history = messageDAO.findByConversation_ConversationIDOrderByCreatedAtAsc(conversationId);
         return ResponseEntity.ok(history);
     }
 
-    // 3. WebSocket xử lý gửi tin nhắn (GIỮ NGUYÊN)
     @MessageMapping("/chat.sendMessage")
     public void sendMessage(@Payload Message chatMessage) {
         try {
             chatMessage.setCreatedAt(new Date());
             chatMessage.setIsRead(0);
+
             if (chatMessage.getConversation() != null) {
-                Integer convId = chatMessage.getConversation().getConversationID();
-                conversationDAO.findById(convId).ifPresent(chatMessage::setConversation);
+                conversationDAO.findById(chatMessage.getConversation().getConversationID())
+                        .ifPresent(chatMessage::setConversation);
             }
             if (chatMessage.getSender() != null) {
-                Integer senderId = chatMessage.getSender().getAccountID();
-                accountDAO.findById(senderId).ifPresent(chatMessage::setSender);
+                accountDAO.findById(chatMessage.getSender().getAccountID())
+                        .ifPresent(chatMessage::setSender);
             }
 
             Message savedMessage = messageDAO.save(chatMessage);
+
+            // Bắn vào phòng chat chung (cho MiniChatBox)
             messagingTemplate.convertAndSend("/topic/" + savedMessage.getConversation().getConversationID(), savedMessage);
+
+            // 🚀 THÊM MỚI: BẮN TÍN HIỆU "TOÀN CẦU" ĐỂ PHÁT ÂM THANH
+            Integer senderId = savedMessage.getSender().getAccountID();
+            Integer receiverId = savedMessage.getConversation().getUserOne().getAccountID().equals(senderId)
+                    ? savedMessage.getConversation().getUserTwo().getAccountID()
+                    : savedMessage.getConversation().getUserOne().getAccountID();
+
+            // Gửi ra kênh riêng của người nhận
+            messagingTemplate.convertAndSend("/topic/global-chat/" + receiverId, savedMessage);
+
         } catch (Exception e) {
             System.err.println("❌ Lỗi gửi tin nhắn: " + e.getMessage());
         }
@@ -102,47 +128,73 @@ public class ChatController {
             if (convIdObj != null) {
                 String conversationId = String.valueOf(convIdObj);
                 Integer senderId = Integer.parseInt(signal.get("senderId").toString());
-                Integer cId = Integer.parseInt(conversationId);
 
-                Conversation conv = conversationDAO.findById(cId).orElse(null);
-                if (conv == null) return;
-
-                Integer receiverId = conv.getUserOne().getAccountID().equals(senderId)
-                        ? conv.getUserTwo().getAccountID()
-                        : conv.getUserOne().getAccountID();
-
-                if ("invite".equals(type)) {
-                    boolean iFollowThem = followDAO.existsByFollower_AccountIDAndFollowee_AccountIDAndStatus(senderId, receiverId, 1);
-                    boolean theyFollowMe = followDAO.existsByFollower_AccountIDAndFollowee_AccountIDAndStatus(receiverId, senderId, 1);
-
-                    if (!iFollowThem || !theyFollowMe) {
-                        System.err.println("❌ Chặn invite: Chưa follow chéo!");
-                        return;
-                    }
-
-                    // 🔥 SỬA TẠI ĐÂY: Thêm (Object) để hết lỗi Ambiguous
-                    messagingTemplate.convertAndSend("/topic/user/" + receiverId, (Object) signal);
-                    System.out.println("🔔 Đang rung chuông máy User: " + receiverId);
+                // 🚀 CASE 1: REACTION
+                if ("reaction".equals(type)) {
+                    Integer msgId = Integer.parseInt(signal.get("messageId").toString());
+                    String emoji = String.valueOf(signal.get("emoji"));
+                    messageService.saveReaction(msgId, senderId, emoji);
+                    messagingTemplate.convertAndSend("/topic/" + conversationId, (Object) signal);
+                    return;
                 }
 
-                // 🔥 Dòng này cũng nên có (Object) cho chắc sếp nhé
+                // 🚀 CASE 2: UN-SEND (GỠ TIN NHẮN) - LƯU VÀO DB RỒI BÁO CHO MỌI NGƯỜI
+                if ("unsend".equals(type)) {
+                    Integer msgId = Integer.parseInt(signal.get("messageId").toString());
+                    messageService.unsendMessage(msgId);
+                    messagingTemplate.convertAndSend("/topic/" + conversationId, (Object) signal);
+                    return;
+                }
+
+                // 🚀 CASE 3: TYPING & READ RECEIPT
+                if ("typing".equals(type) || "stop_typing".equals(type) || "read_receipt".equals(type)) {
+                    messagingTemplate.convertAndSend("/topic/" + conversationId, (Object) signal);
+                    return;
+                }
+
+                // 🚀 CASE 4: VIDEO CALL INVITE
+                if ("invite".equals(type)) {
+                    Integer cId = Integer.parseInt(conversationId);
+                    boolean canCall = messageService.checkMutualFollowForCall(cId, senderId);
+
+                    if (!canCall) return; // Không đủ điều kiện gọi thì im lặng
+
+                    // Nếu oke, bắn tín hiệu tới đích danh người nhận
+                    Conversation conv = conversationDAO.findById(cId).orElse(null);
+                    if (conv != null) {
+                        Integer receiverId = conv.getUserOne().getAccountID().equals(senderId) ? conv.getUserTwo().getAccountID() : conv.getUserOne().getAccountID();
+                        messagingTemplate.convertAndSend("/topic/user/" + receiverId, (Object) signal);
+                    }
+                    return;
+                }
+
+                // Các tín hiệu WebRTC khác (offer, answer, candidate, hangup)
                 messagingTemplate.convertAndSend("/topic/" + conversationId, (Object) signal);
-                System.out.println("🚀 WebRTC Signal [" + type + "] -> Room: " + conversationId);
             }
         } catch (Exception e) {
             System.err.println("❌ Lỗi Signaling: " + e.getMessage());
         }
     }
-    // 🚀 [THÊM MỚI]: API hỗ trợ Frontend check trạng thái nút gọi cực nhanh
+
     @GetMapping("/api/follows/check-mutual/{partnerId}")
     public ResponseEntity<?> checkMutualFollow(@PathVariable Integer partnerId, @RequestParam Integer myId) {
         boolean iFollowThem = followDAO.existsByFollower_AccountIDAndFollowee_AccountIDAndStatus(myId, partnerId, 1);
         boolean theyFollowMe = followDAO.existsByFollower_AccountIDAndFollowee_AccountIDAndStatus(partnerId, myId, 1);
 
         return ResponseEntity.ok(Map.of(
-                "following", iFollowThem, // 🔥 Bỏ chữ 'is'
-                "followed", theyFollowMe,  // 🔥 Bỏ chữ 'is'
+                "following", iFollowThem,
+                "followed", theyFollowMe,
                 "canCall", (iFollowThem && theyFollowMe)
         ));
+    }
+
+    @PutMapping("/api/messages/read/{conversationId}")
+    public ResponseEntity<?> markMessagesAsRead(@PathVariable Integer conversationId, @RequestParam Integer myId) {
+        try {
+            messageDAO.markAsRead(conversationId, myId);
+            return ResponseEntity.ok(Map.of("status", "success"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("status", "error"));
+        }
     }
 }

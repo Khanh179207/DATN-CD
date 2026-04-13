@@ -30,29 +30,26 @@ let tempCallSub = null
 
 // --- 📡 SIGNALING LISTENER ---
 const initCallSignaling = () => {
-  if (stompClient) return; // Tránh tạo nhiều kết nối
+  if (stompClient) return;
 
   const socket = new SockJS('http://localhost:8080/ws-chat')
   stompClient = Stomp.over(socket)
-  stompClient.debug = null // Tắt log cho sạch console
+  stompClient.debug = null
 
   stompClient.connect({ 'Authorization': `Bearer ${authStore.user?.token}` }, () => {
-    // 🚀 ĐĂNG KÝ KÊNH RIÊNG: Lắng nghe cuộc gọi gửi tới mình
     const myID = authStore.user?.accountID || authStore.user?.id;
     
     stompClient.subscribe(`/topic/user/${myID}`, (msg) => {
       const signal = JSON.parse(msg.body);
       
-      // Chỉ hiện rung chuông nếu là lời mời (invite) và mình không trong trang gọi
       if (signal.type === 'invite' && route.name !== 'VideoCall') {
         incomingCallData.value = signal;
         
-        // Lắng nghe thêm kênh của phòng xem người gọi có cúp máy giữa chừng không
         if (tempCallSub) tempCallSub.unsubscribe();
         tempCallSub = stompClient.subscribe(`/topic/${signal.conversationId}`, (roomMsg) => {
           const roomSignal = JSON.parse(roomMsg.body);
           if (roomSignal.type === 'hangup' && incomingCallData.value) {
-             incomingCallData.value = null; // Tự động đóng modal nếu bên kia gác máy
+             incomingCallData.value = null;
           }
         });
       }
@@ -65,28 +62,49 @@ onMounted(() => {
   if (authStore.user) initCallSignaling()
 })
 
-// Theo dõi khi login xong thì bật ăng-ten ngay
+// 🚀 SỬA: Theo dõi đăng nhập/đăng xuất để Bật/Tắt ăng-ten
 watch(() => authStore.user, (newVal) => {
-  if (newVal) initCallSignaling()
-})
+  if (newVal) {
+    initCallSignaling();
+  } else {
+    // Ngắt kết nối khi Logout
+    if (stompClient) {
+      stompClient.disconnect();
+      stompClient = null;
+    }
+  }
+}, { immediate: true })
 
 const handleAcceptCall = () => {
   const roomID = incomingCallData.value.conversationId;
-  incomingCallData.value = null; // Tắt modal
+  const callerName = incomingCallData.value.senderName; // 🚀 LẤY TÊN NGƯỜI GỌI
+
+  incomingCallData.value = null;
   if (tempCallSub) { tempCallSub.unsubscribe(); tempCallSub = null; }
   
-  // Chuyển hướng vào phòng gọi
-  router.push({ path: `/call/${roomID}`, query: { role: 'receiver' } });
+  const routeData = router.resolve({ 
+    path: `/call/${roomID}`, 
+    query: { 
+      role: 'receiver',
+      partnerName: callerName // 🚀 THÊM DÒNG NÀY VÀO QUERY
+    } 
+  });
+  
+  window.open(routeData.href, 'GoMetVideoCall', 'width=1100,height=750,menubar=no,toolbar=no,location=no,status=no,resizable=yes');
 }
 
 const handleDeclineCall = () => {
   if (stompClient && incomingCallData.value) {
     const declineSignal = {
       type: 'decline',
-      conversationId: incomingCallData.value.conversationId
+      conversationId: incomingCallData.value.conversationId,
+      // 🚀 THÊM DÒNG NÀY: Bắt buộc phải có để Backend không bị lỗi Null
+      senderId: authStore.user?.accountID || authStore.user?.id 
     };
     stompClient.send("/app/call.signaling", { 'Authorization': `Bearer ${authStore.user?.token}` }, JSON.stringify(declineSignal));
   }
+  
+  // Tắt popup và dọn dẹp
   incomingCallData.value = null;
   if (tempCallSub) { tempCallSub.unsubscribe(); tempCallSub = null; }
 }

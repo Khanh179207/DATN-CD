@@ -8,9 +8,6 @@
           <span class="unread-count" v-if="unreadTotal > 0">{{ unreadTotal }}</span>
         </div>
         <div class="header-actions">
-          <button class="action-btn" title="Cài đặt">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-          </button>
           <button class="action-btn close-btn" @click="closeSidebar">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
@@ -84,6 +81,8 @@ import { ref, onMounted, computed, watch, onUnmounted } from 'vue'
 import { useChatStore } from '@/stores/chat'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
+import SockJS from 'sockjs-client'
+import Stomp from 'stompjs'
 
 const chatStore = useChatStore()
 const authStore = useAuthStore()
@@ -93,38 +92,70 @@ const loading = ref(false)
 const searchQuery = ref('')
 const sidebarRef = ref(null)
 
+let stompClient = null;
+let activeSubscriptions = []; 
+
+const currentUserId = computed(() => Number(authStore.user?.accountID || authStore.user?.id))
 const unreadTotal = computed(() => conversations.value.filter(c => !c.read).length)
 
-// LOGIC TÌM KIẾM THEO TÊN NGƯỜI DÙNG
+// 🚀 HÀM FORMAT THỜI GIAN CHUYÊN NGHIỆP
+const formatTime = (timeString) => {
+  if (!timeString) return '';
+  const date = new Date(timeString);
+  if (isNaN(date.getTime())) return timeString; // Nếu nó đã là chữ "vừa xong" thì để nguyên
+
+  const now = new Date();
+  const diffInSeconds = Math.floor((now - date) / 1000);
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  const diffInDays = Math.floor(diffInHours / 24);
+
+  if (diffInMinutes < 1) return 'vừa xong';
+  if (diffInHours < 24) {
+    return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }); // Ví dụ: 14:30
+  }
+  if (diffInDays < 7) {
+    const days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+    return days[date.getDay()]; // Ví dụ: T2, T3
+  }
+  return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }); // Ví dụ: 15/04
+}
+
+const formatPreviewMessage = (text) => {
+  if (!text) return 'Chưa có tin nhắn';
+  if (text === '[UNSENT]') return 'Tin nhắn đã thu hồi'; // Hỗ trợ luôn tính năng gỡ tin nhắn vừa làm
+  if (text.startsWith('[IMAGE:')) return '📸 Đã gửi một hình ảnh';
+  if (text.startsWith('[SYS_CALL:')) return '📞 Cuộc gọi video';
+  if (text.startsWith('[POST_SHARE_ID:')) return '📌 Đã chia sẻ bài viết';
+  return text;
+}
+
 const filteredConversations = computed(() => {
   if (!searchQuery.value.trim()) return conversations.value
-  
   const query = searchQuery.value.toLowerCase().trim()
-  return conversations.value.filter(c => 
-    c.name.toLowerCase().includes(query)
-  )
+  return conversations.value.filter(c => c.name.toLowerCase().includes(query))
 })
 
 const loadConversations = async () => {
   loading.value = true
   try {
-    const userId = authStore.user?.accountID || 1;
-    const res = await api.get(`/api/conversations/user/${userId}`);
+    const res = await api.get(`/api/conversations/user/${currentUserId.value}`);
     
-    console.log("Dữ liệu Chat nhận được:", res.data);
-
     conversations.value = res.data.map(item => ({
       id: item.id, 
       name: item.name, 
       avatar: item.avatar,
-      lastMessage: item.lastMessage,
-      time: item.time || "vừa xong",
+      lastMessage: formatPreviewMessage(item.lastMessage), 
+      time: formatTime(item.time), // 🚀 DÙNG HÀM MỚI ĐỂ FORMAT THỜI GIAN
       read: item.read === true,
       online: item.online === true,
       partnerID: item.partnerID,
       following: item.following === true,
       followed: item.followed === true
     }));
+
+    connectSidebarWebSocket();
+
   } catch (err) {
     console.error("Lỗi tải danh sách chat:", err);
   } finally {
@@ -132,11 +163,71 @@ const loadConversations = async () => {
   }
 }
 
+const connectSidebarWebSocket = () => {
+  if (stompClient?.connected) return;
+
+  const socket = new SockJS('http://localhost:8080/ws-chat');
+  stompClient = Stomp.over(socket);
+  stompClient.debug = null; 
+
+  stompClient.connect({ 'Authorization': `Bearer ${authStore.user?.token}` }, () => {
+    conversations.value.forEach(c => {
+      const sub = stompClient.subscribe(`/topic/${c.id}`, (payload) => {
+        handleIncomingMessage(JSON.parse(payload.body), c.id);
+      });
+      activeSubscriptions.push(sub);
+    });
+  });
+}
+
+const handleIncomingMessage = (msg, convId) => {
+  if (msg.type) {
+    if (msg.type === 'read_receipt' && Number(msg.senderId) !== currentUserId.value) {
+      const conv = conversations.value.find(c => c.id === convId);
+      if (conv) conv.read = true;
+    }
+    // Cập nhật preview nếu tin nhắn bị thu hồi
+    if (msg.type === 'unsend') {
+       const conv = conversations.value.find(c => c.id === convId);
+       if (conv) conv.lastMessage = 'Tin nhắn đã thu hồi';
+    }
+    return;
+  }
+
+  const idx = conversations.value.findIndex(c => c.id === convId);
+  if (idx !== -1) {
+    const conv = conversations.value[idx];
+    
+    conv.lastMessage = formatPreviewMessage(msg.content);
+    conv.time = "vừa xong"; // Tin nhắn mới đến thì chắc chắn là vừa xong
+    
+    const senderId = Number(msg.sender?.accountID || msg.senderID);
+    const isMine = senderId === currentUserId.value;
+
+    // 🚀 LÔGIC UNREAD ĐÃ CHUẨN:
+    // Nếu mình đang nhắn với người đó ở chatbox -> read = true
+    // Nếu tin nhắn là do mình gửi (đồng bộ tab) -> read = true
+    // Chỉ in đậm nếu người khác gửi và chatbox chưa mở
+    if (chatStore.activeChat?.id === convId || isMine) {
+      conv.read = true;
+    } else {
+      conv.read = false; 
+    }
+
+    conversations.value.splice(idx, 1);
+    conversations.value.unshift(conv);
+  }
+}
+
+const disconnectSidebarWebSocket = () => {
+  activeSubscriptions.forEach(sub => sub.unsubscribe());
+  activeSubscriptions = [];
+  if (stompClient) stompClient.disconnect();
+}
+
 const selectChat = (conv) => {
   chatStore.openChat(conv)
   conv.read = true
-  // Tùy chọn: Xóa nội dung tìm kiếm sau khi đã click chọn người chat
-  // searchQuery.value = ''
 }
 
 const closeSidebar = () => { chatStore.isMessengerOpen = false }
@@ -152,16 +243,22 @@ const handleClickOutside = (event) => {
   }
 }
 
-watch(() => chatStore.isMessengerOpen, (newVal) => {
-  if (newVal) loadConversations()
+watch(() => chatStore.isMessengerOpen, (isOpen) => {
+  if (isOpen) {
+    loadConversations();
+  } else {
+    disconnectSidebarWebSocket();
+  }
 })
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
+  if (chatStore.isMessengerOpen) loadConversations()
 })
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside)
+  disconnectSidebarWebSocket();
 })
 </script>
 
