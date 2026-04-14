@@ -381,7 +381,9 @@ const handleCompareClick = () => {
   }
 
   const isPremiumUser = authStore.user?.isPremium || authStore.user?.role === 'PREMIUM' || authStore.user?.IsPremium;
-  if (!isPremiumUser) {
+  const isAdmin = authStore.user?.isAdmin || authStore.user?.role === 'ADMIN' || authStore.user?.role === 'admin';
+  
+  if (!isPremiumUser && !isAdmin) {
     toast.warn('Tính năng So sánh Công thức đặc quyền chỉ dành cho tài khoản Premium!');
     window.dispatchEvent(new CustomEvent('ui:open-premium'));
     return;

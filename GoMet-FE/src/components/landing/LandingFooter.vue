@@ -8,70 +8,67 @@
           <span class="brand-name">GOMET</span>
         </div>
         <p class="brand-desc">
-          Mạng xã hội chia sẻ công thức nấu ăn lớn nhất dành cho sinh viên. Khơi nguồn cảm hứng vào bếp mỗi ngày.
+          Mạng xã hội chia sẻ công thức nấu ăn lớn nhất dành cho những tâm hồn đam mê ẩm thực. Khơi nguồn cảm hứng vào bếp mỗi ngày.
         </p>
         
         <div class="socials">
-          <a href="#" class="social-link fb">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+          <a href="https://facebook.com" target="_blank" rel="noopener" class="social-link fb" title="Facebook">
+            <i class="fab fa-facebook-f"></i>
           </a>
-          <a href="#" class="social-link ig">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+          <a href="https://instagram.com" target="_blank" rel="noopener" class="social-link ig" title="Instagram">
+            <i class="fab fa-instagram"></i>
           </a>
-          <a href="#" class="social-link yt">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"></path><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon></svg>
+          <a href="https://youtube.com" target="_blank" rel="noopener" class="social-link yt" title="YouTube">
+            <i class="fab fa-youtube"></i>
           </a>
         </div>
       </div>
 
       <div class="footer-col">
-        <h4>Khám phá</h4>
+        <h4>Khám Phá</h4>
         <ul class="footer-links">
-          <li><router-link to="/home">Công thức mới</router-link></li>
-          <li><router-link to="/leaderboard">Bảng xếp hạng</router-link></li>
-          <li><router-link to="/events">Thử thách tuần</router-link></li>
-          <li><router-link to="/blog">Blog ẩm thực</router-link></li>
+          <li><router-link to="/search">Công Thức Mới</router-link></li>
+          <li><router-link to="/leaderboard">Bảng Xếp Hạng</router-link></li>
+          <li><router-link to="/events">Sự Kiện Ẩm Thực</router-link></li>
+          <li><router-link to="/home">Blog Ẩm Thực</router-link></li>
         </ul>
       </div>
 
       <div class="footer-col">
         <h4>Về GOMET</h4>
         <ul class="footer-links">
-          <li><router-link to="/about">Giới thiệu</router-link></li>
-          <li><router-link to="/careers">Tuyển dụng</router-link></li>
-          <li><router-link to="/terms-and-policy">Chính sách & Điều khoản</router-link></li>
-          <li><a href="#" @click.prevent="showAppealModal = true">Khiếu nại</a></li>
+          <li><router-link to="/">Giới Thiệu</router-link></li>
+          <li><a href="#" @click.prevent="handleCareersClick">Tuyển Dụng</a></li>
+          <li><router-link to="/terms-and-policy">Chính Sách & Điều Khoản</router-link></li>
+          <li><a href="#" @click.prevent="showAppealModal = true">Khiếu Nại</a></li>
         </ul>
       </div>
 
       <div class="footer-col contact-col">
-        <h4>Liên hệ</h4>
-        <div class="contact-item">
-          <span class="icon">📧</span>
+        <h4>Liên Hệ</h4>
+        
+        <a href="mailto:contact@gomet.vn" class="contact-item">
+          <span class="icon"><i class="fas fa-envelope"></i></span>
           <div class="info">
-            <span class="label">Email hỗ trợ</span>
-            <span class="value">Đặng Công Minh Khánh</span>
+            <span class="label">Email Hỗ Trợ</span>
+            <span class="value">contact@gomet.vn</span>
           </div>
-        </div>
-        <div class="contact-item">
-          <span class="icon">📞</span>
+        </a>
+        
+        <a href="tel:0823024745" class="contact-item">
+          <span class="icon"><i class="fas fa-phone-alt"></i></span>
           <div class="info">
-            <span class="label">Hotline</span>
+            <span class="label">Hotline (24/7)</span>
             <span class="value">0823-024-745</span>
           </div>
-        </div>
+        </a>
       </div>
 
     </div>
     
     <div class="footer-bottom">
       <div class="container bottom-flex">
-        <p>&copy; 2026 GOMET. All rights reserved.</p>
-        <div class="bottom-links">
-          <router-link to="/terms-and-policy">Quyền riêng tư</router-link>
-          <span class="dot">•</span>
-          <router-link to="/terms-and-policy">Cookie</router-link>
-        </div>
+        <p>&copy; 2024 GOMET. Đã đăng ký bản quyền.</p>
       </div>
     </div>
   </footer>
@@ -84,8 +81,14 @@
 <script setup>
 import { ref } from 'vue'
 import AppealModal from '@/components/modals/AppealModal.vue'
+import { toast } from '@/composables/useToast' // Tái sử dụng hệ thống Toast của dự án
 
 const showAppealModal = ref(false)
+
+const handleCareersClick = () => {
+  // Thay thế alert() bằng toast cho xịn xò và đồng bộ UX
+  toast.info('GoMet hiện tại chưa có nhu cầu tuyển dụng. Vui lòng quay lại sau!')
+}
 </script>
 
 <style scoped>
@@ -115,104 +118,86 @@ const showAppealModal = ref(false)
 }
 
 .brand-name {
-  font-family: 'Playfair Display', serif; font-size: 1.8rem; font-weight: 800;
+  font-family: 'Playfair Display', serif; font-size: 1.8rem; font-weight: 900;
   color: #1C1917; letter-spacing: 1px;
 }
 
 .brand-desc {
-  color: #57534E; line-height: 1.6; margin-bottom: 25px; font-size: 0.95rem;
+  color: #57534E; line-height: 1.6; margin-bottom: 25px; font-size: 0.95rem; font-weight: 500;
 }
 
+/* Socials Icons FontAwesome */
 .socials { display: flex; gap: 12px; }
 .social-link {
   width: 40px; height: 40px; border-radius: 50%;
   border: 1px solid #E7E5E4; background: white;
-  display: flex; align-items: center; justify-content: center;
-  color: #57534E; transition: 0.3s;
+  display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+  color: #57534E; text-decoration: none; transition: all 0.3s ease;
 }
 .social-link:hover {
-  background: #1C1917; color: white; border-color: #1C1917; transform: translateY(-3px);
+  background: #1C1917; color: white; border-color: #1C1917; transform: translateY(-4px); box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
 .social-link.fb:hover { background: #1877F2; border-color: #1877F2; color: white; }
-.social-link.ig:hover { background: #E4405F; border-color: #E4405F; color: white; }
+.social-link.ig:hover { 
+  background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%); 
+  border-color: transparent; color: white; 
+}
 .social-link.yt:hover { background: #FF0000; border-color: #FF0000; color: white; }
+
 h4 {
-  font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700;
-  margin-bottom: 25px; color: #1C1917;
+  font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 800;
+  margin-bottom: 25px; color: #1C1917; letter-spacing: 0.5px;
 }
 
 .footer-links { list-style: none; padding: 0; margin: 0; }
 .footer-links li { margin-bottom: 12px; }
 .footer-links a, .footer-links :deep(a) {
-  text-decoration: none; color: #57534E; font-size: 0.95rem; font-weight: 500;
-  transition: 0.2s; display: inline-block;
+  text-decoration: none; color: #57534E; font-size: 0.95rem; font-weight: 600;
+  transition: all 0.2s ease; display: inline-block; cursor: pointer;
 }
 .footer-links a:hover, .footer-links :deep(a):hover { color: #F97316; transform: translateX(5px); }
-.contact-item { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
-.contact-item .icon { font-size: 1.2rem; }
+
+/* Liên Hệ Bấm Được (Clickable Contact) */
+.contact-item { 
+  display: flex; align-items: center; gap: 15px; margin-bottom: 20px; text-decoration: none;
+  padding: 10px; border-radius: 12px; transition: all 0.3s ease; border: 1px solid transparent;
+}
+.contact-item:hover { background: #fff; border-color: #E7E5E4; box-shadow: 0 4px 10px rgba(0,0,0,0.05); transform: translateX(5px);}
+.contact-item .icon { font-size: 1.4rem; color: #F97316; }
 .contact-item .info { display: flex; flex-direction: column; }
-.contact-item .label { font-size: 0.75rem; color: #A8A29E; font-weight: 600; text-transform: uppercase; }
-.contact-item .value { font-size: 0.95rem; color: #1C1917; font-weight: 700; }
+.contact-item .label { font-size: 0.75rem; color: #A8A29E; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;}
+.contact-item .value { font-size: 1rem; color: #1C1917; font-weight: 800; transition: color 0.2s;}
+.contact-item:hover .value { color: #F97316; }
+
 .footer-bottom {
   border-top: 1px solid #E5E5E4; background: #F5F5F4;
   padding: 20px 0; font-size: 0.85rem; color: #78716C;
 }
-.bottom-flex { display: flex; justify-content: space-between; align-items: center; }
-.bottom-links a, .bottom-links :deep(a) { text-decoration: none; color: #78716C; transition: 0.2s; }
-.bottom-links a:hover, .bottom-links :deep(a):hover { color: #1C1917; }
-.dot { margin: 0 10px; opacity: 0.5; }
+/* Căn giữa nội dung Copyright do đã bỏ đi các Link */
+.bottom-flex { display: flex; justify-content: center; align-items: center; }
+
+/* Responsive */
 @media (max-width: 1024px) {
-  .footer-content {
-    gap: 30px; 
-  }
-  .container {
-    padding: 0 20px;
-  }
+  .footer-content { gap: 30px; }
+  .container { padding: 0 20px; }
 }
 
-
 @media (max-width: 768px) {
-  .landing-footer {
-    padding-top: 50px;
-  }
+  .landing-footer { padding-top: 50px; }
   .footer-content {
     grid-template-columns: 1fr 1fr; 
     gap: 40px 20px;
   }
-  .brand-col {
-    grid-column: span 2; 
-    margin-bottom: 20px;
-  }
+  .brand-col { grid-column: span 2; margin-bottom: 10px; }
 }
 
-
 @media (max-width: 480px) {
-  .footer-content {
-    grid-template-columns: 1fr; 
-    text-align: center; 
-    gap: 40px;
-  }
+  .footer-content { grid-template-columns: 1fr; text-align: center; gap: 40px; }
+  .brand-col { grid-column: span 1; }
+  .brand-wrapper, .socials, .contact-item { justify-content: center; }
   
-  .brand-col {
-    grid-column: span 1;
-  }
-
-  .brand-wrapper, .socials, .contact-item {
-    justify-content: center;
-  }
-  
-  .contact-item .info {
-    text-align: left; 
-  }
-
-  .footer-links a:hover {
-    transform: none; 
-  }
-
-  .bottom-flex {
-    flex-direction: column; 
-    gap: 15px;
-    text-align: center;
-  }
+  .contact-item:hover { transform: none; } 
+  .contact-item .info { text-align: left; }
+  .footer-links a:hover { transform: none; color: #F97316; }
 }
 </style>
