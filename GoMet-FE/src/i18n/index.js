@@ -19,4 +19,29 @@ export function setLocale(lang) {
   document.documentElement.setAttribute('lang', lang)
 }
 
+export function getDateLocale(lang = i18n.global.locale.value) {
+  return lang === 'en' ? 'en-US' : 'vi-VN'
+}
+
+export function formatLocaleDate(date, options) {
+  return new Date(date).toLocaleDateString(
+    getDateLocale(),
+    options || { day: '2-digit', month: '2-digit', year: 'numeric' },
+  )
+}
+
+export function formatLocaleTime(date, options) {
+  return new Date(date).toLocaleTimeString(
+    getDateLocale(),
+    options || { hour: '2-digit', minute: '2-digit' },
+  )
+}
+
+export function formatLocaleDateTime(date, options) {
+  return new Date(date).toLocaleString(
+    getDateLocale(),
+    options || { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' },
+  )
+}
+
 export default i18n
