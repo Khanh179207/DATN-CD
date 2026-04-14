@@ -31,6 +31,7 @@ public class PublicPostDTO {
     private Long commentCount;
     private Long favoriteCount;
     private Boolean isLiked; 
+    private Integer stepCount;  // 🔥 Thêm số bước
     private Integer isActive;   // 🔥 Trạng thái ẩn/hiện
     private Integer isApproved; // 🔥 Trạng thái duyệt
 }

@@ -14,6 +14,7 @@ import poly.edu.dao.InteractionLogDAO;
 import poly.edu.dao.PostDAO;
 import poly.edu.dto.UserProfileDTO;
 import poly.edu.entity.Account;
+import poly.edu.entity.History;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
@@ -33,6 +34,7 @@ public class UserController {
     private final PostDAO postDAO;
     private final FollowDAO followDAO;
     private final poly.edu.service.AccountService accountService;
+    private final poly.edu.dao.HistoryDAO historyDAO;
 
     @Autowired
     private InteractionLogDAO interactionLogDAO;
@@ -189,6 +191,109 @@ public class UserController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // NEW: Hệ thống Điểm thưởng & Mở khóa Lượt Xem
+    // ─────────────────────────────────────────────────────────────────────────
+
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/{id}/unlock-view")
+    public ResponseEntity<?> unlockView(@PathVariable Integer id, @RequestBody Map<String, Integer> body) {
+        Integer postId = body.get("postId");
+        if (postId == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Thiếu postId"));
+        }
+
+        Account acc = accountDAO.findById(id).orElse(null);
+        poly.edu.entity.Post post = postDAO.findById(postId).orElse(null);
+
+        if (acc == null || post == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Tài khoản hoặc Bài viết không tồn tại"));
+        }
+
+        if (acc.getPoint() < 1) {
+            return ResponseEntity.badRequest().body(Map.of("code", "INSUFFICIENT_POINT", "message", "Bạn không đủ GoMetCoin. Hãy tham gia Event hoặc Đăng bài để kiếm thêm!"));
+        }
+
+        // Trừ 1 point
+        acc.setPoint(acc.getPoint() - 1);
+        accountDAO.save(acc);
+
+        // Upsert vào History: Chỉ tạo mới nếu chưa từng xem, nếu đã xem thì update ngày mới nhất
+        List<History> records = historyDAO.findByAccount_AccountIDAndPost_PostID(id, postId);
+        History history;
+        if (!records.isEmpty()) {
+            history = records.get(0);
+        } else {
+            history = new poly.edu.entity.History();
+            history.setAccount(acc);
+            history.setPost(post);
+        }
+        history.setLastViewedAt(LocalDateTime.now());
+        historyDAO.save(history);
+
+        return ResponseEntity.ok(Map.of(
+            "message", "Mở khóa thành công!",
+            "pointRemaining", acc.getPoint()
+        ));
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/{id}/view-limits")
+    public ResponseEntity<?> getViewLimits(@PathVariable Integer id) {
+        LocalDateTime startOfDay = LocalDateTime.now().with(java.time.LocalTime.MIN);
+        LocalDateTime endOfDay = LocalDateTime.now().with(java.time.LocalTime.MAX);
+        long viewsToday = historyDAO.countDistinctPostsViewedToday(id, startOfDay, endOfDay);
+        int maxViews = 3;
+        long remaining = Math.max(0, maxViews - viewsToday);
+        return ResponseEntity.ok(Map.of(
+            "usedViews", viewsToday,
+            "maxViews", maxViews,
+            "remainingViews", remaining
+        ));
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/{id}/reset-today-views")
+    public ResponseEntity<?> resetTodayViews(@PathVariable Integer id) {
+        LocalDateTime startOfDay = LocalDateTime.now().with(java.time.LocalTime.MIN);
+        LocalDateTime endOfDay = LocalDateTime.now().with(java.time.LocalTime.MAX);
+        historyDAO.deleteTodayHistory(id, startOfDay, endOfDay);
+        return ResponseEntity.ok(Map.of("message", "Đã reset lượt xem ngày hôm nay (Demo)"));
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/{id}/buy-premium")
+    public ResponseEntity<?> buyPremium(@PathVariable Integer id, @RequestBody Map<String, Integer> body) {
+        Integer months = body.get("months");
+        if (months == null || (months != 1 && months != 12)) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Gói không hợp lệ"));
+        }
+
+        Account acc = accountDAO.findById(id).orElse(null);
+        if (acc == null) return ResponseEntity.badRequest().body(Map.of("message", "Tài khoản không tồn tại"));
+
+        if (acc.getIsPremium() == 1) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Tài khoản đã là Premium."));
+        }
+
+        int requiredPoints = (months == 1) ? 50 : 200;
+
+        if (acc.getPoint() < requiredPoints) {
+            return ResponseEntity.badRequest().body(Map.of("code", "INSUFFICIENT_POINT", "message", "Bạn không đủ GoMetCoin."));
+        }
+
+        acc.setPoint(acc.getPoint() - requiredPoints);
+        acc.setIsPremium(1);
+        // Note: Cần thêm PremiumUntil nếu muốn lưu hạn, hiện tại theo DB sếp dùng isPremium = 1 vĩnh viễn hoặc set logic batch trừ.
+        accountDAO.save(acc);
+
+        return ResponseEntity.ok(Map.of(
+            "message", "Nâng cấp Premium thành công!",
+            "pointRemaining", acc.getPoint(),
+            "isPremium", 1
+        ));
     }
 }
 

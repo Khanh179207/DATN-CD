@@ -41,6 +41,7 @@
         @open-premium="showPremium = true" 
         @open-login="openAuth('login')" 
         @open-register="openAuth('register')" 
+        @open-store="showStoreModal = true"
         @logout="handleLogout"
       />
 
@@ -79,6 +80,9 @@
          :post-data="mealplanData" 
          @close="showMealplanModal = false" 
        />
+       
+       <!-- NEW: GOMET STORE MODAL -->
+       <StoreModal v-if="showStoreModal" :is-open="showStoreModal" @close="showStoreModal = false" />
     </Teleport>
   </div>
 </template>
@@ -98,6 +102,8 @@ import PremiumModal from '@/components/modals/PremiumModal.vue'
 import ExpiredModal from '@/components/modals/ExpiredModal.vue'
 // 🔥 IMPORT MEALPLAN MODAL
 import MealplanModal from '@/components/modals/MealplanModal.vue'
+// 🔥 IMPORT STORE MODAL
+import StoreModal from '@/components/modals/StoreModal.vue'
 
 import MiniChatBox from '@/components/chat/MiniChatBox.vue'
 import ChatSidebar from '@/components/chat/ChatSidebar.vue'
@@ -153,6 +159,7 @@ const showExpired = ref(false);
 const isEnforcingRenewal = ref(false); 
 const modalTab = ref('login'); 
 const aiChatRef = ref(null);
+const showStoreModal = ref(false);
 
 // 🔥 TRẠNG THÁI CHO MEALPLAN MODAL
 const showMealplanModal = ref(false);
@@ -188,6 +195,7 @@ onMounted(() => {
   
   /* Global Event Listeners */
   window.addEventListener('ui:open-premium', () => { showPremium.value = true; })
+  window.addEventListener('ui:open-store', () => { showStoreModal.value = true; })
   
   // 🔥 LẮNG NGHE CÁC SỰ KIỆN TỪ HỆ THỐNG
   window.addEventListener('ui:open-mealplan', handleOpenMealplan)
@@ -209,6 +217,7 @@ onUnmounted(() => {
   // 🔥 DỌN DẸP EVENT LISTENER
   window.removeEventListener('ui:open-mealplan', handleOpenMealplan);
   window.removeEventListener('auth:restore-login-prompt', handleRestorePrompt);
+  window.removeEventListener('ui:open-store', () => { showStoreModal.value = true; }); 
 })
 
 // --- LOGIC LOCK PREMIUM CHO NÚT GOMET ASSISTANT ---

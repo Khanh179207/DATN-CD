@@ -145,6 +145,18 @@
         
       </div>
     </template>
+
+    <!-- NEW: Giới hạn lượt xem Modal -->
+    <Teleport to="body">
+      <ViewLimitModal
+        v-if="showLimitModal"
+        :is-open="showLimitModal"
+        :post-id="Number(route.params.id)"
+        @close="showLimitModal = false; router.push('/home')"
+        @unlocked="showLimitModal = false; loadPost(route.params.id)"
+        @open-store="openStoreFromLimit"
+      />
+    </Teleport>
   </div>
 </template>
 
@@ -161,6 +173,7 @@ import RecipeAuthor from '@/components/post-detail/RecipeAuthor.vue'
 import ReviewSummary from '@/components/post-detail/ReviewSummary.vue'
 import RecipeComments from '@/components/post-detail/RecipeComments.vue' 
 import RelatedSuggestions from '@/components/post-detail/RelatedSuggestions.vue'
+import ViewLimitModal from '@/components/modals/ViewLimitModal.vue'
 
 // --- IMPORT SERVICES ---
 import api from '@/services/api'
@@ -168,18 +181,11 @@ import { getPostById, getRelatedPosts, normalizePost, recordPostView } from '@/s
 import { uploadMedia } from '@/services/uploadService'
 import { recordHistory } from '@/services/interactionService'
 
-/* START: Daily View Limit */
-import { usePostViewLimit } from '@/composables/usePostViewLimit'
-/* END */
+const diffMap = { 1: 'Easy', 2: 'Medium', 3: 'Hard' }
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
-
-/* START: Daily View Limit */
-const { checkAndChargeView, remainingViews } = usePostViewLimit()
-/* END */
-const diffMap = { 1: 'Easy', 2: 'Medium', 3: 'Hard' }
 
 const post = ref(null)
 const relatedPosts = ref([])
@@ -194,6 +200,14 @@ const userRating = ref(0)
 const hoverRating = ref(0)
 const selectedPhotos = ref([])
 const isUploading = ref(false)
+
+const showLimitModal = ref(false)
+
+const openStoreFromLimit = () => {
+  showLimitModal.value = false;
+  // Gửi event lên window để trigger DefaultLayout hoặc Header mở StoreModal
+  window.dispatchEvent(new CustomEvent('ui:open-store'));
+}
 
 const currentUserAvatar = computed(() => authStore.user?.avatar || 'https://ui-avatars.com/api/?name=U&background=EA580C&color=fff')
 
@@ -322,16 +336,6 @@ async function loadPost(id) {
   try {
     const dto = await getPostById(id)
 
-    /* START: Daily View Limit Check */
-    const canAccess = checkAndChargeView(Number(id), dto.authorID)
-    if (!canAccess) {
-      toast.warn('Bạn đã hết lượt xem bài viết miễn phí trong ngày hôm nay! Vui lòng nâng cấp Premium.')
-      router.push('/home')
-      window.dispatchEvent(new CustomEvent('ui:open-premium'))
-      return
-    }
-    /* END */
-
     post.value = {
       // ... (Phần map dữ liệu post.value này SẾP GIỮ NGUYÊN HOÀN TOÀN nhé) ...
       id: dto.postID,
@@ -375,16 +379,19 @@ async function loadPost(id) {
     });
 
     await fetchComments(id)
-
-    const user = authStore.user || authStore.currentUser;
-    if (user && (user.accountID || user.id)) {
-      const uid = user.accountID || user.id;
-      recordHistory(uid, Number(id)).catch(() => { })
-    }
     recordPostView(id).catch(err => console.warn('Không ghi nhận được view:', err));
 
+    // 🔥 CẬP NHẬT LƯỢT XEM TRÊN TOPBAR NGAY LẬP TỨC
+    window.dispatchEvent(new CustomEvent('ui:view-limits-updated'));
+
   } catch (err) {
-    console.warn('PostDetail: load error', err)
+    if (err.response?.data?.code === 'VIEW_LIMIT_REACHED') {
+      showLimitModal.value = true;
+    } else {
+      console.warn('PostDetail: load error', err)
+      toast.error('Không thể tải bài viết')
+      router.push('/home')
+    }
   }
 }
 

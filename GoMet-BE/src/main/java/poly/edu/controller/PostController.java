@@ -37,6 +37,8 @@ public class PostController {
     private final poly.edu.service.PostService postService;
     @Autowired
     private InteractionLogDAO interactionLogDAO;
+    @Autowired
+    private HistoryDAO historyDAO;
 
     @GetMapping("/search-mini")
     public ResponseEntity<List<Map<String, Object>>> searchMini(@RequestParam String q) {
@@ -98,8 +100,74 @@ public class PostController {
             if (post.getAccount() != null && post.getAccount().getIsActive() != 1) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Bài viết không tồn tại hoặc đã bị ẩn"));
             }
+
+            // 🔥 LOGIC GIỚI HẠN LƯỢT XEM BẰNG GOMET COIN
+            if (accountId == null) {
+                // Yêu cầu đăng nhập để xem bài viết
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("code", "LOGIN_REQUIRED", "message", "Vui lòng đăng nhập để xem chi tiết bài viết"));
+            }
+
+            Account currentAccount = accountDAO.findById(accountId).orElse(null);
+            if (currentAccount == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Tài khoản không tồn tại"));
+            }
+
+            boolean isAuthor = post.getAccount() != null && post.getAccount().getAccountID().equals(accountId);
+            boolean isPremium = currentAccount.getIsPremium() == 1;
+
+            if (!isAuthor && !isPremium) {
+                LocalDateTime startOfDay = LocalDateTime.now().with(java.time.LocalTime.MIN);
+                LocalDateTime endOfDay = LocalDateTime.now().with(java.time.LocalTime.MAX);
+
+                boolean alreadyViewed = historyDAO.hasViewedPostToday(accountId, id, startOfDay, endOfDay);
+                if (!alreadyViewed) {
+                    long viewsToday = historyDAO.countDistinctPostsViewedToday(accountId, startOfDay, endOfDay);
+                    if (viewsToday >= 3) {
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                                "code", "VIEW_LIMIT_REACHED",
+                                "message", "Bạn đã hết lượt xem miễn phí hôm nay. Dùng 1 GoMetCoin để mở khóa bài viết này?"
+                        ));
+                    }
+                }
+            }
+
+            // Nếu hợp lệ -> Ghi lịch sử luôn ở đây!
+            if (!isAuthor) {
+                List<History> existing = historyDAO.findByAccount_AccountIDAndPost_PostID(accountId, id);
+                History history;
+                if (!existing.isEmpty()) {
+                    history = existing.get(0);
+                    // 🔥 Xóa các bản ghi thừa nếu có (do bug cũ)
+                    if (existing.size() > 1) {
+                        for (int i = 1; i < existing.size(); i++) {
+                            historyDAO.delete(existing.get(i));
+                        }
+                    }
+                } else {
+                    history = History.builder()
+                            .account(currentAccount)
+                            .post(post)
+                            .build();
+                }
+                history.setLastViewedAt(LocalDateTime.now());
+                historyDAO.save(history);
+            }
+
             PostDetailDTO dto = toDetailDTO(post, accountId);
             return ResponseEntity.ok(dto);
+        }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Bài viết không tồn tại")));
+    }
+
+    @GetMapping("/{id}/summary")
+    public ResponseEntity<?> getSummary(@PathVariable Integer id, @RequestParam(required = false) Integer accountId) {
+        return postDAO.findById(id).map(post -> {
+            if (post.getAccount() != null && post.getAccount().getIsActive() != 1) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Bài viết không tồn tại hoặc đã bị ẩn"));
+            }
+            if (post.getIsActive() != 1 || post.getIsApproved() != 1) {
+                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Bài viết không khả dụng"));
+            }
+            return ResponseEntity.ok(toPublicDTO(post, accountId));
         }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Bài viết không tồn tại")));
     }
 
@@ -205,6 +273,7 @@ public class PostController {
         dto.setCreatedAt(p.getCreatedAt()); 
         dto.setIsActive(p.getIsActive());   // 🔥 TRẠNG THÁI ẨN/HIỆN
         dto.setIsApproved(p.getIsApproved()); // 🔥 TRẠNG THÁI DUYỆT
+        dto.setStepCount(p.getCookingSteps() != null ? p.getCookingSteps().size() : 0);
 
         if (p.getAccount() != null) {
             dto.setAuthorID(p.getAccount().getAccountID());

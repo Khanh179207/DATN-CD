@@ -102,6 +102,12 @@ public class PostServiceImpl implements PostService {
 
         Post savedPost = postDAO.save(post);
 
+        // 🔥 CỘNG 1 GOMETCOIN: Nếu bài được auto-approve (Admin/Premium) thì cộng điểm ngay
+        if (autoApprove == 1) {
+            acc.setPoint((acc.getPoint() == null ? 0 : acc.getPoint()) + 1);
+            accountDAO.save(acc);
+        }
+
         if (postDTO.getSteps() != null) {
             for (int i = 0; i < postDTO.getSteps().size(); i++) {
                 StepRequestDTO stepDto = postDTO.getSteps().get(i);

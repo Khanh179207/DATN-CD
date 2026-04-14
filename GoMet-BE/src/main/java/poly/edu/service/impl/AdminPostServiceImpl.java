@@ -80,11 +80,22 @@ public class AdminPostServiceImpl implements AdminPostService {
             post.setIsActive(1);
         }
 
+        boolean isFirstTimeApproval = (post.getIsApproved() == null || post.getIsApproved() == 0);
+
         post.setIsApproved(1);
         post.setRejectReason(null);
         // post.setRejectedAt(null); // Mở ra nếu DB có cột này
 
         postDAO.save(post);
+
+        // Cộng 1 GoMetCoin cho tác giả nếu đây là lần duyệt đầu tiên (từ 0/null lên 1)
+        if (isFirstTimeApproval) {
+            Account author = post.getAccount();
+            if (author != null) {
+                author.setPoint((author.getPoint() == null ? 0 : author.getPoint()) + 1);
+                accountDAO.save(author);
+            }
+        }
 
         moderationLogService.logAction(id, "POST", logAction, adminId, adminName, logNote);
         notificationService.notifyPostApproved(id);

@@ -212,10 +212,15 @@ public class EventRewardServiceImpl implements EventRewardService {
             return new RewardConfig(type, 0, 0, 0, 0, 0, 0);
         }
 
-        // 2. Xử lý giải POINTS (Bắt buộc phải có format: POINTS|top1|top2|top3)
-        if (parts.length < 4) {
-            log.error("❌ Sai format phần thưởng (cần 4 phần): {}", reward);
+        // Nếu format không phải các chuẩn quy định (ví dụ là một custom string như "Tặng 500k")
+        // thì ta coi như giải thưởng thủ công (NONE), không báo lỗi gắt, chỉ log INFO.
+        if (parts.length < 4 && !"PREMIUM".equals(type) && !"POINTS".equals(type)) {
+            log.info("ℹ️ Event sử dụng giải thưởng tuỳ chỉnh (không tự động trao thưởng): {}", reward);
             return new RewardConfig("NONE", 0, 0, 0, 0, 0, 0);
+        } else if (parts.length < 4) {
+             // Trường hợp dùng loại PREMIUM hoặc POINTS nhưng sai cấu trúc
+             log.error("❌ Sai format phần thưởng tự động ({}", reward);
+             return new RewardConfig("NONE", 0, 0, 0, 0, 0, 0);
         }
 
         try {

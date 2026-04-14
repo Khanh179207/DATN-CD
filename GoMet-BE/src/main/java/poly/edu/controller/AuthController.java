@@ -318,6 +318,7 @@ public class AuthController {
         res.setIsAdmin(acc.getIsAdmin());
         res.setIsPremium(acc.getIsPremium());
         res.setToken(jwtToken);
+        res.setPoint(acc.getPoint() != null ? acc.getPoint() : 0);
         return res;
     }
 

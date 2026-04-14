@@ -6,6 +6,13 @@
     <SearchBox />
 
     <div class="header-right">
+      <!-- GoMetCoin Point Display -->
+      <button v-if="authStore.isAuthenticated" class="btn-gomet-coin" @click="emit('open-store')">
+        <span class="coin-icon">✨</span>
+        <span class="coin-amount">{{ authStore.user?.point || 0 }}</span>
+        <span class="coin-label">GoMetCoin</span>
+      </button>
+
       <button class="btn-create-post" @click="handleCreatePost">
         <span class="plus-icon">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -170,7 +177,7 @@ import { getNotifications, markNotificationRead, markAllNotificationsRead as api
 import webSocketService from '@/services/webSocketService'
 import { toast } from '@/composables/useToast'
 
-const emit = defineEmits(['open-login', 'open-register', 'open-premium'])
+const emit = defineEmits(['open-login', 'open-register', 'open-premium', 'open-store'])
 
 const authStore = useAuthStore();
 const chatStore = useChatStore();
