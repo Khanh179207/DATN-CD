@@ -43,12 +43,6 @@
                   />
                 </template>
               </div>
-
-              <div class="social-links">
-                <a href="#" class="s-link">Website</a>
-                <a href="#" class="s-link">Instagram</a>
-                <a href="#" class="s-link">Facebook</a>
-              </div>
             </div>
           </div>
         </aside>
