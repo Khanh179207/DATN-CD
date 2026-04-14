@@ -166,4 +166,67 @@ const goToComparePage = () => {
   opacity: 0;
   transform: translate(-50%, 100%);
 }
+
+/* =======================================================
+   🔥 HỆ THỐNG RESPONSIVE (TỐI ƯU MỌI THIẾT BỊ)
+   ======================================================= */
+
+/* --- 1. Màn hình Tablet dọc & Mobile ngang (Dưới 768px) --- */
+@media (max-width: 768px) {
+  .compare-bar {
+    width: 95%;
+    padding: var(--space-2) var(--space-3) var(--space-2) var(--space-4);
+    bottom: var(--space-6);
+  }
+  
+  .text {
+    display: none; /* Ẩn chữ "Đã chọn" để tiết kiệm diện tích bề ngang */
+  }
+  
+  .thumb {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .btn-compare-now {
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--text-sm);
+  }
+}
+
+/* --- 2. Màn hình Mobile nhỏ (Dưới 480px - Vd: iPhone SE) --- */
+@media (max-width: 480px) {
+  .compare-bar {
+    border-radius: 20px; /* Giảm bo tròn lại cho phù hợp với thiết kế xếp chồng */
+    padding: var(--space-3);
+    bottom: var(--space-4);
+  }
+  
+  .bar-content {
+    flex-direction: column; /* Gập thanh thành 2 dòng */
+    gap: var(--space-3);
+  }
+  
+  .info {
+    width: 100%;
+    justify-content: center; /* Căn giữa số lượng và ảnh trên mobile */
+  }
+  
+  .actions {
+    width: 100%;
+    gap: var(--space-2);
+  }
+  
+  .btn-clear {
+    background: var(--color-neutral-100);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-full);
+    flex-shrink: 0;
+  }
+  
+  .btn-compare-now {
+    flex: 1; /* Nút "So sánh ngay" kéo dãn ra chiếm phần lớn diện tích để dễ bấm */
+    padding: var(--space-3);
+  }
+}
 </style>

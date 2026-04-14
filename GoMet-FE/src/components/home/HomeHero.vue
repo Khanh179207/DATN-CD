@@ -482,16 +482,65 @@ onUnmounted(() => { })
 .delay-1 { animation-delay: 0s; } .delay-2 { animation-delay: 0.1s; } .delay-3 { animation-delay: 0.2s; } .delay-4 { animation-delay: 0.3s; } .delay-5 { animation-delay: 0.4s; }
 @keyframes slideUpAnim { from { opacity: 0; transform: translateY(25px); } to { opacity: 1; transform: translateY(0); } }
 
-/* RESPONSIVE */
+@media (max-width: 1200px) {
+  .hero-content { gap: 40px; padding: 60px 30px 100px; }
+  .main-title { font-size: 4rem; }
+  .author-card { right: -5%; }
+  .stat-card { left: -5%; }
+  .comment-card { left: -10%; }
+}
+
 @media (max-width: 1024px) { 
   .hero-content { grid-template-columns: 1fr; text-align: center; gap: 50px; padding: 40px 24px 120px; } 
   .text-column { align-items: center; padding-right: 0; } 
   .meta-pills { justify-content: center; }
+  
+  .action-row { flex-direction: row; width: auto; justify-content: center; }
+  .btn-glow-wrap, .btn-video { width: auto; }
+  
+  .visual-column { height: auto; } 
+  .media-frame { max-width: 80%; aspect-ratio: 4/5; transform: none !important; margin: 0 auto; } 
+  
+  .glass-card { display: none; } 
+}
+
+@media (max-width: 768px) {
+  .vogue-hero-wrapper { min-height: auto; }
+  .main-title { font-size: 3.2rem; }
+  .t-prefix { font-size: 1.8rem; }
+  .description { font-size: 1.05rem; width: 100%; max-width: 100%; }
+  .media-frame { max-width: 95%; aspect-ratio: 1/1; } /* Ảnh vuông lại cho dễ nhìn trên di động */
+  .meta-pill { padding: 8px 12px 8px 8px; }
+  .m-icon { width: 30px; height: 30px; }
+  .m-val { font-size: 0.85rem; }
+  .m-lbl { font-size: 0.6rem; }
+  
   .action-row { flex-direction: column; width: 100%; }
   .btn-glow-wrap, .btn-video { width: 100%; }
-  .btn-primary { width: 100%; justify-content: center; }
-  .visual-column { height: auto; } 
-  .media-frame { max-width: 100%; aspect-ratio: 1/1; transform: none !important; } 
-  .glass-card { display: none; } 
+  .btn-primary, .btn-video { justify-content: center; width: 100%; }
+}
+
+@media (max-width: 480px) {
+  .hero-content { padding: 30px 15px 100px; gap: 30px; }
+  .main-title { font-size: 2.5rem; letter-spacing: -0.5px; }
+  .t-prefix { font-size: 1.5rem; }
+  .lux-badge { font-size: 0.7rem; padding: 6px 16px; margin-bottom: 16px; }
+  
+  .meta-pills { gap: 10px; }
+  
+  .dock-nav { 
+    bottom: 15px; 
+    padding: 8px 16px; 
+    gap: 15px; 
+    width: 90%;
+    justify-content: space-between;
+  }
+  .d-wrap { width: 28px; height: 28px; }
+}
+
+@media (max-width: 360px) {
+  .main-title { font-size: 2.2rem; }
+  .meta-pills { flex-direction: column; width: 100%; }
+  .meta-pill { width: 100%; justify-content: center; }
 }
 </style>

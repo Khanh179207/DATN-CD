@@ -279,17 +279,109 @@
 }
 
 /* =======================================================
-   6. RESPONSIVE & ANIMATIONS
+   6. RESPONSIVE & ANIMATIONS (UPDATED FOR ALL DEVICES)
 ======================================================= */
-@media (max-width: 1200px) { .grid-layout { grid-template-columns: repeat(3, 1fr); } }
-@media (max-width: 900px) { .grid-layout { grid-template-columns: repeat(2, 1fr); } .advanced-panel-depth .filter-row-bottom { grid-template-columns: 1fr; gap: 24px; } }
-@media (max-width: 600px) { 
-  .grid-layout { grid-template-columns: 1fr; }
-  .filter-header-row { flex-direction: column; gap: 16px; align-items: stretch; }
-  .filter-right { justify-content: space-between; }
-  .sticky-filter-glass { padding: 16px; }
+
+/* --- 6.1 Máy tính bảng ngang & Laptop nhỏ (Dưới 1200px) --- */
+@media (max-width: 1200px) { 
+  .grid-layout { grid-template-columns: repeat(3, 1fr); } 
 }
 
-/* Animations */
+/* --- 6.2 Máy tính bảng dọc & Mobile ngang (Dưới 900px) --- */
+@media (max-width: 900px) { 
+  .grid-layout { grid-template-columns: repeat(2, 1fr); gap: 20px; } 
+  
+  .advanced-panel-depth .filter-row-bottom,
+  .advanced-panel-depth .filter-row-bottom.premium-exclusive-row { 
+    grid-template-columns: 1fr; /* Gộp thành 1 cột */
+    gap: 24px; 
+  } 
+  
+  .advanced-panel-depth .panel-layout { padding: 24px; }
+}
+
+/* --- 6.3 Mobile Lớn (Dưới 768px) --- */
+@media (max-width: 768px) {
+  .main-body-container { padding: 0 16px; margin: 20px auto 80px; }
+  
+  .sticky-filter-glass { 
+    padding: 16px; 
+    border-radius: 20px; 
+    gap: 16px; 
+  }
+
+  /* Sắp xếp lại Header của bộ lọc: Tab ở trên, Nút bấm ở dưới */
+  .filter-header-row { 
+    flex-direction: column; 
+    gap: 16px; 
+    align-items: stretch; 
+  }
+
+  .filter-left { 
+    justify-content: flex-start; /* Giữ Tab nằm bên trái */
+    gap: 20px;
+    border-bottom: 1px solid #F1F5F9;
+    padding-bottom: 10px;
+  }
+
+  .filter-right { 
+    display: grid; 
+    grid-template-columns: 1fr 1.2fr; /* Chia tỉ lệ cho Nút Lọc và Dropdown */
+    gap: 12px; 
+  }
+
+  .btn-filter-trigger { 
+    padding: 0 12px; 
+    font-size: 0.85rem; 
+    display: flex; justify-content: center; align-items: center; 
+  }
+
+  .sort-select-wrapper select { 
+    width: 100%; /* Ép dropdown dài hết ô lưới */
+    padding: 0 10px;
+    font-size: 0.85rem;
+  }
+
+  /* Thanh trượt Category (Cam Neon) */
+  .category-showcase-bar .cat-card .cat-content {
+    padding: 6px 12px 6px 6px;
+  }
+  .category-showcase-bar .cat-card .cat-name { font-size: 0.85rem; }
+  .category-showcase-bar .cat-icon-wrapper { width: 34px; height: 34px; }
+  .category-showcase-bar .cat-icon-wrapper .cat-img { width: 20px; height: 20px; }
+}
+
+/* --- 6.4 Mobile Nhỏ (Dưới 480px - Vd: iPhone SE, iPhone 12 Mini) --- */
+@media (max-width: 480px) { 
+  .grid-layout { grid-template-columns: 1fr; gap: 16px; } /* 1 cột cho Card Món Ăn */
+
+  /* Ép Nút Lọc và Dropdown xuống thành 2 hàng dọc để dễ bấm ngón tay */
+  .filter-right { 
+    grid-template-columns: 1fr; 
+  }
+
+  .advanced-panel-depth .panel-header { 
+    flex-direction: column; 
+    align-items: flex-start; 
+    gap: 16px; 
+    padding: 16px 20px; 
+  }
+
+  .advanced-panel-depth .btn-reset-text { width: 100%; text-align: center; }
+  .advanced-panel-depth .panel-layout { padding: 20px 16px; }
+  
+  .radio-chip span { padding: 8px 16px; font-size: 0.85rem; } /* Thu nhỏ tag chọn */
+  
+  /* Phân trang (Pagination) nhỏ lại */
+  .pagination-floating { 
+    padding: 8px 16px; 
+    gap: 8px; 
+    width: 100%; /* Tràn viền trên màn hình nhỏ */
+    border-radius: 16px;
+    .page-nav, .dot { width: 32px; height: 32px; font-size: 0.85rem; }
+  }
+}
+
+/* --- Animations (Giữ Nguyên) --- */
 .expand-enter-active, .expand-leave-active { transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); max-height: 1000px; opacity: 1; }
-.expand-enter-from, .expand-leave-to { max-height: 0; opacity: 0; transform: scaleY(0.95); transform-origin: top; padding-top: 0; padding-bottom: 0; margin-bottom: 0; border-width: 0; }
+.expand-enter-from, .expand-leave-to { max-height: 0; opacity: 0; transform: scaleY(0.95); transform-origin: top; padding-top: 0; padding-bottom: 0; margin-bottom: 0; border-width: 0; overflow: hidden; }

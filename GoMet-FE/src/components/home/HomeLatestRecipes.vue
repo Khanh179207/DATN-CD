@@ -53,22 +53,21 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue' // Thêm watch để theo dõi đăng nhập
+import { ref, computed, onMounted, watch } from 'vue' 
 import { useRouter } from 'vue-router'
 import RecipeCard from '@/components/common/RecipeCard.vue'
 import { getLatestPosts, normalizePost } from '@/services/postService'
 import { getMyFollows } from '@/services/socialService'
-import { useAuthStore } from '@/stores/auth' // Import store của bạn
+import { useAuthStore } from '@/stores/auth' 
 
 const router = useRouter()
-const authStore = useAuthStore() // Khởi tạo store
+const authStore = useAuthStore() 
 
 const activeTab = ref('discover') 
 const loading = ref(true)
 const posts = ref([])
 const myFollowedAccountIDs = ref([]) 
 
-// Lấy ID người dùng hiện tại từ store một cách an toàn
 const currentUserId = computed(() => {
   return authStore.currentUser ? authStore.currentUser.accountID : null;
 })
@@ -107,7 +106,6 @@ const filteredPosts = computed(() => {
 const goToDetail = (id) => router.push({ name: 'PostDetail', params: { id } })
 const goToSearch = () => router.push('/search')
 
-// Tách riêng hàm tải dữ liệu để có thể gọi lại khi đăng nhập/đăng xuất
 const loadData = async () => {
   loading.value = true;
   try {
@@ -132,12 +130,10 @@ const loadData = async () => {
   }
 }
 
-// Chạy lần đầu khi load trang
 onMounted(() => {
   loadData();
 })
 
-// [TÙY CHỌN NÂNG CAO]: Tự động tải lại danh sách follow khi người dùng đăng nhập hoặc đăng xuất
 watch(currentUserId, (newId, oldId) => {
   if (newId !== oldId) {
     loadData();
@@ -169,7 +165,7 @@ watch(currentUserId, (newId, oldId) => {
 .tabs-scroll-wrapper { position: relative; max-width: 600px; overflow: hidden; }
 .tabs-scroll { 
   display: flex; gap: 10px; overflow-x: auto; padding: 5px; 
-  scrollbar-width: none; -ms-overflow-style: none; /* Hide scrollbar */
+  scrollbar-width: none; -ms-overflow-style: none;
 }
 .tabs-scroll::-webkit-scrollbar { display: none; }
 
@@ -184,10 +180,10 @@ watch(currentUserId, (newId, oldId) => {
   border-color: #D6D3D1; background: #F5F5F4; transform: translateY(-2px); 
 }
 .tab-pill.active { 
-  background: #EA580C; /* Đổi nền thành màu cam */
+  background: #EA580C;
   color: white; 
-  border-color: #EA580C; /* Đổi viền thành màu cam */
-  box-shadow: 0 4px 15px rgba(234, 88, 12, 0.3); /* Đổi bóng đổ (shadow) sang tông cam nhạt */
+  border-color: #EA580C;
+  box-shadow: 0 4px 15px rgba(234, 88, 12, 0.3);
   transform: translateY(-2px);
 }
 
@@ -225,16 +221,63 @@ watch(currentUserId, (newId, oldId) => {
   box-shadow: 0 4px 15px rgba(0,0,0,0.05); transform: translateY(-2px);
 }
 
-/* RESPONSIVE */
-@media (max-width: 1280px) { .recipe-grid { grid-template-columns: repeat(3, 1fr); } }
-@media (max-width: 1024px) { 
-  .recipe-grid { grid-template-columns: repeat(2, 1fr); } 
-  .section-header { flex-direction: column; align-items: flex-start; }
-  .tabs-scroll-wrapper { max-width: 100%; width: 100%; }
+/* ==========================================================================
+   HỆ THỐNG RESPONSIVE TOÀN DIỆN (NEW)
+   ========================================================================== */
+
+/* 1. Màn hình Laptop nhỏ / Tablet ngang (Dưới 1200px) */
+@media (max-width: 1200px) {
+  .recipe-grid { 
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 20px; 
+  }
+  .section-heading { font-size: 2.2rem; }
 }
-@media (max-width: 640px) { 
-  .recipe-grid { grid-template-columns: 1fr; } 
+
+/* 2. Tablet dọc (Dưới 992px) */
+@media (max-width: 992px) {
+  .recipe-grid { 
+    grid-template-columns: repeat(2, 1fr); 
+  }
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 25px;
+  }
+  .tabs-scroll-wrapper {
+    max-width: 100%;
+    width: 100%;
+  }
+}
+
+/* 3. Điện thoại (Dưới 768px) */
+@media (max-width: 768px) {
+  .section-block {
+    padding: 0 24px;
+    margin-bottom: 60px;
+  }
+  .section-heading { font-size: 1.8rem; }
+  .recipe-grid { gap: 16px; }
+}
+
+/* 4. Điện thoại nhỏ (Dưới 576px) */
+@media (max-width: 576px) {
+  .recipe-grid { 
+    grid-template-columns: 1fr; /* Chuyển về 1 cột để ảnh to, rõ nét */
+  }
   .section-block { padding: 0 20px; }
-  .section-heading { font-size: 2rem; }
+  .btn-load-more {
+    width: 100%; /* Nút bấm chiếm hết chiều ngang trên mobile */
+    justify-content: center;
+  }
+  .tab-pill {
+    padding: 8px 18px;
+    font-size: 0.85rem;
+  }
+}
+
+/* 5. Màn hình siêu nhỏ (Dưới 375px) */
+@media (max-width: 375px) {
+  .section-heading { font-size: 1.6rem; }
 }
 </style>

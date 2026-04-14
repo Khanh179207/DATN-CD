@@ -353,21 +353,34 @@ GO
 	);
 	GO
 
-	CREATE TABLE Message (
-		MessageID INT IDENTITY(1,1) PRIMARY KEY,
-		ConversationID INT NOT NULL,
-		SenderID INT NOT NULL,
-		Content NVARCHAR(MAX) NOT NULL,
-		IsRead INT DEFAULT 0,
-		CreatedAt DATETIME DEFAULT GETDATE(),
+CREATE TABLE Message (
+    MessageID INT IDENTITY(1,1) PRIMARY KEY,
+    ConversationID INT NOT NULL,
+    SenderID INT NOT NULL,
+    Content NVARCHAR(MAX) NOT NULL,
+    IsRead BIT DEFAULT 0, -- Đã đổi thành BIT
+    CreatedAt DATETIME DEFAULT GETDATE(),
+	ParentID INT NULL,
 
-		CONSTRAINT FK_Msg_Conv FOREIGN KEY (ConversationID) REFERENCES Conversation(ConversationID),
-		CONSTRAINT FK_Msg_Sender FOREIGN KEY (SenderID) REFERENCES Account(AccountID)
-	);
-	GO
 
-	USE DATN_CD;
-	GO
+	CONSTRAINT FK_Msg_Parent FOREIGN KEY (ParentID) REFERENCES Message(MessageID),
+    CONSTRAINT FK_Msg_Conv FOREIGN KEY (ConversationID) REFERENCES Conversation(ConversationID),
+    CONSTRAINT FK_Msg_Sender FOREIGN KEY (SenderID) REFERENCES Account(AccountID)
+);
+GO
+CREATE TABLE MessageReaction (
+    ReactionID INT IDENTITY(1,1) PRIMARY KEY,
+    MessageID INT NOT NULL,
+    AccountID INT NOT NULL,
+    Emoji NVARCHAR(10) NOT NULL, 
+    CreatedAt DATETIME DEFAULT GETDATE(),
+
+    CONSTRAINT FK_Reaction_Msg FOREIGN KEY (MessageID) REFERENCES Message(MessageID),
+    CONSTRAINT FK_Reaction_User FOREIGN KEY (AccountID) REFERENCES Account(AccountID),
+    CONSTRAINT UQ_Reaction_Msg_User UNIQUE (MessageID, AccountID)
+);
+GO
+
 
 	CREATE TABLE Ticket (
 		TicketID INT IDENTITY(1,1) PRIMARY KEY,

@@ -582,10 +582,87 @@ const finishUpgrade = () => {
 .slide-up-enter-from { opacity: 0; transform: translateX(30px); }
 .slide-up-leave-to { opacity: 0; transform: translateX(-30px); }
 
-@media (max-width: 900px) {
-  .premium-grid { grid-template-columns: 1fr; }
-  .modal-header-elite { padding: 40px 24px; text-align: center; .header-text { max-width: 100%; margin: 0 auto; } .title { font-size: 2rem; } }
-  .btn-close-simple { background: rgba(0,0,0,0.5); top: 16px; right: 16px; }
-  .info-section, .pay-section { padding: 32px 24px; }
+@media (max-width: 1200px) {
+  .modal-container { max-width: 950px; }
+  .modal-header-elite { padding: 40px; }
+  .modal-header-elite .title { font-size: 2.2rem; }
+  
+  .info-section, .pay-section { padding: 36px; }
 }
+
+@media (max-width: 900px) {
+  .modal-container { max-width: 600px; max-height: 95vh; }
+  .btn-close-simple { background: rgba(0,0,0,0.5); top: 16px; right: 16px; }
+  
+  .premium-grid { grid-template-columns: 1fr; }
+  
+  .modal-header-elite { 
+    padding: 40px 24px; 
+    text-align: center; 
+    .header-text { max-width: 100%; margin: 0 auto; } 
+    .title { font-size: 2rem; } 
+    .badge-premium { margin: 0 auto 20px; }
+  }
+  
+  .info-section { border-right: none; border-bottom: 2px solid #f1f5f9; padding: 32px 24px; }
+  .pay-section { padding: 32px 24px; }
+}
+
+@media (max-width: 600px) {
+  .modal-container { border-radius: 20px; }
+  
+  .modal-header-elite { 
+    padding: 30px 20px; 
+    .title { font-size: 1.6rem; }
+    .subtitle { font-size: 0.95rem; }
+  }
+  
+  .info-section, .pay-section { padding: 24px 20px; }
+  .label-heading { font-size: 1.1rem; margin-bottom: 20px; text-align: center; }
+  
+  .feature-table {
+    .t-row { 
+      grid-template-columns: 1.5fr 0.8fr 1fr;
+      padding: 12px 10px; 
+    }
+    .t-header { font-size: 0.7rem; letter-spacing: 0.5px; }
+    .n-main { font-size: 0.9rem; }
+    .n-sub { font-size: 0.75rem; }
+    .badge-free, .unlimited-tag { padding: 4px 8px; font-size: 0.65rem; }
+    .icon-v { width: 18px; height: 18px; }
+  }
+
+  .plan-card {
+    padding: 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    
+    .plan-content { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .plan-info { width: 100%; padding-left: 36px; margin-top: -36px; }
+    
+    .plan-price-wrap { 
+      text-align: left; 
+      padding-left: 36px;
+      width: 100%;
+      border-top: 1px dashed #e2e8f0;
+      padding-top: 12px;
+    }
+    .p-price { font-size: 1.2rem; }
+    .p-unit { display: inline-block; margin-left: 4px; }
+  }
+
+  .btn-vnpay-pro { padding: 14px; .btn-content { font-size: 0.9rem; gap: 8px; } }
+  .btn-submit-premium { padding: 16px; font-size: 0.95rem; }
+}
+
+@media (max-width: 400px) {
+  .modal-header-elite .title { font-size: 1.4rem; }
+  .feature-table .t-row { grid-template-columns: 1.2fr 1fr 1fr; padding: 10px 5px; gap: 5px; }
+  
+  .feature-table .n-sub { display: none; }
+  
+  .css-logo-vnpay { font-size: 0.9rem !important; padding: 3px 6px !important; }
+}
+
 </style>

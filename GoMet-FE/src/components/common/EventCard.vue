@@ -305,4 +305,54 @@ const handleJoin = () => console.log('Toggle join event:', props.event.id)
 
 .btn-view { background: #F3F4F6; color: #374151; }
 .btn-view:hover { background: #111827; color: #FFFFFF; }
+
+@media (max-width: 1024px) {
+  .card-image { height: 200px; }
+  .card-body { padding: 20px; }
+  .event-title { font-size: 1.2rem; margin-bottom: 12px; }
+}
+
+@media (max-width: 768px) {
+  .card-image { height: 180px; }
+  
+  .date-calendar { top: 12px; left: 12px; width: 45px; }
+  .date-calendar .month { font-size: 0.65rem; padding: 3px 0; }
+  .date-calendar .day { font-size: 1.1rem; padding: 3px 0 5px; }
+
+  .countdown-badge { 
+    bottom: 12px; right: 12px; 
+    padding: 4px 12px; 
+    font-size: 0.75rem; 
+  }
+  .countdown-badge .icon-svg { width: 14px; height: 14px; }
+
+  .card-body { padding: 16px; }
+  .event-title { font-size: 1.15rem; margin-bottom: 10px; line-height: 1.3; }
+  
+  .event-meta { gap: 8px; margin-bottom: 16px; }
+  .meta-row { font-size: 0.85rem; }
+  
+  .card-footer { padding-top: 12px; flex-wrap: wrap; gap: 10px; }
+  
+  .status-indicator .text { font-size: 0.8rem; }
+  .btn-action { padding: 6px 14px; font-size: 0.8rem; }
+}
+
+@media (max-width: 480px) {
+  .event-card { border-radius: 16px; }
+  .card-image { height: 160px; }
+  
+  .card-body { padding: 14px; }
+  .event-title { font-size: 1.1rem; }
+  
+  .meta-row { font-size: 0.8rem; gap: 8px; }
+  .meta-row .icon-svg { width: 14px; height: 14px; }
+
+  .card-footer { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .btn-action { 
+    width: 100%; 
+    justify-content: center; 
+    padding: 10px 15px; 
+  }
+}
 </style>

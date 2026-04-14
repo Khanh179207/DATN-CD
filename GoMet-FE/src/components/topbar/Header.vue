@@ -90,7 +90,7 @@
         </div>
 
         <div class="action-wrapper">
-          <button class="btn-icon" :class="{ active: chatStore.isMessengerOpen }" @click.stop="toggleChat">
+          <button class="btn-icon" :class="{ active: chatStore.isMessengerOpen, 'is-blinking': isChatBlinking }" @click.stop="toggleChat">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
             </svg>
@@ -195,24 +195,19 @@ const feedbackForm = ref({ title: '', description: '', attachment: null });
 const originalTitle = ref(document.title);
 const notificationChannel = ref(null);
 
-// 🔥 LOGIC QUYẾT ĐỊNH MÀU HEADER: ĐEN HAY TRẮNG
+// 🚀 BIẾN QUẢN LÝ TRẠNG THÁI NHẤP NHÁY NÚT CHAT
+const isChatBlinking = ref(false);
+let blinkTimeout = null;
+
 const isDark = computed(() => {
-  // 1. Nếu router cố tình đánh dấu là Dark Theme
   if (route.meta?.isDark) return true;
-
-  // 2. Nếu là trang Admin (luôn dùng Header đen/đậm)
   if (route.path.startsWith('/admin')) return true;
-
-  // 3. Các trang có nền màu/dark theme (ĐÃ XÓA '/storage' KHỎI DANH SÁCH NÀY)
   const premiumRoutes = ['/leaderboard', '/meal-plan', '/suggestions'];
   return premiumRoutes.some(path => route.path.startsWith(path));
 });
 const unreadNotiCount = computed(() => notifications.value.filter(n => !n.isRead).length)
 
-const increaseBadge = () => {
-  // Force update the computed property by triggering reactivity
-  notifications.value = [...notifications.value];
-};
+const increaseBadge = () => { notifications.value = [...notifications.value]; };
 
 const addNotificationToDropdown = (notification) => {
   const newNotification = {
@@ -230,63 +225,34 @@ const addNotificationToDropdown = (notification) => {
 
 const playNotificationSound = () => {
   const sound = document.getElementById("notificationSound");
-  if (sound) {
-    sound.currentTime = 0;
-    sound.play().catch(err => console.log('Sound play failed:', err));
-  }
+  if (sound) { sound.currentTime = 0; sound.play().catch(err => console.log('Sound play failed:', err)); }
 };
 
 const updateTabTitle = () => {
   const count = unreadNotiCount.value;
-  if (count > 0) {
-    document.title = "(" + count + ") " + originalTitle.value;
-  } else {
-    document.title = originalTitle.value;
-  }
+  if (count > 0) { document.title = "(" + count + ") " + originalTitle.value; } 
+  else { document.title = originalTitle.value; }
 };
 
-const resetBadge = () => {
-  notifications.value.forEach(n => n.isRead = true);
-  document.title = originalTitle.value;
-};
+const resetBadge = () => { notifications.value.forEach(n => n.isRead = true); document.title = originalTitle.value; };
 
 const handleMarkAllRead = async () => {
   if (!authStore.user?.accountID) return
-  try {
-    await apiMarkAllRead(authStore.user.accountID);
-    resetBadge();
-  } catch (err) { }
+  try { await apiMarkAllRead(authStore.user.accountID); resetBadge(); } catch (err) { }
 }
 
 const toggleShopping = () => { 
-  if (!authStore.isAuthenticated) {
-    emit('open-login');
-    return;
-  }
-  
-  // 🔥 FIX: Kiểm tra "nhẹ tay" hơn, chấp nhận các giá trị 1, "true", "1", true
+  if (!authStore.isAuthenticated) { emit('open-login'); return; }
   const role = String(authStore.user?.role || '').toLowerCase();
-  
-  const isPremiumUser = (
-    role === 'premium' || 
-    ['true', '1', 1, true].includes(authStore.user?.isPremium) ||
-    ['true', '1', 1, true].includes(authStore.user?.IsPremium)
-  );
-
-  const isAdmin = (
-    role === 'admin' || 
-    ['true', '1', 1, true].includes(authStore.user?.isAdmin) ||
-    ['true', '1', 1, true].includes(authStore.user?.IsAdmin)
-  );
+  const isPremiumUser = ( role === 'premium' || ['true', '1', 1, true].includes(authStore.user?.isPremium) || ['true', '1', 1, true].includes(authStore.user?.IsPremium) );
+  const isAdmin = ( role === 'admin' || ['true', '1', 1, true].includes(authStore.user?.isAdmin) || ['true', '1', 1, true].includes(authStore.user?.IsAdmin) );
   
   if (!isPremiumUser && !isAdmin) {
     toast.warn('Tính năng Giỏ đi chợ là đặc quyền chỉ dành cho tài khoản Premium sếp nhé!');
     window.dispatchEvent(new CustomEvent('ui:open-premium'));
     return;
   }
-  
-  showNoti.value = false; 
-  showShopping.value = !showShopping.value; 
+  showNoti.value = false; showShopping.value = !showShopping.value; 
   if (showShopping.value) shoppingStore.fetchCart(); 
 }
 
@@ -309,15 +275,11 @@ const loadNotifications = async () => {
 }
 
 const handleNotiClick = async (n) => {
-  if (!n.isRead) {
-    n.isRead = true;
-    await markNotificationRead(n.id).catch(() => { });
-  }
+  if (!n.isRead) { n.isRead = true; await markNotificationRead(n.id).catch(() => { }); }
   showNoti.value = false;
-  if (n.link) {
-    router.push(n.link);
-  }
+  if (n.link) { router.push(n.link); }
 }
+
 const handleScroll = () => { isScrolled.value = window.scrollY > 10 }
 const handleCreatePost = () => { authStore.isAuthenticated ? router.push('/create-post') : emit('open-login') }
 const openGoogleMaps = () => { showMapModal.value = true; closeAllDropdowns(); }
@@ -325,24 +287,25 @@ const openGoogleMaps = () => { showMapModal.value = true; closeAllDropdowns(); }
 // Handle real-time notifications
 const handleRealtimeNotification = (event) => {
   const notificationDTO = event.detail;
-
   addNotificationToDropdown(notificationDTO);
   playNotificationSound();
   increaseBadge();
   updateTabTitle();
-
-  // Send to other tabs
-  if (notificationChannel.value) {
-    notificationChannel.value.postMessage(notificationDTO);
-  }
-
-  // Optionally show a toast or browser notification
+  if (notificationChannel.value) { notificationChannel.value.postMessage(notificationDTO); }
   if ('Notification' in window && Notification.permission === 'granted') {
-    new Notification(notificationDTO.title, {
-      body: notificationDTO.content,
-      icon: `https://ui-avatars.com/api/?name=${encodeURIComponent(notificationDTO.title)}&background=EA580C&color=fff`
-    });
+    new Notification(notificationDTO.title, { body: notificationDTO.content, icon: `https://ui-avatars.com/api/?name=${encodeURIComponent(notificationDTO.title)}&background=EA580C&color=fff` });
   }
+};
+
+// 🚀 HÀM XỬ LÝ NHÁY NÚT CHAT KHI NHẬN TÍN HIỆU TOÀN CẦU
+const handleGlobalChatAlert = (event) => {
+  // Bật nháy
+  isChatBlinking.value = true;
+  clearTimeout(blinkTimeout);
+  // Tắt nháy sau 4 giây
+  blinkTimeout = setTimeout(() => {
+    isChatBlinking.value = false;
+  }, 4000); 
 };
 
 onMounted(() => {
@@ -351,14 +314,14 @@ onMounted(() => {
 
   if (authStore.isAuthenticated) {
     shoppingStore.fetchCart();
-    loadNotifications(); // Load notifications on mount
-    // Connect to WebSocket for real-time notifications
+    loadNotifications(); 
     webSocketService.connect();
-    // Listen for real-time notifications
     window.addEventListener('realtime-notification', handleRealtimeNotification);
-    // Request notification permission
+    
+    // 🚀 ĐĂNG KÝ LẮNG NGHE TÍN HIỆU CHAT TOÀN CẦU ĐỂ NHÁY NÚT
+    window.addEventListener('global-chat-alert', handleGlobalChatAlert);
+
     requestNotificationPermission();
-    // Setup BroadcastChannel for multi-tab sync
     notificationChannel.value = new BroadcastChannel("notifications");
     notificationChannel.value.onmessage = (event) => {
       const notification = event.data;
@@ -371,22 +334,25 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll);
-  // Disconnect WebSocket and remove event listener
   webSocketService.disconnect();
   window.removeEventListener('realtime-notification', handleRealtimeNotification);
-  // Close BroadcastChannel
-  if (notificationChannel.value) {
-    notificationChannel.value.close();
-  }
+  
+  // 🚀 GỠ BỎ LẮNG NGHE KHI ĐÓNG COMPONENT
+  window.removeEventListener('global-chat-alert', handleGlobalChatAlert);
+  clearTimeout(blinkTimeout);
+
+  if (notificationChannel.value) { notificationChannel.value.close(); }
 })
 
-// Watch for authentication changes
 watch(() => authStore.isAuthenticated, (isAuthenticated) => {
   if (isAuthenticated) {
     webSocketService.connect();
     window.addEventListener('realtime-notification', handleRealtimeNotification);
+    
+    // 🚀 LẮNG NGHE LẠI KHI ĐĂNG NHẬP LẠI
+    window.addEventListener('global-chat-alert', handleGlobalChatAlert);
+
     requestNotificationPermission();
-    // Setup BroadcastChannel
     notificationChannel.value = new BroadcastChannel("notifications");
     notificationChannel.value.onmessage = (event) => {
       const notification = event.data;
@@ -397,18 +363,16 @@ watch(() => authStore.isAuthenticated, (isAuthenticated) => {
   } else {
     webSocketService.disconnect();
     window.removeEventListener('realtime-notification', handleRealtimeNotification);
-    // Close BroadcastChannel
-    if (notificationChannel.value) {
-      notificationChannel.value.close();
-    }
+    
+    // 🚀 GỠ LẮNG NGHE KHI ĐĂNG XUẤT
+    window.removeEventListener('global-chat-alert', handleGlobalChatAlert);
+
+    if (notificationChannel.value) { notificationChannel.value.close(); }
   }
 });
 
-// Request browser notification permission
 const requestNotificationPermission = () => {
-  if ('Notification' in window && Notification.permission === 'default') {
-    Notification.requestPermission();
-  }
+  if ('Notification' in window && Notification.permission === 'default') { Notification.requestPermission(); }
 };
 </script>
 
@@ -425,19 +389,35 @@ const requestNotificationPermission = () => {
   text-align: center;
   min-height: 200px;
 }
-.empty-cart-icon {
-  font-size: 3rem;
-  margin-bottom: 12px;
-  opacity: 0.5;
-}
-.empty-state-container p {
-  color: #64748b;
-  margin-bottom: 20px;
-  font-weight: 600;
-}
+.empty-cart-icon { font-size: 3rem; margin-bottom: 12px; opacity: 0.5; }
+.empty-state-container p { color: #64748b; margin-bottom: 20px; font-weight: 600; }
 .btn-go-shop {
   padding: 10px 24px; background: #f8fafc; border: 1px solid #e2e8f0;
   border-radius: 100px; font-weight: 700; color: #0f172a; cursor: pointer; transition: all 0.2s ease;
 }
 .btn-go-shop:hover { background: #ea580c; color: white; border-color: #ea580c; }
+
+/* 🚀 HIỆU ỨNG NHÁY NÚT CHAT (TINH TẾ & CHUYÊN NGHIỆP) */
+@keyframes softRipple {
+  0% {
+    box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(234, 88, 12, 0); /* Vòng sóng tỏa ra rồi mờ dần */
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(234, 88, 12, 0);
+  }
+}
+
+.btn-icon.is-blinking {
+  animation: softRipple 1.5s infinite cubic-bezier(0.66, 0, 0, 1);
+  color: #ea580c; /* Đổi màu icon sang cam nhẹ nhàng */
+  background-color: transparent; /* Giữ nguyên nền, không làm chói mắt */
+}
+
+.btn-icon.is-blinking svg {
+  stroke: #ea580c;
+  transition: stroke 0.3s ease;
+}
 </style>

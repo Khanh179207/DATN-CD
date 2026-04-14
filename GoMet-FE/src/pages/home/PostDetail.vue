@@ -747,14 +747,104 @@ const goToDetail = (id) => {
 }
 @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
 
+/* =======================================================
+   🔥 HỆ THỐNG RESPONSIVE (TỐI ƯU MỌI THIẾT BỊ)
+   ======================================================= */
+
+/* --- 1. Màn hình Laptop nhỏ & Tablet ngang (Dưới 1200px) --- */
+@media (max-width: 1200px) {
+  .global-container, .split-container-inner, .sk-container-inner { 
+    padding: 0 20px; 
+  }
+  .split-container-inner { 
+    gap: 40px; /* Thu hẹp khoảng cách giữa cột bình luận và cột gợi ý */
+  }
+  .sk-img-box { height: 500px; }
+}
+
+/* --- 2. Màn hình Tablet dọc & Mobile ngang (Dưới 1024px) --- */
 @media (max-width: 1024px) {
-  .split-container-inner { grid-template-columns: 1fr; gap: 60px; }
-  .sticky-sidebar { position: static; } 
-  .sk-container-inner { grid-template-columns: 1fr; gap: 40px; }
+  /* Ép Grid 2 cột thành 1 cột dọc (Stacking) */
+  .split-container-inner { 
+    grid-template-columns: 1fr; 
+    gap: 60px; 
+  }
+  
+  .sticky-sidebar { 
+    position: static; /* Tắt tính năng bám dính của cột Gợi ý */
+  } 
+  
+  /* Skeleton Loading */
+  .sk-container-inner { 
+    grid-template-columns: 1fr; 
+    gap: 40px; 
+  }
   .sk-img-box { height: 400px; }
-  .review-input-luxury { padding: 20px; margin-top: 24px; }
-  .input-header { flex-direction: column; align-items: flex-start; }
-  .action-buttons { width: 100%; flex-direction: column; }
-  .btn-submit-review, .btn-cancel-review { width: 100%; justify-content: center; }
+  .sk-title { height: 40px; }
+}
+
+/* --- 3. Màn hình Mobile Lớn (Dưới 768px) --- */
+@media (max-width: 768px) {
+  .author-full-width-section { padding: 30px 0; margin: 10px 0; }
+  .bottom-split-section { padding: 40px 0 80px; }
+  
+  .section-title { font-size: 1.8rem; margin-bottom: 6px; }
+  .section-subtitle { font-size: 0.95rem; }
+  .reviews-header { margin-bottom: 24px; }
+  
+  /* Form Nhập Đánh Giá (Review Input) */
+  .review-input-luxury { 
+    padding: 20px; 
+    margin: 24px 0 32px 0; 
+    border-radius: 20px;
+  }
+  
+  .input-header { 
+    flex-direction: column; /* Đẩy Avatar lên trên, Sao đánh giá xuống dưới */
+    align-items: flex-start; 
+    gap: 12px;
+  }
+  .current-user-avt { width: 40px; height: 40px; }
+  
+  /* Input Footer (Nút tải ảnh & Gửi) */
+  .input-footer { 
+    flex-direction: column; 
+    align-items: stretch; /* Dàn đều các nút ra full chiều ngang */
+    gap: 16px; 
+  }
+  .comment-upload-btn { justify-content: center; background: #fff4ed; color: #ea580c; border: 1px dashed #fdba74; }
+  
+  .action-buttons { 
+    width: 100%; 
+    flex-direction: column-reverse; /* Nút Gửi nằm trên, Nút Hủy nằm dưới */
+    gap: 10px; 
+  }
+  .btn-submit-review, .btn-cancel-review { 
+    width: 100%; 
+    justify-content: center; 
+    padding: 12px; 
+  }
+  .btn-cancel-review { background: #f8fafc; border: 1px solid #e2e8f0; }
+
+  /* Ảnh Preview */
+  .comment-image-previews { gap: 8px; }
+  .preview-item { width: 64px; height: 64px; border-radius: 10px; }
+}
+
+/* --- 4. Màn hình Mobile Cực Nhỏ (Dưới 480px - Vd: iPhone SE) --- */
+@media (max-width: 480px) {
+  .global-container, .split-container-inner, .sk-container-inner { padding: 0 16px; }
+  
+  .section-title { font-size: 1.6rem; }
+  
+  .review-input-luxury { padding: 16px; border-radius: 16px; }
+  .textarea-box textarea { font-size: 0.95rem; min-height: 60px; }
+  
+  .star-rating-input svg { width: 20px; height: 20px; } /* Thu nhỏ sao một chút cho đỡ chật */
+  .prompt-text { font-size: 0.9rem; }
+  
+  /* Skeleton Mobile */
+  .sk-img-box { height: 250px; border-radius: 20px; }
+  .sk-title { width: 100%; }
 }
 </style>

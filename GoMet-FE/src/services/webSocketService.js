@@ -2,6 +2,9 @@ import SockJS from 'sockjs-client';
 import Stomp from 'stompjs';
 import { useAuthStore } from '@/stores/auth';
 
+// 🚀 1. KHỞI TẠO ÂM THANH (PRE-LOAD) Ở ĐẦU FILE
+const globalMsgSound = new Audio('/sounds/ting.mp3');
+
 class WebSocketService {
     constructor() {
         this.stompClient = null;
@@ -105,6 +108,39 @@ class WebSocketService {
         // before sending subscription requests
         setTimeout(() => {
             try {
+                // ==========================================
+                // 🚀 2. KÊNH LẮNG NGHE CHAT TOÀN CẦU (BÁO ÂM THANH)
+                // ==========================================
+                const globalChatTopic = `/topic/global-chat/${accountId}`;
+                const chatSubscription = this.stompClient.subscribe(
+                    globalChatTopic,
+                    (message) => {
+                        try {
+                            const chatData = JSON.parse(message.body);
+                            console.log('💬 Nhận được tin nhắn ở chế độ Global:', chatData);
+                            
+                            // PHÁT ÂM THANH
+                            globalMsgSound.currentTime = 0; // Trả về đầu bài để phát liên tục
+                            globalMsgSound.play().catch((err) => {
+                                console.warn("Trình duyệt chặn autoplay âm thanh:", err);
+                            });
+
+                            // Phát CustomEvent nếu cần làm Badge báo tin nhắn mới
+                            const event = new CustomEvent('global-chat-alert', { detail: chatData });
+                            window.dispatchEvent(event);
+                            
+                        } catch (error) {
+                            console.error('Error parsing global chat alert:', error);
+                        }
+                    }
+                );
+                this.subscriptions.set('global-chat', chatSubscription);
+                console.log('Subscribed to: ' + globalChatTopic);
+
+                // ==========================================
+                // CODE CŨ - GIỮ NGUYÊN HOÀN TOÀN
+                // ==========================================
+
                 // Subscribe to user-specific notifications using topic-based approach
                 const notificationTopic = `/topic/notifications/${accountId}`;
                 const notificationSubscription = this.stompClient.subscribe(

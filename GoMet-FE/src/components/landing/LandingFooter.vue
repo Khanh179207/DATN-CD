@@ -76,7 +76,6 @@
     </div>
   </footer>
 
-  <!-- Appeal Modal Teleport -->
   <Teleport to="body">
     <AppealModal v-if="showAppealModal" @close="showAppealModal = false" />
   </Teleport>
@@ -91,7 +90,7 @@ const showAppealModal = ref(false)
 
 <style scoped>
 .landing-footer {
-  background-color: #FAFAF9; /* Nền kem sáng sang trọng */
+  background-color: #FAFAF9;
   padding: 80px 0 0;
   border-top: 1px solid #E7E5E4;
   font-family: 'Quicksand', sans-serif;
@@ -101,17 +100,18 @@ const showAppealModal = ref(false)
 .container { max-width: 1200px; margin: 0 auto; padding: 0 30px; }
 
 .footer-content {
-  display: grid; grid-template-columns: 1.5fr 1fr 1fr 1.2fr; gap: 60px;
+  display: grid; 
+  grid-template-columns: 1.5fr 1fr 1fr 1.2fr; 
+  gap: 60px;
   margin-bottom: 60px;
 }
 
-/* --- Brand Column --- */
 .brand-wrapper { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
 
 .brand-logo {
   width: 45px; height: 45px; object-fit: cover;
-  border-radius: 12px; /* Bo góc logo */
-  box-shadow: 0 4px 10px rgba(249, 115, 22, 0.2); /* Bóng cam nhẹ */
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(249, 115, 22, 0.2);
 }
 
 .brand-name {
@@ -123,7 +123,6 @@ const showAppealModal = ref(false)
   color: #57534E; line-height: 1.6; margin-bottom: 25px; font-size: 0.95rem;
 }
 
-/* Socials */
 .socials { display: flex; gap: 12px; }
 .social-link {
   width: 40px; height: 40px; border-radius: 50%;
@@ -137,8 +136,6 @@ const showAppealModal = ref(false)
 .social-link.fb:hover { background: #1877F2; border-color: #1877F2; color: white; }
 .social-link.ig:hover { background: #E4405F; border-color: #E4405F; color: white; }
 .social-link.yt:hover { background: #FF0000; border-color: #FF0000; color: white; }
-
-/* --- Link Columns --- */
 h4 {
   font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700;
   margin-bottom: 25px; color: #1C1917;
@@ -146,38 +143,76 @@ h4 {
 
 .footer-links { list-style: none; padding: 0; margin: 0; }
 .footer-links li { margin-bottom: 12px; }
-.footer-links a, .footer-links router-link {
+.footer-links a, .footer-links :deep(a) {
   text-decoration: none; color: #57534E; font-size: 0.95rem; font-weight: 500;
   transition: 0.2s; display: inline-block;
 }
-.footer-links a:hover, .footer-links router-link:hover { color: #F97316; transform: translateX(5px); }
-
-/* --- Contact Column --- */
+.footer-links a:hover, .footer-links :deep(a):hover { color: #F97316; transform: translateX(5px); }
 .contact-item { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
 .contact-item .icon { font-size: 1.2rem; }
 .contact-item .info { display: flex; flex-direction: column; }
 .contact-item .label { font-size: 0.75rem; color: #A8A29E; font-weight: 600; text-transform: uppercase; }
 .contact-item .value { font-size: 0.95rem; color: #1C1917; font-weight: 700; }
-
-/* --- Bottom --- */
 .footer-bottom {
   border-top: 1px solid #E5E5E4; background: #F5F5F4;
   padding: 20px 0; font-size: 0.85rem; color: #78716C;
 }
 .bottom-flex { display: flex; justify-content: space-between; align-items: center; }
-.bottom-links a, .bottom-links router-link { text-decoration: none; color: #78716C; transition: 0.2s; }
-.bottom-links a:hover, .bottom-links router-link:hover { color: #1C1917; }
+.bottom-links a, .bottom-links :deep(a) { text-decoration: none; color: #78716C; transition: 0.2s; }
+.bottom-links a:hover, .bottom-links :deep(a):hover { color: #1C1917; }
 .dot { margin: 0 10px; opacity: 0.5; }
-
-/* Responsive */
-@media (max-width: 900px) {
-  .footer-content { grid-template-columns: 1fr 1fr; gap: 40px; }
+@media (max-width: 1024px) {
+  .footer-content {
+    gap: 30px; 
+  }
+  .container {
+    padding: 0 20px;
+  }
 }
-@media (max-width: 600px) {
-  .footer-content { grid-template-columns: 1fr; text-align: center; }
-  .brand-wrapper, .socials { justify-content: center; }
-  .contact-item { justify-content: center; }
-  .contact-item .info { text-align: left; }
-  .bottom-flex { flex-direction: column; gap: 10px; }
+
+
+@media (max-width: 768px) {
+  .landing-footer {
+    padding-top: 50px;
+  }
+  .footer-content {
+    grid-template-columns: 1fr 1fr; 
+    gap: 40px 20px;
+  }
+  .brand-col {
+    grid-column: span 2; 
+    margin-bottom: 20px;
+  }
+}
+
+
+@media (max-width: 480px) {
+  .footer-content {
+    grid-template-columns: 1fr; 
+    text-align: center; 
+    gap: 40px;
+  }
+  
+  .brand-col {
+    grid-column: span 1;
+  }
+
+  .brand-wrapper, .socials, .contact-item {
+    justify-content: center;
+  }
+  
+  .contact-item .info {
+    text-align: left; 
+  }
+
+  .footer-links a:hover {
+    transform: none; 
+  }
+
+  .bottom-flex {
+    flex-direction: column; 
+    gap: 15px;
+    text-align: center;
+  }
 }
 </style>
