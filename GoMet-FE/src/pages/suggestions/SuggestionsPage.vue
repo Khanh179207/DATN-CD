@@ -155,7 +155,7 @@ const enterGame = (mode) => {
 const returnToHub = () => { activeMode.value = 'hub'; showResult.value = false }
 const closeResult = () => { showResult.value = false }
 const handleGameFinish = (dish) => { resultDish.value = dish; showResult.value = true }
-const goToDetail = () => router.push(`/home/post/${resultDish.value.id}`)
+const goToDetail = () => router.push(`/post/${resultDish.value.id}`)
 
 onMounted(async () => {
   try {
