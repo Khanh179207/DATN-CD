@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize; // 🔥 IMPORT THẺ BẢO VỆ
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dao.AccountDAO;
+import poly.edu.dao.SystemConfigDAO;
 import poly.edu.dao.FollowDAO;
 import poly.edu.dao.InteractionLogDAO;
 import poly.edu.dao.PostDAO;
@@ -35,6 +36,7 @@ public class UserController {
     private final FollowDAO followDAO;
     private final poly.edu.service.AccountService accountService;
     private final poly.edu.dao.HistoryDAO historyDAO;
+    private final SystemConfigDAO systemConfigDAO;
 
     @Autowired
     private InteractionLogDAO interactionLogDAO;
@@ -245,7 +247,12 @@ public class UserController {
         LocalDateTime startOfDay = LocalDateTime.now().with(java.time.LocalTime.MIN);
         LocalDateTime endOfDay = LocalDateTime.now().with(java.time.LocalTime.MAX);
         long viewsToday = historyDAO.countDistinctPostsViewedToday(id, startOfDay, endOfDay);
-        int maxViews = 3;
+        
+        // 🔥 Lấy giới hạn từ cấu hình hệ thống
+        int maxViews = systemConfigDAO.findById("DEFAULT_FREE_VIEWS")
+                        .map(c -> Integer.parseInt(c.getConfigValue()))
+                        .orElse(3);
+                        
         long remaining = Math.max(0, maxViews - viewsToday);
         return ResponseEntity.ok(Map.of(
             "usedViews", viewsToday,

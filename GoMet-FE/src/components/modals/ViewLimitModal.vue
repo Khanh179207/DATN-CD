@@ -10,7 +10,7 @@
       
       <h3 class="limit-title">Giới hạn xem hàng ngày</h3>
       <p class="limit-desc">
-        Bạn đã hết 3 lượt xem miễn phí trong ngày hôm nay. 
+        Bạn đã hết {{ maxViews }} lượt xem miễn phí trong ngày hôm nay. 
         <br/><br/>
         Bài viết này cần <strong>1 GoMetCoin</strong> để mở ra. Bài viết sau khi mở sẽ xem thoải mái đến hết ngày mà không mất thêm điểm!
       </p>
@@ -55,6 +55,18 @@ const props = defineProps({
 const emit = defineEmits(['close', 'unlocked', 'open-store'])
 const authStore = useAuthStore()
 const isUnlocking = ref(false)
+const maxViews = ref(3)
+
+const fetchLimit = async () => {
+  if (authStore.user?.accountID) {
+    try {
+      const res = await api.get(`/api/users/${authStore.user.accountID}/view-limits`)
+      maxViews.value = res.data.maxViews
+    } catch (e) {}
+  }
+}
+
+fetchLimit() // Gọi ngay khi component được khởi tạo
 
 const closeModal = () => emit('close')
 

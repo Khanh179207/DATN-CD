@@ -1,6 +1,7 @@
 package poly.edu.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,13 +22,14 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/posts")
 @RequiredArgsConstructor
-
+@Slf4j
 public class PostController {
 
     private final PostDAO postDAO;
     private final FavoriteDAO favoriteDAO;
     private final CommentDAO commentDAO;
     private final FollowDAO followDAO;
+    private final SystemConfigDAO systemConfigDAO;
     private final AccountDAO accountDAO;
     private final CategoryDAO categoryDAO;
     private final CookingStepsDAO cookingStepsDAO;
@@ -96,43 +98,55 @@ public class PostController {
             @RequestParam(required = false) Integer accountId) {
 
         return postDAO.findById(id).map(post -> {
-            // 🛡️ BẢO VỆ RIÊNG TƯ: Nếu tác giả đã xóa tài khoản thì bài viết cũng phải ẩn
-            if (post.getAccount() != null && post.getAccount().getIsActive() != 1) {
+            // 🔥 ĐÃ FIX: Lấy thông tin người xem (nếu có) trước để kiểm tra quyền Admin
+            Account currentAccount = null;
+            if (accountId != null) {
+                currentAccount = accountDAO.findById(accountId).orElse(null);
+            }
+
+            boolean isViewerAdmin = currentAccount != null && currentAccount.getIsAdmin() == 1;
+
+            // 🛡️ BẢO VỆ RIÊNG TƯ: Nếu tác giả đã xóa tài khoản thì bài viết cũng phải ẩn (TRỪ KHI ADMIN ĐANG XEM)
+            if (!isViewerAdmin && post.getAccount() != null && post.getAccount().getIsActive() != 1) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Bài viết không tồn tại hoặc đã bị ẩn"));
             }
 
-            // 🔥 LOGIC GIỚI HẠN LƯỢT XEM BẰNG GOMET COIN
-            if (accountId == null) {
-                // Yêu cầu đăng nhập để xem bài viết
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("code", "LOGIN_REQUIRED", "message", "Vui lòng đăng nhập để xem chi tiết bài viết"));
-            }
-
-            Account currentAccount = accountDAO.findById(accountId).orElse(null);
-            if (currentAccount == null) {
+            // Nếu có gửi accountId mà không tìm thấy account và người đó không phải là Admin thì báo lỗi
+            if (accountId != null && currentAccount == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Tài khoản không tồn tại"));
             }
 
-            boolean isAuthor = post.getAccount() != null && post.getAccount().getAccountID().equals(accountId);
-            boolean isPremium = currentAccount.getIsPremium() == 1;
+            boolean isAuthor = accountId != null && post.getAccount() != null && post.getAccount().getAccountID().equals(accountId);
+            boolean isPremium = currentAccount != null && currentAccount.getIsPremium() == 1;
 
-            if (!isAuthor && !isPremium) {
-                LocalDateTime startOfDay = LocalDateTime.now().with(java.time.LocalTime.MIN);
-                LocalDateTime endOfDay = LocalDateTime.now().with(java.time.LocalTime.MAX);
-
-                boolean alreadyViewed = historyDAO.hasViewedPostToday(accountId, id, startOfDay, endOfDay);
-                if (!alreadyViewed) {
+            if (!isViewerAdmin && !isAuthor && !isPremium) {
+                // Logic giới hạn lượt xem chỉ áp dụng cho User hoặc Guest thường (KHÔNG ÁP DỤNG CHO ADMIN)
+                if (currentAccount != null) {
+                    LocalDateTime startOfDay = LocalDateTime.now().with(java.time.LocalTime.MIN);
+                    LocalDateTime endOfDay = LocalDateTime.now().with(java.time.LocalTime.MAX);
                     long viewsToday = historyDAO.countDistinctPostsViewedToday(accountId, startOfDay, endOfDay);
-                    if (viewsToday >= 3) {
-                        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
-                                "code", "VIEW_LIMIT_REACHED",
-                                "message", "Bạn đã hết lượt xem miễn phí hôm nay. Dùng 1 GoMetCoin để mở khóa bài viết này?"
-                        ));
+                    
+                    // 🔥 LẤY GIỚI HẠN TỪ CẤU HÌNH HỆ THỐNG (Mặc định là 3 nếu không tìm thấy)
+                    int viewLimit = 3;
+                    try {
+                        viewLimit = systemConfigDAO.findById("DEFAULT_FREE_VIEWS")
+                                .map(c -> Integer.parseInt(c.getConfigValue()))
+                                .orElse(3);
+                    } catch (Exception e) {
+                        log.error("Lỗi lấy cấu hình DEFAULT_FREE_VIEWS: {}", e.getMessage());
+                    }
+
+                    if (viewsToday >= viewLimit) {
+                        List<History> records = historyDAO.findByAccount_AccountIDAndPost_PostID(accountId, id);
+                        if (records.isEmpty()) {
+                            return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).body(Map.of("code", "LIMIT_EXCEEDED", "message", "Bạn đã hết lượt xem miễn phí hôm nay. Hãy nâng cấp Premium!"));
+                        }
                     }
                 }
             }
 
-            // Nếu hợp lệ -> Ghi lịch sử luôn ở đây!
-            if (!isAuthor) {
+            // Nếu hợp lệ -> Ghi lịch sử luôn ở đây! (CHỈ GHI NẾU CÓ TÀI KHOẢN THỰC)
+            if (!isAuthor && currentAccount != null) {
                 List<History> existing = historyDAO.findByAccount_AccountIDAndPost_PostID(accountId, id);
                 History history;
                 if (!existing.isEmpty()) {

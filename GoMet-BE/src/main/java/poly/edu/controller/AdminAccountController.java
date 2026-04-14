@@ -13,7 +13,7 @@ import java.util.Map;
 
 @Slf4j
 @RestController
-@RequestMapping("/admin/accounts")
+@RequestMapping("/api/admin/member-accounts")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 

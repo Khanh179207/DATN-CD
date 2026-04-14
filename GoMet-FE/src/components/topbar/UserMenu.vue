@@ -132,8 +132,8 @@ const isOpen = ref(false)
 
 // 🔥 KẾT HỢP: Lấy logic ngày lễ từ develop và logic đồng bộ của sếp
 const { isHolidayEventActive, checkGlobalHolidayStatus } = usePostViewLimit()
-const remainingViews = ref(3)
-const maxViews = ref(3)
+const remainingViews = ref(0)
+const maxViews = ref(0)
 
 const dropdownPanel = ref(null)
 const avatarCircle = ref(null)

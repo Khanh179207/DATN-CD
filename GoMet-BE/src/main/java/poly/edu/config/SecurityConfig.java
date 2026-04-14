@@ -59,7 +59,7 @@ public class SecurityConfig {
                         ).permitAll()
 
                         // 🔒 PHÂN QUYỀN ĐẶC BIỆT
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
                         // 🔒 TẤT CẢ CÁC REQUEST CÒN LẠI: Phải đăng nhập (Có Token hợp lệ)
                         // Ví dụ: POST /api/posts (Đăng bài), PUT /api/users (Sửa profile) sẽ rơi vào đây

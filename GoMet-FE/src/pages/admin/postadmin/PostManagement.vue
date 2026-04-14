@@ -513,7 +513,7 @@ const openDetail = async (post) => {
   selectedPost.value = { ...post }
   showModal.value = true 
   try {
-    const res = await api.get(`/api/posts/${post.postID}`)
+    const res = await api.get(`/api/posts/${post.postID}`, { params: { accountId: authStore.user?.accountID || authStore.user?.id } })
     if (res.data) {
       selectedPost.value = { ...selectedPost.value, ...res.data, rejectReason: selectedPost.value.rejectReason, rejectedAt: selectedPost.value.rejectedAt }
     }

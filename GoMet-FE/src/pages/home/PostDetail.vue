@@ -385,7 +385,7 @@ async function loadPost(id) {
     window.dispatchEvent(new CustomEvent('ui:view-limits-updated'));
 
   } catch (err) {
-    if (err.response?.data?.code === 'VIEW_LIMIT_REACHED') {
+    if (err.response?.data?.code === 'LIMIT_EXCEEDED') {
       showLimitModal.value = true;
     } else {
       console.warn('PostDetail: load error', err)
