@@ -51,7 +51,7 @@ export function formatDate(date) {
  * @param {string} originalContent - Original content from backend
  * @returns {string} Localized content
  */
-export function getVietnameseNotificationContent(type, originalContent = '') {
+export function getLocalizedNotificationContent(type, originalContent = '') {
     const translations = {
         COMMENT: i18n.global.t('admin.notifications.activities.comment'),
         FOLLOW: i18n.global.t('admin.notifications.activities.follow'),
@@ -76,7 +76,7 @@ export function getVietnameseNotificationContent(type, originalContent = '') {
  * @param {string} type - Notification type
  * @returns {string} Localized title
  */
-export function getVietnameseNotificationTitle(type) {
+export function getLocalizedNotificationTitle(type) {
     const titles = {
         COMMENT: i18n.global.t('admin.notifications.titles.comment'),
         FOLLOW: i18n.global.t('admin.notifications.titles.follow'),
@@ -95,3 +95,6 @@ export function getVietnameseNotificationTitle(type) {
 
     return titles[type] || i18n.global.t('notifications.fallback_title');
 }
+
+export const getVietnameseNotificationContent = getLocalizedNotificationContent;
+export const getVietnameseNotificationTitle = getLocalizedNotificationTitle;

@@ -1,3 +1,4 @@
+
 <template>
   <div class="gomet-entry-card" :class="{ 'is-top-3': rank > 0 && rank <= 3 }">
     <div v-if="rank > 0 && rank <= 3" class="rank-badge" :class="'rank-' + rank">
@@ -202,7 +203,7 @@ const formatNumber = (n) => Number(n || 0).toLocaleString(locale.value === 'en' 
     .entry-title {
       font-size: 1.15rem; font-weight: 800; color: #0f172a;
       margin: 0 0 12px; cursor: pointer;
-      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+      display: -webkit-box; line-clamp: 2; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
       line-height: 1.4; transition: color 0.2s;
       &:hover { color: #EA580C; }
     }

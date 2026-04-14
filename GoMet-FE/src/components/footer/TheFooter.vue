@@ -38,7 +38,7 @@
         <h4>{{ t('footer.contact_title') }}</h4>
         <div class="contact-item">
           <span class="label">{{ t('footer.contact_email') }}</span>
-          <span class="value">contact@gomet.vn</span>
+          <span class="value">{{ t('footer.contact_email_value') }}</span>
         </div>
         <div class="contact-item">
           <span class="label">{{ t('footer.contact_hotline') }}</span>

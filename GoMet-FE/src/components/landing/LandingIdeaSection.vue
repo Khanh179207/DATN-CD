@@ -85,7 +85,7 @@
               <div class="card-body">
                 <img src="https://i.pravatar.cc/150?u=10" class="user-avt">
                 <h3>{{ $t('landing.community_profile_small_name') }}</h3>
-                <span class="handle">@gocbepnho</span>
+                <span class="handle">{{ $t('landing.community_profile_small_handle') }}</span>
                 <div class="user-stats">
                   <div class="u-stat"><strong>12k</strong><span>{{ $t('landing.community_follow') }}</span></div>
                   <div class="u-stat"><strong>45</strong><span>{{ $t('landing.community_posts') }}</span></div>
@@ -100,7 +100,7 @@
               <div class="card-body">
                 <img src="https://i.pravatar.cc/150?u=20" class="user-avt">
                 <h3>{{ $t('landing.community_profile_featured_name') }} <span class="verified">✓</span></h3>
-                <span class="handle">@masterchef_vn</span>
+                <span class="handle">{{ $t('landing.community_profile_featured_handle') }}</span>
                 <div class="user-stats">
                   <div class="u-stat"><strong>85k</strong><span>{{ $t('landing.community_follow') }}</span></div>
                   <div class="u-stat"><strong>120</strong><span>{{ $t('landing.community_posts') }}</span></div>
@@ -114,7 +114,7 @@
               <div class="card-body">
                 <img src="https://i.pravatar.cc/150?u=30" class="user-avt">
                 <h3>{{ $t('landing.community_profile_healthy_name') }}</h3>
-                <span class="handle">@healthy_life</span>
+                <span class="handle">{{ $t('landing.community_profile_healthy_handle') }}</span>
                 <div class="user-stats">
                   <div class="u-stat"><strong>34k</strong><span>{{ $t('landing.community_follow') }}</span></div>
                   <div class="u-stat"><strong>88</strong><span>{{ $t('landing.community_posts') }}</span></div>
