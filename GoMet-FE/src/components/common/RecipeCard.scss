@@ -181,6 +181,59 @@
       }
     }
   }
+
+  /* --- BANNED STATE (isActive = -1) --- */
+  &.is-banned {
+    border: 2.5px solid #EF4444 !important;
+    background: #FEF2F2 !important;
+    box-shadow: 0 10px 30px rgba(239, 68, 68, 0.15) !important;
+    transform: none !important; // Khóa không cho bay nhảy
+
+    .main-img {
+      filter: grayscale(1) blur(2.5px) brightness(0.5);
+    }
+
+    .card-title {
+      color: #991B1B !important;
+      opacity: 0.8;
+    }
+
+    .category-tag {
+      background: #FEE2E2;
+      color: #EF4444;
+      border-color: #FECACA;
+    }
+
+    .meta-top, .card-footer {
+      opacity: 0.6;
+    }
+
+    &:hover {
+      transform: none !important;
+      box-shadow: 0 10px 30px rgba(239, 68, 68, 0.2) !important;
+    }
+  }
+
+  /* --- PENDING STATE (isApproved = 0) --- */
+  &.is-pending {
+    border: 2px solid #F59E0B !important; // Màu vàng cam (Amber-500)
+    background: #FFFBEB !important; // Nền vàng nhạt (Amber-50)
+    box-shadow: 0 10px 30px rgba(245, 158, 11, 0.1) !important;
+
+    .card-title {
+      color: #92400E !important;
+    }
+
+    .category-tag {
+      background: #FEF3C7;
+      color: #D97706;
+      border-color: #FDE68A;
+    }
+
+    &:hover {
+      box-shadow: 0 15px 35px rgba(245, 158, 11, 0.2) !important;
+    }
+  }
 }
 
 @keyframes shimmer {
@@ -256,6 +309,93 @@
       text-transform: uppercase;
     }
   }
+}
+
+.banned-overlay-badge {
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  padding: 20px;
+
+  .glass-inner {
+    background: rgba(153, 27, 27, 0.8);
+    backdrop-filter: blur(12px);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    animation: ban-pulse 1.5s infinite ease-in-out;
+
+    svg { 
+      color: #FCA5A5;
+      filter: drop-shadow(0 0 12px rgba(239, 68, 68, 0.8));
+    }
+
+    span {
+      font-size: 0.8rem;
+      font-weight: 900;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+  }
+}
+
+@keyframes ban-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 20px 50px rgba(153, 27, 27, 0.4); }
+  50% { transform: scale(1.08); box-shadow: 0 25px 60px rgba(153, 27, 27, 0.6); }
+}
+
+.pending-overlay-badge {
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  padding: 20px;
+
+  .glass-inner {
+    background: rgba(180, 83, 9, 0.85); // Nâu vàng đậm
+    backdrop-filter: blur(12px);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 20px 50px rgba(180, 83, 9, 0.4);
+    animation: pending-pulse 2s infinite ease-in-out;
+
+    svg { 
+      color: #FDE68A;
+      filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.8));
+    }
+
+    span {
+      font-size: 0.8rem;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+  }
+}
+
+@keyframes pending-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.9; }
 }
 
 @keyframes badge-pulse {

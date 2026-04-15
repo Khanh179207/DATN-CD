@@ -44,12 +44,14 @@
               <transition name="fade">
                 <div v-if="previewData['HERO_POST_' + n]" class="post-preview-card" :class="{ 'error-border': previewData['HERO_POST_' + n].error }">
                   <Loader2 v-if="previewData['HERO_POST_' + n].loading" :size="16" class="spin-icon text-gray" />
+                  
                   <template v-else-if="previewData['HERO_POST_' + n].error">
                     <div class="error-detail">
                       <span class="text-red">❌ {{ previewData['HERO_POST_' + n].errorMsg || 'Không tồn tại' }}</span>
                       <small class="tech-code" v-if="previewData['HERO_POST_' + n].status">Mã lỗi: {{ previewData['HERO_POST_' + n].status }}</small>
                     </div>
                   </template>
+
                   <template v-else>
                     <img :src="previewData['HERO_POST_' + n].image" class="preview-thumb">
                     <div class="preview-info">
@@ -201,7 +203,7 @@ const formData = ref({
   HERO_POST_1: '', HERO_POST_2: '', HERO_POST_3: '',
   PREMIUM_PRICE_1_MONTH: '', PREMIUM_PRICE_12_MONTHS: '', PREMIUM_PRICE_LIFETIME: '',
   ADS_BANNER_IMG: '', ADS_TARGET_URL: '',
-  FREE_ACCESS_EVENT: 'FALSE', // 🔥 Key mở khóa ngày lễ
+  FREE_ACCESS_EVENT: 'FALSE', 
   HOLIDAY_START: '', 
   HOLIDAY_END: '',
   DEFAULT_FREE_VIEWS: '3' // 🔥 Mặc định cho tất cả user
@@ -237,11 +239,35 @@ const handleInputDebounce = (key) => {
   debounceTimer = setTimeout(() => fetchPostPreview(key, formData.value[key]), 600);
 }
 
+// 🔥 ĐÃ SỬA: Chặn không cho gắn bài ẩn/chưa duyệt
 const fetchPostPreview = async (key, postId) => {
   try {
     const adminId = authStore.user?.accountID || authStore.user?.id;
     const res = await api.get(`/api/posts/${postId}`, { params: { accountId: adminId } });
     const p = res.data?.data || res.data;
+
+    // Kiểm tra trạng thái bài viết
+    const isActive = Number(p.isActive ?? 1);
+    const isApproved = Number(p.isApproved ?? 1);
+
+    if (isActive !== 1 || isApproved !== 1) {
+      let reason = 'Không hợp lệ';
+      if (isActive === 1 && isApproved === 0) reason = 'đang chờ duyệt';
+      else if (isActive === 0) reason = 'đang bị ẩn bởi tác giả';
+      else if (isActive === -1) reason = 'đã bị Admin gỡ';
+
+      // Hiển thị lỗi UI
+      previewData.value[key] = { loading: false, error: true, errorMsg: `❌ Bài viết ${reason}` };
+      
+      // Bắn Toast báo cho Admin biết
+      toast.warn(`Post ID #${postId} ${reason}, không thể chọn!`);
+      
+      // Reset input ngay lập tức để không cho phép lưu ID không hợp lệ vào DB
+      formData.value[key] = '';
+      return;
+    }
+
+    // Nếu bài viết sạch sẽ, cho phép hiển thị
     previewData.value[key] = {
       loading: false, error: false,
       title: p.title, image: p.media || p.image,
@@ -255,6 +281,9 @@ const fetchPostPreview = async (key, postId) => {
       status: e.response?.status,
       errorMsg: e.response?.data?.message || 'Không tìm thấy bài viết'
     }; 
+    if (e.response?.status === 404) {
+      formData.value[key] = '';
+    }
   }
 }
 
@@ -286,8 +315,6 @@ onMounted(fetchConfigs)
 </script>
 
 <style scoped lang="scss">
-// Kế thừa toàn bộ Style của sếp và thêm phần Holiday Mode Luxury:
-
 .holiday-card {
   border: 2px solid #fbcfe8;
   background: linear-gradient(to bottom right, #ffffff, #fff1f2);

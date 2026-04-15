@@ -5,7 +5,13 @@
     tabindex="0"
     role="article"
     :aria-label="post?.title"
-    :class="{ 'is-skeleton': loading, 'is-premium-card': post?.isPremium, 'is-hidden-p': isManagement && post?.isActive === 0 }"
+    :class="{ 
+      'is-skeleton': loading, 
+      'is-premium-card': post?.isPremium, 
+      'is-hidden-p': isManagement && post?.isActive === 0,
+      'is-banned': post?.isActive === -1,
+      'is-pending': post?.isActive === 1 && post?.isApproved === 0
+    }"
     @click="goToDetail"
     @keydown.enter.prevent="goToDetail"
   >
@@ -20,10 +26,26 @@
         </div>
       </div>
 
+      <!-- Banned Badge Overlay -->
+      <div v-if="post?.isActive === -1" class="banned-overlay-badge">
+        <div class="glass-inner">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
+          <span>BÀI VIẾT BỊ KHÓA</span>
+        </div>
+      </div>
+
+      <!-- Pending Approval Badge Overlay -->
+      <div v-if="post?.isActive === 1 && post?.isApproved === 0" class="pending-overlay-badge">
+        <div class="glass-inner">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          <span>ĐANG CHỜ DUYỆT</span>
+        </div>
+      </div>
+
       <div class="media-overlay"></div>
       <span class="category-tag" v-if="post?.category">{{ post?.category }}</span>
 
-      <div class="quick-actions">
+      <div class="quick-actions" v-if="post?.isActive !== -1">
         <button class="btn-action" @click.stop="toggleSave" :title="isSaved ? $t('post.saved') : $t('post.unsaved')" :disabled="isSaving" :class="{ saving: isSaving }">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :class="{ 'filled': isSaved }">
             <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
@@ -112,7 +134,7 @@
             <span class="stat-text">{{ formatNumber(post?.views || post?.viewCount || 0) }}</span>
           </div>
 
-          <div class="stats-group like-action">
+          <div class="stats-group like-action" v-if="post?.isActive !== -1">
             <button 
               class="btn-icon-like" 
               @click.stop="toggleLike" 

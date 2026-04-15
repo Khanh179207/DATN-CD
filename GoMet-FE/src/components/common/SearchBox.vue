@@ -213,8 +213,8 @@ watch(() => authStore.user, (newUser) => {
 <style scoped lang="scss">
 @use '../../assets/styles/variables' as *;
 
-.search-premium-container { flex: 1; display: flex; justify-content: center; position: relative; z-index: 1001; min-width: 0; }
-.search-pill { display: flex; align-items: center; width: 100%; max-width: 500px; height: 48px; background: var(--color-neutral-100); border-radius: 24px; padding: 4px; border: 1.5px solid transparent; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); position: relative; z-index: 1002; }
+.search-premium-container { flex: 1; display: flex; position: relative; z-index: 1001; min-width: 0; }
+.search-pill { display: flex; align-items: center; width: 100%; max-width: 650px; height: 48px; background: var(--color-neutral-100); border-radius: 24px; padding: 4px; border: 1.5px solid transparent; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); position: relative; z-index: 1002; }
 .search-pill.is-active { background: #ffffff; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); }
 .input-section { display: flex; align-items: center; flex: 1; height: 100%; padding-left: 16px; min-width: 0; }
 .icon-prefix { color: var(--color-neutral-400); display: flex; margin-right: 8px; flex-shrink: 0; }

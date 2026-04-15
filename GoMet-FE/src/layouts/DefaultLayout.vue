@@ -82,8 +82,8 @@
          @close="showMealplanModal = false" 
        />
        
-       <!-- NEW: GOMET STORE MODAL -->
-       <StoreModal v-if="showStoreModal" :is-open="showStoreModal" @close="showStoreModal = false" />
+       <!-- NEW: GOMET STORE MODAL (Mạng lưới Pinia) -->
+       <StoreModal v-if="uiStore.isStoreOpen" :is-open="uiStore.isStoreOpen" @close="uiStore.closeStore" />
     </Teleport>
   </div>
 </template>
@@ -105,8 +105,9 @@ import AuthModal from '@/components/modals/AuthModal.vue'
 import PremiumModal from '@/components/modals/PremiumModal.vue'
 import ExpiredModal from '@/components/modals/ExpiredModal.vue'
 import MealplanModal from '@/components/modals/MealplanModal.vue'
-// 🔥 IMPORT STORE MODAL
+// 🔥 IMPORT STORE MODAL & UI STORE
 import StoreModal from '@/components/modals/StoreModal.vue'
+import { useUIStore } from '@/stores/ui'
 
 import MiniChatBox from '@/components/chat/MiniChatBox.vue'
 import ChatSidebar from '@/components/chat/ChatSidebar.vue'
@@ -150,7 +151,7 @@ const showExpired = ref(false);
 const isEnforcingRenewal = ref(false); 
 const modalTab = ref('login'); 
 const aiChatRef = ref(null);
-const showStoreModal = ref(false);
+const uiStore = useUIStore();
 
 // 🔥 TRẠNG THÁI CHO MEALPLAN MODAL
 const showMealplanModal = ref(false);
@@ -171,7 +172,7 @@ const handleRestorePrompt = (e) => {
 onMounted(() => {
   if (sessionStorage.getItem('just_logged_in') === 'true') startLoadingAnimation();
   window.addEventListener('ui:open-premium', () => { showPremium.value = true; })
-  window.addEventListener('ui:open-store', () => { showStoreModal.value = true; })
+  window.addEventListener('ui:open-store', () => { uiStore.openStore(); })
   
   // 🔥 LẮNG NGHE CÁC SỰ KIỆN TỪ HỆ THỐNG
   window.addEventListener('ui:open-mealplan', handleOpenMealplan)
@@ -194,7 +195,7 @@ onUnmounted(() => {
   if (ctx) ctx.revert();
   window.removeEventListener('ui:open-mealplan', handleOpenMealplan);
   window.removeEventListener('auth:restore-login-prompt', handleRestorePrompt);
-  window.removeEventListener('ui:open-store', () => { showStoreModal.value = true; }); 
+  window.removeEventListener('ui:open-store', () => { uiStore.openStore(); }); 
   window.removeEventListener('resize', checkScreenSize);
 })
 

@@ -44,6 +44,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { useUIStore } from '@/stores/ui'
 import api from '@/services/api'
 import { toast } from '@/composables/useToast'
 
@@ -54,6 +55,7 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'unlocked', 'open-store'])
 const authStore = useAuthStore()
+const uiStore = useUIStore()
 const isUnlocking = ref(false)
 const maxViews = ref(3)
 
@@ -72,7 +74,7 @@ const closeModal = () => emit('close')
 
 const openStore = () => {
   emit('close'); // Đóng popup này
-  emit('open-store'); // Nhờ layout cha mở Store
+  uiStore.openStore(); // Mở Store bằng Pinia
 }
 
 const handleUnlock = async () => {

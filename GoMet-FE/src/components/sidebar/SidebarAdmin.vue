@@ -130,7 +130,6 @@
               </svg>
             </div>
             <span class="link-text" v-if="!isCollapsed">Hỗ trợ & Phản hồi</span>
-            <span class="count-badge" v-if="!isCollapsed">5</span>
             <span class="count-badge-dot" v-else></span>
           </router-link>
 

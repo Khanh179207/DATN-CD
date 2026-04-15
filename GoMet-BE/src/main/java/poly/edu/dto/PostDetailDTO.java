@@ -15,6 +15,8 @@ public class PostDetailDTO {
     private Integer level;
     private Integer cookingTime;
     private Integer views;
+    private Integer isActive;
+    private Integer isApproved;
     private LocalDateTime createdAt; // 🔥 Đã cập nhật kiểu dữ liệu
 
     // Author
