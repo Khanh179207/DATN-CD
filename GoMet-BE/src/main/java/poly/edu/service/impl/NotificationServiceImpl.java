@@ -278,6 +278,12 @@ public class NotificationServiceImpl implements NotificationService {
         Post post = postOpt.get();
         Account postOwner = post.getAccount();
 
+        if (postOwner == null) {
+            System.err.println(
+                    "notifyPostApproved: post owner missing for postId=" + postId + " - skipping notification");
+            return;
+        }
+
         String title = "Bài viết được duyệt";
         String content = "Bài viết của bạn đã được admin duyệt.";
         String type = "POST_APPROVED";
@@ -297,6 +303,12 @@ public class NotificationServiceImpl implements NotificationService {
 
         Post post = postOpt.get();
         Account postOwner = post.getAccount();
+
+        if (postOwner == null) {
+            System.err.println(
+                    "notifyPostRejected: post owner missing for postId=" + postId + " - skipping notification");
+            return;
+        }
 
         String title = "Bài viết bị từ chối";
         String content = reason != null && !reason.trim().isEmpty()
@@ -319,6 +331,12 @@ public class NotificationServiceImpl implements NotificationService {
 
         Post post = postOpt.get();
         Account postOwner = post.getAccount();
+
+        if (postOwner == null) {
+            System.err.println(
+                    "notifyPostDisabled: post owner missing for postId=" + postId + " - skipping notification");
+            return;
+        }
 
         String title = "Bài viết bị vô hiệu hóa";
         String content = "Bài viết của bạn đã bị admin vô hiệu hóa.";

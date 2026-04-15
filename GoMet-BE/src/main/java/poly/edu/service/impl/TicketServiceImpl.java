@@ -73,7 +73,8 @@ public class TicketServiceImpl implements TicketService {
      * 🔥 HÀM ĐÃ NÂNG CẤP: Lưu chủ quyền của sếp (Admin)
      */
     @Override
-    public Ticket updateTicketStatus(Integer ticketId, Integer newStatus, Integer adminId, String adminName, String adminNote) {
+    public Ticket updateTicketStatus(Integer ticketId, Integer newStatus, Integer adminId, String adminName,
+            String adminNote) {
         Ticket ticket = ticketDAO.findById(ticketId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy Ticket!"));
 
@@ -105,7 +106,8 @@ public class TicketServiceImpl implements TicketService {
     }
 
     /**
-     * Helper: Chuyển đổi Entity sang DTO (Đã thêm thông tin Admin xử lý để FE hiển thị)
+     * Helper: Chuyển đổi Entity sang DTO (Đã thêm thông tin Admin xử lý để FE hiển
+     * thị)
      */
     private AdminTicketDTO convertToAdminDTO(Ticket ticket) {
         AdminTicketDTO dto = new AdminTicketDTO();
@@ -153,7 +155,14 @@ public class TicketServiceImpl implements TicketService {
                 content = "Your support ticket #" + ticket.getTicketID() + " has been rejected.";
                 type = "TICKET_REJECTED";
             }
-            notificationService.createNotification(title, content, type, ticket.getAccount().getAccountID(), null, null, null);
+            if (ticket.getAccount() != null) {
+                notificationService.createNotification(title, content, type, ticket.getAccount().getAccountID(), null,
+                        null, null);
+            } else {
+                System.err
+                        .println("sendUserStatusNotification: Ticket has no account, skip user notification for ticket "
+                                + ticket.getTicketID());
+            }
         } catch (Exception e) {
             System.err.println("Failed to send notification: " + e.getMessage());
         }

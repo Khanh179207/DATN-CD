@@ -135,7 +135,6 @@ public class AppealServiceImpl implements AppealService {
         // 🔥 Lưu Admin vào phiếu
         appeal.setAdminId(adminId);
         appeal.setAdminName(adminName);
-
         appealDAO.save(appeal);
 
         try {
