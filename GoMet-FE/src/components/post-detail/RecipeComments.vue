@@ -17,8 +17,8 @@
         <div class="icon-circle error">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
         </div>
-        <p>{{ errorMsg || 'Kết nối bị gián đoạn. Vui lòng thử lại!' }}</p>
-        <button @click="$emit('reload')" class="btn-retry">Thử lại ngay</button>
+        <p>{{ errorMsg || t('comment.connection_retry') }}</p>
+        <button @click="$emit('reload')" class="btn-retry">{{ t('comment.retry_now') }}</button>
       </div>
 
       <div v-else-if="!commentTree.length" class="empty-state-luxury fade-in">
@@ -27,7 +27,7 @@
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
           </svg>
         </div>
-        <p>Hãy là người đầu tiên chia sẻ cảm nhận về món ăn này!</p>
+        <p>{{ t('comment.empty_prompt') }}</p>
       </div>
 
       <div v-else class="comments-list">
@@ -53,7 +53,7 @@
           </div>
           <div class="review-meta">
             <div class="review-top">
-              <span class="review-author">{{ commentData.authorName || commentData.name || 'Người dùng ẩn danh' }}</span>
+              <span class="review-author">{{ commentData.authorName || commentData.name || t('recipe.anonymous_user') }}</span>
               <div v-if="commentData.rating > 0" class="review-stars-pill">
                 <span v-for="n in 5" :key="n" :class="['star', { filled: n <= commentData.rating }]">★</span>
               </div>
@@ -92,7 +92,7 @@
           
           <button class="action-btn reply-btn" @click="openReplyBox">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
-            Trả lời
+            {{ t('comment.reply') }}
           </button>
 
           <button v-if="canDelete(commentData)" class="action-btn delete-btn" @click="onDeleteRequest(commentData.id)">
@@ -105,12 +105,12 @@
           <div class="reply-input-wrapper">
             <textarea 
               v-model="replyText" 
-              :placeholder="'Viết câu trả lời cho ' + (commentData.authorName || 'bình luận') + '...'"
+              :placeholder="t('comment.reply_placeholder', { name: commentData.authorName || t('comment.comment_lower') })"
               v-focus
             ></textarea>
             <div class="reply-actions">
-              <button class="btn-cancel-glass" @click="isReplying = false">Hủy</button>
-              <button class="btn-submit-glow" :disabled="!replyText.trim()" @click="submitReply">Gửi</button>
+              <button class="btn-cancel-glass" @click="isReplying = false">{{ t('create_post.cancel') }}</button>
+              <button class="btn-submit-glow" :disabled="!replyText.trim()" @click="submitReply">{{ t('comment.send') }}</button>
             </div>
           </div>
         </div>
@@ -151,6 +151,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { toast } from '@/composables/useToast'
 
@@ -168,6 +169,7 @@ const props = defineProps({
 
 const emit = defineEmits(['toggle-like', 'reply-submitted', 'reload', 'delete-comment'])
 const authStore = useAuthStore()
+const { t } = useI18n()
 
 // --- LOGIC TREE COMMENTS GIỮ NGUYÊN ---
 const commentTree = computed(() => {
@@ -215,18 +217,23 @@ const currentUserAvatar = computed(() => authStore.user?.avatar || `https://ui-a
 const avatarUrl = computed(() => props.commentData.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(props.commentData.authorName || 'U')}&background=EA580C&color=fff`)
 
 const formatTime = (isoString) => {
-  if (!isoString) return 'Vừa xong'
-  const date = new Date(isoString); if (isNaN(date.getTime())) return 'Vừa xong'
+  if (!isoString) return t('comment.just_now')
+  const date = new Date(isoString); if (isNaN(date.getTime())) return t('comment.just_now')
   const diff = Math.floor((new Date() - date) / 1000)
-  if (diff < 60) return 'Vừa xong'
-  if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`
-  if (diff < 86400) return `${Math.floor(diff / 3600)} giờ trước`
-  return `${Math.floor(diff / 86400)} ngày trước`
+  if (diff < 60) return t('comment.just_now')
+  if (diff < 3600) return t('comment.minutes_ago', { count: Math.floor(diff / 60) })
+  if (diff < 86400) return t('comment.hours_ago', { count: Math.floor(diff / 3600) })
+  return t('comment.days_ago', { count: Math.floor(diff / 86400) })
 }
 
 const formatCommentText = (text) => {
   if (!text) return ''
-  let safeText = text.replace(/</g, "&lt;").replace(/>/g, "&gt;")
+  let safeText = String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
   return safeText.replace(/(@[^\s]+)/g, '<span class="mention-tag">$1</span>')
 }
 
@@ -238,12 +245,12 @@ const canDelete = (cmt) => {
 }
 
 const onDeleteRequest = (id) => {
-  if (confirm('Sếp có chắc chắn muốn xóa bình luận này không?')) emit('delete-comment', id)
+  if (confirm(t('comment.delete_confirm'))) emit('delete-comment', id)
 }
 
 const openImage = (url) => { modalImage.value = url }
 const openReplyBox = () => {
-  if (!authStore.isAuthenticated) { toast.warn('Vui lòng đăng nhập để trả lời!'); return }
+  if (!authStore.isAuthenticated) { toast.warn(t('comment.login_reply')); return }
   isReplying.value = !isReplying.value; replyText.value = ''
 }
 

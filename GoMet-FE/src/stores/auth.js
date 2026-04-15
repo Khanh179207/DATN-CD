@@ -3,6 +3,8 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import * as authService from '@/services/authService'
 import { toast } from '@/composables/useToast'
+import i18n from '@/i18n'
+import { formatLocaleDateTime } from '@/i18n'
 
 export const useAuthStore = defineStore('auth', () => {
   const router = useRouter()
@@ -44,16 +46,21 @@ export const useAuthStore = defineStore('auth', () => {
 
     if (isBanned) {
       // Truy xuất thông tin khóa tài khoản (Nếu API có gửi kèm theo)
-      const banReason = event.detail?.banReason || event.detail?.reason || 'Vi phạm tiêu chuẩn cộng đồng';
-      const bannedBy = event.detail?.bannedByName || event.detail?.bannedBy || 'Quản trị viên';
+      const banReason = event.detail?.banReason || event.detail?.reason || i18n.global.t('auth.banned_reason_default');
+      const bannedBy = event.detail?.bannedByName || event.detail?.bannedBy || i18n.global.t('auth.banned_by_admin');
       let timeStr = '';
       let rawTimeStr = '';
       if (event.detail?.bannedAt) {
-         const d = new Date(event.detail.bannedAt);
-         rawTimeStr = `${d.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})} ngày ${d.toLocaleDateString('vi-VN')}`;
-         timeStr = ` vào lúc ${rawTimeStr}`;
+        rawTimeStr = formatLocaleDateTime(event.detail.bannedAt, {
+          hour: '2-digit',
+          minute: '2-digit',
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        });
+        timeStr = i18n.global.t('toast.account_locked_time', { time: rawTimeStr });
       }
-      const fullMsg = `Tài khoản của bạn đã bị khóa${timeStr} bởi ${bannedBy}. Lý do: ${banReason}.`;
+      const fullMsg = i18n.global.t('toast.account_locked_notice', { time: timeStr, by: bannedBy, reason: banReason });
       
       setTimeout(() => {
         // Thử kích hoạt mở UI Đăng nhập trước
@@ -63,7 +70,7 @@ export const useAuthStore = defineStore('auth', () => {
         }, 200)
       }, 300)
     } else {
-      toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.')
+      toast.error(i18n.global.t('toast.session_error'))
       // Nếu lỗi token bình thường thì mới cho đẩy về trang chủ
       router.push('/').catch(() => {})
     }
@@ -130,17 +137,6 @@ async function login(email, password) {
     }
   }
 
-  async function register(username, email, password) {
-    try {
-      const data = await authService.register(username, email, password)
-      setUser(data)
-      return user.value
-    } catch (err) {
-      const msg = err.response?.data?.message || 'Registration failed'
-      throw new Error(msg)
-    }
-  }
-
   async function refreshProfile() {
     if (!user.value?.token) return
     try {
@@ -154,7 +150,7 @@ async function login(email, password) {
   function logout() {
     user.value = null
     localStorage.removeItem('user')
-    toast.info('You have been signed out.')
+    toast.info(i18n.global.t('toast.logout_ok'))
     router.push('/')
   }
 
@@ -210,12 +206,12 @@ async function login(email, password) {
     }
     localStorage.setItem('gomet_view_limits', JSON.stringify(limitsCache))
     
-    toast.success('Đã reset lượt xem (Demo Mode)')
+    toast.success(i18n.global.t('toast.demo_reset_views'))
   }
 
   return { 
     user, isAuthenticated, isAdmin, currentUser, 
-    login, register, logout, refreshProfile, setUser, resetViews,
+    login, logout, refreshProfile, setUser, resetViews,
     deactivateAccount, restoreAccount 
   }
 })

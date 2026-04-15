@@ -10,7 +10,7 @@
           ref="inputRef"
           type="text"
           v-model="searchKeyword"
-          placeholder="Tìm công thức, người dùng..."
+          :placeholder="t('search_box.placeholder')"
           @focus="openSearchHistory"
           @keyup.enter="handleSearch"
           spellcheck="false"
@@ -31,18 +31,18 @@
           
           <div v-if="isLoadingHistory" class="history-loading">
             <div class="loading-spinner"></div>
-            <span>Đang tải...</span>
+            <span>{{ t('search_box.loading') }}</span>
           </div>
 
           <div v-else-if="errorMessage" class="history-error">
             <span>{{ errorMessage }}</span>
-            <button class="btn-retry" @click="loadSearchHistory">Thử lại</button>
+            <button class="btn-retry" @click="loadSearchHistory">{{ t('search_box.retry') }}</button>
           </div>
 
           <div v-else-if="suggestions.length > 0">
             <div class="card-header">
-              <span class="label">{{ searchKeyword.trim() ? 'GỢI Ý TÌM KIẾM' : 'TÌM KIẾM GẦN ĐÂY' }}</span>
-              <span v-if="!searchKeyword.trim()" class="btn-clear-all" @click.stop="clearAllSearchHistory">Xóa tất cả</span>
+              <span class="label">{{ searchKeyword.trim() ? t('search_box.suggestion_title') : t('search_box.recent_title') }}</span>
+              <span v-if="!searchKeyword.trim()" class="btn-clear-all" @click.stop="clearAllSearchHistory">{{ t('search_box.clear_all') }}</span>
             </div>
 
             <div class="history-list">
@@ -61,7 +61,7 @@
           </div>
 
           <div v-else class="history-empty">
-            <span>{{ searchKeyword.trim() ? 'Không có gợi ý nào' : 'Không có lịch sử tìm kiếm' }}</span>
+            <span>{{ searchKeyword.trim() ? t('search_box.empty_suggestions') : t('search_box.empty_history') }}</span>
           </div>
           
         </div>
@@ -101,7 +101,7 @@ const loadSearchHistory = async () => {
     const res = await api.get(`/api/search-history/${accId}`)
     searchHistory.value = Array.isArray(res.data) ? res.data : []
   } catch (e) {
-    errorMessage.value = 'Không thể kết nối máy chủ'
+    errorMessage.value = t('toast.search_error')
     searchHistory.value = []
   } finally {
     isLoadingHistory.value = false
@@ -117,7 +117,7 @@ const suggestions = computed(() => {
   filtered = filtered.slice(0, 5).map(item => ({ ...item, type: 'history', id: `hist-${item.searchId}` }))
   if (keyword && !filtered.some(item => item.keyword.toLowerCase() === keyword)) {
     if (filtered.length < 5) {
-      filtered.push({ type: 'suggest', id: `suggest-${Date.now()}`, keyword: keyword, displayText: `Tìm kiếm "${searchKeyword.value.trim()}"` })
+      filtered.push({ type: 'suggest', id: `suggest-${Date.now()}`, keyword: keyword, displayText: t('search_box.suggest_query', { query: searchKeyword.value.trim() }) })
     }
   }
   return filtered

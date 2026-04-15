@@ -11,20 +11,20 @@
       <header class="legal-hero-light" data-aos="fade-up">
         <div class="brand-badge-light">
           <span class="dot-vibrant"></span>
-          <span class="text">GOMET LEGAL PROTOCOL</span>
+          <span class="text">{{ t('terms_page.badge') }}</span>
         </div>
-        <h1 class="hero-title">Chính sách <br/> & <span class="accent">Điều khoản</span></h1>
+        <h1 class="hero-title">{{ t('terms_page.title') }} <br/> & <span class="accent">{{ t('terms_page.title_accent') }}</span></h1>
         <div class="hero-line"></div>
         <p class="hero-subtitle">
-          Cập nhật lần cuối: <span class="date">18.03.2026</span> <br/>
-          Chào mừng bạn đến với hệ sinh thái ẩm thực của GOMET. Quy ước sử dụng dịch vụ được thiết kế để bảo vệ trải nghiệm của bạn.
+          {{ t('terms_page.updated') }} <span class="date">{{ t('terms_page.updated_date') }}</span> <br/>
+          {{ t('terms_page.subtitle') }}
         </p>
       </header>
 
       <div class="legal-layout-light">
         <aside class="legal-nav-light">
           <nav>
-            <div class="nav-header">Mục lục nội dung</div>
+            <div class="nav-header">{{ t('terms_page.nav_title') }}</div>
             <ul class="nav-list">
               <li v-for="(item, index) in legalSections" :key="index">
                 <a :href="'#' + item.id" @click.prevent="scrollTo(item.id)" class="nav-link">
@@ -47,14 +47,14 @@
 
           <footer class="legal-footer-light">
             <div class="footer-card-light">
-              <h3>Bạn cần hỗ trợ thêm?</h3>
-              <p>Nếu có bất kỳ thắc mắc nào về các điều khoản này, đừng ngần ngại liên hệ với chúng tôi.</p>
-              <a href="mailto:support@gomet.example" class="contact-btn">Gửi yêu cầu ngay</a>
+              <h3>{{ t('terms_page.support_title') }}</h3>
+              <p>{{ t('terms_page.support_desc') }}</p>
+              <a href="mailto:support@gomet.example" class="contact-btn">{{ t('terms_page.support_cta') }}</a>
             </div>
             <div class="final-note">
-              <p>© 2026 GOMET Ecosystem. Mọi quyền được bảo lưu.</p>
+              <p>{{ t('terms_page.footer_note') }}</p>
               <router-link to="/" class="back-link">
-                <span class="arrow">←</span> Trở về trang chủ
+                <span class="arrow">←</span> {{ t('terms_page.back_home') }}
               </router-link>
             </div>
           </footer>
@@ -65,38 +65,41 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, watchEffect } from 'vue'
+import { useI18n } from 'vue-i18n'
 
-const legalSections = ref([
+const { t } = useI18n()
+
+const legalSections = computed(() => [
   {
     id: 'sec-01',
-    title: 'Chấp thuận Điều khoản',
-    content: `<p>Bằng việc truy cập hoặc sử dụng GOMET, bạn xác nhận rằng mình đã đọc, hiểu và đồng ý chịu ràng buộc bởi các Điều khoản dịch vụ này. Chúng tôi cung cấp nền tảng dựa trên sự tin tưởng và tôn trọng lẫn nhau.</p>`
+    title: t('terms_page.sections.accept_title'),
+    content: t('terms_page.sections.accept_body')
   },
   {
     id: 'sec-02',
-    title: 'Tài khoản & Định danh',
-    content: `<p>Mỗi tài khoản tại GOMET là một định danh duy nhất. Bạn chịu trách nhiệm hoàn toàn về các hoạt động diễn ra dưới tài khoản của mình. Chúng tôi khuyến khích mật khẩu mạnh và thay đổi định kỳ.</p>`
+    title: t('terms_page.sections.account_title'),
+    content: t('terms_page.sections.account_body')
   },
   {
     id: 'sec-03',
-    title: 'Quyền sở hữu nội dung',
-    content: `<p>Bạn sở hữu các công thức và hình ảnh mình đăng tải. GOMET giữ quyền hiển thị các nội dung này để phục vụ cộng đồng và phát triển hệ sinh thái ẩm thực chung.</p>`
+    title: t('terms_page.sections.ownership_title'),
+    content: t('terms_page.sections.ownership_body')
   },
   {
     id: 'sec-04',
-    title: 'Quy trình Premium',
-    content: `<p>Các tính năng cao cấp (Meal Plan, AI Suggestions) được cung cấp sau khi thanh toán qua PayOS. Dịch vụ có hiệu lực ngay lập tức và không áp dụng chính sách hoàn trả sau khi sử dụng.</p>`
+    title: t('terms_page.sections.premium_title'),
+    content: t('terms_page.sections.premium_body')
   },
   {
     id: 'sec-05',
-    title: 'Tiêu chuẩn Cộng đồng',
-    content: `<p>GOMET là nơi chia sẻ niềm vui ăn uống. Nghiêm cấm mọi hành vi công kích, spam hoặc đăng tải nội dung không liên quan đến ẩm thực. Vi phạm sẽ dẫn đến việc đình chỉ tài khoản.</p>`
+    title: t('terms_page.sections.community_title'),
+    content: t('terms_page.sections.community_body')
   },
   {
     id: 'sec-06',
-    title: 'Bảo mật & Dữ liệu',
-    content: `<p>Dữ liệu của bạn được bảo vệ bởi các lớp mã hóa hiện đại. Chúng tôi chỉ sử dụng thông tin để cải thiện Gomet AI và không bao giờ bán dữ liệu cho bên thứ ba.</p>`
+    title: t('terms_page.sections.privacy_title'),
+    content: t('terms_page.sections.privacy_body')
   }
 ])
 
@@ -113,8 +116,8 @@ const scrollTo = (id) => {
   }
 }
 
-onMounted(() => {
-  document.title = 'Legal | GOMET'
+watchEffect(() => {
+  document.title = t('terms_page.doc_title')
 })
 </script>
 

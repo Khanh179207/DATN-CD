@@ -2,25 +2,25 @@
   <div class="gomet-admin-pro">
     <div class="header-zone">
       <div class="header-content">
-        <h1 class="page-title">Quản lý Sự kiện</h1>
-        <p class="sub-text">Tối ưu trải nghiệm cuộc thi ẩm thực của GOMET</p>
+        <h1 class="page-title">{{ t('admin.events.title') }}</h1>
+        <p class="sub-text">{{ t('admin.events.subtitle') }}</p>
       </div>
       <button class="btn-create-mega" @click="openCreateModal">
-        <span class="icon-plus">+</span> Tạo mới sự kiện
+        <span class="icon-plus">+</span> {{ t('admin.events.create') }}
       </button>
     </div>
 
     <div class="stats-bar">
       <div class="stat-item">
-        <span class="s-label">Tổng sự kiện</span><span class="s-val">{{ events?.length || 0 }}</span>
+        <span class="s-label">{{ t('admin.events.total_events') }}</span><span class="s-val">{{ events?.length || 0 }}</span>
       </div>
       <div class="divider"></div>
       <div class="stat-item">
-        <span class="s-label">Đang diễn ra</span><span class="s-val text-green">{{ ongoingCount }}</span>
+        <span class="s-label">{{ t('admin.events.status_active') }}</span><span class="s-val text-green">{{ ongoingCount }}</span>
       </div>
       <div class="divider"></div>
       <div class="stat-item">
-        <span class="s-label">Tổng bài thi</span><span class="s-val text-orange">{{ totalPostCount }}</span>
+        <span class="s-label">{{ t('admin.events.total_entries') }}</span><span class="s-val text-orange">{{ totalPostCount }}</span>
       </div>
     </div>
 
@@ -31,15 +31,15 @@
           <circle cx="11" cy="11" r="8" />
           <line x1="21" y1="21" x2="16.65" y2="16.65" />
         </svg>
-        <input v-model="searchQuery" type="text" placeholder="Tìm kiếm tên sự kiện..." />
+        <input v-model="searchQuery" type="text" :placeholder="t('admin.common.search_events')" />
       </div>
       <div class="filter-group">
         <select v-model="statusFilter">
-          <option value="">Tất cả trạng thái</option>
-          <option value="active">Đang diễn ra</option>
-          <option value="upcoming">Sắp diễn ra</option>
-          <option value="ended">Đã kết thúc</option>
-          <option value="deleted">Đã bị ẩn (Xóa)</option>
+          <option value="">{{ t('admin.events.all_statuses') }}</option>
+          <option value="active">{{ t('admin.events.status_active') }}</option>
+          <option value="upcoming">{{ t('admin.events.status_upcoming') }}</option>
+          <option value="ended">{{ t('admin.events.status_ended') }}</option>
+          <option value="deleted">{{ t('admin.events.status_hidden') }}</option>
         </select>
       </div>
     </div>
@@ -55,7 +55,7 @@
     </div>
 
     <div v-else-if="error" class="error-banner">
-      ⚠️ {{ error }} <button @click="loadEvents">Thử lại</button>
+      ⚠️ {{ error }} <button @click="loadEvents">{{ t('comment.retry_now') }}</button>
     </div>
 
     <div v-else class="event-list-container">
@@ -64,7 +64,7 @@
         @deleteEvent="confirmDeleteRestore" @goToPostManagement="goToPostManagement" />
 
       <div v-if="!filteredEvents || filteredEvents.length === 0" class="empty-state">
-        Không tìm thấy sự kiện nào.
+        {{ t('admin.events.empty') }}
       </div>
     </div>
 
@@ -73,11 +73,11 @@
         <div class="modal-form wide-modal">
           <div class="mf-header">
             <div class="mf-header-left">
-              <h3 v-if="isViewOnly">🔍 Xem chi tiết Sự kiện</h3>
+              <h3 v-if="isViewOnly">🔍 {{ t('admin.events.view_detail') }}</h3>
               <h3 v-else>
-                {{ isEditing ? "✏️ Chỉnh sửa sự kiện" : "✨ Tạo sự kiện mới" }}
+                {{ isEditing ? `✏️ ${t('admin.events.edit_event')}` : `✨ ${t('admin.events.create_event')}` }}
               </h3>
-              <span v-if="isViewOnly" class="readonly-badge">Chỉ đọc</span>
+              <span v-if="isViewOnly" class="readonly-badge">{{ t('admin.events.read_only') }}</span>
             </div>
             <div class="mf-header-actions">
               <button class="btn-x" @click="showModal = false">✕</button>
@@ -85,26 +85,26 @@
           </div>
 
           <div class="modal-scroll-area">
-            <div class="edit-section-title">Thông tin cơ bản</div>
+            <div class="edit-section-title">{{ t('admin.events.basic_info') }}</div>
             <div class="form-group">
-              <label>Tên sự kiện
+              <label>{{ t('admin.events.event_name') }}
                 <span v-if="!isViewOnly" class="req">*</span></label>
-              <input v-model="form.eventName" type="text" placeholder="VD: Top Chef Gomet 2026"
+              <input v-model="form.eventName" type="text" :placeholder="t('admin.events.event_name_placeholder')"
                 :disabled="isViewOnly" />
             </div>
             <div class="form-group">
-              <label>Mô tả sự kiện</label>
-              <textarea v-model="form.description" rows="3" placeholder="Giới thiệu về cuộc thi..."
+              <label>{{ t('admin.events.description') }}</label>
+              <textarea v-model="form.description" rows="3" :placeholder="t('admin.events.description_placeholder')"
                 :disabled="isViewOnly"></textarea>
             </div>
             <div class="form-group">
-              <label>Ảnh Banner</label>
+              <label>{{ t('admin.events.banner') }}</label>
               <div class="upload-zone" :class="{ 'disabled-zone': isViewOnly }">
                 <input v-if="!isViewOnly" type="file" id="fileUpload" accept="image/*" @change="handleFileUpload"
                   hidden />
                 <div v-if="!imagePreview" class="upload-placeholder">
-                  <label v-if="!isViewOnly" for="fileUpload" class="btn-upload">Tải ảnh lên</label>
-                  <span v-else>Không có ảnh</span>
+                  <label v-if="!isViewOnly" for="fileUpload" class="btn-upload">{{ t('admin.events.upload_image') }}</label>
+                  <span v-else>{{ t('admin.events.no_image') }}</span>
                 </div>
                 <div v-else class="preview-container">
                   <img :src="imagePreview" class="preview-img" />
@@ -117,30 +117,30 @@
 
             <div class="form-grid">
               <div class="form-column">
-                <h4 class="column-title">📜 Quy tắc</h4>
+                <h4 class="column-title">📜 {{ t('admin.events.rules_rewards') }}</h4>
                 <div class="form-group">
-                  <label>Số phiếu Vote/User
+                  <label>{{ t('admin.events.max_votes_per_user') }}
                     <span v-if="!isViewOnly" class="req">*</span></label>
                   <input v-model="form.maxVotes" type="number" min="1" :disabled="isViewOnly || isRulesLocked" />
                   <small v-if="isRulesLocked" style="color: #ea580c; font-size: 0.75rem; font-style: italic; margin-top: 6px; display: block;">
-                    * Luật và thưởng đã được khóa để đảm bảo tính công bằng khi sự kiện diễn ra.
+                    {{ t('admin.events.rules_locked_hint') }}
                   </small>
                 </div>
                 <div class="form-group">
-                  <label>Phần thưởng vinh danh</label>
+                  <label>{{ t('admin.events.reward') }}</label>
                   <select v-model="form.rewardType" :disabled="isViewOnly || isRulesLocked"
                     style="width: 100%; padding: 12px 16px; border: 1px solid #dbe4ee; border-radius: 12px; font-size: 0.95rem; background: #ffffff; cursor: pointer; transition: all 0.28s ease;">
-                    <option disabled value="">Chọn loại phần thưởng</option>
-                    <option value="premium_1m">Premium 1 tháng (Tất cả top đều nhận)</option>
-                    <option value="premium_1y">Premium 1 năm (Tất cả top đều nhận)</option>
-                    <option value="points">Points (Nhập riêng cho Top 1, 2, 3)</option>
+                    <option disabled value="">{{ t('admin.events.reward_type_placeholder') }}</option>
+                    <option value="premium_1m">{{ t('admin.events.reward_premium_1m') }}</option>
+                    <option value="premium_1y">{{ t('admin.events.reward_premium_1y') }}</option>
+                    <option value="points">{{ t('admin.events.reward_points') }}</option>
                   </select>
 
                   <!-- PREMIUM 1 MONTH -->
                   <div v-if="form.rewardType === 'premium_1m'" class="form-group mt-3">
                     <div class="reward-info-box">
                       <i class="fas fa-info-circle"></i>
-                      <p><strong>Top 1, Top 2, Top 3</strong> đều sẽ nhận <strong>Premium 1 tháng</strong></p>
+                      <p>{{ t('admin.events.reward_premium_1m_hint') }}</p>
                     </div>
                   </div>
 
@@ -148,41 +148,41 @@
                   <div v-if="form.rewardType === 'premium_1y'" class="form-group mt-3">
                     <div class="reward-info-box">
                       <i class="fas fa-info-circle"></i>
-                      <p><strong>Top 1, Top 2, Top 3</strong> đều sẽ nhận <strong>Premium 1 năm</strong></p>
+                      <p>{{ t('admin.events.reward_premium_1y_hint') }}</p>
                     </div>
                   </div>
 
                   <!-- POINTS -->
                   <div v-if="form.rewardType === 'points'" class="form-group mt-3">
-                    <label>Phần thưởng Points</label>
+                    <label>{{ t('admin.events.reward_points_label') }}</label>
 
                     <div class="grid grid-cols-3 gap-2">
-                      <input v-model="form.pointsTop1" type="number" placeholder="Top 1" min="0"
+                      <input v-model="form.pointsTop1" type="number" :placeholder="t('admin.events.top_1')" min="0"
                         :disabled="isViewOnly || isRulesLocked" />
-                      <input v-model="form.pointsTop2" type="number" placeholder="Top 2" min="0"
+                      <input v-model="form.pointsTop2" type="number" :placeholder="t('admin.events.top_2')" min="0"
                         :disabled="isViewOnly || isRulesLocked" />
-                      <input v-model="form.pointsTop3" type="number" placeholder="Top 3" min="0"
+                      <input v-model="form.pointsTop3" type="number" :placeholder="t('admin.events.top_3')" min="0"
                         :disabled="isViewOnly || isRulesLocked" />
                     </div>
                   </div>
                 </div>
               </div>
               <div class="form-column">
-                <h4 class="column-title">⏳ Thiết lập thời gian</h4>
+                <h4 class="column-title">⏳ {{ t('admin.events.time_setup') }}</h4>
                 <div class="form-group">
-                  <label>Bắt đầu nhận bài</label><input v-model="form.startAt" type="datetime-local"
+                  <label>{{ t('admin.events.submission_start') }}</label><input v-model="form.startAt" type="datetime-local"
                     :disabled="isViewOnly" />
                 </div>
                 <div class="form-group">
-                  <label>Kết thúc nhận bài</label><input v-model="form.endAt" type="datetime-local"
+                  <label>{{ t('admin.events.submission_end') }}</label><input v-model="form.endAt" type="datetime-local"
                     :disabled="isViewOnly" />
                 </div>
                 <div class="form-group">
-                  <label>Bắt đầu bình chọn</label><input v-model="form.voteStartAt" type="datetime-local"
+                  <label>{{ t('admin.events.voting_start') }}</label><input v-model="form.voteStartAt" type="datetime-local"
                     :disabled="isViewOnly" />
                 </div>
                 <div class="form-group">
-                  <label>Kết thúc bình chọn</label><input v-model="form.voteEndAt" type="datetime-local"
+                  <label>{{ t('admin.events.voting_end') }}</label><input v-model="form.voteEndAt" type="datetime-local"
                     :disabled="isViewOnly" />
                 </div>
               </div>
@@ -197,16 +197,16 @@
                 (getStatusHelper(form) === 'active' ||
                   getStatusHelper(form) === 'upcoming')
               " class="btn-end-event" @click="confirmForceEnd(form)">
-                Kết thúc sớm
+                {{ t('admin.events.end_early') }}
               </button>
             </div>
             <div class="mf-actions-right">
               <button @click="showModal = false" class="btn-cancel">
-                {{ isViewOnly ? "Đóng" : "Hủy" }}
+                {{ isViewOnly ? t('admin.events.close') : t('admin.events.cancel_action') }}
               </button>
               <button v-if="!isViewOnly" @click="saveEvent" class="btn-save" :disabled="saving">
-                <span v-if="saving">Đang xử lý...</span><span v-else>{{
-                  isEditing ? "Lưu thay đổi" : "Tạo ngay"
+                <span v-if="saving">{{ t('admin.events.processing') }}</span><span v-else>{{
+                  isEditing ? t('admin.events.save_changes') : t('admin.events.create_now')
                 }}</span>
               </button>
             </div>
@@ -221,22 +221,21 @@
           <div class="icon-warning">
             <i class="fas fa-exclamation-triangle"></i>
           </div>
-          <h2>Xác nhận kết thúc sớm</h2>
+          <h2>{{ t('admin.events.force_end_title') }}</h2>
           <p>
-            Bạn đang yêu cầu đóng sự kiện
-            <strong>"{{ eventToClose?.eventName }}"</strong> ngay lập tức.
+            {{ t('admin.events.force_end_message', { name: eventToClose?.eventName }) }}
           </p>
           <ul class="warning-list">
-            <li>Người dùng sẽ không thể nộp thêm bài dự thi.</li>
-            <li>Chức năng bình chọn sẽ bị khóa.</li>
-            <li>Hệ thống sẽ ngay lập tức tính toán người chiến thắng.</li>
+            <li>{{ t('admin.events.force_end_warning_entries') }}</li>
+            <li>{{ t('admin.events.force_end_warning_votes') }}</li>
+            <li>{{ t('admin.events.force_end_warning_winner') }}</li>
           </ul>
           <div class="confirm-actions">
             <button class="btn-gray" @click="showConfirmEndModal = false">
-              Hủy thao tác
+              {{ t('admin.events.cancel_action') }}
             </button>
             <button class="btn-danger" @click="executeForceEnd">
-              Vẫn đóng sự kiện
+              {{ t('admin.events.force_end_anyway') }}
             </button>
           </div>
         </div>
@@ -252,24 +251,22 @@
 
           <h2>
             {{
-              isActionSoftDelete ? "Xác nhận ẩn sự kiện" : "Xác nhận khôi phục"
+              isActionSoftDelete ? t('admin.events.confirm_hide_title') : t('admin.events.confirm_restore_title')
             }}
           </h2>
           <p v-if="isActionSoftDelete">
-            Bạn có chắc muốn ẩn sự kiện
-            <strong>"{{ eventTargetName }}"</strong> khỏi hệ thống?
+            {{ t('admin.events.hide_confirm', { name: eventTargetName }) }}
           </p>
           <p v-else>
-            Sự kiện <strong>"{{ eventTargetName }}"</strong> sẽ được hiển thị
-            trở lại cho người dùng. Bạn đồng ý chứ?
+            {{ t('admin.events.restore_confirm', { name: eventTargetName }) }}
           </p>
 
           <div class="confirm-actions mt-4">
             <button class="btn-gray" @click="showDeleteRestoreModal = false">
-              Hủy bỏ
+              {{ t('admin.events.cancel_action') }}
             </button>
             <button :class="isActionSoftDelete ? 'btn-danger' : 'btn-success'" @click="executeDeleteRestore">
-              {{ isActionSoftDelete ? "Vẫn Ẩn Sự Kiện" : "Khôi Phục Ngay" }}
+              {{ isActionSoftDelete ? t('admin.events.hide_anyway') : t('admin.events.restore_now') }}
             </button>
           </div>
         </div>
@@ -280,28 +277,28 @@
       <div v-if="showWinnerModal" class="modal-overlay" @click.self="showWinnerModal = false">
         <div class="winner-modal-card">
           <div class="winner-header">
-            <h3>👑 Người chiến thắng</h3>
+            <h3>👑 {{ t('admin.events.winner_title') }}</h3>
             <button class="btn-x" @click="showWinnerModal = false">✕</button>
           </div>
           <div v-if="loadingWinner" class="winner-loading">
-            Đang tính kết quả...
+            {{ t('admin.events.calculating_results') }}
           </div>
           <div v-else-if="!winnerData" class="winner-empty">
-            Không tìm thấy bài dự thi hợp lệ.
+            {{ t('admin.events.no_valid_entry') }}
           </div>
           <div v-else class="winner-content">
             <div class="winner-medal">🥇</div>
-            <img :src="getImageUrl(winnerData.postImage)" alt="Winning Recipe" class="winner-recipe-img" />
+            <img :src="getImageUrl(winnerData.postImage)" :alt="t('admin.events.winning_recipe_alt')" class="winner-recipe-img" />
             <h2 class="winner-title">{{ winnerData.postTitle }}</h2>
             <p class="winner-author">
-              Tác giả: <strong>{{ winnerData.username }}</strong>
+              {{ t('admin.events.author') }} <strong>{{ winnerData.username }}</strong>
             </p>
             <p class="winner-id">
-              Account ID: <strong>#{{ winnerData.accountID }}</strong>
+              {{ t('admin.events.account_id') }}: <strong>#{{ winnerData.accountID }}</strong>
             </p>
             <div class="winner-votes">
               <span class="v-count">{{ winnerData.voteCount }}</span>
-              <span class="v-lbl">Lượt vote</span>
+              <span class="v-lbl">{{ t('admin.events.votes') }}</span>
             </div>
           </div>
         </div>
@@ -312,6 +309,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import api from "@/services/api.js";
 import { toast } from "@/composables/useToast";
@@ -320,6 +318,7 @@ import AdminEventCard from "./AdminEventCard.vue";
 import "./EventManagement.scss";
 
 const router = useRouter();
+const { t } = useI18n();
 
 const events = ref([]);
 const loading = ref(true);
@@ -490,7 +489,7 @@ const loadEvents = async () => {
       }
     });
   } catch (e) {
-    error.value = "Tải dữ liệu thất bại. Vui lòng kiểm tra kết nối mạng!";
+    error.value = t("admin.events.load_failed");
     events.value = []; // Gán mảng rỗng để không bị văng code
   } finally {
     loading.value = false;
@@ -628,14 +627,14 @@ const executeForceEnd = async () => {
     // 1️⃣ Gọi API force-end event (sẽ tự động thưởng)
     await api.post(`/api/admin/events/${ev.eventID}/force-end`);
 
-    toast.success("Sự kiện đã được đóng khẩn cấp! Đang tính kết quả... ⚡");
+    toast.success(t("admin.events.force_end_ok"));
     showConfirmEndModal.value = false;
     eventToClose.value = null;
 
     // Delay 1s để hệ thống xử lý xong
     setTimeout(() => loadEvents(), 1000);
   } catch (e) {
-    toast.error("Lỗi khi kết thúc sự kiện!");
+    toast.error(t("admin.events.force_end_fail"));
     console.error(e);
   }
 };
@@ -655,7 +654,7 @@ const viewWinner = async (ev) => {
         )[0];
     }
   } catch (e) {
-    toast.error("Lỗi lấy dữ liệu");
+    toast.error(t("admin.events.winner_load_fail"));
   } finally {
     loadingWinner.value = false;
   }
@@ -663,10 +662,10 @@ const viewWinner = async (ev) => {
 
 const saveEvent = async () => {
   if (isViewOnly.value) return;
-  if (!form.eventName.trim()) return toast.warn("Vui lòng nhập tên sự kiện");
+  if (!form.eventName.trim()) return toast.warn(t("admin.events.name_required"));
 
   if (!form.startAt || !form.endAt || !form.voteStartAt || !form.voteEndAt) {
-    return toast.warn("Vui lòng nhập đầy đủ các mốc thời gian của sự kiện!");
+    return toast.warn(t("admin.events.time_required"));
   }
 
   const dStart = new Date(form.startAt);
@@ -674,10 +673,10 @@ const saveEvent = async () => {
   const dVoteStart = new Date(form.voteStartAt);
   const dVoteEnd = new Date(form.voteEndAt);
 
-  if (dEnd <= dStart) return toast.warn("Thời gian kết thúc nộp bài phải sau thời gian bắt đầu nộp!");
-  if (dVoteEnd <= dVoteStart) return toast.warn("Thời gian kết thúc bình chọn phải sau thời gian bắt đầu bình chọn!");
-  if (dVoteStart < dStart) return toast.warn("Thời gian bắt đầu bình chọn không được diễn ra TRƯỚC khi sự kiện bắt đầu!");
-  if (dVoteEnd < dEnd) return toast.warn("Sự kiện không thể kết thúc bình chọn khi vẫn còn đang trong thời gian nhận bài!");
+  if (dEnd <= dStart) return toast.warn(t("admin.events.submit_end_after_start"));
+  if (dVoteEnd <= dVoteStart) return toast.warn(t("admin.events.vote_end_after_start"));
+  if (dVoteStart < dStart) return toast.warn(t("admin.events.vote_start_after_submit_start"));
+  if (dVoteEnd < dEnd) return toast.warn(t("admin.events.vote_end_after_submit_end"));
 
   saving.value = true;
   try {
@@ -718,11 +717,11 @@ const saveEvent = async () => {
       await api.put(`/api/admin/events/${form.eventID}`, eventData);
     else await api.post("/api/admin/events", eventData);
 
-    toast.success("Lưu thành công! 🚀");
+    toast.success(t("admin.events.save_ok"));
     loadEvents();
     showModal.value = false;
   } catch (e) {
-    toast.error("Lỗi máy chủ!");
+    toast.error(t("admin.events.server_error"));
   } finally {
     saving.value = false;
   }
@@ -754,14 +753,12 @@ const executeDeleteRestore = async () => {
       if (index !== -1) events.value[index].isActive = 1;
     }
 
-    toast.success(
-      isSoftDelete ? "Đã ẩn sự kiện thành công!" : "Đã khôi phục sự kiện!",
-    );
+    toast.success(isSoftDelete ? t("admin.events.hide_ok") : t("admin.events.restore_ok"));
     showDeleteRestoreModal.value = false;
 
     loadEvents();
   } catch (e) {
-    toast.error("Lỗi thao tác trên hệ thống!");
+    toast.error(t("admin.events.action_error"));
     console.error(e);
   }
 };
@@ -775,13 +772,13 @@ const rewardTopUsers = async (eventID) => {
   try {
     const res = await api.post(`/api/admin/events/${eventID}/reward`);
     if (res.data?.success) {
-      toast.success("Thưởng người thắng thành công! 🎉");
+      toast.success(t("admin.events.reward_ok"));
       loadEvents();
     } else {
-      toast.warn(res.data?.message || "Không thể thưởng sự kiện này!");
+      toast.warn(res.data?.message || t("admin.events.reward_unavailable"));
     }
   } catch (error) {
-    toast.error(error.response?.data?.message || "Lỗi khi thưởng người thắng!");
+    toast.error(error.response?.data?.message || t("admin.events.reward_fail"));
     console.error(error);
   }
 };

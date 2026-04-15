@@ -16,10 +16,10 @@
           <div class="header-text">
             <div class="badge-premium">
               <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="margin-right: 4px; display: inline-block; vertical-align: text-bottom;"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              GOMET PREMIUM
+              {{ t('premium_modal.badge') }}
             </div>
-            <h2 class="title" id="premium-title">Đánh Thức Tiềm Năng Đầu Bếp</h2>
-            <p class="subtitle">Không giới hạn tính năng - Trải nghiệm ẩm thực đỉnh cao</p>
+            <h2 class="title" id="premium-title">{{ t('premium_modal.title') }}</h2>
+            <p class="subtitle">{{ t('premium_modal.subtitle') }}</p>
           </div>
         </header>
 
@@ -27,12 +27,12 @@
           <div class="premium-grid">
             
             <section class="info-section">
-              <h3 class="label-heading">Đặc Quyền Dành Riêng Cho Bạn</h3>
+              <h3 class="label-heading">{{ t('premium_modal.benefits_heading') }}</h3>
               <div class="feature-table">
                 <div class="t-row t-header">
-                  <span>TÍNH NĂNG</span>
-                  <span class="text-center text-muted">FREE</span>
-                  <span class="text-center highlight-gold-text">PREMIUM</span>
+                  <span>{{ t('premium_modal.feature_col') }}</span>
+                  <span class="text-center text-muted">{{ t('premium_modal.free_col') }}</span>
+                  <span class="text-center highlight-gold-text">{{ t('premium_modal.premium_col') }}</span>
                 </div>
                 <div class="t-row" v-for="(feat, i) in features" :key="i">
                   <div class="feat-box">
@@ -40,12 +40,12 @@
                     <span class="n-sub">{{ feat.sub }}</span>
                   </div>
                   <div class="text-center val-txt text-muted">
-                    <span v-if="feat.free === 'max3'" class="badge-free">Tối đa 3</span>
+                    <span v-if="feat.free === 'max3'" class="badge-free">{{ t('premium_modal.max_three') }}</span>
                     <svg v-else-if="feat.free === true" class="icon-v text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     <span v-else class="dash">—</span>
                   </div>
                   <div class="text-center val-txt premium-bg-cell">
-                    <span v-if="feat.pro === 'unlimited'" class="unlimited-tag">VÔ HẠN</span>
+                    <span v-if="feat.pro === 'unlimited'" class="unlimited-tag">{{ t('premium_modal.unlimited') }}</span>
                     <svg v-else class="icon-v gold-v" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
                   </div>
                 </div>
@@ -56,44 +56,44 @@
               <transition name="slide-up" mode="out-in">
                 
                 <div v-if="paymentStep === 'manage'" class="step-container manage-step" key="step-manage">
-                  <h3 class="label-heading">Trạng Thái Gói Cước</h3>
+                  <h3 class="label-heading">{{ t('premium_modal.manage_heading') }}</h3>
                   
                   <div class="manage-card">
                     <div class="status-badge">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                      ĐANG HOẠT ĐỘNG
+                      {{ t('premium_modal.active_status') }}
                     </div>
-                    <h4>GoMet Premium</h4>
+                    <h4>{{ t('premium_modal.plan_name') }}</h4>
                     
                     <div class="expiry-info-box">
                       <p v-if="isLifetimePlan">
-                        Thời hạn sử dụng: <strong class="lifetime-text">Vĩnh viễn (∞)</strong>
+                        {{ t('premium_modal.expiry_label') }} <strong class="lifetime-text">{{ t('premium_modal.lifetime') }}</strong>
                       </p>
                       <p v-else>
-                        Ngày hết hạn: <strong>{{ realExpiryDate }}</strong>
+                        {{ t('premium_modal.expiry_date') }} <strong>{{ realExpiryDate }}</strong>
                       </p>
                     </div>
                   </div>
 
                   <div class="manage-benefits">
-                    <b>Bạn đang tận hưởng:</b>
+                    <b>{{ t('premium_modal.enjoying_label') }}</b>
                     <ul>
-                      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Duyệt web không quảng cáo</li>
-                      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Trợ lý nấu ăn AI thông minh 24/7</li>
-                      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Lưu trữ công thức không giới hạn</li>
+                      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> {{ t('premium_modal.enjoying_no_ads') }}</li>
+                      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> {{ t('premium_modal.enjoying_ai') }}</li>
+                      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> {{ t('premium_modal.enjoying_storage') }}</li>
                     </ul>
                   </div>
 
                   <button v-if="!isLifetimePlan" class="btn-submit-premium" @click="paymentStep = 'select'">
-                    GIA HẠN THÊM
+                    {{ t('premium_modal.renew_more') }}
                   </button>
                 </div>
 
                 <div v-else-if="paymentStep === 'select'" class="step-container" key="step-select">
-                  <h3 class="label-heading">Lựa Chọn Gói Đăng Ký</h3>
+                  <h3 class="label-heading">{{ t('premium_modal.select_heading') }}</h3>
                   <div class="plan-cards">
                     <div 
-                      v-for="plan in plans" :key="plan.id"
+                      v-for="plan in localizedPlans" :key="plan.id"
                       class="plan-card" :class="{ 'active': selectedPlan === plan.id }"
                       @click="selectedPlan = plan.id"
                     >
@@ -118,7 +118,7 @@
                     <button class="btn-vnpay-pro" @click="handleVNPayPayment" :disabled="isLoading">
                       <div class="btn-content" v-if="!isLoading">
                         <svg class="wallet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
-                        <span>Thanh toán an toàn qua</span>
+                        <span>{{ t('premium_modal.pay_qr') }}</span>
                         <div class="css-logo-vnpay">
                           <span class="txt-vn">VN</span><span class="txt-pay">PAY</span>
                         </div>
@@ -131,17 +131,17 @@
 
                     <button class="btn-dev-mock" @click="simulatePaymentSuccess" :disabled="isLoading">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
-                      {{ isLoading ? 'Đang xử lý...' : '[Dev] Giả lập nhận tiền thành công' }}
+                      {{ isLoading ? t('premium_modal.processing') : t('premium_modal.dev_success') }}
                     </button>
                   </div>
 
                   <button v-if="isPremiumUser" class="btn-text-back" @click="paymentStep = 'manage'">
-                    &larr; Quay lại Quản lý
+                    &larr; {{ t('premium_modal.back_to_manage') }}
                   </button>
                   
                   <div class="secure-badge">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                    Giao dịch an toàn qua cổng thanh toán VNPay 
+                    {{ t('premium_modal.secure_note') }}
                   </div>
                 </div>
 
@@ -153,10 +153,10 @@
                       <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
                     </svg>
                   </div>
-                  <h3 class="success-title">Nâng Cấp Thành Công!</h3>
-                  <p class="success-desc">Cảm ơn bạn. Trải nghiệm <b>GoMet Premium</b> của bạn đã sẵn sàng sử dụng.</p>
+                  <h3 class="success-title">{{ t('premium_modal.success_title') }}</h3>
+                  <p class="success-desc">{{ t('premium_modal.success_desc') }} <b>{{ t('premium_modal.plan_name') }}</b> {{ t('premium_modal.success_desc_suffix') }}</p>
                   <button class="btn-submit-premium" @click="finishUpgrade">
-                    HOÀN TẤT & BẮT ĐẦU
+                    {{ t('premium_modal.finish') }}
                   </button>
                 </div>
 
@@ -171,6 +171,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { toast } from '@/composables/useToast'
 import api from '@/services/api' 
@@ -180,6 +181,16 @@ const emit = defineEmits(['close', 'upgraded', 'start-test-timer'])
 
 const backdropRef = ref(null)
 const userStore = useAuthStore()
+const { t } = useI18n()
+
+const readStoredUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem('user') || 'null')
+  } catch {
+    localStorage.removeItem('user')
+    return null
+  }
+}
 
 const paymentStep = ref('select') 
 const isLoading = ref(false)
@@ -200,9 +211,6 @@ const fetchExpiryDate = async () => {
   
   try {
     const res = await api.get(`/api/payments/check-expiry/${userStore.user.accountID}`);
-    
-    // LOG ĐỂ KIỂM TRA (Sếp mở F12 xem cái này nhé)
-    console.log("Dữ liệu ngày hết hạn từ Server:", res.data);
 
     if (res.data && res.data.success && res.data.endAt) {
       const dateObj = new Date(res.data.endAt);
@@ -213,7 +221,7 @@ const fetchExpiryDate = async () => {
       // Thường là cộng 99 năm nên năm sẽ > năm hiện tại + 50
       if (year > currentYear + 50) { 
         isLifetimePlan.value = true;
-        realExpiryDate.value = 'Vĩnh viễn';
+        realExpiryDate.value = t('premium_modal.lifetime_short');
       } else {
         isLifetimePlan.value = false;
         // Định dạng ngày giờ Việt Nam cho gói tháng/năm
@@ -226,12 +234,11 @@ const fetchExpiryDate = async () => {
         });
       }
     } else {
-      realExpiryDate.value = 'Hết hạn hoặc chưa đăng ký';
+      realExpiryDate.value = t('premium_modal.expiry_unknown');
       isLifetimePlan.value = false;
     }
   } catch (error) {
-    console.error("Lỗi lấy ngày hết hạn:", error);
-    realExpiryDate.value = 'Không thể tải dữ liệu';
+    realExpiryDate.value = t('premium_modal.expiry_error');
   }
 }
 
@@ -253,21 +260,44 @@ const closeModal = () => {
 }
 
 onMounted(() => {
-  document.body.style.overflow = 'hidden'
-  nextTick(() => backdropRef.value?.focus())
+  if (props.isOpen) {
+    document.body.style.overflow = 'hidden'
+    nextTick(() => backdropRef.value?.focus())
+  }
 })
 
 onUnmounted(() => {
   document.body.style.overflow = ''
 })
 
+watch(() => props.isOpen, async (isOpen) => {
+  document.body.style.overflow = isOpen ? 'hidden' : ''
+  if (isOpen) {
+    await nextTick()
+    backdropRef.value?.focus()
+  }
+})
+
 const selectedPlan = ref('yearly')
 const plans = ref([
-  { id: 'test', name: 'Gói Test 10s', desc: 'Dành cho Dev test luồng', price: 1000, unit: '10 giây', tag: 'DEV MODE' },
-  { id: 'monthly', name: 'Gói 1 Tháng', desc: 'Trải nghiệm linh hoạt', price: 49000, unit: 'tháng' },
-  { id: 'yearly', name: 'Gói 1 Năm', desc: 'Sử dụng bền vững', price: 399000, unit: 'năm', tag: 'TIẾT KIỆM' },
-  { id: 'lifetime', name: 'Gói Vĩnh Viễn', desc: 'Mua 1 lần dùng mãi mãi', price: 999000, unit: 'vĩnh viễn', tag: 'PREMIUM VIP' },
+  { id: 'test', price: 1000 },
+  { id: 'monthly', price: 49000 },
+  { id: 'yearly', price: 399000 },
+  { id: 'lifetime', price: 999000 },
 ])
+
+const optionalT = (key) => {
+  const value = t(key)
+  return value === key ? '' : value
+}
+
+const localizedPlans = computed(() => plans.value.map((plan) => ({
+  ...plan,
+  name: t(`premium_modal.plans.${plan.id}.name`),
+  desc: t(`premium_modal.plans.${plan.id}.desc`),
+  unit: optionalT(`premium_modal.plans.${plan.id}.unit`),
+  tag: optionalT(`premium_modal.plans.${plan.id}.tag`),
+})))
 
 const fetchDynamicPricing = async () => {
   try {
@@ -284,7 +314,9 @@ const fetchDynamicPricing = async () => {
     plans.value[2].price = getPrice('PREMIUM_PRICE_12_MONTHS', 399000);
     plans.value[3].price = getPrice('PREMIUM_PRICE_LIFETIME', 999000);
   } catch (error) {
-    console.warn("Lấy bảng giá động thất bại, dùng giá mặc định.", error);
+    if (import.meta.env.DEV) {
+      console.warn('Premium pricing fallback to defaults.', error)
+    }
   }
 }
 
@@ -298,17 +330,17 @@ const getPlanTypeInt = (id) => {
   return 2;
 }
 
-const features = [
-  { name: 'Không quảng cáo', sub: 'Trải nghiệm liền mạch', free: true, pro: true },
-  { name: 'Chat AI (GoMet Assistant)', sub: 'Trợ lý gợi ý 24/7', free: false, pro: true },
-  { name: 'Bộ sưu tập Món-Tủ', sub: 'Lưu trữ tinh hoa', free: 'max3', pro: 'unlimited' },
-  { name: 'Kế hoạch ăn uống', sub: 'Thực đơn tự động', free: false, pro: true },
-  { name: 'Tính năng so sánh', sub: 'Đánh giá dinh dưỡng', free: false, pro: true },
-]
+const features = computed(() => [
+  { name: t('premium_modal.features.no_ads.name'), sub: t('premium_modal.features.no_ads.sub'), free: true, pro: true },
+  { name: t('premium_modal.features.ai_chat.name'), sub: t('premium_modal.features.ai_chat.sub'), free: false, pro: true },
+  { name: t('premium_modal.features.storage.name'), sub: t('premium_modal.features.storage.sub'), free: 'max3', pro: 'unlimited' },
+  { name: t('premium_modal.features.mealplan.name'), sub: t('premium_modal.features.mealplan.sub'), free: false, pro: true },
+  { name: t('premium_modal.features.compare.name'), sub: t('premium_modal.features.compare.sub'), free: false, pro: true },
+])
 
 const handleVNPayPayment = async () => {
   if (!userStore.isAuthenticated || !userStore.user?.accountID) {
-    toast.warn("Vui lòng đăng nhập để nâng cấp!");
+    toast.warn(t('route_guard.login_for_premium'));
     return;
   }
   
@@ -325,11 +357,10 @@ const handleVNPayPayment = async () => {
       const paymentUrl = res.data.url;
       window.location.href = paymentUrl; 
     } else {
-      toast.error(res.data?.message || "Không lấy được đường dẫn thanh toán. Vui lòng thử lại!");
+      toast.error(res.data?.message || t('premium_modal.payment_request_failed'));
     }
   } catch (error) {
-    console.error("Lỗi khởi tạo VNPay:", error);
-    toast.error(error.response?.data?.message || "Lỗi kết nối đến cổng thanh toán!");
+    toast.error(error.response?.data?.message || t('premium_modal.payment_request_failed'));
   } finally {
     isLoading.value = false;
   }
@@ -346,9 +377,9 @@ const simulatePaymentSuccess = async () => {
     });
     
     if (res.data && res.data.success) {
-      toast.success("Đã nâng cấp Premium thành công!");
+      toast.success(t('payment_success.premium_activated'));
 
-      const localUser = JSON.parse(localStorage.getItem('user'));
+      const localUser = readStoredUser();
       if (localUser) {
         localUser.isPremium = 1;
         localUser.role = 'premium'; 
@@ -364,7 +395,7 @@ const simulatePaymentSuccess = async () => {
       paymentStep.value = 'success';
     } 
   } catch (error) {
-    toast.error("Lỗi cập nhật quyền hạn!");
+    toast.error(t('premium_modal.expiry_error'));
   } finally {
     isLoading.value = false;
   }

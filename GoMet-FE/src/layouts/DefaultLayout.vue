@@ -11,7 +11,7 @@
         </div>
         <div class="loader-content">
           <div class="logo-wrapper"><h2 class="loader-logo shine-text">GOMET</h2></div>
-          <p class="loader-text">CHÀO MỪNG TỚI VỚI GOMET</p>
+          <p class="loader-text">{{ t('app_shell.loader_welcome') }}</p>
           <div class="progress-wrapper">
             <div class="progress-track">
               <div class="loader-progress" ref="progressBarRef"><div class="progress-glow-tip"></div></div>
@@ -62,13 +62,13 @@
     <CompareFloatingBar />
     <GometAiChat ref="aiChatRef" />
 
-    <button class="float-ai-btn" @click="openAiChat" title="Chat with Gomet AI">
+    <button class="float-ai-btn" @click="openAiChat" :title="t('chat.ai_button')">
       <div class="ai-icon-bg">
         <span class="icon">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
         </span>
       </div>
-      <span class="label">GOMET AI</span>
+      <span class="label">{{ t('chat.ai_button') }}</span>
     </button>
 
     <Teleport to="body">
@@ -83,6 +83,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useChatStore } from '@/stores/chat' 
 import { toast } from '@/composables/useToast' 
 import gsap from 'gsap' 
@@ -109,6 +110,7 @@ gsap.registerPlugin(ScrollTrigger)
 const router = useRouter()
 const route = useRoute()
 const chatStore = useChatStore() 
+const { t } = useI18n()
 
 const isMobileView = ref(false)
 const checkScreenSize = () => { isMobileView.value = window.innerWidth <= 1024; }
@@ -145,7 +147,7 @@ const mealplanData = ref(null);
 
 const handleStartTestTimer = () => { setTimeout(() => { showExpired.value = true; isEnforcingRenewal.value = true; }, 12000); };
 const handleRenew = () => { showExpired.value = false; showPremium.value = true; };
-const handleClosePremium = () => { showPremium.value = false; if (isEnforcingRenewal.value) { showExpired.value = true; toast.error("Bạn cần gia hạn Premium!"); } };
+const handleClosePremium = () => { showPremium.value = false; if (isEnforcingRenewal.value) { showExpired.value = true; toast.error(t('toast.premium_renew_required')); } };
 const handleUpgraded = () => { isEnforcingRenewal.value = false; showPremium.value = false; showExpired.value = false; };
 const handleCancel = () => { showExpired.value = false; isEnforcingRenewal.value = false; };
 
@@ -190,7 +192,7 @@ const openAiChat = () => {
       isPremiumUser = user?.isPremium || user?.IsPremium || user?.role === 'PREMIUM' || user?.role === 'ADMIN';
     } catch (e) {}
   }
-  if (!isPremiumUser) { showPremium.value = true; toast.warn("Gomet Assistant dành cho Premium sếp nhé!"); return; }
+  if (!isPremiumUser) { showPremium.value = true; toast.warn(t('route_guard.premium_only')); return; }
   if (aiChatRef.value) aiChatRef.value.openChat();
 };
 

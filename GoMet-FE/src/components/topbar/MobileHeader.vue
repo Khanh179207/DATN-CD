@@ -53,20 +53,20 @@
           <div v-if="showShopping || showNoti" class="m-dropdown-overlay" @click="closeAll">
              <div class="m-dropdown-content" @click.stop>
                 
-                <div v-if="showShopping" class="m-drop-pane">
+                 <div v-if="showShopping" class="m-drop-pane">
                    <div class="m-drop-head">
                       <div class="m-head-title">
-                        <h3>Giỏ đi chợ</h3>
+                      <h3>{{ t('header.shopping_list') }}</h3>
                         <div class="m-head-links">
-                           <button v-if="shoppingStore.items.some(i => i.checked)" class="m-link danger" @click="shoppingStore.removeCheckedItems()">Xóa đã tick</button>
-                           <button v-if="shoppingStore.items.length > 0" class="m-link" @click="shoppingStore.clearItems()">Xóa hết</button>
+                        <button v-if="shoppingStore.items.some(i => i.checked)" class="m-link danger" @click="shoppingStore.removeCheckedItems()">{{ t('header.remove_checked') }}</button>
+                        <button v-if="shoppingStore.items.length > 0" class="m-link" @click="shoppingStore.clearItems()">{{ t('header.clear_all') }}</button>
                         </div>
                       </div>
                       <button class="btn-close-m" @click="closeAll">✖</button>
                    </div>
                    <div class="m-drop-body custom-scroll">
                       <div v-if="shoppingStore.items.length === 0" class="m-empty-state">
-                        <p>Giỏ trống sếp ơi!</p>
+                      <p>{{ t('header.shopping_empty') }}</p>
                       </div>
                       <div v-else v-for="(item, idx) in shoppingStore.items" :key="idx" 
                            class="m-list-item" :class="{ 'checked': item.checked }"
@@ -76,7 +76,7 @@
                         </div>
                         <div class="m-item-info">
                            <span class="m-item-name">{{ item.name }}</span>
-                           <span class="m-item-qty">Bài viết: {{ item.quantity }}</span>
+                          <span class="m-item-qty">{{ t('header.post_label') }}: {{ item.quantity }}</span>
                         </div>
                       </div>
                    </div>
@@ -85,13 +85,13 @@
                 <div v-if="showNoti" class="m-drop-pane">
                    <div class="m-drop-head">
                       <div class="m-head-title">
-                        <h3>Thông báo</h3>
-                        <button v-if="unreadNotiCount > 0" class="m-link" @click="handleMarkAllRead">Đánh dấu đã đọc</button>
+                        <h3>{{ t('header.notifications') }}</h3>
+                        <button v-if="unreadNotiCount > 0" class="m-link" @click="handleMarkAllRead">{{ t('header.mark_all_read') }}</button>
                       </div>
                       <button class="btn-close-m" @click="closeAll">✖</button>
                    </div>
                    <div class="m-drop-body custom-scroll">
-                      <p v-if="notifications.length === 0" class="m-empty-state">Chưa có thông báo nào.</p>
+                       <p v-if="notifications.length === 0" class="m-empty-state">{{ t('header.empty_notifications') }}</p>
                       <div v-else v-for="n in notifications" :key="n.id" 
                            class="m-noti-item" :class="{ 'unread': !n.isRead }"
                            @click="handleNotiClick(n)">
@@ -115,6 +115,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useShoppingStore } from '@/stores/shopping'
 import SearchBox from '@/components/common/SearchBox.vue'
@@ -127,6 +128,7 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const shoppingStore = useShoppingStore()
+const { t, locale } = useI18n()
 
 const isScrolled = ref(false)
 const showShopping = ref(false)
@@ -150,7 +152,7 @@ const toggleShopping = () => {
   const isAdmin = role === 'admin' || [1, "1", true].includes(authStore.user?.isAdmin);
   
   if (!isPremiumUser && !isAdmin) {
-    toast.warn('Giỏ đi chợ là đặc quyền dành cho tài khoản Premium!');
+    toast.warn(t('post_detail.shopping_premium_only'));
     window.dispatchEvent(new CustomEvent('ui:open-premium'));
     return;
   }
@@ -170,7 +172,7 @@ const handleMarkAllRead = async () => {
   try {
     await apiMarkAllRead(authStore.user.accountID);
     notifications.value.forEach(n => n.isRead = true);
-    toast.success("Đã đánh dấu tất cả là đã đọc");
+    toast.success(t('header.mark_all_read_success'));
   } catch (err) { }
 }
 
@@ -182,7 +184,7 @@ const loadNotifications = async () => {
       id: n.notificationID, 
       user: n.title, 
       action: n.content,
-      time: n.createdAt ? new Date(n.createdAt).toLocaleDateString('vi-VN') : '',
+      time: n.createdAt ? new Date(n.createdAt).toLocaleDateString(locale.value === 'vi' ? 'vi-VN' : 'en-US') : '',
       isRead: n.isRead === 1,
       avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(n.title)}&background=EA580C&color=fff`,
       link: n.link

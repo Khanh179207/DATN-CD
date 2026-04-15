@@ -3,14 +3,14 @@
     
     <div class="page-header-lux">
       <div>
-        <h1 class="page-title">Quản lý Khiếu nại</h1>
-        <p class="page-subtitle">Hệ thống xử lý khiếu nại và gỡ ban tài khoản cộng đồng GOMET</p>
+        <h1 class="page-title">{{ t('admin.appeals.manage_title') }}</h1>
+        <p class="page-subtitle">{{ t('admin.appeals.manage_subtitle') }}</p>
       </div>
       <button class="btn-refresh-lux" @click="loadAppeals" :disabled="loading">
         <svg :class="{ 'spinning': loading }" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
         </svg>
-        {{ loading ? 'Đang đồng bộ...' : 'Làm mới dữ liệu' }}
+        {{ loading ? t('admin.appeals.refreshing') : t('admin.appeals.refresh') }}
       </button>
     </div>
 
@@ -20,7 +20,7 @@
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
         </div>
         <div class="stat-info">
-          <span class="label">Tổng khiếu nại</span>
+          <span class="label">{{ t('admin.appeals.total') }}</span>
           <h3 class="value">{{ appeals.length }}</h3>
         </div>
       </div>
@@ -29,7 +29,7 @@
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
         </div>
         <div class="stat-info">
-          <span class="label">Chờ xử lý</span>
+          <span class="label">{{ t('admin.appeals.pending') }}</span>
           <h3 class="value">{{ getPendingCount }}</h3>
         </div>
       </div>
@@ -38,7 +38,7 @@
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
         </div>
         <div class="stat-info">
-          <span class="label">Đã chấp thuận</span>
+          <span class="label">{{ t('admin.appeals.approved') }}</span>
           <h3 class="value">{{ getResolvedCount }}</h3>
         </div>
       </div>
@@ -47,7 +47,7 @@
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
         </div>
         <div class="stat-info">
-          <span class="label">Đã Từ chối</span>
+          <span class="label">{{ t('admin.appeals.rejected_total') }}</span>
           <h3 class="value">{{ getRejectedCount }}</h3>
         </div>
       </div>
@@ -66,7 +66,7 @@
         <div class="filter-right-actions">
           <div class="search-box-lux">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <input v-model="searchEmail" type="email" placeholder="Tìm kiếm theo email...">
+            <input v-model="searchEmail" type="email" :placeholder="t('admin.appeals.search_email')">
             <button v-if="searchEmail" @click="searchEmail = ''" class="clear-search" style="background: none; border: none; cursor: pointer; color: #94a3b8;">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
@@ -77,18 +77,18 @@
       <div class="table-responsive">
         <div v-if="loading" class="loading-state-lux">
           <svg class="spinning" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="3"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>
-          <span>Đang tải dữ liệu...</span>
+          <span>{{ t('admin.appeals.loading') }}</span>
         </div>
 
         <table v-else class="lux-table">
           <thead>
             <tr>
-              <th width="10%">Mã Đơn</th>
-              <th width="30%">Tài Khoản Yêu Cầu</th>
-              <th width="25%">Lý Do (Trích lục)</th>
-              <th width="15%">Thời Gian Gửi</th>
-              <th width="10%">Trạng Thái</th>
-              <th width="10%" class="text-right">Thao Tác</th>
+              <th width="10%">{{ t('admin.appeals.code_col') }}</th>
+              <th width="30%">{{ t('admin.appeals.account_col') }}</th>
+              <th width="25%">{{ t('admin.appeals.reason_col') }}</th>
+              <th width="15%">{{ t('admin.appeals.created_col') }}</th>
+              <th width="10%">{{ t('admin.appeals.status_col') }}</th>
+              <th width="10%" class="text-right">{{ t('admin.appeals.actions_col') }}</th>
             </tr>
           </thead>
           <transition-group name="list-slide" tag="tbody">
@@ -103,7 +103,7 @@
                 </span>
               </td>
               <td class="text-right">
-                <button class="btn-refresh-lux btn-sm-action" @click.stop="openDetail(appeal)">Xử lý</button>
+                <button class="btn-refresh-lux btn-sm-action" @click.stop="openDetail(appeal)">{{ t('admin.appeals.process_action') }}</button>
               </td>
             </tr>
           </transition-group>
@@ -111,8 +111,8 @@
 
         <div v-if="!loading && filteredAppeals.length === 0" class="empty-state-lux">
           <div class="empty-icon">📭</div>
-          <h3>Không tìm thấy Khiếu nại nào!</h3>
-          <p>Không có dữ liệu phù hợp với bộ lọc hiện tại của sếp.</p>
+          <h3>{{ t('admin.appeals.empty_title') }}</h3>
+          <p>{{ t('admin.appeals.empty') }}</p>
         </div>
       </div>
     </div>
@@ -125,14 +125,12 @@
             <div class="icon-success-circle">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
             </div>
-            <h3 class="confirm-title">Phê Duyệt & Gỡ Ban?</h3>
-            <p class="confirm-desc">
-              Bạn đang chuẩn bị gỡ ban cho tài khoản <strong>{{ selectedAppeal?.email }}</strong>.<br><br>Hệ thống sẽ lập tức mở khóa và gửi Email thông báo tin vui này tới người dùng.
-            </p>
+            <h3 class="confirm-title">{{ t('admin.appeals.confirm_approve_title') }}</h3>
+            <p class="confirm-desc" v-html="t('admin.appeals.confirm_approve_message', { email: selectedAppeal?.email })"></p>
             <div class="confirm-actions">
-              <button class="btn-cancel-action" @click="showConfirmApprove = false" :disabled="isUpdating">Hủy bỏ</button>
+              <button class="btn-cancel-action" @click="showConfirmApprove = false" :disabled="isUpdating">{{ t('admin.posts.cancel') }}</button>
               <button class="btn-success-action" @click="confirmApprove" :disabled="isUpdating">
-                {{ isUpdating ? 'Đang xử lý...' : 'Xác nhận Gỡ Ban' }}
+                {{ isUpdating ? t('admin.appeals.processing') : t('admin.appeals.confirm_approve_button') }}
               </button>
             </div>
           </div>
@@ -145,20 +143,20 @@
             <div class="icon-danger-circle">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
             </div>
-            <h3 class="confirm-title">Từ chối Khiếu nại</h3>
-            <p class="confirm-desc">Bạn đang từ chối đơn của <strong>{{ selectedAppeal?.email }}</strong>.</p>
+            <h3 class="confirm-title">{{ t('admin.appeals.confirm_reject_title') }}</h3>
+            <p class="confirm-desc">{{ t('admin.appeals.confirm_reject_message', { email: selectedAppeal?.email }) }}</p>
             
             <div class="note-input-wrapper">
-              <label>Lý do từ chối (Bắt buộc nhập) <span style="color: #ef4444">*</span></label>
+              <label>{{ t('admin.appeals.reject_reason') }} <span style="color: #ef4444">*</span></label>
               <textarea v-model="updateNote" class="note-input-lux required-lux" 
-                placeholder="Ghi rõ lý do (Ví dụ: Bằng chứng chưa thuyết phục)..." rows="3"></textarea>
-              <span class="note-hint">Lý do này sẽ được gửi thẳng vào Email của người dùng.</span>
+                :placeholder="t('admin.appeals.reject_reason_placeholder')" rows="3"></textarea>
+              <span class="note-hint">{{ t('admin.appeals.reject_reason_hint') }}</span>
             </div>
 
             <div class="confirm-actions">
-              <button class="btn-cancel-action" @click="showConfirmReject = false" :disabled="isUpdating">Hủy bỏ</button>
+              <button class="btn-cancel-action" @click="showConfirmReject = false" :disabled="isUpdating">{{ t('admin.posts.cancel') }}</button>
               <button class="btn-danger-action" @click="confirmReject" :disabled="isUpdating">
-                {{ isUpdating ? 'Đang gửi Email...' : 'Từ chối & Gửi Mail' }}
+                {{ isUpdating ? t('admin.appeals.sending_mail') : t('admin.appeals.confirm_reject_button') }}
               </button>
             </div>
           </div>
@@ -169,24 +167,24 @@
         <div v-if="selectedAppeal && !showConfirmApprove && !showConfirmReject" class="modal-glass-backdrop" @click="closeDetail">
           <div class="modal-lux-content" @click.stop>
             <div class="modal-header-lux">
-              <h3>Hồ Sơ Khiếu Nại #{{ selectedAppeal.appealID }}</h3>
+              <h3>{{ t('admin.appeals.detail_title') }} #{{ selectedAppeal.appealID }}</h3>
               <button class="btn-x" @click="closeDetail">×</button>
             </div>
 
             <div class="modal-body lux-split-layout custom-scroll">
               <div class="split-left">
                 <div class="desc-box-lux highlight">
-                  <label>Nội dung khiếu nại (User trình bày)</label>
+                  <label>{{ t('admin.appeals.detail_reason_label') }}</label>
                   <div class="detail-text" style="font-style: italic; font-size: 1rem;">"{{ selectedAppeal.reason }}"</div>
                 </div>
 
                 <div class="timeline-logs">
-                  <div class="timeline-title">Nhật ký xử lý</div>
+                  <div class="timeline-title">{{ t('admin.appeals.timeline_title') }}</div>
                   <div class="log-item">
                     <div class="log-dot gray"></div>
                     <div class="log-content">
                       <span class="log-time">{{ formatDateTime(selectedAppeal.createdAt) }}</span>
-                      <span class="log-action">Hệ thống ghi nhận đơn từ <span class="log-actor">{{ selectedAppeal.email }}</span>.</span>
+                      <span class="log-action">{{ t('admin.appeals.timeline_received', { email: selectedAppeal.email }) }}</span>
                     </div>
                   </div>
                   
@@ -195,11 +193,11 @@
                     <div class="log-content">
                       <span class="log-time">{{ formatDateTime(selectedAppeal.resolvedAt) }}</span>
                       <span class="log-action">
-                        Phiếu được đóng bởi <span class="log-actor">{{ selectedAppeal.adminName || 'Admin' }}</span>.
-                        Kết quả: <strong :style="{ color: selectedAppeal.status === 'Resolved' ? '#16a34a' : '#dc2626'}">{{ selectedAppeal.status === 'Resolved' ? 'Đồng ý Gỡ Ban' : 'Từ chối Gỡ Ban' }}</strong>.
+                        {{ t('admin.appeals.timeline_closed_by', { admin: selectedAppeal.adminName || t('admin.dashboard.role_admin') }) }}
+                        {{ t('admin.appeals.timeline_result') }} <strong :style="{ color: selectedAppeal.status === 'Resolved' ? '#16a34a' : '#dc2626'}">{{ selectedAppeal.status === 'Resolved' ? t('admin.appeals.result_approved') : t('admin.appeals.result_rejected') }}</strong>.
                       </span>
                       <div v-if="selectedAppeal.note" class="admin-note-reply mt-2">
-                        <strong>Phản hồi:</strong> {{ selectedAppeal.note }}
+                        <strong>{{ t('admin.appeals.response_label') }}</strong> {{ selectedAppeal.note }}
                       </div>
                     </div>
                   </div>
@@ -209,11 +207,11 @@
               <div class="split-right">
                 <div class="meta-card-lux">
                   <div class="meta-item">
-                    <label>Email Liên Hệ</label>
+                    <label>{{ t('admin.appeals.contact_email') }}</label>
                     <p>📧 {{ selectedAppeal.email }}</p>
                   </div>
                   <div class="meta-item">
-                    <label>Trạng Thái Hiện Tại</label>
+                    <label>{{ t('admin.appeals.current_status') }}</label>
                     <p>
                       <span class="badge-status" :class="'status-' + selectedAppeal.status.toLowerCase()" style="margin-top: 5px;">
                         {{ getStatusLabel(selectedAppeal.status) }}
@@ -221,23 +219,23 @@
                     </p>
                   </div>
                   <div class="meta-item">
-                    <label>Thời Gian Gửi</label>
+                    <label>{{ t('admin.appeals.sent_time') }}</label>
                     <p>🕒 {{ formatDateTime(selectedAppeal.createdAt) }}</p>
                   </div>
                 </div>
 
                 <div v-if="selectedAppeal.status === 'Pending'" class="violation-card-lux">
                   <div class="v-header">
-                    <span>⚡ Bảng Quyết Định</span>
+                    <span>⚡ {{ t('admin.appeals.decision_board') }}</span>
                   </div>
                   <div class="v-body">
-                    <span class="lbl">Thao tác xử lý:</span>
+                    <span class="lbl">{{ t('admin.appeals.process_label') }}</span>
                     <div class="quick-mod-bar-vertical">
                       <button class="btn-mod btn-ban-user" @click="openAction('REJECT', selectedAppeal)" :disabled="isUpdating">
-                        ❌ Bác Bỏ / Từ chối
+                        ❌ {{ t('admin.appeals.reject_action') }}
                       </button>
                       <button class="btn-mod btn-success-mod" @click="openAction('APPROVE', selectedAppeal)" :disabled="isUpdating">
-                        ✅ Phê Duyệt & Gỡ Ban
+                        ✅ {{ t('admin.appeals.approve_action') }}
                       </button>
                     </div>
                   </div>
@@ -246,7 +244,7 @@
             </div>
 
             <div class="modal-footer-lux">
-              <button @click="closeDetail" class="btn-lux btn-close-modal" style="margin-left: auto;">Đóng hồ sơ</button>
+              <button @click="closeDetail" class="btn-lux btn-close-modal" style="margin-left: auto;">{{ t('admin.appeals.close_detail') }}</button>
             </div>
           </div>
         </div>
@@ -258,6 +256,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { toast } from '@/composables/useToast'
 import { getAppeals, updateAppeal, unbanAccountByAppeal } from '@/services/appealService'
 
@@ -275,13 +274,14 @@ const updateNote = ref('')
 
 const showConfirmApprove = ref(false)
 const showConfirmReject = ref(false)
+const { t, locale } = useI18n()
 
-const statusTabs = [
-  { value: '', label: 'Tất cả' },
-  { value: 'Pending', label: 'Chờ xử lý' },
-  { value: 'Resolved', label: 'Đã Gỡ Ban' },
-  { value: 'Rejected', label: 'Đã Từ chối' }
-]
+const statusTabs = computed(() => [
+  { value: '', label: t('admin.posts.tab_all') },
+  { value: 'Pending', label: t('admin.appeals.pending') },
+  { value: 'Resolved', label: t('admin.appeals.status_resolved') },
+  { value: 'Rejected', label: t('admin.appeals.status_rejected') }
+])
 
 // ─────────────────────────────────────────────────────────────────
 // COMPUTED & STATS
@@ -307,7 +307,7 @@ const loadAppeals = async () => {
     const data = await getAppeals()
     appeals.value = Array.isArray(data) ? data : (data.data || data.appeals || [])
   } catch (error) {
-    toast.error('Lỗi khi tải dữ liệu khiếu nại!')
+    toast.error(t('admin.appeals.load_failed'))
   } finally {
     loading.value = false
   }
@@ -330,11 +330,11 @@ const confirmApprove = async () => {
   isUpdating.value = true
   try {
     await unbanAccountByAppeal(selectedAppeal.value.appealID)
-    toast.success('Đã GỠ BAN thành công! Hệ thống đang gửi Email.')
+    toast.success(t('admin.appeals.approve_success'))
     await loadAppeals()
     resetState()
   } catch (error) {
-    toast.error(error.response?.data?.message || 'Lỗi xử lý!')
+    toast.error(error.response?.data?.message || t('admin.appeals.update_failed'))
   } finally {
     isUpdating.value = false
   }
@@ -343,7 +343,7 @@ const confirmApprove = async () => {
 const confirmReject = async () => {
   if (!selectedAppeal.value) return
   if (!updateNote.value || updateNote.value.trim() === '') {
-    toast.error('Sếp phải nhập Lý do từ chối để gửi Email cho User nhé!')
+    toast.error(t('admin.appeals.reject_reason_required'))
     return
   }
 
@@ -353,11 +353,11 @@ const confirmReject = async () => {
       status: 'Rejected',
       note: updateNote.value.trim()
     })
-    toast.success('Đã từ chối đơn & Gửi Email thành công.')
+    toast.success(t('admin.appeals.reject_success'))
     await loadAppeals()
     resetState()
   } catch (error) {
-    toast.error(error.response?.data?.message || 'Lỗi xử lý!')
+    toast.error(error.response?.data?.message || t('admin.appeals.update_failed'))
   } finally {
     isUpdating.value = false
   }
@@ -378,13 +378,19 @@ const resetState = () => {
 const truncateText = (t, l) => t?.length > l ? t.substring(0, l) + '...' : t
 
 const getStatusLabel = status => {
-  const labels = { Pending: 'Chờ xử lý', Resolved: 'Đã Gỡ Ban', Rejected: 'Từ chối' }
+  const labels = {
+    Pending: t('admin.appeals.status_pending'),
+    Resolved: t('admin.appeals.status_resolved'),
+    Rejected: t('admin.appeals.status_rejected')
+  }
   return labels[status] || status
 }
 
 const formatDateTime = date => {
   if (!date) return '—'
-  return new Date(date).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })
+  return new Intl.DateTimeFormat(locale.value === 'vi' ? 'vi-VN' : 'en-US', {
+    hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric'
+  }).format(new Date(date))
 }
 
 onMounted(() => {

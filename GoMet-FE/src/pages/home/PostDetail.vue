@@ -45,8 +45,8 @@
             <div class="interaction-col">
               
               <div class="reviews-header">
-                <h3 class="section-title">Cộng đồng GoMet</h3>
-                <p class="section-subtitle">Chia sẻ cảm nhận và hình ảnh thực tế của bạn</p>
+                <h3 class="section-title">{{ t('post_detail.community_title') }}</h3>
+                <p class="section-subtitle">{{ t('post_detail.community_subtitle') }}</p>
               </div>
 
               <div v-if="!isPostInteractive" class="status-alert-banner">
@@ -68,7 +68,7 @@
                   <img :src="currentUserAvatar" class="current-user-avt" alt="User">
                   
                   <div class="rating-selector" v-if="!hasUserRated">
-                    <span class="prompt-text">Bạn chấm món này mấy sao?</span>
+                    <span class="prompt-text">{{ t('post_detail.rating_prompt') }}</span>
                     <div class="star-rating-input" @mouseleave="hoverRating = 0">
                       <span 
                         v-for="star in 5" 
@@ -85,7 +85,7 @@
                   </div>
 
                   <div class="rating-selector locked" v-else>
-                    <span class="prompt-text text-muted">Đánh giá của bạn:</span>
+                    <span class="prompt-text text-muted">{{ t('post_detail.your_rating') }}</span>
                     <div class="star-rating-locked">
                       <span v-for="star in 5" :key="star" :class="{ 'filled': star <= (currentUserReview.rating || currentUserReview.rate) }">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
@@ -99,7 +99,7 @@
                     ref="commentInputRef" 
                     v-model="newComment" 
                     @input="autoResize"
-                    :placeholder="userRating > 0 && userRating < 3 ? 'Vui lòng chia sẻ lý do bạn chưa hài lòng về món ăn này (* Bắt buộc)' : 'Góp ý thêm về gia vị, cách làm hoặc chia sẻ thành quả...'"
+                    :placeholder="userRating > 0 && userRating < 3 ? t('post_detail.review_reason_placeholder') : t('post_detail.comment_placeholder')"
                   ></textarea>
                   
                   <div class="comment-image-previews" v-if="selectedPhotos.length">
@@ -112,17 +112,17 @@
                   </div>
 
                   <div class="input-footer">
-                    <label class="comment-upload-btn" title="Đính kèm hình ảnh thành quả">
+                    <label class="comment-upload-btn" :title="t('post_detail.attach_image')">
                       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                      <span class="upload-text">Thêm ảnh</span>
+                      <span class="upload-text">{{ t('post_detail.add_photo') }}</span>
                       <input type="file" hidden accept="image/*" multiple @change="onPhotosSelected" />
                     </label>
                     
                     <div class="action-buttons">
-                      <button v-if="newComment.trim() || selectedPhotos.length || userRating > 0" class="btn-cancel-review" @click="clearForm" :disabled="isUploading">Hủy</button>
+                      <button v-if="newComment.trim() || selectedPhotos.length || userRating > 0" class="btn-cancel-review" @click="clearForm" :disabled="isUploading">{{ t('compare.cancel') }}</button>
                       <button class="btn-submit-review" @click="submitComment" :disabled="isSubmitDisabled">
                         <svg v-if="isUploading" class="spinner-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>
-                      <span>{{ isUploading ? 'Đang gửi...' : (hasUserRated ? 'Gửi bình luận' : 'Gửi đánh giá') }}</span>
+                      <span>{{ isUploading ? t('post_detail.sending') : (hasUserRated ? t('post_detail.submit_comment') : t('post_detail.submit_review')) }}</span>
                       </button>
                     </div>
                   </div>
@@ -159,6 +159,7 @@
 <script setup>
 import { ref, watch, onMounted, computed, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { toast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
 
@@ -183,6 +184,7 @@ import { usePostViewLimit } from '@/composables/usePostViewLimit'
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const { t } = useI18n()
 
 /* START: Daily View Limit */
 const { checkAndChargeView, remainingViews } = usePostViewLimit()
@@ -269,13 +271,13 @@ const postStatusMessage = computed(() => {
   const isActive = post.value.isActive;
   const isApproved = post.value.isApproved;
 
-  if (isActive === 1 && isApproved === 0) return 'Bài viết đang chờ Admin duyệt. Bạn có thể xem nhưng không thể tương tác lúc này.';
-  if (isActive === 0 && isApproved === 0) return 'Bài viết đã được bạn ẩn trong lúc chờ duyệt. Không thể tương tác.';
-  if (isActive === 0 && isApproved === 1) return 'Bài viết đang được bạn cấu hình ẩn. Không thể tương tác.';
-  if (isActive === -1 && isApproved === 1) return 'Bài viết đã bị Admin gỡ khỏi hệ thống hiển thị. Không thể tương tác.';
-  if (isActive === -1 && isApproved === 0) return 'Bài viết đã bị Admin từ chối phê duyệt. Không thể tương tác.';
+  if (isActive === 1 && isApproved === 0) return t('post_detail.status_pending_approval');
+  if (isActive === 0 && isApproved === 0) return t('post_detail.status_hidden_while_pending');
+  if (isActive === 0 && isApproved === 1) return t('post_detail.status_hidden_by_author');
+  if (isActive === -1 && isApproved === 1) return t('post_detail.status_removed_by_admin');
+  if (isActive === -1 && isApproved === 0) return t('post_detail.status_rejected_by_admin');
   
-  return 'Bài viết hiện không khả dụng để tương tác.';
+  return t('post_detail.status_unavailable');
 });
 
 
@@ -351,7 +353,7 @@ async function loadPost(id) {
     /* START: Daily View Limit Check */
     const canAccess = checkAndChargeView(Number(id), dto.authorID)
     if (!canAccess) {
-      toast.warn('Bạn đã hết lượt xem bài viết miễn phí trong ngày hôm nay! Vui lòng nâng cấp Premium.')
+      toast.warn(t('post_detail.free_view_limit_reached'))
       router.push('/home')
       window.dispatchEvent(new CustomEvent('ui:open-premium'))
       return
@@ -364,7 +366,7 @@ async function loadPost(id) {
       title: dto.title,
       image: dto.media || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=1200&q=95',
       video: dto.video || null, 
-      author: dto.authorName || 'GoMet Chef',
+      author: dto.authorName || t('compare.default_author'),
       authorID: dto.authorID,
       authorAvatar: dto.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(dto.authorName||'G')}&background=EA580C&color=fff`,
       authorBio: dto.authorBio || '', 
@@ -399,7 +401,7 @@ async function loadPost(id) {
 
     // Nếu bài viết KHÔNG phải (1, 1) VÀ người xem KHÔNG phải Tác giả VÀ KHÔNG phải Admin
     if (!isPostInteractive.value && !isAuthor && !isAdmin) {
-      toast.error('Bài viết này không tồn tại, đang chờ duyệt hoặc đã bị ẩn!');
+      toast.error(t('post_detail.not_available_error'));
       router.push('/home'); // Đẩy người dùng lạ về trang chủ
       return; // Dừng luôn việc tải bình luận và các bài viết liên quan
     }
@@ -438,19 +440,19 @@ const checkContentPolicy = async (text) => {
     const res = await api.post('/api/blacklist/check', { content: text });
     return res.data.hasBadWord; 
   } catch (error) {
-    console.warn("Lỗi kiểm duyệt nội dung:", error);
+    console.warn('PostDetail content policy error:', error);
     return false; 
   }
 };
 
 // --- LOGIC API ---
 const submitComment = async () => {
-  if (!isPostInteractive.value) { toast.warn('Không thể thao tác trên bài viết này!'); return; }
+  if (!isPostInteractive.value) { toast.warn(t('post_detail.post_action_unavailable')); return; }
 
   let content = newComment.value.trim()
   
   if (userRating.value > 0 && userRating.value < 3 && !content) {
-    toast.warn('Vui lòng cho biết lý do bạn đánh giá dưới 3 sao!');
+    toast.warn(t('post_detail.low_rating_reason_required'));
     return;
   }
 
@@ -465,7 +467,7 @@ const submitComment = async () => {
   const isViolating = await checkContentPolicy(content);
   if (isViolating) {
     content = "chỉ cần bạn đăng bài, ngon hay dở không quan trong!";
-    toast.info("Bình luận của bạn đã được hệ thống tự động làm sạch!");
+    toast.info(t('post_detail.comment_sanitized'));
   }
 
   try {
@@ -486,15 +488,15 @@ const submitComment = async () => {
     await api.post('/api/comments', payload);
     clearForm(); 
     await fetchComments(postID); 
-    toast.success('Đã gửi đánh giá thành công!');
+    toast.success(t('post_detail.review_submitted'));
   } catch (err) { 
-    const msg = err.response?.data?.message || 'Gửi đánh giá thất bại!';
+    const msg = err.response?.data?.message || t('post_detail.review_submit_failed');
     toast.error(msg);
   } finally { isUploading.value = false }
 }
 
 const handleSubmitReply = async ({ parentId, content }) => {
-  if (!isPostInteractive.value) { toast.warn('Không thể thao tác trên bài viết này!'); return; }
+  if (!isPostInteractive.value) { toast.warn(t('post_detail.post_action_unavailable')); return; }
 
   let textContent = content;
   if (!textContent || !textContent.trim()) return
@@ -506,7 +508,7 @@ const handleSubmitReply = async ({ parentId, content }) => {
   const isViolating = await checkContentPolicy(textContent);
   if (isViolating) {
     textContent = "chỉ cần bạn đăng bài, ngon hay dở không quan trong!";
-    toast.info("Nội dung của bạn đã được hệ thống tự động làm sạch!");
+    toast.info(t('post_detail.reply_sanitized'));
   }
 
   try {
@@ -516,15 +518,15 @@ const handleSubmitReply = async ({ parentId, content }) => {
     };
     await api.post('/api/comments', payload);
     await fetchComments(payload.postID); 
-    toast.success('Đã gửi câu trả lời!');
+    toast.success(t('post_detail.reply_submitted'));
   } catch (err) { 
-    const msg = err.response?.data?.message || 'Lỗi khi gửi câu trả lời!';
+    const msg = err.response?.data?.message || t('post_detail.reply_submit_failed');
     toast.error(msg);
   }
 }
 
 const handleDeleteComment = async (commentId) => {
-  if (!isPostInteractive.value) { toast.warn('Không thể thao tác trên bài viết này!'); return; }
+  if (!isPostInteractive.value) { toast.warn(t('post_detail.post_action_unavailable')); return; }
 
   if (!authStore.isAuthenticated) {
     window.dispatchEvent(new CustomEvent('ui:open-login'))
@@ -548,23 +550,23 @@ const handleDeleteComment = async (commentId) => {
       });
       
       if (targetComment) {
-        targetComment.content = "[Bình luận này đã bị ẩn vì vi phạm chính sách của GoMet]";
+        targetComment.content = t('post_detail.comment_hidden_notice');
         targetComment.imageUrls = [];
         targetComment.rating = 0; 
       }
-      toast.success('Đã ẩn bình luận vi phạm!');
+      toast.success(t('post_detail.comment_hidden_success'));
     } else {
       await api.delete(`/api/comments/user/${commentId}?currentAccountID=${userId}`);
       rawCommentsList.value = rawCommentsList.value.filter(c => (c.commentID || c.id) !== commentId);
-      toast.success('Đã xóa bình luận!');
+      toast.success(t('post_detail.comment_deleted_success'));
     }
   } catch (err) { 
-    toast.error(err.response?.data?.message || 'Lỗi khi xóa bình luận!'); 
+    toast.error(err.response?.data?.message || t('post_detail.comment_delete_failed')); 
   }
 }
 
 const handleToggleLikeComment = async (comment) => {
-  if (!isPostInteractive.value) { toast.warn('Không thể thao tác trên bài viết này!'); return; }
+  if (!isPostInteractive.value) { toast.warn(t('post_detail.post_action_unavailable')); return; }
 
   if (!authStore.isAuthenticated) {
     window.dispatchEvent(new CustomEvent('ui:open-login'))
@@ -588,7 +590,7 @@ const handleToggleLikeComment = async (comment) => {
   } catch (err) {
     targetComment.isLiked = previousIsLiked; targetComment.likes = previousLikesCount;
     comment.isLiked = previousIsLiked; comment.likes = previousLikesCount;
-    toast.error('Máy chủ đang bận, bạn thử lại sau nhé!');
+    toast.error(t('post_detail.comment_like_failed'));
   }
 }
 

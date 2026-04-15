@@ -117,6 +117,13 @@ const isTyping = ref(false);
 const formatTime = () => new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
 const messages = ref([{ text: '👋 Chào sếp! Sếp cần tìm món gì hôm nay?', isMine: false, timeStr: formatTime() }])
 
+const escapeHtml = (value) => String(value || '')
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#039;')
+
 const parseMsg = (content) => {
   const regex = /\[LINK:(\d+)\]/g;
   const matches = [...content.matchAll(regex)];
@@ -129,7 +136,7 @@ const parseMsg = (content) => {
 // 🚀 NÂNG CẤP: Dịch Markdown siêu chuẩn cho AI
 const formatMessageText = (text) => {
   if (!text) return '';
-  let formatted = text;
+  let formatted = escapeHtml(text);
   
   // 1. In đậm (**text**)
   formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');

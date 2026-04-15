@@ -16,27 +16,27 @@
 
           <div class="idea-text">
             <div class="reveal-wrapper">
-              <span class="sub-tag gsap-idea-reveal">{{ $t('landing.idea_tag', 'Nghệ Thuật Ẩm Thực') }}</span>
+              <span class="sub-tag gsap-idea-reveal">{{ $t('landing.idea_tag') }}</span>
             </div>
             <h2 class="idea-title gsap-idea-text">
-              Đánh Thức <br>
-              <span class="text-gradient shine-effect">Mọi Giác Quan</span>
+              {{ $t('landing.idea_title_line1') }} <br>
+              <span class="text-gradient shine-effect">{{ $t('landing.idea_title_hl') }}</span>
             </h2>
             <div class="reveal-wrapper">
               <p class="idea-desc gsap-idea-reveal">
-                GoMet là bảo tàng lưu giữ di sản ẩm thực đa quốc gia. Nơi mỗi nguyên liệu được thổi hồn thành những kiệt tác độc bản trên bàn tiệc gia đình bạn.
+                {{ $t('landing.idea_desc') }}
               </p>
             </div>
             
             <div class="idea-stats gsap-idea-reveal">
               <div class="stat-item">
                 <span class="stat-num"><span class="gsap-counter-recipes">15</span>k+</span>
-                <span class="stat-label">Bài viết</span>
+                <span class="stat-label">{{ $t('landing.idea_stat_posts') }}</span>
               </div>
               <div class="stat-sep"></div>
               <div class="stat-item">
                 <span class="stat-num"><span class="gsap-counter-topics">500</span>+</span>
-                <span class="stat-label">Danh mục</span>
+                <span class="stat-label">{{ $t('landing.idea_stat_categories') }}</span>
               </div>
             </div>
           </div>
@@ -46,21 +46,21 @@
               <div class="bento-item bento-main gsap-bento" data-speed="0.2">
                 <div class="bento-mask"><img src="https://images.unsplash.com/photo-1547592180-85f173990554?w=800" alt="Món chính"></div>
                 <div class="bento-overlay">
-                  <span class="b-tag">Signature</span>
-                  <h3>Tinh Hoa Bếp Việt</h3>
+                  <span class="b-tag">{{ $t('landing.idea_signature_tag') }}</span>
+                  <h3>{{ $t('landing.idea_signature_title') }}</h3>
                 </div>
               </div>
               <div class="bento-item bento-tr gsap-bento" data-speed="0.5">
                 <div class="bento-mask"><img src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600" alt="Healthy"></div>
-                <div class="bento-overlay"><h3>Lối Sống Xanh</h3></div>
+                <div class="bento-overlay"><h3>{{ $t('landing.idea_green_title') }}</h3></div>
               </div>
               <div class="bento-item bento-br gsap-bento" data-speed="0.7">
                 <div class="bento-mask"><img src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=600" alt="Bánh"></div>
-                <div class="bento-overlay"><h3>Bánh Ngọt</h3></div>
+                <div class="bento-overlay"><h3>{{ $t('landing.idea_dessert_title') }}</h3></div>
               </div>
               <div class="bento-item bento-float gsap-bento" data-speed="0.9">
                 <div class="bento-mask"><img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800" alt="Thịt nướng"></div>
-                <div class="bento-overlay"><h3>Fine Dining</h3></div>
+                <div class="bento-overlay"><h3>{{ $t('landing.idea_dining_title') }}</h3></div>
               </div>
             </div>
           </div>
@@ -74,9 +74,9 @@
           <div class="floating-deco d4 gsap-float-slow">🧀</div>
 
           <div class="community-header gsap-comm-reveal-group">
-            <span class="sub-tag">GoMet Elite Community</span>
-            <h2 class="community-title">Nơi Tâm Hồn <br><span class="text-gradient shine-effect">Tìm Thấy Nhau</span></h2>
-            <p class="community-desc">Kết nối cùng hơn 100.000 chuyên gia ẩm thực. Kiến tạo một cộng đồng văn minh, nơi đam mê được tôn vinh và lan tỏa.</p>
+            <span class="sub-tag">{{ $t('landing.community_tag') }}</span>
+            <h2 class="community-title">{{ $t('landing.community_title_line1') }} <br><span class="text-gradient shine-effect">{{ $t('landing.community_title_hl') }}</span></h2>
+            <p class="community-desc">{{ $t('landing.community_desc') }}</p>
           </div>
 
           <div class="cards-container">
@@ -84,28 +84,28 @@
               <div class="card-cover"><img src="https://images.unsplash.com/photo-1556911220-e15b29be8c8f?q=80&w=400"></div>
               <div class="card-body">
                 <img src="https://i.pravatar.cc/150?u=10" class="user-avt">
-                <h3>Góc Bếp Nhỏ</h3>
-                <span class="handle">@gocbepnho</span>
+                <h3>{{ $t('landing.community_profile_small_name') }}</h3>
+                <span class="handle">{{ $t('landing.community_profile_small_handle') }}</span>
                 <div class="user-stats">
-                  <div class="u-stat"><strong>12k</strong><span>Follow</span></div>
-                  <div class="u-stat"><strong>45</strong><span>Bài viết</span></div>
+                  <div class="u-stat"><strong>12k</strong><span>{{ $t('landing.community_follow') }}</span></div>
+                  <div class="u-stat"><strong>45</strong><span>{{ $t('landing.community_posts') }}</span></div>
                 </div>
-                <button class="btn-follow">Theo dõi</button>
+                <button class="btn-follow">{{ $t('landing.community_follow_btn') }}</button>
               </div>
             </div>
             
             <div class="user-card card-center gsap-comm-card" data-x="0" data-rotate="0" data-y="0">
-              <div class="badge-top">Top Creator</div>
+              <div class="badge-top">{{ $t('landing.community_top_creator') }}</div>
               <div class="card-cover"><img src="https://images.unsplash.com/photo-1507048331197-7d4ac70811cf?q=80&w=400"></div>
               <div class="card-body">
                 <img src="https://i.pravatar.cc/150?u=20" class="user-avt">
-                <h3>Chef de Cuisine <span class="verified">✓</span></h3>
-                <span class="handle">@masterchef_vn</span>
+                <h3>{{ $t('landing.community_profile_featured_name') }} <span class="verified">✓</span></h3>
+                <span class="handle">{{ $t('landing.community_profile_featured_handle') }}</span>
                 <div class="user-stats">
-                  <div class="u-stat"><strong>85k</strong><span>Follow</span></div>
-                  <div class="u-stat"><strong>120</strong><span>Bài viết</span></div>
+                  <div class="u-stat"><strong>85k</strong><span>{{ $t('landing.community_follow') }}</span></div>
+                  <div class="u-stat"><strong>120</strong><span>{{ $t('landing.community_posts') }}</span></div>
                 </div>
-                <button class="btn-follow primary">Đang theo dõi</button>
+                <button class="btn-follow primary">{{ $t('landing.community_following_btn') }}</button>
               </div>
             </div>
             
@@ -113,13 +113,13 @@
               <div class="card-cover"><img src="https://images.unsplash.com/photo-1556911220-e15b29be8c8f?q=80&w=400"></div>
               <div class="card-body">
                 <img src="https://i.pravatar.cc/150?u=30" class="user-avt">
-                <h3>Sống Lành Mạnh</h3>
-                <span class="handle">@healthy_life</span>
+                <h3>{{ $t('landing.community_profile_healthy_name') }}</h3>
+                <span class="handle">{{ $t('landing.community_profile_healthy_handle') }}</span>
                 <div class="user-stats">
-                  <div class="u-stat"><strong>34k</strong><span>Follow</span></div>
-                  <div class="u-stat"><strong>88</strong><span>Bài viết</span></div>
+                  <div class="u-stat"><strong>34k</strong><span>{{ $t('landing.community_follow') }}</span></div>
+                  <div class="u-stat"><strong>88</strong><span>{{ $t('landing.community_posts') }}</span></div>
                 </div>
-                <button class="btn-follow">Theo dõi</button>
+                <button class="btn-follow">{{ $t('landing.community_follow_btn') }}</button>
               </div>
             </div>
           </div>
@@ -142,8 +142,8 @@
               <div class="float-card calendar-card gsap-plan-float" data-x="80" data-y="-30">
                 <div class="icon-box green-box">🚫</div>
                 <div class="text-box">
-                  <span class="label">Trải nghiệm</span>
-                  <span class="value text-green">Không quảng cáo</span>
+                  <span class="label">{{ $t('landing.plan_experience_label') }}</span>
+                  <span class="value text-green">{{ $t('landing.plan_no_ads') }}</span>
                 </div>
                 <div class="status-badge check-mark">✓</div>
               </div>
@@ -151,22 +151,22 @@
               <div class="float-card calories-card gsap-plan-float" data-x="-80" data-y="30">
                 <div class="icon-box orange-box">📊</div>
                 <div class="text-box">
-                  <span class="label">Phân Tích</span>
-                  <span class="value">Dinh dưỡng chuyên sâu</span>
+                  <span class="label">{{ $t('landing.plan_analysis_label') }}</span>
+                  <span class="value">{{ $t('landing.plan_nutrition') }}</span>
                 </div>
               </div>
             </div>
           </div>
 
           <div class="plan-content">
-            <div class="reveal-wrapper"><span class="sub-tag gsap-plan-reveal">GoMet Premium</span></div>
+            <div class="reveal-wrapper"><span class="sub-tag gsap-plan-reveal">{{ $t('landing.plan_tag') }}</span></div>
             <h2 class="plan-title gsap-plan-text">
-              Mở Khóa Đặc Quyền <br>
-              <span class="text-gradient shine-effect">Thành Viên Cao Cấp</span>
+              {{ $t('landing.plan_title_line1') }} <br>
+              <span class="text-gradient shine-effect">{{ $t('landing.plan_title_hl') }}</span>
             </h2>
             <div class="reveal-wrapper">
               <p class="plan-desc gsap-plan-reveal">
-                Nâng tầm trải nghiệm ẩm thực của bạn. Tận hưởng không gian sáng tạo không giới hạn, loại bỏ hoàn toàn quảng cáo và nhận đặc quyền hỗ trợ từ chuyên gia.
+                {{ $t('landing.plan_desc') }}
               </p>
             </div>
             
@@ -174,21 +174,21 @@
               <div class="feature-item gsap-plan-reveal">
                 <div class="f-icon">🚫</div>
                 <div class="f-text">
-                  <h4>Sạch bóng quảng cáo</h4>
-                  <p>Tập trung 100% vào đam mê nấu nướng, không bị làm phiền.</p>
+                  <h4>{{ $t('landing.plan_feature_no_ads_title') }}</h4>
+                  <p>{{ $t('landing.plan_feature_no_ads_desc') }}</p>
                 </div>
               </div>
               <div class="feature-item gsap-plan-reveal">
                 <div class="f-icon">📊</div>
                 <div class="f-text">
-                  <h4>Phân tích dinh dưỡng thông minh</h4>
-                  <p>Theo dõi chi tiết lượng calo, macro và vi chất cho từng bữa ăn.</p>
+                  <h4>{{ $t('landing.plan_feature_nutrition_title') }}</h4>
+                  <p>{{ $t('landing.plan_feature_nutrition_desc') }}</p>
                 </div>
               </div>
             </div>
             
             <div class="action-wrapper gsap-plan-reveal" style="margin-top: 40px;">
-              <button class="btn-plan-action">Nâng Cấp Premium Ngay <span class="arrow">→</span></button>
+              <button class="btn-plan-action">{{ $t('landing.plan_cta') }} <span class="arrow">→</span></button>
             </div>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import i18n from '@/i18n'
 
 // ⚠️ IMPORTANT: This line must start with "export"
 export const useCompareStore = defineStore('compare', () => {
@@ -15,7 +16,7 @@ export const useCompareStore = defineStore('compare', () => {
       items.value.splice(index, 1) // Already exists, remove it
     } else {
       if (items.value.length >= 3) {
-        alert('You can compare up to 3 dishes at a time!')
+        alert(i18n.global.t('compare.limit_alert'))
         return
       }
       items.value.push(post) // Not in list yet, add it

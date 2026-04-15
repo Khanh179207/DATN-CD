@@ -3,15 +3,15 @@
     
     <div class="page-header">
       <div class="title-group">
-        <h2 class="title">Quản Lý Giao Dịch</h2>
-        <p class="subtitle">Lịch sử thanh toán và hóa đơn điện tử</p>
+        <h2 class="title">{{ t('admin.transactions.title') }}</h2>
+        <p class="subtitle">{{ t('admin.transactions.subtitle') }}</p>
       </div>
       <div class="header-actions">
-        <button class="btn-export" @click="exportToExcel" title="Tải xuống file Excel">
-          <i class="fa-solid fa-file-excel"></i> Xuất Excel
+        <button class="btn-export" @click="exportToExcel" :title="t('admin.transactions.export_excel')">
+          <i class="fa-solid fa-file-excel"></i> {{ t('admin.transactions.export_excel') }}
         </button>
         <button class="btn-refresh" @click="fetchTransactions" :disabled="isLoading">
-          <i class="fa-solid fa-rotate-right" :class="{ 'fa-spin': isLoading }"></i> Làm mới
+          <i class="fa-solid fa-rotate-right" :class="{ 'fa-spin': isLoading }"></i> {{ t('admin.transactions.refresh') }}
         </button>
       </div>
     </div>
@@ -21,21 +21,21 @@
         <div class="stat-icon bg-emerald-light"><i class="fa-solid fa-sack-dollar text-emerald"></i></div>
         <div class="stat-info">
           <span class="stat-value text-emerald">{{ formatCurrency(totalRevenue) }}</span>
-          <span class="stat-label">Tổng doanh thu thực tế</span>
+          <span class="stat-label">{{ t('admin.transactions.revenue') }}</span>
         </div>
       </div>
       <div class="stat-card">
         <div class="stat-icon bg-blue-light"><i class="fa-solid fa-money-bill-transfer text-blue"></i></div>
         <div class="stat-info">
           <span class="stat-value">{{ transactions.length }}</span>
-          <span class="stat-label">Tổng số giao dịch</span>
+          <span class="stat-label">{{ t('admin.transactions.total_transactions') }}</span>
         </div>
       </div>
       <div class="stat-card">
         <div class="stat-icon bg-red-light"><i class="fa-solid fa-triangle-exclamation text-red"></i></div>
         <div class="stat-info">
           <span class="stat-value">{{ failedCount }}</span>
-          <span class="stat-label">Giao dịch bị hủy/lỗi</span>
+          <span class="stat-label">{{ t('admin.transactions.failed_transactions') }}</span>
         </div>
       </div>
     </div>
@@ -51,7 +51,7 @@
       
       <div class="search-box">
         <i class="fa-solid fa-search search-icon"></i>
-        <input v-model="searchQuery" type="text" placeholder="Tìm theo mã giao dịch, email..." class="search-input" />
+        <input v-model="searchQuery" type="text" :placeholder="t('admin.common.search_transactions')" class="search-input" />
         <button v-if="searchQuery" @click="searchQuery = ''" class="clear-search">
           <i class="fa-solid fa-xmark"></i>
         </button>
@@ -61,18 +61,18 @@
     <div class="table-wrapper">
       <div v-if="isLoading" class="loading-state">
         <div class="spinner-modern"></div>
-        <span>Đang tải dữ liệu từ máy chủ...</span>
+        <span>{{ t('admin.common.loading_data') }}</span>
       </div>
 
       <table v-else class="data-table">
         <thead>
           <tr>
-            <th width="15%">MÃ GIAO DỊCH</th>
-            <th width="25%">KHÁCH HÀNG</th>
-            <th width="15%">SỐ TIỀN</th>
-            <th width="18%">GÓI ĐĂNG KÝ</th>
-            <th width="15%">TRẠNG THÁI</th>
-            <th width="12%" class="text-right">CHỨNG TỪ</th>
+            <th width="15%">{{ t('admin.transactions.columns.code') }}</th>
+            <th width="25%">{{ t('admin.transactions.columns.customer') }}</th>
+            <th width="15%">{{ t('admin.transactions.columns.amount') }}</th>
+            <th width="18%">{{ t('admin.transactions.columns.plan') }}</th>
+            <th width="15%">{{ t('admin.transactions.columns.status') }}</th>
+            <th width="12%" class="text-right">{{ t('admin.transactions.columns.receipt') }}</th>
           </tr>
         </thead>
         <TransitionGroup tag="tbody" name="list">
@@ -107,8 +107,8 @@
             </td>
             <td>
               <div class="actions">
-                <button @click="openReceipt(txn)" class="btn-action view" title="Xem Biên Lai">
-                  <i class="fa-solid fa-file-invoice"></i> Chi tiết
+                <button @click="openReceipt(txn)" class="btn-action view" :title="t('admin.transactions.view_receipt')">
+                  <i class="fa-solid fa-file-invoice"></i> {{ t('admin.transactions.detail') }}
                 </button>
               </div>
             </td>
@@ -117,7 +117,7 @@
           <tr v-if="filteredTransactions.length === 0">
             <td colspan="6" class="empty-state">
               <div class="empty-icon"><i class="fa-solid fa-box-open"></i></div>
-              <p>Không có dữ liệu giao dịch nào.</p>
+              <p>{{ t('admin.transactions.empty') }}</p>
             </td>
           </tr>
         </TransitionGroup>
@@ -132,7 +132,7 @@
           <div class="receipt-top">
             <div class="r-logo-wrap">
               <div class="r-logo-circle"><i class="fa-solid fa-check"></i></div>
-              <h3 class="r-title">Giao dịch thành công</h3>
+              <h3 class="r-title">{{ getStatusLabel(receiptModal.txn.status) }}</h3>
               <span class="r-time">{{ formatDate(receiptModal.txn.paidAt || receiptModal.txn.createdAt) }}</span>
             </div>
             <div class="r-amount-big">
@@ -145,39 +145,39 @@
 
           <div class="receipt-body">
             <div class="r-info-row">
-              <span class="r-label">Mã giao dịch</span>
+              <span class="r-label">{{ t('admin.transactions.receipt.code') }}</span>
               <span class="r-value monospace">{{ receiptModal.txn.orderCode }}</span>
             </div>
             <div class="r-info-row">
-              <span class="r-label">Người chuyển</span>
+              <span class="r-label">{{ t('admin.transactions.receipt.sender') }}</span>
               <span class="r-value">{{ receiptModal.txn.username }}</span>
             </div>
             <div class="r-info-row">
-              <span class="r-label">Tài khoản</span>
+              <span class="r-label">{{ t('admin.transactions.receipt.account') }}</span>
               <span class="r-value">{{ receiptModal.txn.email }}</span>
             </div>
             <div class="r-info-row">
-              <span class="r-label">Trạng thái</span>
+              <span class="r-label">{{ t('admin.transactions.columns.status') }}</span>
               <span class="r-value" :class="getAmountColor(receiptModal.txn.status)">{{ getStatusLabel(receiptModal.txn.status) }}</span>
             </div>
             <div class="r-info-row">
-              <span class="r-label">Nội dung</span>
-              <span class="r-value">Thanh toán dịch vụ GoMet Premium</span>
+              <span class="r-label">{{ t('admin.transactions.receipt.content') }}</span>
+              <span class="r-value">{{ t('admin.transactions.receipt.premium_payment') }}</span>
             </div>
           </div>
 
           <div class="r-divider"></div>
 
           <div class="receipt-footer">
-            <img :src="`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${receiptModal.txn.orderCode}`" alt="QR Code" class="qr-code">
+            <img :src="`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${receiptModal.txn.orderCode}`" :alt="t('admin.transactions.receipt.qr_alt')" class="qr-code">
             <div class="r-footer-text">
-              <strong>GoMet Enterprise</strong>
-              <p>Mã QR dùng để tra cứu giao dịch trên hệ thống.</p>
+              <strong>{{ t('admin.transactions.receipt.company_name') }}</strong>
+              <p>{{ t('admin.transactions.receipt.qr_hint') }}</p>
             </div>
           </div>
 
           <button class="btn-print" @click="printReceipt">
-            <i class="fa-solid fa-print"></i> In Hóa Đơn
+            <i class="fa-solid fa-print"></i> {{ t('admin.transactions.print_invoice') }}
           </button>
         </div>
       </div>
@@ -187,63 +187,81 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
+import { getDateLocale } from '@/i18n'
 import { toast } from '@/composables/useToast'
-import * as XLSX from 'xlsx'
-import { saveAs } from 'file-saver'
+import ExcelJS from 'exceljs'
 
-// --- STATE ---
+const { t, locale } = useI18n()
+
 const transactions = ref([])
 const isLoading = ref(true)
 const searchQuery = ref('')
 const currentFilter = ref('ALL')
+const dateLocale = computed(() => getDateLocale(locale.value))
 
-const filterTabs = [
-  { label: 'Tất cả', value: 'ALL' },
-  { label: 'Đã thu tiền', value: 'PAID' },
-  { label: 'Đang chờ', value: 'PENDING' },
-  { label: 'Đã hủy', value: 'FAILED' }
-]
+const filterTabs = computed(() => [
+  { label: t('admin.common.all'), value: 'ALL' },
+  { label: t('admin.transactions.filter_paid'), value: 'PAID' },
+  { label: t('admin.transactions.filter_pending'), value: 'PENDING' },
+  { label: t('admin.transactions.filter_cancelled'), value: 'CANCELLED' },
+])
 
 const receiptModal = ref({ show: false, txn: null })
 
-// --- FORMATTERS ---
 const formatCurrency = (val) => {
-  if (!val && val !== 0) return '0 VNĐ'
-  return new Intl.NumberFormat('vi-VN').format(val) + ' VNĐ'
+  if (!val && val !== 0) return `0 ${t('admin.transactions.currency')}`
+  return `${new Intl.NumberFormat(dateLocale.value).format(val)} ${t('admin.transactions.currency')}`
 }
 
 const formatDate = (dateString) => {
   if (!dateString) return '—'
   const d = new Date(dateString)
-  return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+  return d.toLocaleString(dateLocale.value, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
-// --- UI HELPERS ---
+const normalizeStatus = (status) => {
+  const normalized = String(status || 'PENDING').toUpperCase()
+
+  if (normalized === 'FAILED' || normalized === 'ERROR') {
+    return 'CANCELLED'
+  }
+
+  return normalized
+}
+
 const getStatusLabel = (status) => {
-  const map = { 'PAID': 'Thành công', 'PENDING': 'Chờ xử lý', 'FAILED': 'Thất bại' }
-  return map[status] || status
+  const normalized = normalizeStatus(status)
+  const map = {
+    PAID: t('admin.transactions.status.paid'),
+    PENDING: t('admin.transactions.status.pending'),
+    CANCELLED: t('admin.transactions.status.cancelled'),
+  }
+  return map[normalized] || normalized
 }
 
 const getStatusClass = (status) => {
-  const map = { 'PAID': 'active', 'PENDING': 'warning', 'FAILED': 'banned' }
-  return map[status] || 'banned'
+  const map = { PAID: 'active', PENDING: 'warning', CANCELLED: 'banned' }
+  return map[normalizeStatus(status)] || 'banned'
 }
 
 const getAmountColor = (status) => {
-  if (status === 'PAID') return 'text-emerald font-bold'
-  if (status === 'FAILED') return 'text-gray-400 line-through'
+  const normalized = normalizeStatus(status)
+  if (normalized === 'PAID') return 'text-emerald font-bold'
+  if (normalized === 'CANCELLED') return 'text-gray-400 line-through'
   return 'text-gray-800 font-bold'
 }
 
-// --- COMPUTED ---
 const totalRevenue = computed(() => {
   return transactions.value
     .filter(t => t.status === 'PAID')
     .reduce((sum, t) => sum + (t.amount || 0), 0)
 })
 
-const failedCount = computed(() => transactions.value.filter(t => t.status === 'FAILED').length)
+const failedCount = computed(() => transactions.value.filter(t => t.status === 'CANCELLED').length)
+const pendingCount = computed(() => transactions.value.filter(t => t.status === 'PENDING').length)
+const paidCount = computed(() => transactions.value.filter(t => t.status === 'PAID').length)
 
 const filteredTransactions = computed(() => {
   let result = transactions.value
@@ -263,17 +281,16 @@ const filteredTransactions = computed(() => {
   return result
 })
 
-// --- API ACTIONS ---
 const fetchTransactions = async () => {
   isLoading.value = true
   try {
-const res = await api.get('/api/admin/transactions')
+    const res = await api.get('/api/admin/transactions')
     transactions.value = res.data.map(t => ({
       ...t,
-      status: t.status ? String(t.status).toUpperCase() : 'PENDING'
+      status: normalizeStatus(t.status)
     }))
   } catch (err) {
-    toast.error('Không thể kết nối đến máy chủ dữ liệu!')
+    toast.error(t('admin.transactions.load_failed'))
   } finally {
     isLoading.value = false
   }
@@ -285,42 +302,315 @@ const openReceipt = (txn) => {
 
 const printReceipt = () => window.print() 
 
-// --- XUẤT EXCEL (REAL) ---
-const exportToExcel = () => {
+const exportToExcel = async () => {
   if (filteredTransactions.value.length === 0) {
-    toast.warn('Không có dữ liệu để xuất!')
+    toast.warn(t('admin.transactions.no_export_data'))
     return
   }
 
-  // 1. Chẩn bị dữ liệu để xuất
-  const dataToExport = filteredTransactions.value.map((txn, index) => ({
-    'STT': index + 1,
-    'Mã Giao Dịch': txn.orderCode,
-    'Khách Hàng': txn.username,
-    'Email': txn.email,
-    'Gói Dịch Vụ': txn.planName,
-    'Số Tiền (VNĐ)': txn.amount,
-    'Trạng Thái': getStatusLabel(txn.status),
-    'Ngày Tạo': formatDate(txn.createdAt),
-    'Ngày Thanh Toán': formatDate(txn.paidAt)
-  }))
+  try {
+    const workbook = new ExcelJS.Workbook()
+    workbook.creator = 'GoMet'
+    workbook.lastModifiedBy = 'GoMet'
+    workbook.created = new Date()
+    workbook.modified = new Date()
 
-  // 2. Tạo file Excel
-  const worksheet = XLSX.utils.json_to_sheet(dataToExport)
-  
-  // Tự động căn chỉnh độ rộng cột
-  const wscols = [ {wch:5}, {wch:20}, {wch:25}, {wch:30}, {wch:20}, {wch:15}, {wch:15}, {wch:20}, {wch:20} ]
-  worksheet['!cols'] = wscols
+    const overviewSheet = workbook.addWorksheet(t('admin.transactions.export.overview_sheet_name'), {
+      views: [{ state: 'frozen', ySplit: 8 }],
+      properties: { defaultRowHeight: 22 }
+    })
 
-  const workbook = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Sao_Ke_Giao_Dich')
+    const sheet = workbook.addWorksheet(t('admin.transactions.export.sheet_name'), {
+      views: [{ state: 'frozen', ySplit: 11 }],
+      properties: { defaultRowHeight: 22 }
+    })
 
-  // 3. Tải xuống
-  const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
-  const dataBlob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' })
-  saveAs(dataBlob, `GOMET_SAOKE_${new Date().getTime()}.xlsx`)
-  
-  toast.success('Đã tải xuống file báo cáo Excel!')
+    overviewSheet.columns = [
+      { width: 18 },
+      { width: 20 },
+      { width: 18 },
+      { width: 20 },
+      { width: 18 },
+      { width: 20 },
+    ]
+
+    overviewSheet.mergeCells('A1:F1')
+    overviewSheet.getCell('A1').value = t('admin.transactions.export.report_title')
+    overviewSheet.getCell('A1').font = { bold: true, size: 20, color: { argb: 'FFFFFFFF' } }
+    overviewSheet.getCell('A1').alignment = { horizontal: 'center', vertical: 'middle' }
+    overviewSheet.getCell('A1').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } }
+    overviewSheet.getRow(1).height = 30
+
+    overviewSheet.mergeCells('A2:F2')
+    overviewSheet.getCell('A2').value = t('admin.transactions.export.report_subtitle')
+    overviewSheet.getCell('A2').alignment = { horizontal: 'center' }
+    overviewSheet.getCell('A2').font = { size: 11, color: { argb: 'FF475569' } }
+
+    overviewSheet.mergeCells('A4:F4')
+    overviewSheet.getCell('A4').value = `${t('admin.transactions.export.generated_at')}: ${formatDate(new Date())}`
+    overviewSheet.getCell('A4').font = { italic: true, size: 10, color: { argb: 'FF64748B' } }
+
+    overviewSheet.mergeCells('A5:F5')
+    overviewSheet.getCell('A5').value = `${t('admin.transactions.export.active_filter')}: ${currentFilter.value === 'ALL' ? t('admin.transactions.export.filter_all') : getStatusLabel(currentFilter.value)}`
+    overviewSheet.getCell('A5').font = { size: 10, color: { argb: 'FF64748B' } }
+
+    const overviewRanges = ['A7:B7','A8:B8','C7:D7','C8:D8','E7:F7','E8:F8','E10:F10','E11:F11']
+    overviewRanges.forEach(range => overviewSheet.mergeCells(range))
+
+    const overviewBlocks = [
+      { labelCell: 'A7', valueCell: 'A8', label: t('admin.transactions.revenue'), value: formatCurrency(totalRevenue.value), fill: 'FFF0FDF4', text: 'FF166534' },
+      { labelCell: 'C7', valueCell: 'C8', label: t('admin.transactions.total_transactions'), value: filteredTransactions.value.length, fill: 'FFEFF6FF', text: 'FF1D4ED8' },
+      { labelCell: 'E7', valueCell: 'E8', label: t('admin.transactions.failed_transactions'), value: failedCount.value, fill: 'FFFEF2F2', text: 'FFDC2626' },
+      { labelCell: 'E10', valueCell: 'E11', label: t('admin.transactions.export.summary_pending'), value: pendingCount.value, fill: 'FFFFFBEB', text: 'FFD97706' },
+    ]
+
+    overviewBlocks.forEach((block) => {
+      const labelCell = overviewSheet.getCell(block.labelCell)
+      const valueCell = overviewSheet.getCell(block.valueCell)
+      labelCell.value = block.label
+      valueCell.value = block.value
+      labelCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: block.fill } }
+      valueCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: block.fill } }
+      labelCell.font = { bold: true, size: 10, color: { argb: block.text } }
+      valueCell.font = { bold: true, size: 16, color: { argb: block.text } }
+      labelCell.alignment = { horizontal: 'center', vertical: 'middle' }
+      valueCell.alignment = { horizontal: 'center', vertical: 'middle' }
+    })
+
+    overviewSheet.mergeCells('A13:C13')
+    overviewSheet.getCell('A13').value = t('admin.transactions.export.status_breakdown_title')
+    overviewSheet.getCell('A13').font = { bold: true, size: 12, color: { argb: 'FF0F172A' } }
+
+    overviewSheet.getRow(14).values = [
+      t('admin.transactions.export.metric_label'),
+      '',
+      t('admin.transactions.export.metric_value')
+    ]
+    ;['A14','C14'].forEach((address) => {
+      const cell = overviewSheet.getCell(address)
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } }
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEA580C' } }
+      cell.alignment = { horizontal: 'center' }
+    })
+    overviewSheet.mergeCells('A15:B15')
+    overviewSheet.mergeCells('A16:B16')
+    overviewSheet.mergeCells('A17:B17')
+    overviewSheet.getCell('A15').value = t('admin.transactions.status.paid')
+    overviewSheet.getCell('C15').value = paidCount.value
+    overviewSheet.getCell('A16').value = t('admin.transactions.status.pending')
+    overviewSheet.getCell('C16').value = pendingCount.value
+    overviewSheet.getCell('A17').value = t('admin.transactions.status.cancelled')
+    overviewSheet.getCell('C17').value = failedCount.value
+
+    overviewSheet.mergeCells('D13:F13')
+    overviewSheet.getCell('D13').value = t('admin.transactions.export.plan_breakdown_title')
+    overviewSheet.getCell('D13').font = { bold: true, size: 12, color: { argb: 'FF0F172A' } }
+
+    overviewSheet.getRow(14).getCell(4).value = t('admin.transactions.export.metric_label')
+    overviewSheet.getRow(14).getCell(6).value = t('admin.transactions.export.metric_value')
+    ;['D14','F14'].forEach((address) => {
+      const cell = overviewSheet.getCell(address)
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } }
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } }
+      cell.alignment = { horizontal: 'center' }
+    })
+    overviewSheet.mergeCells('D15:E15')
+    overviewSheet.mergeCells('D16:E16')
+    overviewSheet.mergeCells('D17:E17')
+
+    const topPlans = [...filteredTransactions.value].reduce((acc, txn) => {
+      acc[txn.planName] = (acc[txn.planName] || 0) + 1
+      return acc
+    }, {})
+    const planEntries = Object.entries(topPlans).sort((a, b) => b[1] - a[1]).slice(0, 3)
+    while (planEntries.length < 3) {
+      planEntries.push(['—', 0])
+    }
+    ;[['D15','F15'], ['D16','F16'], ['D17','F17']].forEach(([labelCell, valueCell], index) => {
+      overviewSheet.getCell(labelCell).value = planEntries[index][0]
+      overviewSheet.getCell(valueCell).value = planEntries[index][1]
+    })
+
+    for (const rowNumber of [15, 16, 17]) {
+      ;['A','C','D','F'].forEach((col) => {
+        const cell = overviewSheet.getCell(`${col}${rowNumber}`)
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+          left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+          bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+          right: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+        }
+        cell.alignment = { horizontal: col === 'C' || col === 'F' ? 'center' : 'left', vertical: 'middle' }
+      })
+    }
+
+    sheet.columns = [
+      { width: 8 },
+      { width: 22 },
+      { width: 24 },
+      { width: 30 },
+      { width: 22 },
+      { width: 16 },
+      { width: 18 },
+      { width: 22 },
+      { width: 22 },
+    ]
+
+    sheet.mergeCells('A1:I1')
+    sheet.getCell('A1').value = t('admin.transactions.export.report_title')
+    sheet.getCell('A1').font = { bold: true, size: 18, color: { argb: 'FFFFFFFF' } }
+    sheet.getCell('A1').alignment = { vertical: 'middle', horizontal: 'center' }
+    sheet.getCell('A1').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEA580C' } }
+    sheet.getRow(1).height = 28
+
+    sheet.mergeCells('A2:I2')
+    sheet.getCell('A2').value = t('admin.transactions.export.report_subtitle')
+    sheet.getCell('A2').font = { size: 11, color: { argb: 'FF475569' } }
+    sheet.getCell('A2').alignment = { horizontal: 'center' }
+
+    sheet.mergeCells('A4:I4')
+    sheet.getCell('A4').value = `${t('admin.transactions.export.generated_at')}: ${formatDate(new Date())}`
+    sheet.getCell('A4').font = { italic: true, size: 10, color: { argb: 'FF64748B' } }
+
+    sheet.mergeCells('A5:I5')
+    sheet.getCell('A5').value = `${t('admin.transactions.export.active_filter')}: ${currentFilter.value === 'ALL' ? t('admin.transactions.export.filter_all') : getStatusLabel(currentFilter.value)}`
+    sheet.getCell('A5').font = { size: 10, color: { argb: 'FF64748B' } }
+
+    const mergeRanges = ['A6:C6', 'A7:C7', 'D6:F6', 'D7:F7', 'G6:I6', 'G7:I7', 'G8:I8', 'G9:I9']
+    mergeRanges.forEach(range => sheet.mergeCells(range))
+
+    const summaryBlocks = [
+      { labelCell: 'A6', valueCell: 'A7', label: t('admin.transactions.revenue'), value: formatCurrency(totalRevenue.value), fill: 'FFF0FDF4', text: 'FF166534' },
+      { labelCell: 'D6', valueCell: 'D7', label: t('admin.transactions.total_transactions'), value: filteredTransactions.value.length, fill: 'FFEFF6FF', text: 'FF1D4ED8' },
+      { labelCell: 'G6', valueCell: 'G7', label: t('admin.transactions.failed_transactions'), value: failedCount.value, fill: 'FFFEF2F2', text: 'FFDC2626' },
+      { labelCell: 'G8', valueCell: 'G9', label: t('admin.transactions.export.summary_pending'), value: pendingCount.value, fill: 'FFFFFBEB', text: 'FFD97706' },
+    ]
+
+    summaryBlocks.forEach((block) => {
+      const labelCell = sheet.getCell(block.labelCell)
+      const valueCell = sheet.getCell(block.valueCell)
+      labelCell.value = block.label
+      valueCell.value = block.value
+      labelCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: block.fill } }
+      valueCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: block.fill } }
+      labelCell.font = { bold: true, size: 10, color: { argb: block.text } }
+      valueCell.font = { bold: true, size: 15, color: { argb: block.text } }
+      labelCell.alignment = { horizontal: 'center', vertical: 'middle' }
+      valueCell.alignment = { horizontal: 'center', vertical: 'middle' }
+    })
+
+    const headerRowIndex = 11
+    const headerRow = sheet.getRow(headerRowIndex)
+    headerRow.values = [
+      t('admin.transactions.export.index'),
+      t('admin.transactions.export.code'),
+      t('admin.transactions.export.customer'),
+      t('admin.transactions.export.email'),
+      t('admin.transactions.export.plan'),
+      t('admin.transactions.export.amount'),
+      t('admin.transactions.export.status'),
+      t('admin.transactions.export.created_at'),
+      t('admin.transactions.export.paid_at'),
+    ]
+    headerRow.height = 24
+    headerRow.eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } }
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } }
+      cell.alignment = { horizontal: 'center', vertical: 'middle' }
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+        left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+        bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+        right: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+      }
+    })
+
+    filteredTransactions.value.forEach((txn, index) => {
+      const row = sheet.addRow([
+        index + 1,
+        txn.orderCode,
+        txn.username,
+        txn.email,
+        txn.planName,
+        txn.amount || 0,
+        getStatusLabel(txn.status),
+        formatDate(txn.createdAt),
+        formatDate(txn.paidAt),
+      ])
+
+      row.eachCell((cell) => {
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FFF1F5F9' } },
+          left: { style: 'thin', color: { argb: 'FFF1F5F9' } },
+          bottom: { style: 'thin', color: { argb: 'FFF1F5F9' } },
+          right: { style: 'thin', color: { argb: 'FFF1F5F9' } },
+        }
+        cell.alignment = { vertical: 'middle' }
+      })
+
+      if (index % 2 === 0) {
+        row.eachCell((cell) => {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFCFCFD' } }
+        })
+      }
+
+      row.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' }
+      row.getCell(6).numFmt = '#,##0 "VND"'
+      row.getCell(6).font = { bold: true, color: { argb: txn.status === 'PAID' ? 'FF166534' : txn.status === 'CANCELLED' ? 'FF94A3B8' : 'FF0F172A' } }
+
+      const statusCell = row.getCell(7)
+      const statusFill = txn.status === 'PAID' ? 'FFE8FFF3' : txn.status === 'PENDING' ? 'FFFFFBEB' : 'FFFEF2F2'
+      const statusText = txn.status === 'PAID' ? 'FF15803D' : txn.status === 'PENDING' ? 'FFD97706' : 'FFDC2626'
+      statusCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: statusFill } }
+      statusCell.font = { bold: true, color: { argb: statusText } }
+      statusCell.alignment = { horizontal: 'center', vertical: 'middle' }
+    })
+
+    const totalRow = sheet.addRow([
+      '',
+      '',
+      '',
+      t('admin.transactions.export.total_row_label'),
+      '',
+      filteredTransactions.value
+        .filter(txn => txn.status === 'PAID')
+        .reduce((sum, txn) => sum + (txn.amount || 0), 0),
+      '',
+      '',
+      '',
+    ])
+    totalRow.eachCell((cell) => {
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF7ED' } }
+      cell.font = { bold: true, color: { argb: 'FF9A3412' } }
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FFFED7AA' } },
+        left: { style: 'thin', color: { argb: 'FFFED7AA' } },
+        bottom: { style: 'thin', color: { argb: 'FFFED7AA' } },
+        right: { style: 'thin', color: { argb: 'FFFED7AA' } },
+      }
+    })
+    totalRow.getCell(6).numFmt = '#,##0 "VND"'
+
+    sheet.autoFilter = {
+      from: { row: headerRowIndex, column: 1 },
+      to: { row: headerRowIndex, column: 9 },
+    }
+
+    const buffer = await workbook.xlsx.writeBuffer()
+    const blob = new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${t('admin.transactions.export.file_name')}-${new Date().getTime()}.xlsx`
+    link.click()
+    URL.revokeObjectURL(url)
+
+    toast.success(t('admin.transactions.export_ok'))
+  } catch (error) {
+    toast.error(t('admin.transactions.load_failed'))
+  }
 }
 
 onMounted(fetchTransactions)

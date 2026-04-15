@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useChatStore } from '@/stores/chat'
 import { toast } from '@/composables/useToast'
 import api from '@/services/api'
+import i18n from '@/i18n'
 
 export const useProfileActionsStore = defineStore('profileActions', () => {
   const authStore = useAuthStore()
@@ -17,7 +18,7 @@ export const useProfileActionsStore = defineStore('profileActions', () => {
   const toggleFollow = async (targetUserId, currentStatus) => {
     const myId = authStore.user?.accountID || authStore.user?.id
     if (!myId) {
-      toast.info('Bạn cần đăng nhập để theo dõi đầu bếp này!')
+      toast.info(i18n.global.t('toast.need_login_follow'))
       return currentStatus
     }
     
@@ -27,15 +28,15 @@ export const useProfileActionsStore = defineStore('profileActions', () => {
     try {
       if (currentStatus) {
         await unfollow(myId, targetUserId)
-        toast.success('Đã bỏ theo dõi')
+        toast.success(i18n.global.t('toast.unfollow_ok'))
         return false
       } else {
         await follow(myId, targetUserId)
-        toast.success('Đã theo dõi đầu bếp!')
+        toast.success(i18n.global.t('toast.follow_ok'))
         return true
       }
     } catch (err) {
-      toast.error('Thao tác thất bại, vui lòng thử lại.')
+      toast.error(i18n.global.t('toast.follow_error'))
       return currentStatus
     } finally {
       followLoading.value = false
@@ -46,7 +47,7 @@ export const useProfileActionsStore = defineStore('profileActions', () => {
   const startConversation = async (targetUser) => {
     const myId = authStore.user?.accountID || authStore.user?.id
     if (!myId) {
-      toast.info('Vui lòng đăng nhập để nhắn tin!')
+      toast.info(i18n.global.t('toast.need_login_chat'))
       return
     }
 
@@ -71,12 +72,12 @@ export const useProfileActionsStore = defineStore('profileActions', () => {
           partnerID: targetUser.accountID || targetUser.id
         })
       } else {
-        toast.error('Không thể khởi tạo cuộc hội thoại.')
+        toast.error(i18n.global.t('toast.chat_connect_fail'))
       }
     } catch (err) {
       console.error('Chat error:', err)
       // 🔥 HIỆN LỖI CẶP NHẬT TỪ BACKEND (VD: TÀI KHOẢN ĐÃ XÓA)
-      const msg = err.response?.data?.message || 'Lỗi khi mở tin nhắn.'
+      const msg = err.response?.data?.message || i18n.global.t('toast.chat_connect_fail')
       toast.error(msg)
     } finally {
       loading.value = false

@@ -20,29 +20,29 @@
               </svg>
               <div class="logo-glow"></div>
             </div>
-            <span class="premium-tag">GOMET PREMIUM</span>
+            <span class="premium-tag">{{ t('payment_success.success_tag') }}</span>
           </div>
           
-          <h1 class="serif-title">Trải nghiệm<br>đỉnh cao bắt đầu.</h1>
-          <p class="summary-text">Tài khoản của bạn đã được nâng cấp. Các đặc quyền ưu tiên tối thượng đã chính thức được kích hoạt trên toàn hệ thống.</p>
+          <h1 class="serif-title">{{ t('payment_success.success_heading') }}</h1>
+          <p class="summary-text">{{ t('payment_success.success_summary') }}</p>
           
           <div class="benefits-list">
             <div class="b-item">
               <div class="check-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-              <span>Không gian làm việc không quảng cáo</span>
+              <span>{{ t('payment_success.benefit_ad_free') }}</span>
             </div>
             <div class="b-item">
               <div class="check-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-              <span>Quyền truy cập Trợ lý AI Cook</span>
+              <span>{{ t('payment_success.benefit_ai') }}</span>
             </div>
             <div class="b-item">
               <div class="check-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-              <span>Mở khóa toàn bộ Kho thư viện V.I.P</span>
+              <span>{{ t('payment_success.benefit_storage') }}</span>
             </div>
           </div>
           
           <div class="redirect-status">
-            <span class="label">Hệ thống tự động chuyển hướng sau <b>{{ countdown }}s</b></span>
+            <span class="label">{{ t('payment_success.redirect_prefix') }} <b>{{ countdown }}s</b></span>
             <div class="progress-line">
               <div class="fill" :style="{ width: (countdown / 10) * 100 + '%' }"></div>
             </div>
@@ -50,7 +50,7 @@
         </div>
 
         <div class="statement-section">
-          <div class="statement-card-wrapper" ref="receiptRef">
+          <div class="statement-card-wrapper">
             <div class="statement-card">
               
               <div class="ticket-top">
@@ -60,7 +60,7 @@
                     <path d="M14.1 27.2l7.1 7.2 16.7-16.8" fill="none" stroke="#16A34A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
                 </div>
-                <h3>XÁC NHẬN GIAO DỊCH</h3>
+                <h3>{{ t('payment_success.receipt_title') }}</h3>
                 <p class="timestamp">{{ currentTime }}</p>
               </div>
 
@@ -71,24 +71,24 @@
 
               <div class="ticket-bottom">
                 <div class="field">
-                  <span class="f-label">Mã tham chiếu</span>
+                  <span class="f-label">{{ t('payment_success.reference_code') }}</span>
                   <span class="f-value font-mono">{{ displayTxnRef }}</span>
                 </div>
                 <div class="field">
-                  <span class="f-label">Gói dịch vụ</span>
+                  <span class="f-label">{{ t('payment_success.plan_label') }}</span>
                   <span class="f-value">{{ displayPlanName }}</span>
                 </div>
                 <div class="field">
-                  <span class="f-label">Chủ tài khoản</span>
+                  <span class="f-label">{{ t('payment_success.account_owner') }}</span>
                   <span class="f-value">{{ userName }}</span>
                 </div>
                 <div class="field">
-                  <span class="f-label">Trạng thái</span>
-                  <span class="f-value text-success">Thành công</span>
+                  <span class="f-label">{{ t('payment_success.status_label') }}</span>
+                  <span class="f-value text-success">{{ t('payment_success.status_paid') }}</span>
                 </div>
                 
                 <div class="total-box">
-                  <span class="total-label">TỔNG THANH TOÁN</span>
+                  <span class="total-label">{{ t('payment_success.total_paid') }}</span>
                   <span class="total-val">{{ displayAmount }}</span>
                 </div>
               </div>
@@ -96,14 +96,14 @@
             </div>
             
             <div class="statement-footer">
-              <p>Hỗ trợ: <b>support@gomet.vn</b></p>
+              <p>{{ t('payment_success.support_label') }}: <b>support@gomet.vn</b></p>
             </div>
           </div>
 
           <div class="action-footer">
-            <button class="btn-publish-lux" @click="goHome">BẮT ĐẦU TRẢI NGHIỆM</button>
+            <button class="btn-publish-lux" @click="goHome">{{ t('payment_success.start_now') }}</button>
             <button class="btn-cancel-lux" @click="downloadReceipt" :disabled="isDownloading">
-              {{ isDownloading ? 'ĐANG XUẤT FILE...' : 'TẢI CHỨNG TỪ (PNG)' }}
+              {{ isDownloading ? t('payment_success.exporting_pdf') : t('payment_success.download_pdf') }}
             </button>
           </div>
         </div>
@@ -121,21 +121,21 @@
               </svg>
               <div class="logo-glow-cancel"></div>
             </div>
-            <span class="cancel-tag">GIAO DỊCH ĐÃ HỦY</span>
+              <span class="cancel-tag">{{ t('payment_success.cancel_tag') }}</span>
           </div>
           
-          <h1 class="serif-title text-slate">Thanh toán<br>chưa hoàn tất.</h1>
-          <p class="summary-text">Quá trình giao dịch đã bị hủy. Không có khoản phí nào được trừ từ tài khoản của bạn và gói Premium chưa được kích hoạt. Bạn có thể thử lại bất cứ lúc nào khi sẵn sàng.</p>
+            <h1 class="serif-title text-slate">{{ t('payment_success.cancel_heading') }}</h1>
+            <p class="summary-text">{{ t('payment_success.cancel_summary') }}</p>
           
           <div class="redirect-status">
-            <span class="label">Hệ thống tự động chuyển hướng sau <b>{{ countdown }}s</b></span>
+              <span class="label">{{ t('payment_success.redirect_prefix') }} <b>{{ countdown }}s</b></span>
             <div class="progress-line">
               <div class="fill bg-slate" :style="{ width: (countdown / 10) * 100 + '%' }"></div>
             </div>
           </div>
 
           <div class="action-footer">
-            <button class="btn-cancel-lux" style="width: 100%" @click="goHome">QUAY LẠI TRANG CHỦ</button>
+              <button class="btn-cancel-lux" style="width: 100%" @click="goHome">{{ t('payment_success.back_home') }}</button>
           </div>
         </div>
       </div>
@@ -146,54 +146,109 @@
 <script setup>
 import { onMounted, onUnmounted, ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
+import { getDateLocale } from '@/i18n'
 import { toast } from '@/composables/useToast'
-import html2canvas from 'html2canvas'
-// import api from '@/services/api' // Nếu sếp muốn gọi API riêng
+import { jsPDF } from 'jspdf'
+import QRCode from 'qrcode'
+
+let pdfFontPromise = null
+
+const arrayBufferToBase64 = (buffer) => {
+  const bytes = new Uint8Array(buffer)
+  const chunkSize = 0x8000
+  let binary = ''
+
+  for (let index = 0; index < bytes.length; index += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(index, index + chunkSize))
+  }
+
+  return btoa(binary)
+}
+
+const ensureVietnamesePdfFont = async (pdf) => {
+  if (!pdfFontPromise) {
+    pdfFontPromise = Promise.all([
+      fetch('/fonts/NotoSans-Regular.ttf'),
+      fetch('/fonts/NotoSans-Bold.ttf'),
+    ]).then(async ([regularResponse, boldResponse]) => {
+      if (!regularResponse.ok || !boldResponse.ok) {
+        throw new Error('Unable to load PDF fonts')
+      }
+
+      const [regularBuffer, boldBuffer] = await Promise.all([
+        regularResponse.arrayBuffer(),
+        boldResponse.arrayBuffer(),
+      ])
+
+      return {
+        regular: arrayBufferToBase64(regularBuffer),
+        bold: arrayBufferToBase64(boldBuffer),
+      }
+    })
+  }
+
+  const fonts = await pdfFontPromise
+  pdf.addFileToVFS('NotoSans-Regular.ttf', fonts.regular)
+  pdf.addFont('NotoSans-Regular.ttf', 'NotoSans', 'normal')
+  pdf.addFileToVFS('NotoSans-Bold.ttf', fonts.bold)
+  pdf.addFont('NotoSans-Bold.ttf', 'NotoSans', 'bold')
+
+  const originalSetFont = pdf.setFont.bind(pdf)
+  pdf.setFont = (fontName, fontStyle, fontWeight) => originalSetFont(
+    fontName === 'helvetica' ? 'NotoSans' : fontName,
+    fontStyle,
+    fontWeight,
+  )
+  pdf.setFont('NotoSans', 'normal')
+}
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const { t, locale } = useI18n()
 
-const status = ref(route.query.status || 'success')
+const status = ref(String(route.query.status || 'success').toLowerCase())
 const vnpAmount = route.query.vnp_Amount
 const vnpTxnRef = route.query.vnp_TxnRef
+const dateLocale = computed(() => getDateLocale(locale.value))
 
-// 1. LẤY PLANTYPE THẬT TỪ URL (DO BACKEND GỬI VỀ)
 const planTypeFromUrl = route.query.planType
 
 const displayPlanName = computed(() => {
   const pType = parseInt(planTypeFromUrl)
   switch (pType) {
-    case 0: return 'Premium (Gói Test 10s)'
-    case 1: return 'Premium (1 Tháng)'
-    case 2: return 'Premium (1 Năm)'
-    case 3: return 'Premium (Vĩnh viễn)'
-    default: return 'Premium Account'
+    case 0: return t('payment_success.plans.test')
+    case 1: return t('payment_success.plans.monthly')
+    case 2: return t('payment_success.plans.yearly')
+    case 3: return t('payment_success.plans.lifetime')
+    default: return t('payment_success.plans.default')
   }
 })
 
-const userName = computed(() => authStore.user?.fullName || authStore.user?.username || 'Quý khách')
+const userName = computed(() => authStore.user?.fullName || authStore.user?.username || t('payment_success.guest_name'))
 const displayTxnRef = computed(() => vnpTxnRef ? vnpTxnRef : `TXN-${Math.floor(100000 + Math.random() * 899999)}`)
+const amountValue = computed(() => (vnpAmount ? Number(vnpAmount) / 100 : 0))
 const displayAmount = computed(() => {
-  if (vnpAmount) return (Number(vnpAmount) / 100).toLocaleString('vi-VN') + ' đ'
-  return 'Đã thanh toán'
+  if (amountValue.value) {
+    return `${new Intl.NumberFormat(dateLocale.value).format(amountValue.value)} ${t('admin.transactions.currency')}`
+  }
+  return t('payment_success.paid_fallback')
 })
 
 const currentTime = ref('')
 const countdown = ref(10)
-const receiptRef = ref(null)
 const isDownloading = ref(false)
 let timer = null
 
 onMounted(async () => {
   const now = new Date()
-  currentTime.value = now.toLocaleString('vi-VN', {
+  currentTime.value = now.toLocaleString(dateLocale.value, {
     hour: '2-digit', minute: '2-digit', second: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric'
   })
 
   if (status.value === 'success') {
-    // 2. CẬP NHẬT QUYỀN TRONG LOCAL VÀ STORE
     const localUser = JSON.parse(localStorage.getItem('user')) || {}
     localUser.isPremium = 1
     localUser.role = 'premium'
@@ -204,7 +259,7 @@ onMounted(async () => {
       authStore.user.role = 'premium'
     }
     
-    toast.success("Nâng cấp Premium thành công! 🎉")
+    toast.success(t('payment_success.premium_activated'))
   }
 
   timer = setInterval(() => {
@@ -221,21 +276,268 @@ const goHome = () => {
 }
 
 const downloadReceipt = async () => {
-  if (!receiptRef.value) return
   isDownloading.value = true
   try {
-    const canvas = await html2canvas(receiptRef.value, { 
-      scale: 3, 
-      backgroundColor: '#ffffff',
-      useCORS: true 
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+    await ensureVietnamesePdfFont(pdf)
+    const pageWidth = pdf.internal.pageSize.getWidth()
+    const pageHeight = pdf.internal.pageSize.getHeight()
+    const sideMargin = 18
+    const contentWidth = pageWidth - sideMargin * 2
+    const bottomMargin = 18
+    const qrPayload = JSON.stringify({
+      referenceCode: displayTxnRef.value,
+      plan: displayPlanName.value,
+      customer: userName.value,
+      amount: amountValue.value,
+      issuedAt: currentTime.value,
+      status: t('payment_success.status_paid')
     })
-    const link = document.createElement('a')
-    link.href = canvas.toDataURL("image/png")
-    link.download = `GoMet_Receipt_${displayTxnRef.value}.png`
-    link.click()
-    toast.success("Đã lưu chứng từ!")
+    const qrDataUrl = await QRCode.toDataURL(qrPayload, {
+      margin: 1,
+      width: 220,
+      color: {
+        dark: '#0F172A',
+        light: '#FFFFFF'
+      }
+    })
+
+    const drawPageChrome = () => {
+      pdf.setFillColor(255, 250, 245)
+      pdf.rect(0, 0, pageWidth, pageHeight, 'F')
+
+      pdf.setFillColor(255, 237, 213)
+      pdf.rect(0, 0, pageWidth, 54, 'F')
+
+      pdf.setFillColor(234, 88, 12)
+      pdf.circle(pageWidth - 18, 16, 20, 'F')
+      pdf.setFillColor(245, 158, 11)
+      pdf.circle(pageWidth - 7, 34, 10, 'F')
+
+      pdf.setTextColor(234, 88, 12)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setFontSize(12)
+      pdf.text(t('payment_success.badge'), 18, 20)
+
+      pdf.setTextColor(15, 23, 42)
+      pdf.setFontSize(22)
+      pdf.text(t('payment_success.invoice_title'), 18, 31)
+
+      pdf.setFont('helvetica', 'normal')
+      pdf.setFontSize(10)
+      pdf.setTextColor(71, 85, 105)
+      pdf.text(pdf.splitTextToSize(t('payment_success.invoice_summary'), 115), 18, 39)
+    }
+
+    const ensureSpace = (requiredHeight) => {
+      if (currentY + requiredHeight <= pageHeight - bottomMargin) {
+        return
+      }
+
+      pdf.addPage()
+      drawPageChrome()
+      currentY = 62
+    }
+
+    const measureLines = (text, width) => pdf.splitTextToSize(String(text ?? ''), width)
+
+    const drawDetailTable = (rows, x, y, width) => {
+      const labelWidth = 46
+      const valueWidth = width - labelWidth - 20
+      const lineHeight = 4.6
+      const parsedRows = rows.map(([label, value]) => {
+        const labelLines = measureLines(label, labelWidth)
+        const valueLines = measureLines(value, valueWidth)
+        const contentLines = Math.max(labelLines.length, valueLines.length)
+        return {
+          labelLines,
+          valueLines,
+          height: 8 + contentLines * lineHeight,
+        }
+      })
+
+      const totalHeight = parsedRows.reduce((sum, row) => sum + row.height, 6)
+      pdf.setFillColor(248, 250, 252)
+      pdf.roundedRect(x, y, width, totalHeight, 4, 4, 'F')
+
+      let rowY = y + 8
+      parsedRows.forEach((row, index) => {
+        pdf.setFont('helvetica', 'normal')
+        pdf.setFontSize(9)
+        pdf.setTextColor(100, 116, 139)
+        pdf.text(row.labelLines, x + 6, rowY)
+
+        pdf.setFont('helvetica', 'bold')
+        pdf.setFontSize(10)
+        pdf.setTextColor(15, 23, 42)
+        pdf.text(row.valueLines, x + 6 + labelWidth + 8, rowY)
+
+        if (index < parsedRows.length - 1) {
+          pdf.setDrawColor(226, 232, 240)
+          pdf.line(x + 6, rowY + row.height - 4, x + width - 6, rowY + row.height - 4)
+        }
+
+        rowY += row.height
+      })
+
+      return totalHeight
+    }
+
+    const getBenefitRows = (items, width) => items.map((item) => {
+      const lines = measureLines(item, width)
+      return {
+        lines,
+        height: Math.max(10, lines.length * 4.8 + 4),
+      }
+    })
+
+    const drawInfoCard = ({ title, body, x, y, width, fill = [255, 247, 237], titleColor = [194, 65, 12], bodyColor = [120, 53, 15] }) => {
+      const bodyLines = measureLines(body, width - 12)
+      const height = Math.max(24, 14 + bodyLines.length * 4.5 + 8)
+      pdf.setFillColor(...fill)
+      pdf.roundedRect(x, y, width, height, 5, 5, 'F')
+      pdf.setFont('helvetica', 'bold')
+      pdf.setFontSize(10)
+      pdf.setTextColor(...titleColor)
+      pdf.text(title, x + 6, y + 9)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setFontSize(8.5)
+      pdf.setTextColor(...bodyColor)
+      pdf.text(bodyLines, x + 6, y + 15)
+      return height
+    }
+
+    drawPageChrome()
+
+    let currentY = 62
+
+    pdf.setFillColor(255, 255, 255)
+    pdf.roundedRect(sideMargin, currentY, contentWidth, 34, 8, 8, 'F')
+    pdf.setDrawColor(226, 232, 240)
+    pdf.roundedRect(sideMargin, currentY, contentWidth, 34, 8, 8, 'S')
+
+    pdf.setFillColor(15, 23, 42)
+    pdf.roundedRect(sideMargin + 10, currentY + 8, 26, 18, 5, 5, 'F')
+    pdf.setFont('helvetica', 'bold')
+    pdf.setFontSize(12)
+    pdf.setTextColor(255, 255, 255)
+    pdf.text('GM', sideMargin + 23, currentY + 19, { align: 'center' })
+
+    pdf.setFont('helvetica', 'normal')
+    pdf.setFontSize(8)
+    pdf.setTextColor(100, 116, 139)
+    pdf.text(t('payment_success.invoice_number'), sideMargin + 44, currentY + 13)
+    pdf.setFont('helvetica', 'bold')
+    pdf.setFontSize(12)
+    pdf.setTextColor(15, 23, 42)
+    pdf.text(`INV-${displayTxnRef.value}`, sideMargin + 44, currentY + 21)
+
+    const amountLines = measureLines(displayAmount.value, 32)
+    pdf.setFillColor(255, 247, 237)
+    pdf.roundedRect(pageWidth - sideMargin - 58, currentY + 5, 48, 24, 6, 6, 'F')
+    pdf.setFont('helvetica', 'normal')
+    pdf.setFontSize(8)
+    pdf.setTextColor(120, 53, 15)
+    pdf.text(t('payment_success.total_paid'), pageWidth - sideMargin - 52, currentY + 13)
+    pdf.setFont('helvetica', 'bold')
+    pdf.setFontSize(10.5)
+    pdf.setTextColor(194, 65, 12)
+    pdf.text(amountLines, pageWidth - sideMargin - 52, currentY + 19)
+
+    currentY += 46
+
+    const detailRows = [
+      [t('payment_success.reference_code'), displayTxnRef.value],
+      [t('payment_success.account_owner'), userName.value],
+      [t('payment_success.plan_label'), displayPlanName.value],
+      [t('payment_success.status_label'), t('payment_success.status_paid')],
+      [t('payment_success.payment_method'), t('payment_success.payment_method_value')],
+      [t('payment_success.issued_at'), currentTime.value],
+      [t('payment_success.amount_label'), displayAmount.value],
+      [t('payment_success.tax_label'), t('payment_success.tax_value')],
+    ]
+
+    const estimatedDetailHeight = 92
+    ensureSpace(estimatedDetailHeight)
+    pdf.setFont('helvetica', 'bold')
+    pdf.setFontSize(12)
+    pdf.setTextColor(15, 23, 42)
+    pdf.text(t('payment_success.invoice_details_title'), sideMargin + 10, currentY)
+    currentY += 6
+    currentY += drawDetailTable(detailRows, sideMargin + 10, currentY, contentWidth - 20)
+    currentY += 12
+
+    ensureSpace(34)
+    currentY += drawInfoCard({
+      title: t('payment_success.company_block_title'),
+      body: t('payment_success.company_block_body'),
+      x: sideMargin + 10,
+      y: currentY,
+      width: contentWidth - 20,
+    })
+    currentY += 12
+
+    const qrMetaLines = measureLines(`${displayTxnRef.value} - ${t('payment_success.status_paid')}`, contentWidth - 74)
+    const qrBlockHeight = Math.max(42, 18 + qrMetaLines.length * 4.6)
+    ensureSpace(qrBlockHeight + 6)
+    pdf.setFillColor(248, 250, 252)
+    pdf.roundedRect(sideMargin + 10, currentY, contentWidth - 20, qrBlockHeight, 5, 5, 'F')
+    pdf.addImage(qrDataUrl, 'PNG', sideMargin + 16, currentY + 6, 24, 24)
+    pdf.setFont('helvetica', 'bold')
+    pdf.setFontSize(10)
+    pdf.setTextColor(15, 23, 42)
+    pdf.text(t('payment_success.qr_caption'), sideMargin + 48, currentY + 14)
+    pdf.setFont('helvetica', 'normal')
+    pdf.setFontSize(8.5)
+    pdf.setTextColor(100, 116, 139)
+    pdf.text(qrMetaLines, sideMargin + 48, currentY + 22)
+    currentY += qrBlockHeight + 12
+
+    const benefits = [
+      t('payment_success.benefit_ad_free'),
+      t('payment_success.benefit_ai'),
+      t('payment_success.benefit_storage'),
+    ]
+    const benefitRows = getBenefitRows(benefits, contentWidth - 36)
+    const benefitsHeight = benefitRows.reduce((sum, row) => sum + row.height, 14)
+    ensureSpace(benefitsHeight + 20)
+    pdf.setFont('helvetica', 'bold')
+    pdf.setFontSize(12)
+    pdf.setTextColor(15, 23, 42)
+    pdf.text(t('payment_success.invoice_benefits_title'), sideMargin + 10, currentY)
+    currentY += 6
+    pdf.setFillColor(255, 255, 255)
+    pdf.roundedRect(sideMargin + 10, currentY, contentWidth - 20, benefitsHeight, 5, 5, 'F')
+    pdf.setDrawColor(226, 232, 240)
+    pdf.roundedRect(sideMargin + 10, currentY, contentWidth - 20, benefitsHeight, 5, 5, 'S')
+
+    let benefitY = currentY + 12
+    benefitRows.forEach((benefit) => {
+      pdf.setFillColor(22, 163, 74)
+      pdf.circle(sideMargin + 16, benefitY - 1, 1.8, 'F')
+      pdf.setFont('helvetica', 'normal')
+      pdf.setFontSize(10)
+      pdf.setTextColor(51, 65, 85)
+      pdf.text(benefit.lines, sideMargin + 22, benefitY)
+      benefitY += benefit.height
+    })
+
+    currentY += benefitsHeight + 12
+    ensureSpace(20)
+    pdf.setDrawColor(226, 232, 240)
+    pdf.line(sideMargin, currentY, pageWidth - sideMargin, currentY)
+    currentY += 9
+    pdf.setFont('helvetica', 'normal')
+    pdf.setFontSize(9)
+    pdf.setTextColor(100, 116, 139)
+    pdf.text(measureLines(t('payment_success.support_line'), contentWidth), sideMargin, currentY)
+    currentY += 8
+    pdf.text(measureLines(t('payment_success.invoice_footer_note'), contentWidth), sideMargin, currentY)
+
+    pdf.save(`${t('payment_success.file_name')}-${displayTxnRef.value}.pdf`)
+    toast.success(t('payment_success.download_ok'))
   } catch (e) { 
-    toast.error("Lỗi khi tạo ảnh!") 
+    toast.error(t('payment_success.download_failed'))
   } finally { 
     isDownloading.value = false 
   }

@@ -8,37 +8,37 @@
             <FileText :size="26" stroke-width="2.5" />
           </div>
           <div>
-            <h2 class="title">Quản lý Bài viết</h2>
-            <p class="subtitle">Kiểm duyệt và duy trì chất lượng cộng đồng Gomet</p>
+            <h2 class="title">{{ t('admin.posts.title') }}</h2>
+            <p class="subtitle">{{ t('admin.posts.subtitle') }}</p>
           </div>
         </div>
       </div>
       
       <div class="header-actions">
          <div class="sort-box-lux">
-          <select v-model="selectedCategory" class="sort-select" title="Lọc theo danh mục">
-            <option value="all">Tất cả danh mục</option>
+          <select v-model="selectedCategory" class="sort-select" :title="t('admin.posts.filter_category_title')">
+            <option value="all">{{ t('search.all_categories') }}</option>
             <option v-for="cat in categories" :key="cat.categoryID" :value="cat.categoryID">
               {{ cat.categoryName }}
             </option>
           </select>
         </div>
          <div class="sort-box-lux">
-          <select v-model="sortOption" class="sort-select" title="Sắp xếp bài viết">
-            <option value="newest">Ngày đăng (Mới nhất)</option>
-            <option value="oldest">Ngày đăng (Cũ nhất)</option>
-            <option value="views_desc">Lượt xem (Nhiều nhất)</option>
-            <option value="alphabetical">Tên món (A-Z)</option>
+          <select v-model="sortOption" class="sort-select" :title="t('admin.posts.sort_title')">
+            <option value="newest">{{ t('admin.posts.sort_newest') }}</option>
+            <option value="oldest">{{ t('admin.posts.sort_oldest') }}</option>
+            <option value="views_desc">{{ t('admin.posts.sort_views') }}</option>
+            <option value="alphabetical">{{ t('admin.posts.sort_alpha') }}</option>
           </select>
         </div>
 
         <div class="search-box-lux">
           <Search :size="18" class="search-icon" />
-          <input v-model="searchQuery" type="text" placeholder="Tìm tên món, tác giả..." />
+          <input v-model="searchQuery" type="text" :placeholder="t('admin.posts.search_placeholder')" />
         </div>
         <router-link to="/admin/blacklist" class="btn-open-blacklist">
           <ShieldAlert :size="18" />
-          <span>Bộ lọc Từ khóa</span>
+          <span>{{ t('admin.posts.blacklist') }}</span>
         </router-link>
       </div>
     </div>
@@ -56,20 +56,20 @@
       </div>
     </div>
 
-    <div v-if="loading" class="empty-state-lux"><Loader2 :size="36" class="spin-icon" /> <p>Đang đồng bộ dữ liệu...</p></div>
+    <div v-if="loading" class="empty-state-lux"><Loader2 :size="36" class="spin-icon" /> <p>{{ t('admin.posts.loading') }}</p></div>
     <div v-else-if="error" class="empty-state-lux error"><AlertTriangle :size="36" /> <p>{{ error }}</p></div>
 
     <div v-else class="table-lux-wrapper anim-fade-up" style="--delay: 0.1s">
       <table class="data-table-lux">
         <thead>
           <tr>
-            <th width="8%">MÃ</th>
-            <th width="26%">MÓN ĂN</th>
-            <th width="14%">DANH MỤC</th>
-            <th width="16%">ĐẦU BẾP</th>
-            <th width="10%">LƯỢT XEM</th>
-            <th width="13%">TRẠNG THÁI</th>
-            <th width="13%" class="text-right">THAO TÁC</th>
+            <th width="8%">{{ t('admin.posts.col_id') }}</th>
+            <th width="26%">{{ t('admin.posts.col_post') }}</th>
+            <th width="14%">{{ t('admin.posts.col_category') }}</th>
+            <th width="16%">{{ t('admin.posts.col_author') }}</th>
+            <th width="10%">{{ t('admin.posts.col_views') }}</th>
+            <th width="13%">{{ t('admin.posts.col_status') }}</th>
+            <th width="13%" class="text-right">{{ t('admin.posts.col_actions') }}</th>
           </tr>
         </thead>
         <TransitionGroup tag="tbody" name="list-anim">
@@ -86,17 +86,17 @@
                 </div>
               </div>
             </td>
-            <td><span class="cat-tag">{{ post.categoryName || 'Chưa phân loại' }}</span></td>
+            <td><span class="cat-tag">{{ post.categoryName || t('admin.posts.uncategorized') }}</span></td>
             <td>
               <div class="author-info">
                 <div class="avatar-wrapper-lux">
                    <img :src="post.accountAvatar || post.authorAvatar || `https://ui-avatars.com/api/?name=${post.username || post.authorName || 'U'}&background=f1f5f9`" 
                         :class="['avatar-xs', isPostAdmin(post) ? 'border-admin' : (isPostPremium(post) ? 'border-premium' : '')]">
-                   <div v-if="isPostAdmin(post)" class="vip-mini-badge" title="Quản trị viên">🛡️</div>
-                   <div v-else-if="isPostPremium(post)" class="vip-mini-badge" title="Tài khoản Premium">👑</div>
+                   <div v-if="isPostAdmin(post)" class="vip-mini-badge" :title="t('admin.posts.admin_badge')">🛡️</div>
+                   <div v-else-if="isPostPremium(post)" class="vip-mini-badge" :title="t('admin.posts.premium_badge')">👑</div>
                 </div>
                 <span :class="['author-name', isPostAdmin(post) ? 'text-admin' : (isPostPremium(post) ? 'text-premium' : '')]">
-                  {{ post.username || post.authorName || 'Ẩn danh' }}
+                  {{ post.username || post.authorName || t('admin.posts.anonymous') }}
                 </span>
               </div>
             </td>
@@ -113,18 +113,18 @@
             </td>
             <td class="text-right">
               <div class="action-group">
-                <button @click="openDetail(post)" class="btn-action view" title="Xem chi tiết"><Eye :size="16" /></button>
+                <button @click="openDetail(post)" class="btn-action view" :title="t('admin.posts.action_view')"><Eye :size="16" /></button>
 
                 <template v-if="post._status === 'pending'">
-                  <button @click="approvePost(post.postID)" class="btn-action approve" title="Duyệt bài"><CheckCircle :size="16" /></button>
+                  <button @click="approvePost(post.postID)" class="btn-action approve" :title="t('admin.posts.action_approve')"><CheckCircle :size="16" /></button>
                 </template>
 
                 <template v-if="post._status === 'active' || post._status === 'pending'">
-                  <button @click="askRejectAction(post)" class="btn-action ban" title="Từ chối/Gỡ bài"><Ban :size="16" /></button>
+                  <button @click="askRejectAction(post)" class="btn-action ban" :title="t('admin.posts.action_reject')"><Ban :size="16" /></button>
                 </template>
 
               <template v-if="post._status === 'banned' || post._status === 'rejected'">
-                  <button @click="reactivatePost(post.postID)" class="btn-action restore" title="Khôi phục bài"><RotateCcw :size="16" /></button>
+                  <button @click="reactivatePost(post.postID)" class="btn-action restore" :title="t('admin.posts.action_restore')"><RotateCcw :size="16" /></button>
                 </template>
                 
                 </div>
@@ -135,7 +135,7 @@
             <td colspan="7">
               <div class="empty-state-lux">
                 <div class="empty-icon-box"><Search :size="32" /></div>
-                <p>Không tìm thấy bài viết nào trong mục này.</p>
+                <p>{{ t('admin.posts.empty') }}</p>
               </div>
             </td>
           </tr>
@@ -158,7 +158,7 @@
 
           <div class="modal-body-lux">
             <div class="modal-meta-row">
-              <span class="cat-tag">{{ selectedPost.categoryName || 'Chưa phân loại' }}</span>
+              <span class="cat-tag">{{ selectedPost.categoryName || t('admin.posts.uncategorized') }}</span>
               <span class="meta-dot">•</span>
               <span class="meta-time">{{ formatDate(selectedPost.createdAt) }}</span>
               <span class="meta-dot">•</span>
@@ -166,47 +166,47 @@
                 <div class="avatar-wrapper-lux">
                    <img :src="selectedPost.accountAvatar || selectedPost.authorAvatar || `https://ui-avatars.com/api/?name=${selectedPost.username || selectedPost.authorName || 'U'}`" 
                         :class="['avatar-xs', isPostAdmin(selectedPost) ? 'border-admin' : (isPostPremium(selectedPost) ? 'border-premium' : '')]">
-                   <div v-if="isPostAdmin(selectedPost)" class="vip-mini-badge" title="Quản trị viên">🛡️</div>
-                   <div v-else-if="isPostPremium(selectedPost)" class="vip-mini-badge" title="Tài khoản Premium">👑</div>
+                   <div v-if="isPostAdmin(selectedPost)" class="vip-mini-badge" :title="t('admin.posts.admin_badge')">🛡️</div>
+                   <div v-else-if="isPostPremium(selectedPost)" class="vip-mini-badge" :title="t('admin.posts.premium_badge')">👑</div>
                 </div>
                 <b :class="[isPostAdmin(selectedPost) ? 'text-admin' : (isPostPremium(selectedPost) ? 'text-premium' : '')]">
-                  {{ selectedPost.username || selectedPost.authorName || 'Ẩn danh' }}
+                  {{ selectedPost.username || selectedPost.authorName || t('admin.posts.anonymous') }}
                 </b>
               </div>
             </div>
             
             <h1 class="modal-title">{{ selectedPost.title }}</h1>
-            <p class="modal-desc">{{ selectedPost.description || 'Bài viết này không có mô tả chi tiết.' }}</p>
+            <p class="modal-desc">{{ selectedPost.description || t('admin.posts.modal_no_desc') }}</p>
 
             <div class="modal-stats-box">
               <div class="stat-item">
                 <span class="stat-icon">👁️</span>
                 <span class="stat-value">{{ selectedPost.views || selectedPost.viewCount || 0 }}</span>
-                <span class="stat-label">Lượt xem</span>
+                <span class="stat-label">{{ t('admin.posts.stats_views') }}</span>
               </div>
               <div class="stat-item">
                 <span class="stat-icon">❤️</span>
                 <span class="stat-value">{{ selectedPost.likes || selectedPost.favoriteCount || selectedPost.likeCount || 0 }}</span>
-                <span class="stat-label">Lượt thích</span>
+                <span class="stat-label">{{ t('admin.posts.stats_likes') }}</span>
               </div>
               <div class="stat-item">
                 <span class="stat-icon">⭐</span>
                 <span class="stat-value">{{ (Number(selectedPost.rating || selectedPost.avgRating || selectedPost.averageRating) || 0).toFixed(1) }}</span>
-                <span class="stat-label">Đánh giá</span>
+                <span class="stat-label">{{ t('admin.posts.stats_rating') }}</span>
               </div>
             </div>
 
             <div v-if="(selectedPost._status === 'banned' || selectedPost._status === 'rejected') && selectedPost.rejectReason" class="p-detail-ban-reason">
               <div class="ban-header">
-                <AlertTriangle :size="16" /> Thông tin gỡ/từ chối bài viết
+                <AlertTriangle :size="16" /> {{ t('admin.posts.moderation_info') }}
               </div>
               <div class="ban-info-grid">
                 <div class="ban-info-item">
-                  <span class="info-lbl">Lý do vi phạm:</span>
+                  <span class="info-lbl">{{ t('admin.posts.violation_reason') }}</span>
                   <span class="info-val reason-text">{{ selectedPost.rejectReason }}</span>
                 </div>
                 <div v-if="selectedPost.rejectedAt" class="ban-info-item">
-                  <span class="info-lbl">Thời gian xử lý:</span>
+                  <span class="info-lbl">{{ t('admin.posts.processed_time') }}</span>
                   <span class="info-val time-text">{{ formatDate(selectedPost.rejectedAt) }}</span>
                 </div>
               </div>
@@ -214,32 +214,32 @@
 
             <div class="modal-action-zone" v-if="selectedPost._status === 'pending'">
               <div class="alert-ribbon">
-                <AlertCircle :size="18" /> Bài viết đang chờ duyệt. Bạn quyết định sao?
+                <AlertCircle :size="18" /> {{ t('admin.posts.pending_banner') }}
               </div>
               <div class="btn-grid-lux">
                 <button @click="approvePost(selectedPost.postID); closeDetail()" class="btn-lux-primary">
-                  <CheckCircle :size="18" /> Duyệt bài ngay
+                  <CheckCircle :size="18" /> {{ t('admin.posts.approve_now') }}
                 </button>
                 <button @click="askRejectAction(selectedPost); closeDetail()" class="btn-lux-secondary">
-                  <Ban :size="18" /> Từ chối & Gỡ
+                  <Ban :size="18" /> {{ t('admin.posts.reject_now') }}
                 </button>
               </div>
             </div>
 
             <div class="modal-action-zone" v-if="selectedPost._status === 'banned' || selectedPost._status === 'rejected'" style="background: #f0f9ff; border-color: #e0f2fe; margin-top: 24px;">
               <div class="alert-ribbon" style="color: #0369a1;">
-                <AlertCircle :size="18" /> Bài viết đã bị gỡ. Bạn có muốn khôi phục lại không?
+                <AlertCircle :size="18" /> {{ t('admin.posts.deactivated_banner') }}
               </div>
               <div class="btn-grid-lux" style="grid-template-columns: 1fr;">
                 <button @click="reactivatePost(selectedPost.postID)" class="btn-lux-primary" style="background: linear-gradient(135deg, #0284c7, #0ea5e9); box-shadow: 0 10px 20px -5px rgba(2, 132, 199, 0.4);">
-                  <RotateCcw :size="18" /> Khôi phục bài viết
+                  <RotateCcw :size="18" /> {{ t('admin.posts.restore_now') }}
                 </button>
               </div>
             </div>
 
             <div class="modal-footer-zone">
               <router-link :to="`/post/${selectedPost.postID}`" target="_blank" class="btn-lux-view-post">
-                <span>Xem giao diện người dùng</span>
+                <span>{{ t('admin.posts.view_on_site') }}</span>
                 <ExternalLink :size="18" />
               </router-link>
             </div>
@@ -254,24 +254,24 @@
           <div class="action-icon">
             <Ban :size="28" />
           </div>
-          <h3>Từ chối / Gỡ bài viết?</h3>
-          <p>Xác nhận gỡ bài viết <strong>"{{ rejectModal.title }}"</strong> khỏi hệ thống?</p>
+          <h3>{{ t('admin.posts.reject_title') }}</h3>
+          <p>{{ t('admin.posts.reject_confirm', { title: rejectModal.title }) }}</p>
           
           <div class="reason-input-group">
-            <label for="rejectReason">Lý do từ chối (bắt buộc):</label>
+            <label for="rejectReason">{{ t('admin.posts.reject_reason') }}</label>
             <textarea 
               id="rejectReason" 
               v-model="rejectModal.reason" 
-              placeholder="Ví dụ: Hình ảnh mờ, vi phạm tiêu chuẩn cộng đồng..." 
+              :placeholder="t('admin.posts.reject_reason_placeholder')" 
               rows="3" 
               class="reason-textarea"
             ></textarea>
-            <span v-if="rejectModal.showError" class="error-msg">Bạn phải nhập lý do vi phạm!</span>
+            <span v-if="rejectModal.showError" class="error-msg">{{ t('admin.posts.reject_reason_required') }}</span>
           </div>
 
           <div class="action-btns">
-            <button class="btn-cancel" @click="rejectModal.show = false">Hủy bỏ</button>
-            <button class="btn-confirm btn-danger" @click="confirmRejectAction">Xác nhận Gỡ</button>
+            <button class="btn-cancel" @click="rejectModal.show = false">{{ t('admin.posts.cancel') }}</button>
+            <button class="btn-confirm btn-danger" @click="confirmRejectAction">{{ t('admin.posts.confirm_reject') }}</button>
           </div>
         </div>
       </div>
@@ -291,12 +291,14 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { FileText, Search, Loader2, AlertTriangle, Eye, Ban, CheckCircle, XCircle, AlertCircle, ShieldAlert, RotateCcw, ExternalLink } from 'lucide-vue-next'
 import api from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
 const route = useRoute()
+const { t, locale } = useI18n()
 
 // --- STATE ---
 const posts = ref([])
@@ -312,13 +314,13 @@ const selectedPost = ref({})
 
 const rejectModal = ref({ show: false, postId: null, title: '', reason: '', showError: false })
 
-const tabs = [
-  { key: 'all', label: 'Tất cả' },
-  { key: 'pending', label: 'Chờ duyệt' },
-  { key: 'active', label: 'Đang hiển thị' },
-  { key: 'hidden', label: 'User tự ẩn' },
-  { key: 'deactivated', label: 'Bị Admin gỡ' }
-]
+const tabs = computed(() => [
+  { key: 'all', label: t('admin.posts.tab_all') },
+  { key: 'pending', label: t('admin.posts.tab_pending') },
+  { key: 'active', label: t('admin.posts.tab_active') },
+  { key: 'hidden', label: t('admin.posts.tab_hidden') },
+  { key: 'deactivated', label: t('admin.posts.tab_deactivated') }
+])
 
 // --- LOGIC ---
 const getStatus = (post) => {
@@ -337,14 +339,14 @@ const getStatus = (post) => {
 
 const getStatusLabel = (status) => {
   const map = { 
-    active: 'Đang hiển thị', 
-    pending: 'Chờ duyệt', 
-    hidden_pending: 'User tự ẩn (Đang chờ)', 
-    hidden_active: 'User tự ẩn', 
-    banned: 'Bị Admin gỡ', 
-    rejected: 'Bị từ chối' 
+    active: t('admin.posts.status_active'), 
+    pending: t('admin.posts.status_pending'), 
+    hidden_pending: t('admin.posts.status_hidden_pending'), 
+    hidden_active: t('admin.posts.status_hidden_active'), 
+    banned: t('admin.posts.status_deactivated'), 
+    rejected: t('admin.posts.status_rejected') 
   }
-  return map[status] || 'Không xác định'
+  return map[status] || t('admin.posts.status_unknown')
 }
 
 const isPostAdmin = (p) => {
@@ -361,7 +363,7 @@ const isPostPremium = (p) => {
 const formatDate = (d) => {
   if (!d) return ''
   const dt = new Date(d)
-  return dt.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute:'2-digit' })
+  return dt.toLocaleDateString(locale.value === 'vi' ? 'vi-VN' : 'en-US', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute:'2-digit' })
 }
 
 // --- FETCH DATA ---
@@ -372,7 +374,7 @@ const fetchPosts = async () => {
     const res = await api.get('/api/admin/posts')
     posts.value = res.data.map(p => ({ ...p, _status: getStatus(p) }))
   } catch (e) {
-    error.value = 'Không thể tải dữ liệu: ' + (e.response?.data?.message || e.message)
+    error.value = t('admin.posts.load_failed_prefix') + (e.response?.data?.message || e.message)
   } finally {
     loading.value = false
   }
@@ -383,7 +385,7 @@ const fetchCategories = async () => {
     const res = await api.get('/api/admin/categories')
     categories.value = res.data
   } catch (e) {
-    console.warn('Lỗi tải danh mục:', e)
+    console.warn('Category load failed:', e)
   }
 }
 
@@ -448,7 +450,7 @@ const approvePost = async (id) => {
         p.isApproved = 1; p.isActive = 1; 
         p._status = getStatus(p); p.rejectReason = null; 
     }
-    showToast('Đã duyệt bài viết thành công!')
+    showToast(t('admin.posts.approved_ok'))
   } catch (e) { showToast('Lỗi: ' + (e.response?.data?.message || e.message), 'error') }
 }
 
@@ -477,12 +479,12 @@ const confirmRejectAction = async () => {
     }
     
     rejectModal.value.show = false;
-    showToast('Đã gỡ bài viết thành công!')
+    showToast(t('admin.posts.rejected_ok'))
   } catch (e) { showToast('Lỗi: ' + (e.response?.data?.message || e.message), 'error') }
 }
 
 const reactivatePost = async (id) => {
-  if (!confirm('Bạn có chắc muốn khôi phục bài viết này lên hệ thống?')) return;
+  if (!confirm(t('admin.posts.restore_confirm'))) return;
   
   try {
     const payload = {
@@ -503,7 +505,7 @@ const reactivatePost = async (id) => {
     
     if (selectedPost.value?.postID === id) closeDetail();
     
-    showToast('Đã khôi phục bài viết bị gỡ thành công!');
+    showToast(t('admin.posts.restore_ok'));
   } catch (e) {
     showToast('Lỗi: ' + (e.response?.data?.message || e.message), 'error');
   }
@@ -517,7 +519,7 @@ const openDetail = async (post) => {
     if (res.data) {
       selectedPost.value = { ...selectedPost.value, ...res.data, rejectReason: selectedPost.value.rejectReason, rejectedAt: selectedPost.value.rejectedAt }
     }
-  } catch (err) { console.warn('Không thể tải chi tiết:', err) }
+  } catch (err) { console.warn(t('admin.posts.detail_load_warn'), err) }
 }
 const closeDetail = () => { showModal.value = false }
 

@@ -10,12 +10,12 @@
     </div>
     
     <div class="user-info">
-      <h3 class="user-name">{{ user.name || user.username || 'Người dùng' }}</h3>
+      <h3 class="user-name">{{ user.name || user.username || t('user_card.fallback_name') }}</h3>
       <p class="user-handle">{{ displayHandle }}</p>
     </div>
 
     <div class="user-actions">
-      <button class="btn-icon-chat hide-on-mobile" @click.stop="handleContactUser" title="Nhắn tin">
+      <button class="btn-icon-chat hide-on-mobile" @click.stop="handleContactUser" :title="t('user_card.message_title')">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
         </svg>
@@ -24,10 +24,11 @@
       <button 
         class="btn-follow-black" 
         :class="{ 'is-following': isFollowing }" 
+        :data-unfollow-text="t('user_card.unfollow_hover')"
         @click.stop="toggleFollow"
       >
-        <span v-if="isFollowing">Đang theo dõi</span>
-        <span v-else>Theo dõi</span>
+        <span v-if="isFollowing">{{ t('user_card.following') }}</span>
+        <span v-else>{{ t('user_card.follow') }}</span>
       </button>
     </div>
   </div>
@@ -99,7 +100,7 @@ const goToProfile = () => {
 const handleContactUser = async () => {
   // 🔥 CHẶN TÍNH NĂNG NHẮN TIN TRÊN MOBILE/TABLET (Theo đúng yêu cầu của sếp)
   if (window.innerWidth <= 1024) {
-    toast.info('Tính năng nhắn tin hiện chỉ hỗ trợ trên Máy tính!')
+    toast.info(t('post_detail.desktop_chat_only'))
     return
   }
 
@@ -111,7 +112,7 @@ const handleContactUser = async () => {
   const currentUserId = authStore.user?.accountID || authStore.user?.id
 
   if (currentUserId === targetId.value) { 
-    toast.info('Sếp không thể tự nhắn tin cho chính mình đâu nha!')
+    toast.info(t('post_detail.self_chat_blocked'))
     return 
   }
   
@@ -128,9 +129,9 @@ const handleContactUser = async () => {
       online: true 
     })
     chatStore.isMessengerOpen = true
-    toast.success(`Đang kết nối với ${props.user.name || props.user.username}...`)
+    toast.success(t('post_detail.connecting_with', { name: props.user.name || props.user.username }))
   } catch (err) { 
-    toast.error('Lỗi kết nối chat!') 
+    toast.error(t('post_detail.chat_connect_error')) 
   }
 }
 
@@ -143,7 +144,7 @@ const toggleFollow = async () => {
   const currentUserId = authStore.user?.accountID || authStore.user?.id
 
   if (!targetId.value || currentUserId === targetId.value) {
-    toast.info('Bạn không thể theo dõi chính mình!')
+    toast.info(t('user_card.self_follow_blocked'))
     return
   }
   
@@ -156,7 +157,7 @@ const toggleFollow = async () => {
       isFollowing.value = true
     }
   } catch (err) { 
-    toast.error('Lỗi thao tác, vui lòng thử lại!') 
+    toast.error(t('toast.follow_error')) 
   }
 }
 </script>
@@ -293,7 +294,7 @@ const toggleFollow = async () => {
     }
     
     &:hover span { display: none; }
-    &:hover::after { content: "Hủy theo dõi"; }
+    &:hover::after { content: attr(data-unfollow-text); }
   }
 }
 

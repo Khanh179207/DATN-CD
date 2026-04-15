@@ -9,15 +9,15 @@
             <div class="card-header-dark">
               <div class="h-left">
                 <span class="pulse-dot-neon"></span>
-                <span class="caps-text">{{ isTheater ? 'CHẾ ĐỘ RẠP PHIM' : 'MASTERCLASS VIDEO' }}</span>
+                <span class="caps-text">{{ isTheater ? $t('recipe.theater_mode') : $t('recipe.video_masterclass') }}</span>
               </div>
-              <button class="btn-theater-toggle" @click="isTheater = !isTheater" :title="isTheater ? 'Thu nhỏ' : 'Mở rộng'">
+              <button class="btn-theater-toggle" @click="isTheater = !isTheater" :title="$t('recipe.theater_mode')">
                 <svg v-if="!isTheater" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
                 <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7"/></svg>
               </button>
             </div>
             <div class="video-aspect-frame">
-              <iframe v-if="parsedVideo.type === 'youtube'" :src="parsedVideo.url" title="Recipe Video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+              <iframe v-if="parsedVideo.type === 'youtube'" :src="parsedVideo.url" :title="t('recipe.video_masterclass')" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
               <video v-else-if="parsedVideo.type === 'html5'" :src="parsedVideo.url" controls playsinline class="html5-player"></video>
             </div>
           </div>
@@ -28,9 +28,9 @@
               <div class="widget-header">
                 <div class="title-with-icon">
                   <div class="icon-box"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg></div>
-                  <h3>Giỏ nguyên liệu</h3>
+                  <h3>{{ $t('recipe.add_to_cart') }}</h3>
                 </div>
-                <button class="text-btn-soft" @click="selectAllIngredients">Chọn tất cả</button>
+                <button class="text-btn-soft" @click="selectAllIngredients">{{ $t('recipe.select_all') }}</button>
               </div>
 
               <div class="ingredients-list-clean">
@@ -55,16 +55,16 @@
               <div class="widget-header">
                 <div class="title-with-icon">
                   <div class="icon-box note-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></div>
-                  <h3>Ghi chú cá nhân</h3>
+                  <h3>{{ $t('recipe.personal_note') }}</h3>
                 </div>
               </div>
               <div class="textarea-wrapper">
-                <textarea v-model="userNote" placeholder="Ghi chú lại bí quyết gia giảm của riêng sếp..."></textarea>
+                <textarea v-model="userNote" :placeholder="$t('recipe.note_placeholder')"></textarea>
               </div>
               <div class="note-actions">
-                <span class="lock-text"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> Chỉ mình sếp thấy</span>
+                <span class="lock-text"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> {{ $t('recipe.private') }}</span>
                 <button class="btn-text-save" @click="handleSaveNote" :disabled="isSavingNote">
-                   {{ isSavingNote ? 'Đang lưu...' : 'Lưu lại' }}
+                   {{ isSavingNote ? $t('common.saving') : $t('recipe.personal_note_save') }}
                 </button>
               </div>
             </div>
@@ -77,12 +77,12 @@
         <div class="process-editorial-section slide-in-up">
           
           <div class="process-header">
-            <h2 class="serif-title">Quy trình thực hiện</h2>
+            <h2 class="serif-title">{{ $t('recipe.process') }}</h2>
             <div class="header-actions">
-              <span class="step-count-badge">{{ post.steps?.length || 0 }} BƯỚC</span>
+              <span class="step-count-badge">{{ $t('recipe.steps_count', { count: post.steps?.length || 0 }) }}</span>
               <button class="btn-gradient-dark" @click="cookingCardRef?.openModal(0)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
-                CHẾ ĐỘ NẤU
+                {{ $t('recipe.cooking_mode') }}
               </button>
             </div>
           </div>
@@ -96,7 +96,7 @@
               </div>
               
               <div class="timeline-content">
-                <h4 class="step-subtitle">BƯỚC {{ index + 1 }}</h4>
+                <h4 class="step-subtitle">{{ $t('recipe.step_prefix') }} {{ index + 1 }}</h4>
                 <p class="step-desc">{{ step.desc }}</p>
                 
                 <div class="step-gallery" v-if="step.images && step.images.length && step.images[0]">
@@ -176,9 +176,9 @@ const handleSaveNote = async () => {
       postId: props.post.id, 
       content: userNote.value 
     })
-    toast.success('Bí quyết đã được lưu!');
+    toast.success(t('recipe.note_saved'));
   } catch (e) { 
-    toast.error('Lỗi hệ thống!'); 
+    toast.error(t('post_detail.system_error')); 
   } 
   finally { isSavingNote.value = false }
 }
@@ -202,15 +202,15 @@ const handleGoShopping = () => {
   const hasPremiumAccess = isPremiumUser || isAdmin;
 
   if (!hasPremiumAccess) {
-    toast.warn('Tính năng Giỏ đi chợ là đặc quyền chỉ dành cho tài khoản Premium sếp nhé!');
+    toast.warn(t('recipe.shopping_premium_only'));
     window.dispatchEvent(new CustomEvent('ui:open-premium'));
     return;
   }
 
   const selected = ingredientsList.value.filter(i => i.selectedForShopping)
-  if (!selected.length) return toast.warn('Sếp chưa chọn nguyên liệu nào!');
+  if (!selected.length) return toast.warn(t('recipe.no_selected_ingredients'));
   shoppingStore.addItems(selected, props.post.id)
-  toast.success(`Đã thêm ${selected.length} món vào giỏ!`)
+  toast.success(t('recipe.added_to_cart_count', { count: selected.length }))
 }
 
 const handleImageError = (e) => { e.target.style.display = 'none'; }

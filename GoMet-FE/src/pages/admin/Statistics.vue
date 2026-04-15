@@ -6,14 +6,14 @@
           <Activity :size="28" stroke-width="2.5" />
         </div>
         <div>
-          <h2 class="page-title">Trung Tâm Phân Tích</h2>
-          <p class="page-sub">Giám sát hiệu suất và dữ liệu toàn diện của hệ sinh thái GoMet</p>
+          <h2 class="page-title">{{ t('admin.statistics.title') }}</h2>
+          <p class="page-sub">{{ t('admin.statistics.subtitle') }}</p>
         </div>
       </div>
       <div class="header-right">
         <button class="btn-refresh" @click="refreshAll" :disabled="loading">
           <RefreshCcw :size="16" :class="{ 'spinning': loading }" />
-          Đồng bộ dữ liệu
+          {{ t('admin.common.refresh') }}
         </button>
       </div>
     </div>
@@ -53,11 +53,11 @@
                 <div class="head-left">
                   <div class="icon-box" style="background: #EFF6FF; color: #3B82F6"><TrendingUp :size="20"/></div>
                   <div>
-                    <h3>Tăng trưởng Bài viết</h3>
-                    <p>Sản lượng nội dung năm nay</p>
+                    <h3>{{ t('admin.statistics.post_growth_title') }}</h3>
+                    <p>{{ t('admin.statistics.post_growth_subtitle') }}</p>
                   </div>
                 </div>
-                <span class="live-badge"><span class="pulse-dot"></span> Live</span>
+                <span class="live-badge"><span class="pulse-dot"></span> {{ t('admin.statistics.live') }}</span>
               </div>
               <div v-if="loading" class="loading-box"><div class="spinner"></div></div>
               <div v-else class="chart-wrapper">
@@ -70,8 +70,8 @@
                 <div class="head-left">
                   <div class="icon-box" style="background: #FAF5FF; color: #8B5CF6"><Users :size="20"/></div>
                   <div>
-                    <h3>Người dùng mới</h3>
-                    <p>Tốc độ thu hút hội viên</p>
+                    <h3>{{ t('admin.statistics.new_users_title') }}</h3>
+                    <p>{{ t('admin.statistics.new_users_subtitle') }}</p>
                   </div>
                 </div>
               </div>
@@ -101,7 +101,7 @@
 
           <div class="chart-card">
             <div class="card-head">
-              <h3><Banknote :size="18" style="color: #10B981"/> Biểu đồ Doanh thu Thực tế</h3>
+              <h3><Banknote :size="18" style="color: #10B981"/> {{ t('admin.statistics.revenue_chart_title') }}</h3>
             </div>
             <div v-if="loadingRevenue" class="loading-box"><div class="spinner"></div></div>
             <div v-else>
@@ -129,14 +129,14 @@
           <div class="two-col">
             <div class="chart-card">
               <div class="card-head">
-                <h3><Layout :size="18" style="color: #F97316"/> Phân bổ Danh mục Nội dung</h3>
+                <h3><Layout :size="18" style="color: #F97316"/> {{ t('admin.statistics.category_distribution_title') }}</h3>
               </div>
               <div v-if="loadingContent" class="loading-box"><div class="spinner"></div></div>
               <VueApexCharts v-else type="radar" height="350" :options="categoryChartOptions" :series="categoryChartSeries" />
             </div>
             <div class="chart-card">
               <div class="card-head">
-                <h3><MessageSquare :size="18" style="color: #3B82F6"/> Tương tác Cộng đồng</h3>
+                <h3><MessageSquare :size="18" style="color: #3B82F6"/> {{ t('admin.statistics.community_engagement_title') }}</h3>
               </div>
               <div v-if="loadingContent" class="loading-box"><div class="spinner"></div></div>
               <VueApexCharts v-else type="bar" height="350" :options="engagementChartOptions" :series="engagementChartSeries" />
@@ -145,7 +145,7 @@
         </div>
 
       <div v-else-if="activeTab === 'ranking'" key="ranking" class="tab-pane">
-          <div v-if="loadingRanking" class="loading-state"><div class="spinner"></div><p>Đang tổng hợp dữ liệu...</p></div>
+          <div v-if="loadingRanking" class="loading-state"><div class="spinner"></div><p>{{ t('admin.statistics.compiling_data') }}</p></div>
           <div v-else class="ranking-layout">
             
             <div class="chart-card podium-card">
@@ -153,13 +153,13 @@
                 <div class="head-left">
                   <div class="icon-box" style="background: #FEF9C3; color: #EAB308"><Trophy :size="20"/></div>
                   <div>
-                    <h3>Vinh Danh Đầu Bếp</h3>
-                    <p>Top 5 thành viên đóng góp nổi bật nhất</p>
+                    <h3>{{ t('admin.statistics.top_chefs_title') }}</h3>
+                    <p>{{ t('admin.statistics.top_chefs_subtitle') }}</p>
                   </div>
                 </div>
               </div>
 
-              <div v-if="!topChefs.length" class="state-empty">Chưa có đủ dữ liệu xếp hạng</div>
+              <div v-if="!topChefs.length" class="state-empty">{{ t('admin.statistics.not_enough_ranking_data') }}</div>
               <div v-else class="podium-area">
                 <div class="podium-container" v-if="topChefs.length >= 3">
                   <!-- Rank 2 -->
@@ -169,7 +169,7 @@
                       <div class="medal silver">🥈</div>
                     </div>
                     <div class="p-name">{{ topChefs[1].name }}</div>
-                    <div class="p-score">{{ topChefs[1].postCount }} bài</div>
+                    <div class="p-score">{{ t('admin.statistics.posts_count', { count: topChefs[1].postCount }) }}</div>
                     <div class="pedestal step-2"><span>2</span></div>
                   </div>
                   <!-- Rank 1 -->
@@ -179,7 +179,7 @@
                       <div class="medal gold">👑</div>
                     </div>
                     <div class="p-name">{{ topChefs[0].name }}</div>
-                    <div class="p-score">{{ topChefs[0].postCount }} bài</div>
+                    <div class="p-score">{{ t('admin.statistics.posts_count', { count: topChefs[0].postCount }) }}</div>
                     <div class="pedestal step-1"><span>1</span></div>
                   </div>
                   <!-- Rank 3 -->
@@ -189,7 +189,7 @@
                       <div class="medal bronze">🥉</div>
                     </div>
                     <div class="p-name">{{ topChefs[2].name }}</div>
-                    <div class="p-score">{{ topChefs[2].postCount }} bài</div>
+                    <div class="p-score">{{ t('admin.statistics.posts_count', { count: topChefs[2].postCount }) }}</div>
                     <div class="pedestal step-3"><span>3</span></div>
                   </div>
                 </div>
@@ -199,7 +199,7 @@
                     <span class="r-num">{{ i + 4 }}</span>
                     <img :src="u.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=F1F5F9&color=475569`" class="r-ava" />
                     <span class="r-name">{{ u.name }}</span>
-                    <span class="r-score">{{ u.postCount }} bài</span>
+                    <span class="r-score">{{ t('admin.statistics.posts_count', { count: u.postCount }) }}</span>
                   </div>
                 </div>
               </div>
@@ -210,12 +210,12 @@
                 <div class="head-left">
                   <div class="icon-box" style="background: #ECFEFF; color: #06B6D4"><Sparkles :size="20"/></div>
                   <div>
-                    <h3>Tuyệt Tác Ẩm Thực</h3>
-                    <p>Top 5 bài viết đạt nhiều lượt xem nhất</p>
+                    <h3>{{ t('admin.statistics.top_posts_title') }}</h3>
+                    <p>{{ t('admin.statistics.top_posts_subtitle') }}</p>
                   </div>
                 </div>
               </div>
-              <div v-if="!topPosts.length" class="state-empty">Chưa có đủ dữ liệu xếp hạng</div>
+              <div v-if="!topPosts.length" class="state-empty">{{ t('admin.statistics.not_enough_ranking_data') }}</div>
               <div v-else class="masterpiece-list">
                 <div v-for="(p, i) in topPosts" :key="p.id" class="mp-item" :class="'mp-rank-' + (i+1)">
                   <div class="mp-rank-num">0{{ i + 1 }}</div>
@@ -223,12 +223,12 @@
                     <h4 class="mp-title" :title="p.title">{{ p.title }}</h4>
                     <span class="mp-author">
                       <Star :size="12" style="color: #F59E0B" v-if="i===0"/>
-                      Bếp trưởng: <b>@{{ p.author }}</b>
+                      {{ t('admin.statistics.chef_label') }} <b>@{{ p.author }}</b>
                     </span>
                   </div>
                   <div class="mp-views">
                     <span class="v-count">{{ p.views.toLocaleString('vi-VN') }}</span>
-                    <span class="v-lbl">lượt xem</span>
+                    <span class="v-lbl">{{ t('admin.statistics.views_label') }}</span>
                   </div>
                 </div>
               </div>
@@ -254,16 +254,16 @@
 
           <div class="two-col">
             <div class="chart-card">
-              <div class="card-head"><h3><ShieldAlert :size="18" style="color: #EF4444" /> Phân loại Ticket (Dữ liệu thực)</h3></div>
+              <div class="card-head"><h3><ShieldAlert :size="18" style="color: #EF4444" /> {{ t('admin.statistics.ticket_breakdown_title') }}</h3></div>
               <div v-if="loadingTickets" class="loading-box"><div class="spinner"></div></div>
-              <div v-else-if="!ticketStats.length" class="state-empty">Hệ thống an toàn, không có dữ liệu!</div>
+              <div v-else-if="!ticketStats.length" class="state-empty">{{ t('admin.statistics.safe_empty_state') }}</div>
               <div v-else>
                  <VueApexCharts type="donut" height="350" :options="ticketChartOptions" :series="ticketChartSeries" />
               </div>
             </div>
             
             <div class="chart-card">
-              <div class="card-head"><h3><Flag :size="18" style="color: #F59E0B" /> Trạng thái Xử lý Khiếu nại</h3></div>
+              <div class="card-head"><h3><Flag :size="18" style="color: #F59E0B" /> {{ t('admin.statistics.appeals_status_title') }}</h3></div>
               <div v-if="loadingSecurity" class="loading-box"><div class="spinner"></div></div>
               <VueApexCharts v-else type="bar" height="350" :options="appealsChartOptions" :series="appealsChartSeries" />
             </div>
@@ -276,6 +276,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   Activity, RefreshCcw, BarChart2, Users, FileText, AlertTriangle, 
   Diamond, Eye, TrendingUp, Trophy, Banknote, ShieldAlert, 
@@ -284,6 +285,7 @@ import {
 import VueApexCharts from 'vue3-apexcharts'
 import api from '@/services/api' 
 
+const { t } = useI18n()
 const activeTab = ref('system')
 const loading = ref(false)
 const loadingRanking = ref(false)
@@ -293,39 +295,39 @@ const loadingContent = ref(false)
 const loadingSecurity = ref(false)
 
 const tabs = [
-  { key: 'system', icon: BarChart2, label: 'Tổng quan' },
-  { key: 'revenue', icon: Banknote, label: 'Tài chính & Doanh thu' },
-  { key: 'content', icon: Layout, label: 'Nội dung & Tương tác' },
-  { key: 'ranking', icon: Trophy, label: 'Xếp hạng' },
-  { key: 'security', icon: ShieldAlert, label: 'Vận hành & Hỗ trợ' }
+  { key: 'system', icon: BarChart2, label: t('admin.statistics.tabs.system') },
+  { key: 'revenue', icon: Banknote, label: t('admin.statistics.tabs.revenue') },
+  { key: 'content', icon: Layout, label: t('admin.statistics.tabs.content') },
+  { key: 'ranking', icon: Trophy, label: t('admin.statistics.tabs.ranking') },
+  { key: 'security', icon: ShieldAlert, label: t('admin.statistics.tabs.security') }
 ]
 
 // --- KPI DATA ---
 const systemStats = ref([
-  { key: 'totalUsers', label: 'Tổng Người Dùng', value: 0, icon: Users, color: '#3B82F6' },
-  { key: 'totalPosts', label: 'Tổng Bài Viết', value: 0, icon: FileText, color: '#F97316' },
-  { key: 'premiumUsers', label: 'Tài khoản Premium', value: 0, icon: Diamond, color: '#8B5CF6' },
-  { key: 'totalViews', label: 'Lượt Xem Toàn Hệ Thống', value: 0, icon: Eye, color: '#06B6D4' },
+  { key: 'totalUsers', label: t('admin.statistics.kpi.total_users'), value: 0, icon: Users, color: '#3B82F6' },
+  { key: 'totalPosts', label: t('admin.statistics.kpi.total_posts'), value: 0, icon: FileText, color: '#F97316' },
+  { key: 'premiumUsers', label: t('admin.statistics.kpi.premium_users'), value: 0, icon: Diamond, color: '#8B5CF6' },
+  { key: 'totalViews', label: t('admin.statistics.kpi.total_views'), value: 0, icon: Eye, color: '#06B6D4' },
 ])
 
 const revenueStats = ref([
-  { key: 'revenue', label: 'Tổng Doanh Thu', value: 0, icon: Banknote, color: '#10B981', suffix: ' ₫' },
-  { key: 'transactions', label: 'Giao Dịch Thành Công', value: 0, icon: CreditCard, color: '#3B82F6' },
-  { key: 'refunds', label: 'Giao dịch Lỗi/Hủy', value: 0, icon: AlertTriangle, color: '#EF4444' },
+  { key: 'revenue', label: t('admin.statistics.kpi.revenue'), value: 0, icon: Banknote, color: '#10B981', suffix: ' ₫' },
+  { key: 'transactions', label: t('admin.statistics.kpi.transactions'), value: 0, icon: CreditCard, color: '#3B82F6' },
+  { key: 'refunds', label: t('admin.statistics.kpi.refunds'), value: 0, icon: AlertTriangle, color: '#EF4444' },
 ])
 
 const contentStats = ref([
-  { key: 'categories', label: 'Danh Mục Ẩm Thực', value: 0, icon: Layout, color: '#8B5CF6' },
-  { key: 'comments', label: 'Lượt Bình Luận', value: 0, icon: MessageSquare, color: '#06B6D4' },
-  { key: 'events', label: 'Sự Kiện Đã Tổ Chức', value: 0, icon: Calendar, color: '#F97316' },
-  { key: 'totalLikes', label: 'Tổng Lượt Thích', value: 0, icon: Heart, color: '#E42256' }, // 🔥 Đã thay bằng Likes
+  { key: 'categories', label: t('admin.statistics.kpi.categories'), value: 0, icon: Layout, color: '#8B5CF6' },
+  { key: 'comments', label: t('admin.statistics.kpi.comments'), value: 0, icon: MessageSquare, color: '#06B6D4' },
+  { key: 'events', label: t('admin.statistics.kpi.events'), value: 0, icon: Calendar, color: '#F97316' },
+  { key: 'totalLikes', label: t('admin.statistics.kpi.total_likes'), value: 0, icon: Heart, color: '#E42256' },
 ])
 
 const securityStats = ref([
-  { key: 'totalTickets', label: 'Tổng Tickets', value: 0, icon: AlertTriangle, color: '#EF4444' },
-  { key: 'appeals', label: 'Khiếu Nại (Appeals)', value: 0, icon: Flag, color: '#F59E0B' },
-  { key: 'blacklist', label: 'Từ Khóa Vi Phạm', value: 0, icon: ShieldAlert, color: '#10B981' },
-  { key: 'banned', label: 'Tài Khoản Bị Cấm', value: 0, icon: Users, color: '#64748B' },
+  { key: 'totalTickets', label: t('admin.statistics.kpi.total_tickets'), value: 0, icon: AlertTriangle, color: '#EF4444' },
+  { key: 'appeals', label: t('admin.statistics.kpi.appeals'), value: 0, icon: Flag, color: '#F59E0B' },
+  { key: 'blacklist', label: t('admin.statistics.kpi.blacklist'), value: 0, icon: ShieldAlert, color: '#10B981' },
+  { key: 'banned', label: t('admin.statistics.kpi.banned'), value: 0, icon: Users, color: '#64748B' },
 ])
 
 const topChefs = ref([])
@@ -335,7 +337,7 @@ const ticketStats = ref([])
 // ================= CẤU HÌNH APEXCHARTS ĐÃ ĐƯỢC LÀM ĐẸP (POLISHED) =================
 
 // 1. Biểu đồ Bài viết (Area Chart)
-const postChartSeries = ref([{ name: 'Bài viết', data: [] }])
+const postChartSeries = ref([{ name: t('admin.statistics.series.posts'), data: [] }])
 const postChartOptions = ref({
   chart: { type: 'area', toolbar: { show: false }, dropShadow: { enabled: true, top: 4, left: 0, blur: 4, opacity: 0.1 } },
   colors: ['#3B82F6'],
@@ -349,7 +351,7 @@ const postChartOptions = ref({
 })
 
 // 2. Biểu đồ User mới (Bar Chart)
-const userChartSeries = ref([{ name: 'Người dùng mới', data: [] }])
+const userChartSeries = ref([{ name: t('admin.statistics.series.new_users'), data: [] }])
 const userChartOptions = ref({
   chart: { type: 'bar', toolbar: { show: false } },
   colors: ['#8B5CF6'],
@@ -361,7 +363,7 @@ const userChartOptions = ref({
 })
 
 // 🔥 3. BIỂU ĐỒ DOANH THU (Real Data Area Chart)
-const revenueChartSeries = ref([{ name: 'Doanh thu', data: [] }])
+const revenueChartSeries = ref([{ name: t('admin.statistics.series.revenue'), data: [] }])
 const revenueChartOptions = ref({
   chart: { type: 'area', toolbar: { show: false }, dropShadow: { enabled: true, top: 5, left: 0, blur: 5, opacity: 0.15 } },
   colors: ['#10B981'],
@@ -378,7 +380,7 @@ const revenueChartOptions = ref({
 })
 
 // 4. Biểu đồ Phân bổ Danh mục (Radar Chart - Real Data)
-const categoryChartSeries = ref([{ name: 'Bài viết', data: [] }])
+const categoryChartSeries = ref([{ name: t('admin.statistics.series.posts'), data: [] }])
 const categoryChartOptions = ref({
   chart: { type: 'radar', toolbar: { show: false }, dropShadow: { enabled: true, blur: 3, left: 1, top: 1, opacity: 0.1 } },
   labels: [],
@@ -406,14 +408,14 @@ const ticketChartOptions = ref({
   chart: { type: 'donut' },
   labels: [],
   colors: ['#EF4444', '#F59E0B', '#3B82F6', '#10B981', '#8B5CF6'],
-  plotOptions: { donut: { size: '75%', labels: { show: true, name: { show: true }, value: { show: true, fontSize: '24px', fontWeight: 800 }, total: { show: true, label: 'Tổng Ticket' } } } },
+  plotOptions: { donut: { size: '75%', labels: { show: true, name: { show: true }, value: { show: true, fontSize: '24px', fontWeight: 800 }, total: { show: true, label: t('admin.statistics.total_tickets_label') } } } },
   legend: { position: 'bottom', horizontalAlign: 'center' },
   stroke: { width: 2, colors: ['#ffffff'] },
   dataLabels: { enabled: false } // Đã tắt datalabels trên miếng bánh cho sang trọng
 })
 
 // 7. Biểu đồ Appeals (Bar Chart - Real Data)
-const appealsChartSeries = ref([{ name: 'Khiếu nại', data: [] }])
+const appealsChartSeries = ref([{ name: t('admin.statistics.series.appeals'), data: [] }])
 const appealsChartOptions = ref({
   chart: { type: 'bar', toolbar: { show: false } },
   colors: ['#F59E0B', '#3B82F6', '#10B981', '#EF4444'],
@@ -449,9 +451,9 @@ async function fetchSystemStats() {
     if (growthRes.status === 'fulfilled') {
       const { labels, posts, users } = growthRes.value.data
       const shortLabels = labels.map(lbl => lbl.replace('Tháng ', 'T'))
-      postChartSeries.value = [{ name: 'Bài viết', data: posts }]
+      postChartSeries.value = [{ name: t('admin.statistics.series.posts'), data: posts }]
       postChartOptions.value = { ...postChartOptions.value, xaxis: { categories: shortLabels } }
-      userChartSeries.value = [{ name: 'Người dùng', data: users }]
+      userChartSeries.value = [{ name: t('admin.statistics.series.users'), data: users }]
       userChartOptions.value = { ...userChartOptions.value, xaxis: { categories: shortLabels } }
     }
   } catch (e) { console.error(e) }
@@ -463,7 +465,7 @@ async function fetchRevenueChart() {
   try {
     const { data } = await api.get('/api/admin/stats/revenue-chart')
     // Data từ BE trả về dạng mảng [0, 50000, 100000, ...] (12 tháng)
-    revenueChartSeries.value = [{ name: 'Doanh thu', data: data }]
+    revenueChartSeries.value = [{ name: t('admin.statistics.series.revenue'), data: data }]
   } catch (e) { console.error("Lỗi lấy data doanh thu", e) }
   finally { loadingRevenue.value = false }
 }
@@ -506,13 +508,13 @@ async function fetchContentCharts() {
     ])
     if (catRes.status === 'fulfilled') {
       categoryChartOptions.value = { ...categoryChartOptions.value, labels: catRes.value.data.labels }
-      categoryChartSeries.value = [{ name: 'Bài viết', data: catRes.value.data.data }]
+      categoryChartSeries.value = [{ name: t('admin.statistics.series.posts'), data: catRes.value.data.data }]
     }
     if (engRes.status === 'fulfilled') {
       engagementChartOptions.value = { ...engagementChartOptions.value, xaxis: { categories: engRes.value.data.labels, axisBorder: {show:false} } }
       engagementChartSeries.value = [
-        { name: 'Lượt Thích', data: engRes.value.data.likes },
-        { name: 'Bình Luận', data: engRes.value.data.comments }
+        { name: t('admin.statistics.series.likes'), data: engRes.value.data.likes },
+        { name: t('admin.statistics.series.comments'), data: engRes.value.data.comments }
       ]
     }
   } catch (e) { console.error("Lỗi data content", e) }
@@ -538,7 +540,7 @@ async function fetchSecurityCharts() {
     })
 
     appealsChartOptions.value = { ...appealsChartOptions.value, xaxis: { categories: filteredLabels, axisBorder: {show:false} } }
-    appealsChartSeries.value = [{ name: 'Khiếu nại', data: filteredData }]
+    appealsChartSeries.value = [{ name: t('admin.statistics.series.appeals'), data: filteredData }]
   } catch (e) { console.error(e) }
   finally { loadingSecurity.value = false }
 }

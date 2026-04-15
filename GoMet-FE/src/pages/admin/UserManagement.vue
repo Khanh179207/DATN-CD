@@ -7,14 +7,14 @@
           <UserCog :size="28" stroke-width="2.5" />
         </div>
         <div>
-          <h2 class="title">Quản lý Hội viên</h2>
-          <p class="subtitle">Giám sát và phân quyền cộng đồng Gomet</p>
+          <h2 class="title">{{ t('admin.users.title') }}</h2>
+          <p class="subtitle">{{ t('admin.users.subtitle') }}</p>
         </div>
       </div>
       <div class="header-actions">
         <button class="btn-refresh-lux" @click="fetchUsers" :disabled="isLoading">
           <RefreshCw :size="18" :class="{ 'spin-icon': isLoading }" />
-          <span>Đồng bộ</span>
+          <span>{{ t('admin.users.refresh') }}</span>
         </button>
       </div>
     </div>
@@ -26,7 +26,7 @@
         </div>
         <div class="stat-info">
           <span class="stat-value">{{ users.length }}</span>
-          <span class="stat-label">Tổng người dùng</span>
+          <span class="stat-label">{{ t('admin.users.total_users') }}</span>
         </div>
       </div>
       <div class="stat-card-lux">
@@ -35,7 +35,7 @@
         </div>
         <div class="stat-info">
           <span class="stat-value">{{ premiumCount }}</span>
-          <span class="stat-label">Thành viên Premium</span>
+          <span class="stat-label">{{ t('admin.users.premium_users') }}</span>
         </div>
       </div>
       <div class="stat-card-lux danger">
@@ -44,7 +44,7 @@
         </div>
         <div class="stat-info">
           <span class="stat-value text-red">{{ bannedCount }}</span>
-          <span class="stat-label">Tài khoản bị khóa</span>
+          <span class="stat-label">{{ t('admin.users.banned_users') }}</span>
         </div>
       </div>
     </div>
@@ -60,7 +60,7 @@
       
       <div class="search-box-lux">
         <Search :size="18" class="search-icon" />
-        <input v-model="searchQuery" type="text" placeholder="Tìm tên, email, ID..." class="search-input" />
+        <input v-model="searchQuery" type="text" :placeholder="t('admin.users.search_placeholder')" class="search-input" />
         <button v-if="searchQuery" @click="searchQuery = ''" class="clear-search">
           <XCircle :size="18" />
         </button>
@@ -70,18 +70,18 @@
     <div class="table-lux-wrapper">
       <div v-if="isLoading" class="empty-state-lux">
         <div class="spinner-modern"></div>
-        <p>Đang tải dữ liệu hội viên...</p>
+        <p>{{ t('admin.users.loading') }}</p>
       </div>
 
       <table v-else class="data-table-lux">
         <thead>
           <tr>
-            <th width="8%">ID</th>
-            <th width="32%">NGƯỜI DÙNG</th>
-            <th width="15%">VAI TRÒ</th>
-            <th width="15%">TRẠNG THÁI</th>
-            <th width="10%" class="text-center">ĐIỂM</th>
-            <th width="20%" class="text-center">THAO TÁC</th>
+            <th width="8%">{{ t('admin.users.col_id') }}</th>
+            <th width="32%">{{ t('admin.users.col_user') }}</th>
+            <th width="15%">{{ t('admin.users.col_role') }}</th>
+            <th width="15%">{{ t('admin.users.col_status') }}</th>
+            <th width="10%" class="text-center">{{ t('admin.users.col_points') }}</th>
+            <th width="20%" class="text-center">{{ t('admin.users.col_actions') }}</th>
           </tr>
         </thead>
         <TransitionGroup tag="tbody" name="list-anim">
@@ -104,12 +104,12 @@
               <span class="role-badge" :class="user.role === 'ADMIN' ? 'role-admin' : 'role-user'">
                 <Shield v-if="user.role === 'ADMIN'" :size="14" />
                 <User v-else :size="14" />
-                {{ user.role === 'ADMIN' ? 'Quản trị viên' : 'Thành viên' }}
+                {{ user.role === 'ADMIN' ? t('admin.users.role_admin') : t('admin.users.role_member') }}
               </span>
             </td>
             <td>
               <span class="status-pill" :class="user.isActive === 1 ? 'active' : (user.isActive === 0 ? 'hidden' : 'banned')">
-                <span class="status-dot"></span> {{ user.isActive === 1 ? 'Hoạt động' : (user.isActive === 0 ? 'Tạm ẩn' : 'Bị khóa') }}
+                <span class="status-dot"></span> {{ getStatusLabel(user.isActive) }}
               </span>
             </td>
             <td class="text-center">
@@ -117,14 +117,14 @@
             </td>
             <td class="text-center">
               <div class="action-center-group">
-                <button @click="openDetail(user)" class="btn-action view" title="Xem hồ sơ">
+                <button @click="openDetail(user)" class="btn-action view" :title="t('admin.users.view_profile')">
                   <Eye :size="16" />
                 </button>
                 
                 <button @click="askBanAction(user)" class="btn-action" 
                         :class="[user.isActive !== -1 ? 'ban' : 'unban', { 'disabled': !canBanUser(user) }]" 
                         :disabled="!canBanUser(user)"
-                        :title="!canBanUser(user) ? 'Không thể khóa tài khoản này' : (user.isActive !== -1 ? 'Khóa tài khoản' : 'Mở khóa')">
+                        :title="!canBanUser(user) ? t('admin.users.cannot_change_status') : (user.isActive !== -1 ? t('admin.users.ban_account') : t('admin.users.unban_account'))">
                   <Lock v-if="user.isActive !== -1" :size="16" />
                   <Unlock v-else :size="16" />
                 </button>
@@ -133,7 +133,7 @@
                   <button v-if="user.role !== 'ADMIN'" 
                           @click="askPromoteAdmin(user)" 
                           class="btn-action promote" 
-                          title="Thăng cấp Quản trị viên">
+                          :title="t('admin.users.promote_admin')">
                     <ArrowUpRight :size="16" />
                   </button>
                   <div v-else class="btn-placeholder"></div>
@@ -147,7 +147,7 @@
             <td colspan="6">
               <div class="empty-state-lux">
                 <div class="empty-icon-box"><Search :size="48" /></div>
-                <p>Không tìm thấy hội viên nào phù hợp.</p>
+                <p>{{ t('admin.users.empty') }}</p>
               </div>
             </td>
           </tr>
@@ -165,7 +165,7 @@
           <template v-else-if="detailModal.user">
             <div class="profile-cover" :class="getCoverClass(detailModal.user)">
               <span class="absolute-status" :class="detailModal.user.isActive === 1 ? 'bg-green' : (detailModal.user.isActive === 0 ? 'bg-gray' : 'bg-red')">
-                {{ detailModal.user.isActive === 1 ? 'Đang hoạt động' : (detailModal.user.isActive === 0 ? 'Tạm ẩn' : 'Bị khóa') }}
+                {{ detailModal.user.isActive === 1 ? t('admin.users.status_active') : (detailModal.user.isActive === 0 ? t('admin.users.status_hidden') : t('admin.users.status_banned')) }}
               </span>
             </div>
 
@@ -183,45 +183,45 @@
                   <span class="tag" :class="detailModal.user.role === 'ADMIN' ? 'tag-admin' : 'tag-user'">
                     <Shield v-if="detailModal.user.role === 'ADMIN'" :size="14" />
                     <User v-else :size="14" />
-                    {{ detailModal.user.role === 'ADMIN' ? 'Quản trị viên' : 'Thành viên' }}
+                    {{ detailModal.user.role === 'ADMIN' ? t('admin.users.role_admin') : t('admin.users.role_member') }}
                   </span>
-                  <span v-if="detailModal.user.isPremium" class="tag tag-vip"><Crown :size="14" /> Premium</span>
+                  <span v-if="detailModal.user.isPremium" class="tag tag-vip"><Crown :size="14" /> {{ t('admin.users.premium_badge') }}</span>
                 </div>
               </div>
 
               <div class="profile-stats-box">
-                <div class="p-stat"><strong>{{ detailModal.user.point ?? 0 }}</strong><span>Điểm số</span></div>
+                <div class="p-stat"><strong>{{ detailModal.user.point ?? 0 }}</strong><span>{{ t('admin.users.points') }}</span></div>
                 <div class="stat-divider"></div>
-                <div class="p-stat"><strong>{{ detailModal.user.postCount ?? 0 }}</strong><span>Bài viết</span></div>
+                <div class="p-stat"><strong>{{ detailModal.user.postCount ?? 0 }}</strong><span>{{ t('admin.users.posts') }}</span></div>
                 <div class="stat-divider"></div>
-                <div class="p-stat"><strong>{{ detailModal.user.totalLikes ?? 0 }}</strong><span>Lượt thích</span></div>
+                <div class="p-stat"><strong>{{ detailModal.user.totalLikes ?? 0 }}</strong><span>{{ t('admin.users.likes') }}</span></div>
                 <div class="stat-divider"></div>
-                <div class="p-stat"><strong>{{ detailModal.user.followerCount ?? 0 }}</strong><span>Followers</span></div>
+                <div class="p-stat"><strong>{{ detailModal.user.followerCount ?? 0 }}</strong><span>{{ t('admin.users.followers') }}</span></div>
               </div>
 
               <div class="profile-details-lux">
                 <div class="p-detail-item">
-                  <span class="lbl"><Hash :size="16" /> ID Hệ thống</span>
+                  <span class="lbl"><Hash :size="16" /> {{ t('admin.users.system_id') }}</span>
                   <strong class="val">#{{ detailModal.user.accountID }}</strong>
                 </div>
                 <div class="p-detail-item">
-                  <span class="lbl"><Calendar :size="16" /> Ngày tham gia</span>
-                  <strong class="val">{{ detailModal.user.createdAt ? new Date(detailModal.user.createdAt).toLocaleDateString('vi-VN') : '—' }}</strong>
+                  <span class="lbl"><Calendar :size="16" /> {{ t('admin.users.joined_date') }}</span>
+                  <strong class="val">{{ detailModal.user.createdAt ? formatShortDate(detailModal.user.createdAt) : '—' }}</strong>
                 </div>
                 
                 <div v-if="detailModal.user.isActive === -1" class="p-detail-ban-reason">
                   <div class="ban-header">
                     <AlertTriangle :size="16" /> 
-                    <span>Thông tin khóa tài khoản</span>
+                    <span>{{ t('admin.users.ban_information') }}</span>
                   </div>
                   <div class="ban-info-grid">
                     <div class="ban-info-item">
-                      <span class="info-lbl">Lý do khóa:</span>
-                      <span class="info-val reason-text">{{ detailModal.user.banReason || 'Chưa cập nhật lý do' }}</span>
+                      <span class="info-lbl">{{ t('admin.users.ban_reason') }}</span>
+                      <span class="info-val reason-text">{{ detailModal.user.banReason || t('admin.users.no_reason') }}</span>
                     </div>
                     <div v-if="detailModal.user.bannedAt" class="ban-info-item">
-                       <span class="info-lbl">Thời gian xử lý:</span>
-                       <span class="info-val time-text">{{ new Date(detailModal.user.bannedAt).toLocaleString('vi-VN') }}</span>
+                       <span class="info-lbl">{{ t('admin.users.processed_time') }}</span>
+                       <span class="info-val time-text">{{ formatDateTime(detailModal.user.bannedAt) }}</span>
                     </div>
                   </div>
                 </div>
@@ -231,7 +231,7 @@
                 <button v-if="isSuperAdmin && detailModal.user.role !== 'ADMIN'" 
                         @click="askPromoteAdmin(detailModal.user); detailModal.show = false" 
                         class="btn-lux-promote">
-                  <Shield :size="18" /> Cấp quyền Quản trị
+                  <Shield :size="18" /> {{ t('admin.users.promote_admin') }}
                 </button>
 
                 <button v-if="canBanUser(detailModal.user)" 
@@ -239,15 +239,15 @@
                         class="btn-lux-ban" :class="detailModal.user.isActive !== -1 ? 'warn' : 'ok'">
                   <Lock v-if="detailModal.user.isActive !== -1" :size="18" />
                   <Unlock v-else :size="18" />
-                  {{ detailModal.user.isActive !== -1 ? 'Khóa tài khoản' : 'Khôi phục tài khoản' }}
+                  {{ detailModal.user.isActive !== -1 ? t('admin.users.ban_account') : t('admin.users.restore_account') }}
                 </button>
 
                 <div v-else class="admin-protect-msg full-width">
-                  <Shield :size="18" /> Không thể thay đổi trạng thái tài khoản này
+                  <Shield :size="18" /> {{ t('admin.users.cannot_change_status') }}
                 </div>
 
                 <router-link :to="`/profile/${detailModal.user.accountID}`" target="_blank" class="btn-lux-view-post full-width">
-                  <span>Xem hồ sơ công khai</span>
+                  <span>{{ t('admin.users.view_public_profile') }}</span>
                   <ExternalLink :size="18" />
                 </router-link>
               </div>
@@ -267,21 +267,21 @@
           <p v-html="actionModal.message"></p>
           
           <div v-if="actionModal.type === 'ban'" class="reason-input-group">
-            <label for="banReason">Lý do khóa (bắt buộc):</label>
+            <label for="banReason">{{ t('admin.users.ban_reason_required') }}</label>
             <textarea 
               id="banReason" 
               v-model="actionModal.reason" 
-              placeholder="Ví dụ: Spam, lừa đảo, vi phạm ngôn từ..." 
+              :placeholder="t('admin.users.ban_reason_placeholder')" 
               rows="3" 
               class="reason-textarea"
             ></textarea>
-            <span v-if="actionModal.showError" class="error-msg">Bạn phải nhập lý do khóa!</span>
+            <span v-if="actionModal.showError" class="error-msg">{{ t('admin.users.reason_required_error') }}</span>
           </div>
 
           <div class="action-btns">
-            <button class="btn-cancel" @click="actionModal.show = false">Hủy bỏ</button>
+            <button class="btn-cancel" @click="actionModal.show = false">{{ t('admin.posts.cancel') }}</button>
             <button class="btn-confirm" :class="actionModal.btnClass" @click="executeAction">
-              Xác nhận
+              {{ t('admin.common.confirm') }}
             </button>
           </div>
         </div>
@@ -293,12 +293,14 @@
 
 <script setup>
 import { ref, computed, onMounted, markRaw } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { UserCog, RefreshCw, Users, Crown, UserX, Search, XCircle, Shield, User, Star, Eye, Lock, Unlock, ArrowUpRight, X, Hash, Calendar, AlertTriangle, ExternalLink } from 'lucide-vue-next'
 import api from '@/services/api'
 import { toast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
+const { t, locale } = useI18n()
 
 // 🔥 ĐIỀU KIỆN SẾP TỔNG: Chỉ user có ID = 1 mới được cấp quyền Admin cho người khác
 const isSuperAdmin = computed(() => {
@@ -316,13 +318,27 @@ const isLoading = ref(true)
 const searchQuery = ref('')
 const currentFilter = ref('ALL')
 
-const filterTabs = [
-  { label: 'Tất cả', value: 'ALL' },
-  { label: 'Quản trị viên', value: 'ADMIN' },
-  { label: 'Premium', value: 'PREMIUM' },
-  { label: 'Tạm ẩn', value: 'HIDDEN' },
-  { label: 'Bị khóa', value: 'BANNED' }
-]
+const filterTabs = computed(() => [
+  { label: t('admin.posts.tab_all'), value: 'ALL' },
+  { label: t('admin.users.filter_admin'), value: 'ADMIN' },
+  { label: t('admin.users.filter_premium'), value: 'PREMIUM' },
+  { label: t('admin.users.filter_hidden'), value: 'HIDDEN' },
+  { label: t('admin.users.filter_banned'), value: 'BANNED' }
+])
+
+const getStatusLabel = (status) => {
+  if (status === 1) return t('admin.users.status_active')
+  if (status === 0) return t('admin.users.status_hidden')
+  return t('admin.users.status_banned')
+}
+
+const formatShortDate = (value) => new Intl.DateTimeFormat(locale.value === 'vi' ? 'vi-VN' : 'en-US', {
+  day: '2-digit', month: '2-digit', year: 'numeric'
+}).format(new Date(value))
+
+const formatDateTime = (value) => new Intl.DateTimeFormat(locale.value === 'vi' ? 'vi-VN' : 'en-US', {
+  hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric'
+}).format(new Date(value))
 
 // Dùng chung 1 Modal cho Ban, Unban và Promote
 const actionModal = ref({ 
@@ -379,7 +395,7 @@ const fetchUsers = async () => {
       isPremium: u.isPremium === 1 || u.isPremium === true
     }))
   } catch (err) {
-    toast.error('Không thể kết nối đến máy chủ!')
+    toast.error(t('admin.users.load_failed'))
   } finally {
     isLoading.value = false
   }
@@ -391,8 +407,8 @@ const askBanAction = (user) => {
   const isBanned = user.isActive === -1;
   actionModal.value = {
     show: true, type: !isBanned ? 'ban' : 'unban', accountID: user.accountID, userRef: user,
-    title: !isBanned ? 'Khóa tài khoản?' : 'Mở khóa tài khoản?',
-    message: `Xác nhận ${!isBanned ? 'khóa' : 'khôi phục'} quyền truy cập của <strong>${user.username}</strong>?`,
+    title: !isBanned ? t('admin.users.ban_title') : t('admin.users.unban_title'),
+    message: !isBanned ? t('admin.users.ban_message', { name: user.username }) : t('admin.users.unban_message', { name: user.username }),
     icon: !isBanned ? markRaw(Lock) : markRaw(Unlock),
     styleClass: !isBanned ? 'bg-red-light text-red' : 'bg-green-light text-green',
     btnClass: !isBanned ? 'btn-danger' : 'btn-success',
@@ -403,8 +419,8 @@ const askBanAction = (user) => {
 const askPromoteAdmin = (user) => {
   actionModal.value = {
     show: true, type: 'promote', accountID: user.accountID, userRef: user,
-    title: 'Cấp quyền Quản trị viên?',
-    message: `Bạn đang chuẩn bị cấp quyền Admin cho <strong>${user.username}</strong>. Người này sẽ có quyền quản lý toàn bộ hệ thống. Tiếp tục?`,
+    title: t('admin.users.promote_title'),
+    message: t('admin.users.promote_message', { name: user.username }),
     icon: markRaw(Shield),
     styleClass: 'bg-blue-light text-blue',
     btnClass: 'btn-primary',
@@ -434,7 +450,7 @@ const executeAction = async () => {
         await api.patch(`/admin/accounts/${accountID}/unban`, payload);
         userRef.isActive = 1;
       }
-      toast.success('Cập nhật trạng thái thành công!')
+      toast.success(t('admin.users.status_updated'))
     } 
     
     // 🔥 CALL API THĂNG CẤP ADMIN
@@ -446,13 +462,13 @@ const executeAction = async () => {
       }
       await api.put(`/admin/accounts/${accountID}`, dto);
       userRef.role = 'ADMIN';
-      toast.success(`Đã thăng cấp ${userRef.username} làm Quản trị viên!`);
+      toast.success(t('admin.users.promote_success', { name: userRef.username }));
     }
     
     actionModal.value.show = false;
     fetchUsers() 
   } catch (err) {
-    toast.error(`Thao tác thất bại! ${err.response?.data?.message || ''}`)
+    toast.error(`${t('admin.users.action_failed_prefix')} ${err.response?.data?.message || ''}`.trim())
   }
 }
 

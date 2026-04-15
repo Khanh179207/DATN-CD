@@ -5,12 +5,12 @@
       <div class="page-header">
         <div class="header-left">
           <button class="btn-back" @click="$router.push('/home')">
-            <i class="fas fa-arrow-left"></i> Trở về
+            <i class="fas fa-arrow-left"></i> {{ t('compare.back') }}
           </button>
-          <h1>So sánh món ăn <i class="fas fa-balance-scale text-primary"></i></h1>
+          <h1>{{ t('compare.title') }} <i class="fas fa-balance-scale text-primary"></i></h1>
         </div>
         <p class="header-desc" v-if="compareStore.items.length > 0">
-          So sánh chi tiết để tìm ra chân ái cho bữa ăn hôm nay của bạn.
+          {{ t('compare.header_desc') }}
         </p>
       </div>
 
@@ -18,10 +18,10 @@
         <div class="icon-box">
           <i class="fas fa-balance-scale-left"></i>
         </div>
-        <h3>Chưa có món ăn nào trên bàn cân</h3>
-        <p>Sếp hãy dạo quanh và chọn ít nhất 2 tuyệt tác để so sánh nhé!</p>
+        <h3>{{ t('compare.empty_title_full') }}</h3>
+        <p>{{ t('compare.empty_desc_full') }}</p>
         <button class="btn-primary" @click="$router.push('/home')">
-          Khám Phá Ngay <i class="fas fa-compass"></i>
+          {{ t('compare.explore_now') }} <i class="fas fa-compass"></i>
         </button>
       </div>
 
@@ -29,13 +29,13 @@
         
         <div class="grid-col labels-col">
           <div class="cell header-cell empty-label"></div> 
-          <div class="cell label"><i class="fas fa-star l-icon"></i> Đánh giá</div>
-          <div class="cell label"><i class="fas fa-eye l-icon"></i> Lượt xem</div>
-          <div class="cell label"><i class="fas fa-heart l-icon"></i> Lượt thích</div>
-          <div class="cell label"><i class="fas fa-user-chef l-icon"></i> Tác giả</div>
-          <div class="cell label"><i class="fas fa-calendar-alt l-icon"></i> Ngày đăng</div>
-          <div class="cell label"><i class="fas fa-clock l-icon"></i> Thời gian nấu</div>
-          <div class="cell label"><i class="fas fa-fire l-icon"></i> Độ khó</div>
+          <div class="cell label"><i class="fas fa-star l-icon"></i> {{ t('compare.rating') }}</div>
+          <div class="cell label"><i class="fas fa-eye l-icon"></i> {{ t('compare.views') }}</div>
+          <div class="cell label"><i class="fas fa-heart l-icon"></i> {{ t('compare.likes') }}</div>
+          <div class="cell label"><i class="fas fa-user-chef l-icon"></i> {{ t('compare.author') }}</div>
+          <div class="cell label"><i class="fas fa-calendar-alt l-icon"></i> {{ t('compare.publish_date') }}</div>
+          <div class="cell label"><i class="fas fa-clock l-icon"></i> {{ t('compare.cook_time') }}</div>
+          <div class="cell label"><i class="fas fa-fire l-icon"></i> {{ t('compare.difficulty') }}</div>
           <div class="cell label action-label"></div>
         </div>
 
@@ -48,70 +48,70 @@
             <div class="img-wrap">
               <img :src="item.image || 'https://images.unsplash.com/photo-1490818387583-1b5f2223d848?w=600'" loading="lazy" :alt="item.title">
               <div class="img-overlay"></div>
-              <button class="btn-remove" @click="compareStore.toggleItem(item)" title="Xóa khỏi bàn cân">
+              <button class="btn-remove" @click="compareStore.toggleItem(item)" :title="t('compare.remove_from_board')">
                 <i class="fas fa-times"></i>
               </button>
             </div>
             <h3 class="item-title" @click="goToDetail(item.id)">{{ item.title }}</h3>
           </div>
 
-          <div class="cell" :class="{ 'winner': isBest('rating', getRating(item)) }" data-label="Đánh giá">
+          <div class="cell" :class="{ 'winner': isBest('rating', getRating(item)) }" :data-label="t('compare.rating')">
             <div class="stat-box">
               <b class="text-lg">{{ getRating(item).toFixed(1) }}</b>
               <span class="text-sm text-gray">/ 5.0</span>
             </div>
             <span class="win-badge" v-if="isBest('rating', getRating(item))">
-              <i class="fas fa-crown"></i> Đỉnh nhất
+              <i class="fas fa-crown"></i> {{ t('compare.best_rating') }}
             </span>
           </div>
 
-          <div class="cell" :class="{ 'winner': isBest('views', getViews(item)) }" data-label="Lượt xem">
+          <div class="cell" :class="{ 'winner': isBest('views', getViews(item)) }" :data-label="t('compare.views')">
             <div class="stat-box">
               <b>{{ formatNumber(getViews(item)) }}</b>
             </div>
             <span class="win-badge" v-if="isBest('views', getViews(item))">
-              <i class="fas fa-fire-alt"></i> Hot nhất
+              <i class="fas fa-fire-alt"></i> {{ t('compare.most_viewed') }}
             </span>
           </div>
 
-          <div class="cell" :class="{ 'winner': isBest('likes', getLikes(item)) }" data-label="Lượt thích">
+          <div class="cell" :class="{ 'winner': isBest('likes', getLikes(item)) }" :data-label="t('compare.likes')">
             <div class="stat-box">
               <b>{{ formatNumber(getLikes(item)) }}</b>
             </div>
             <span class="win-badge" v-if="isBest('likes', getLikes(item))">
-              <i class="fas fa-heart"></i> Thích nhất
+              <i class="fas fa-heart"></i> {{ t('compare.most_liked') }}
             </span>
           </div>
 
-          <div class="cell" data-label="Tác giả">
+          <div class="cell" :data-label="t('compare.author')">
             <div class="author-row" @click="$router.push(`/profile/${item.author?.id || ''}`)">
               <img :src="item.author?.avatar || 'https://ui-avatars.com/api/?name=' + (item.author?.name || 'G') + '&background=EA580C&color=fff'" class="avt-small">
-              <span class="line-clamp-1 author-name">{{ item.author?.name || 'Đầu bếp GoMet' }}</span>
+              <span class="line-clamp-1 author-name">{{ item.author?.name || t('compare.default_author') }}</span>
             </div>
           </div>
 
-          <div class="cell" :class="{ 'winner': isBest('date', getDateTs(item)) }" data-label="Ngày đăng">
+          <div class="cell" :class="{ 'winner': isBest('date', getDateTs(item)) }" :data-label="t('compare.publish_date')">
             <span class="value">{{ formatDate(item) }}</span>
-            <span class="win-badge" v-if="isBest('date', getDateTs(item))">Mới nhất</span>
+            <span class="win-badge" v-if="isBest('date', getDateTs(item))">{{ t('compare.newest') }}</span>
           </div>
 
-          <div class="cell" :class="{ 'winner': isBest('time', parseTime(item.time)) }" data-label="Thời gian nấu">
-            <span class="value">{{ item.time || '30 phút' }}</span>
+          <div class="cell" :class="{ 'winner': isBest('time', parseTime(item.time)) }" :data-label="t('compare.cook_time')">
+            <span class="value">{{ item.time || t('compare.default_time_full') }}</span>
             <span class="win-badge" v-if="isBest('time', parseTime(item.time))">
-              <i class="fas fa-bolt"></i> Nhanh nhất
+              <i class="fas fa-bolt"></i> {{ t('compare.fastest') }}
             </span>
           </div>
 
-          <div class="cell" :class="{ 'winner': isBest('difficulty', getDifficultyWeight(item.difficulty)) }" data-label="Độ khó">
+          <div class="cell" :class="{ 'winner': isBest('difficulty', getDifficultyWeight(item.difficulty)) }" :data-label="t('compare.difficulty')">
             <span class="tag-difficulty" :class="getDifficultyClass(item.difficulty)">
               {{ formatDifficulty(item.difficulty) }}
             </span>
-            <span class="win-badge" v-if="isBest('difficulty', getDifficultyWeight(item.difficulty))">Dễ nhất</span>
+            <span class="win-badge" v-if="isBest('difficulty', getDifficultyWeight(item.difficulty))">{{ t('compare.easiest') }}</span>
           </div>
 
           <div class="cell action-cell">
             <button class="btn-view-recipe" @click="goToDetail(item.id)">
-              Xem Ngay <i class="fas fa-arrow-right"></i>
+              {{ t('compare.view_now') }} <i class="fas fa-arrow-right"></i>
             </button>
           </div>
         </div>
@@ -121,8 +121,8 @@
             <div class="plus-circle">
               <i class="fas fa-plus"></i>
             </div>
-            <span>Thêm món ăn khác</span>
-            <small>Tối đa 3 món</small>
+            <span>{{ t('compare.add_another_dish') }}</span>
+            <small>{{ t('compare.max_items') }}</small>
           </div>
         </div>
 
@@ -135,9 +135,11 @@
 <script setup>
 import { useCompareStore } from '@/stores/compare'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
 const compareStore = useCompareStore()
 const router = useRouter()
+const { t, locale } = useI18n()
 
 const goToDetail = (id) => {
   router.push({ name: 'PostDetail', params: { id } })
@@ -163,8 +165,8 @@ const getDateTs = (item) => {
 
 const formatDate = (item) => {
   const ts = getDateTs(item);
-  if (!ts) return 'N/A';
-  return new Date(ts).toLocaleString('vi-VN', { 
+  if (!ts) return t('compare.not_available');
+  return new Date(ts).toLocaleDateString(locale.value === 'vi' ? 'vi-VN' : 'en-US', { 
     day: '2-digit', month: '2-digit', year: 'numeric'
   });
 }
@@ -179,9 +181,9 @@ const parseTime = (t) => {
 
 const formatDifficulty = (diff) => {
   const d = String(diff || '').toLowerCase();
-  if (d.includes('easy') || d.includes('dễ') || d === '1') return 'Dễ dàng';
-  if (d.includes('hard') || d.includes('khó') || d === '3') return 'Thử thách';
-  return 'Trung bình';
+  if (d.includes('easy') || d.includes('dễ') || d === '1') return t('compare.diff_easy');
+  if (d.includes('hard') || d.includes('khó') || d === '3') return t('compare.diff_hard');
+  return t('compare.diff_medium');
 }
 
 const getDifficultyWeight = (diff) => {

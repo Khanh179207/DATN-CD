@@ -108,7 +108,7 @@
     </div>
 
     <!-- GoMet brand stamp -->
-    <p class="brand-stamp">GoMet &nbsp;·&nbsp; Culinary Community</p>
+    <p class="brand-stamp">{{ $t('verify_email.brand_stamp') }}</p>
   </div>
 </template>
 

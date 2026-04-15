@@ -19,8 +19,8 @@
 
           <div class="event-meta">
             <span class="meta-pill">📅 {{ eventData.date }}</span>
-            <span class="meta-pill">👥 {{ totalParticipants }} bài dự thi</span>
-            <span class="meta-pill">️ {{ totalEventVotes }} lượt bầu chọn</span>
+            <span class="meta-pill">👥 {{ t('event_detail.entries_count', { count: totalParticipants }) }}</span>
+            <span class="meta-pill">️ {{ t('event_detail.votes_count', { count: totalEventVotes }) }}</span>
           </div>
 
           <div class="hero-actions">
@@ -30,10 +30,10 @@
                 <polyline points="17 8 12 3 7 8"></polyline>
                 <line x1="12" y1="3" x2="12" y2="15"></line>
               </svg>
-              <span>{{ hasSubmitted ? 'Sếp đã tham gia sự kiện' : 'Nộp bài dự thi ngay' }}</span>
+              <span>{{ hasSubmitted ? t('event_detail.already_joined') : t('event_detail.submit_entry_now') }}</span>
             </button>
             <button v-else class="btn-disabled" disabled>
-              {{ eventData.category === 'upcoming' ? 'Sự kiện chưa mở cổng nộp bài' : 'Sự kiện đã kết thúc' }}
+              {{ eventData.category === 'upcoming' ? t('event_detail.submit_closed_upcoming') : t('event_detail.submit_closed_ended') }}
             </button>
           </div>
         </div>
@@ -55,50 +55,50 @@
             <div class="info-main">
 
               <div class="card-box shadow-sm">
-                <h3>📖 Giới thiệu</h3>
+                <h3>{{ t('event_detail.intro') }}</h3>
                 <p class="desc-text">{{ eventData.description }}</p>
               </div>
 
               <div class="card-box prizes-section shadow-sm">
-                <h3>🏆 {{ eventData.category === 'ended' ? 'Kết quả chung cuộc & Giải thưởng' : 'Cơ cấu giải thưởng' }}</h3>
+                <h3>🏆 {{ eventData.category === 'ended' ? t('event_detail.final_results_and_prizes') : t('event_detail.prizes') }}</h3>
 
                 <div class="prizes-grid mt-6">
                   <div class="prize-card gold small-card">
                     <div class="prize-icon">🥇</div>
-                    <p>Hạng Nhất</p>
+                    <p>{{ t('event_detail.rank_first') }}</p>
                     <div class="reward-val" :class="getRewardClass(parsedRewards[0].type)">{{ parsedRewards[0].value }}</div>
                     <div v-if="eventData.category === 'ended' && topEntries[0]" class="winner-reveal">
                       <div class="winner-avatar" style="background: #b45309;">{{ topEntries[0].username.charAt(0).toUpperCase() }}</div>
                       <div class="winner-details">
                         <strong class="w-name">{{ topEntries[0].username }}</strong>
                         <span class="w-post">{{ topEntries[0].postTitle }}</span>
-                        <span class="w-votes">{{ topEntries[0].voteCount }} bình chọn</span>
+                        <span class="w-votes">{{ t('event_detail.votes_count', { count: topEntries[0].voteCount }) }}</span>
                       </div>
                     </div>
                   </div>
                   <div class="prize-card silver small-card">
                     <div class="prize-icon">🥈</div>
-                    <p>Hạng Nhì</p>
+                    <p>{{ t('event_detail.rank_second') }}</p>
                     <div class="reward-val" :class="getRewardClass(parsedRewards[1].type)">{{ parsedRewards[1].value }}</div>
                     <div v-if="eventData.category === 'ended' && topEntries[1]" class="winner-reveal">
                       <div class="winner-avatar" style="background: #475569;">{{ topEntries[1].username.charAt(0).toUpperCase() }}</div>
                       <div class="winner-details">
                         <strong class="w-name">{{ topEntries[1].username }}</strong>
                         <span class="w-post">{{ topEntries[1].postTitle }}</span>
-                        <span class="w-votes">{{ topEntries[1].voteCount }} bình chọn</span>
+                        <span class="w-votes">{{ t('event_detail.votes_count', { count: topEntries[1].voteCount }) }}</span>
                       </div>
                     </div>
                   </div>
                   <div class="prize-card bronze small-card">
                     <div class="prize-icon">🥉</div>
-                    <p>Hạng Ba</p>
+                    <p>{{ t('event_detail.rank_third') }}</p>
                     <div class="reward-val" :class="getRewardClass(parsedRewards[2].type)">{{ parsedRewards[2].value }}</div>
                     <div v-if="eventData.category === 'ended' && topEntries[2]" class="winner-reveal">
                       <div class="winner-avatar" style="background: #9a3412;">{{ topEntries[2].username.charAt(0).toUpperCase() }}</div>
                       <div class="winner-details">
                         <strong class="w-name">{{ topEntries[2].username }}</strong>
                         <span class="w-post">{{ topEntries[2].postTitle }}</span>
-                        <span class="w-votes">{{ topEntries[2].voteCount }} bình chọn</span>
+                        <span class="w-votes">{{ t('event_detail.votes_count', { count: topEntries[2].voteCount }) }}</span>
                       </div>
                     </div>
                   </div>
@@ -109,14 +109,14 @@
 
             <div class="info-sidebar">
               <div class="card-box shadow-sm sticky-card">
-                <h3>⏰ Cổng bình chọn (Voting)</h3>
+                <h3>{{ t('event_detail.voting_gate') }}</h3>
                 <div class="voting-timeline">
                   <div class="time-item">
-                    <span class="label">Mở cổng:</span>
+                    <span class="label">{{ t('event_detail.gate_open') }}</span>
                     <span class="value">{{ formatDateTime(eventData.voteStartAt) }}</span>
                   </div>
                   <div class="time-item">
-                    <span class="label">Đóng cổng:</span>
+                    <span class="label">{{ t('event_detail.gate_close') }}</span>
                     <span class="value">{{ formatDateTime(eventData.voteEndAt) }}</span>
                   </div>
 
@@ -128,19 +128,19 @@
                 
                 <div class="voting-progress-block" v-if="votingStatus.type === 'active'">
                   <div class="progress-header">
-                    <span class="progress-text">Sếp đã bầu chọn:</span>
-                    <span class="progress-nums"><strong>{{ votedCount }}</strong> / {{ eventData.maxVotes }} phiếu</span>
+                    <span class="progress-text">{{ t('event_detail.voted_progress') }}</span>
+                    <span class="progress-nums"><strong>{{ votedCount }}</strong> / {{ eventData.maxVotes }} {{ t('event_detail.votes_unit') }}</span>
                   </div>
                   <div class="progress-bar-bg">
                     <div class="progress-bar-fill" :class="{ 'is-full': isVoteLimitReached }" :style="{ width: votePercentage + '%' }"></div>
                   </div>
                   <div v-if="isVoteLimitReached" class="progress-full-msg">
-                    <i class="fas fa-check-circle"></i> Đã dùng hết quyền bầu chọn
+                    <i class="fas fa-check-circle"></i> {{ t('event_detail.vote_limit_reached') }}
                   </div>
                 </div>
 
                 <p class="vote-note" v-if="votingStatus.type === 'active'">
-                  * Sếp có tối đa <strong>{{ eventData.maxVotes }} phiếu bầu</strong> cho mỗi sự kiện. Hãy chọn kỹ nhé!
+                  {{ t('event_detail.vote_note_dynamic', { count: eventData.maxVotes }) }}
                 </p>
               </div>
             </div>
@@ -149,7 +149,7 @@
           <div v-else class="entries-layout">
 
             <div v-if="topEntries.length > 0" class="ranking-section">
-              <h3 class="section-title">🏆 {{ eventData.category === 'ended' ? 'Kết quả chung cuộc (Top 3)' : 'Bảng xếp hạng tạm thời' }}</h3>
+              <h3 class="section-title">🏆 {{ eventData.category === 'ended' ? t('event_detail.final_results_top3') : t('event_detail.ranking_title') }}</h3>
               <div class="entries-grid">
 <ContestEntryCard 
   v-for="(entry, index) in topEntries" 
@@ -164,7 +164,7 @@
             </div>
 
             <div class="all-entries-section mt-12">
-              <h3 class="section-title">🎨 Tác phẩm tham gia ({{ totalParticipants }})</h3>
+              <h3 class="section-title">{{ t('event_detail.entries_title', { count: totalParticipants }) }}</h3>
               <div v-if="approvedList.length > 0" class="entries-grid">
                 <ContestEntryCard 
                   v-for="entry in approvedList" 
@@ -178,7 +178,7 @@
 
               <div v-else class="empty-entries">
                 <div class="icon">📭</div>
-                <p>Chưa có bài dự thi nào. Sếp nộp bài để nhận giải ngay!</p>
+                <p>{{ t('event_detail.empty_entries') }}</p>
               </div>
             </div>
           </div>
@@ -225,7 +225,7 @@ const isModalOpen = ref(false)
 
 const tabs = computed(() => [
   { id: 'info', label: t('event_detail.tab_info') },
-  { id: 'entries', label: 'Bài dự thi' },
+  { id: 'entries', label: t('event_detail.tab_entries') },
 ])
 
 // --- LOGIC RANKING ---
@@ -266,9 +266,9 @@ const isVoteLimitReached = computed(() => {
 const parsedRewards = computed(() => {
   const rewardStr = eventData.value?.reward
   const defaultRewards = [
-    { type: 'empty', value: 'Đang cập nhật...' },
-    { type: 'empty', value: 'Đang cập nhật...' },
-    { type: 'empty', value: 'Đang cập nhật...' }
+    { type: 'empty', value: t('event_detail.date_pending') },
+    { type: 'empty', value: t('event_detail.date_pending') },
+    { type: 'empty', value: t('event_detail.date_pending') }
   ]
 
   if (!rewardStr) return defaultRewards
@@ -284,10 +284,10 @@ const parsedRewards = computed(() => {
 
   const type = parts[0]
   const formatValue = (val) => {
-    if (type === 'POINTS') return { type: 'points', value: `${val} Points` }
-    if (type === 'PREMIUM_1M') return { type: 'premium', value: 'Gói Premium 1 Tháng' }
-    if (type === 'PREMIUM_1Y') return { type: 'premium', value: 'Gói Premium 1 Năm' }
-    return { type: 'empty', value: 'Đang cập nhật...' }
+    if (type === 'POINTS') return { type: 'points', value: t('event_detail.points_reward', { count: val }) }
+    if (type === 'PREMIUM_1M') return { type: 'premium', value: t('event_detail.premium_1m') }
+    if (type === 'PREMIUM_1Y') return { type: 'premium', value: t('event_detail.premium_1y') }
+    return { type: 'empty', value: t('event_detail.date_pending') }
   }
 
   return [formatValue(parts[1]), formatValue(parts[2]), formatValue(parts[3])]
@@ -313,20 +313,20 @@ const votingStatus = computed(() => {
   const start = new Date(eventData.value.voteStartAt)
   const end = new Date(eventData.value.voteEndAt)
 
-  if (now < start) return { type: 'upcoming', message: 'Bình chọn chưa mở' }
-  if (now > end) return { type: 'ended', message: 'Bình chọn đã đóng' }
-  return { type: 'active', message: 'Đang mở bình chọn' }
+  if (now < start) return { type: 'upcoming', message: t('event_detail.vote_not_open') }
+  if (now > end) return { type: 'ended', message: t('event_detail.vote_closed') }
+  return { type: 'active', message: t('event_detail.vote_open') }
 })
 
 // --- HELPERS ---
 const formatDate = (dateStr) => {
-  if (!dateStr) return '...'
+  if (!dateStr) return t('event_detail.date_pending')
   const d = new Date(dateStr)
   return d.toLocaleDateString('vi-VN')
 }
 
 const formatDateTime = (dateStr) => {
-  if (!dateStr) return 'Chưa cập nhật'
+  if (!dateStr) return t('event_detail.date_pending')
   return new Date(dateStr).toLocaleString('vi-VN', {
     hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric'
   })
@@ -357,21 +357,21 @@ const loadAllData = async () => {
       participants: data.postCount || 0,
 
       // Lấy từ SQL:
-      description: data.description || 'Sự kiện này chưa có mô tả chi tiết.',
+      description: data.description || t('event_detail.no_description'),
       maxVotes: data.maxVotes || 3,
 
       // Tách chuỗi rules bằng dấu xuống dòng để hiển thị dạng list (li)
       rules: data.rules
         ? data.rules.split('\n').filter(r => r.trim() !== '')
-        : ['Chưa có quy định cụ thể.'],
+        : [t('event_detail.no_rules')],
 
       // Lấy giải thưởng thật
-      reward: data.reward || 'Thông tin giải thưởng đang được cập nhật.'
+      reward: data.reward || t('event_detail.reward_pending')
     }
 
     await fetchEventEntries(eventId)
   } catch (err) {
-    toast.error('Không thể tải thông tin sự kiện!')
+    toast.error(t('event_detail.load_failed'))
   } finally {
     loading.value = false
   }

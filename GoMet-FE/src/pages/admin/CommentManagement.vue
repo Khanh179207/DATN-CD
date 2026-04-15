@@ -3,17 +3,17 @@
     
     <div class="page-header-lux">
       <div>
-        <h1 class="page-title">Quản lý Bình luận</h1>
-        <p class="page-subtitle">Kiểm soát nội dung và tương tác từ cộng đồng GOMET</p>
+        <h1 class="page-title">{{ t('admin.comments.title') }}</h1>
+        <p class="page-subtitle">{{ t('admin.comments.subtitle') }}</p>
       </div>
       <div class="header-actions">
         <router-link to="/admin/blacklist" class="btn-action-lux warning-style">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          Bộ lọc Từ khóa
+          {{ t('admin.posts.blacklist') }}
         </router-link>
         <button class="btn-refresh-lux" @click="loadComments" :disabled="loading">
           <svg :class="{ 'spinning': loading }" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-          {{ loading ? 'Đang đồng bộ...' : 'Làm mới dữ liệu' }}
+          {{ loading ? t('admin.comments.refreshing') : t('admin.comments.refresh') }}
         </button>
       </div>
     </div>
@@ -24,7 +24,7 @@
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
         </div>
         <div class="stat-info">
-          <span class="label">Tổng bình luận</span>
+          <span class="label">{{ t('admin.comments.total_comments') }}</span>
           <h3 class="value">{{ comments.length }}</h3>
         </div>
       </div>
@@ -33,7 +33,7 @@
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
         </div>
         <div class="stat-info">
-          <span class="label">Hôm nay</span>
+          <span class="label">{{ t('admin.comments.today_comments') }}</span>
           <h3 class="value">{{ todayCommentsCount }}</h3>
         </div>
       </div>
@@ -42,7 +42,7 @@
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
         </div>
         <div class="stat-info">
-          <span class="label">Đính kèm ảnh</span>
+          <span class="label">{{ t('admin.comments.comments_with_images') }}</span>
           <h3 class="value">{{ attachmentsCount }}</h3>
         </div>
       </div>
@@ -53,7 +53,7 @@
         <div class="filter-right-actions" style="margin-left: auto;">
           <div class="search-box-lux">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <input v-model="searchQuery" type="text" placeholder="Tìm theo nội dung, tên...">
+            <input v-model="searchQuery" type="text" :placeholder="t('admin.comments.search_placeholder')">
             <button v-if="searchQuery" @click="searchQuery = ''" class="clear-search" style="background: none; border: none; cursor: pointer; color: #94a3b8;">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
@@ -64,24 +64,24 @@
       <div class="table-responsive">
         <div v-if="loading" class="loading-state-lux">
           <svg class="spinning" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="3"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>
-          <span>Đang tải dữ liệu...</span>
+          <span>{{ t('admin.dashboard.loading') }}</span>
         </div>
 
         <div v-else-if="error" class="error-banner">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
           <span>{{ error }}</span>
-          <button @click="loadComments">Thử lại</button>
+          <button @click="loadComments">{{ t('comment.retry_now') }}</button>
         </div>
 
         <table v-else class="lux-table">
           <thead>
             <tr>
               <th width="5%">#</th>
-              <th width="20%">NGƯỜI DÙNG</th>
-              <th width="35%">NỘI DUNG</th>
-              <th width="10%">BÀI VIẾT</th>
-              <th width="15%">THỜI GIAN</th>
-              <th width="15%" class="text-right">THAO TÁC</th>
+              <th width="20%">{{ t('admin.comments.user_col') }}</th>
+              <th width="35%">{{ t('admin.comments.content_col') }}</th>
+              <th width="10%">{{ t('admin.comments.post_col') }}</th>
+              <th width="15%">{{ t('admin.comments.time_col') }}</th>
+              <th width="15%" class="text-right">{{ t('admin.comments.actions_col') }}</th>
             </tr>
           </thead>
           <TransitionGroup tag="tbody" name="list-slide">
@@ -93,34 +93,34 @@
                        @error="$event.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(cmt.authorName || 'U')}&background=f8fafc&color=0f172a`"
                        class="user-avatar">
                   <div class="u-info">
-                    <span class="user-name">{{ cmt.authorName || 'Ẩn danh' }}</span>
+                    <span class="user-name">{{ cmt.authorName || t('admin.comments.anonymous') }}</span>
                     <span class="user-id" v-if="cmt.authorID">ID: {{ cmt.authorID }}</span>
                   </div>
                 </div>
               </td>
               <td class="content-cell">
                 <div v-if="cmt.isActive === -1" class="badge-hidden admin-banned">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Đã khóa
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> {{ t('admin.comments.locked_badge') }}
                 </div>
                 
                 <div v-if="cmt.isActive === 0" class="badge-hidden user-deleted">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M16 21v-2a4 4 0 0 0-4-4H5c-1.1 0-2 .9-2 2v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="18" y1="8" x2="23" y2="13"></line><line x1="23" y1="8" x2="18" y2="13"></line></svg> Tự xóa
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M16 21v-2a4 4 0 0 0-4-4H5c-1.1 0-2 .9-2 2v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="18" y1="8" x2="23" y2="13"></line><line x1="23" y1="8" x2="18" y2="13"></line></svg> {{ t('admin.comments.user_deleted_badge') }}
                 </div>
                 
                 <div v-if="cmt.parentCommentID" class="badge-reply">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 14 4 9 9 4"></polyline><path d="M20 20v-7a4 4 0 0 0-4-4H4"></path></svg> Trả lời #{{ cmt.parentCommentID }}
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 14 4 9 9 4"></polyline><path d="M20 20v-7a4 4 0 0 0-4-4H4"></path></svg> {{ t('admin.comments.reply_to', { id: cmt.parentCommentID }) }}
                 </div>
                 
                 <span class="comment-text">
-                  {{ cmt.content || (cmt.hasAttachments ? '[Có hình ảnh đính kèm]' : '') }}
+                  {{ cmt.content || (cmt.hasAttachments ? t('admin.comments.has_attachment') : '') }}
                 </span>
                 
                 <div v-if="cmt.hasAttachments" class="badge-img">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg> Kèm ảnh
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg> {{ t('admin.comments.image_attached') }}
                 </div>
               </td>
               <td>
-                <a class="post-link" :href="`/post/${cmt.postID}#comment-${cmt.commentID}`" target="_blank" title="Xem bình luận tại bài viết">
+                <a class="post-link" :href="`/post/${cmt.postID}#comment-${cmt.commentID}`" target="_blank" :title="t('admin.comments.view_on_post')">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
                   Post #{{ cmt.postID }}
                 </a>
@@ -128,17 +128,17 @@
               <td class="time-cell">{{ formatDate(cmt.createdAt, true) }}</td>
               <td class="text-right">
                 <div class="actions">
-                  <a :href="`/post/${cmt.postID}#comment-${cmt.commentID}`" target="_blank" class="btn-sm-action view" title="Xem tại bài viết" style="text-decoration: none;">
+                  <a :href="`/post/${cmt.postID}#comment-${cmt.commentID}`" target="_blank" class="btn-sm-action view" :title="t('admin.comments.view_on_post')" style="text-decoration: none;">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                   </a>
 
                   <button v-if="cmt.isActive === 1" class="btn-sm-action delete" 
-                          @click="handleDelete(cmt.commentID)" title="Khóa/Ẩn bình luận">
+                          @click="handleDelete(cmt.commentID)" :title="t('admin.comments.hide_comment')">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
                   </button>
                   
                   <button v-else class="btn-sm-action restore" 
-                          @click="handleRestore(cmt.commentID)" title="Khôi phục bình luận">
+                          @click="handleRestore(cmt.commentID)" :title="t('admin.comments.restore_comment')">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><polyline points="3 3 3 8 8 8"></polyline></svg>
                   </button>
                 </div>
@@ -149,8 +149,8 @@
 
         <div v-if="!loading && filteredComments.length === 0" class="empty-state-lux">
           <div class="empty-icon">💬</div>
-          <h3>Không có dữ liệu!</h3>
-          <p>Không tìm thấy bình luận nào khớp với từ khóa tìm kiếm.</p>
+          <h3>{{ t('admin.comments.empty_title') }}</h3>
+          <p>{{ t('admin.comments.empty') }}</p>
         </div>
       </div>
     </div>
@@ -171,10 +171,12 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import api from '@/services/api.js'
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
+const { t, locale } = useI18n()
 
 const comments = ref([])
 const loading = ref(true)
@@ -211,8 +213,8 @@ const loadComments = async () => {
     const res = await api.get('/api/admin/comments')
     comments.value = res.data
   } catch (e) {
-    console.error('Lỗi khi tải bình luận:', e)
-    error.value = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại đường truyền hoặc quyền truy cập.'
+    console.error('Comment load failed:', e)
+    error.value = t('admin.comments.load_failed')
   } finally {
     loading.value = false
   }
@@ -220,7 +222,7 @@ const loadComments = async () => {
 
 // --- API ACTIONS: ADMIN KHÓA BÌNH LUẬN (-1) ---
 const handleDelete = async (id) => {
-  if (!confirm('Xác nhận KHÓA bình luận này vì vi phạm tiêu chuẩn cộng đồng?')) return
+  if (!confirm(t('admin.comments.delete_confirm'))) return
   try {
     const payload = {
       adminId: authStore.user?.accountID || authStore.user?.id || 0,
@@ -233,13 +235,13 @@ const handleDelete = async (id) => {
     const target = comments.value.find(c => c.commentID === id)
     if (target) target.isActive = -1
   } catch (e) {
-    alert(e.response?.data?.message || 'Khóa thất bại. Vui lòng thử lại!')
+    alert(e.response?.data?.message || t('admin.comments.delete_failed'))
   }
 }
 
 // --- API ACTIONS: KHÔI PHỤC BÌNH LUẬN (1) ---
 const handleRestore = async (id) => {
-  if (!confirm('Xác nhận KHÔI PHỤC lại bình luận này cho hiển thị công khai?')) return
+  if (!confirm(t('admin.comments.restore_confirm'))) return
   try {
     const payload = {
       adminId: authStore.user?.accountID || authStore.user?.id || 0,
@@ -252,7 +254,7 @@ const handleRestore = async (id) => {
     const target = comments.value.find(c => c.commentID === id)
     if (target) target.isActive = 1
   } catch (e) {
-    alert('Khôi phục thất bại. Vui lòng thử lại!')
+    alert(t('admin.comments.restore_failed'))
   }
 }
 
@@ -266,10 +268,11 @@ const formatDate = (dateStr, includeTime = true) => {
   if (!dateStr) return '—'
   const d = new Date(dateStr)
   const options = { day: '2-digit', month: '2-digit', year: 'numeric' }
-  const date = d.toLocaleDateString('vi-VN', options)
+  const resolvedLocale = locale.value === 'vi' ? 'vi-VN' : 'en-US'
+  const date = d.toLocaleDateString(resolvedLocale, options)
   
   if (includeTime) {
-    const time = d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+    const time = d.toLocaleTimeString(resolvedLocale, { hour: '2-digit', minute: '2-digit' })
     return `${time} - ${date}`
   }
   return date

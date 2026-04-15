@@ -19,7 +19,7 @@
           <div class="modal-info-col">
             <div class="info-top">
               <span class="match-badge anim-item">
-                <i class="fas fa-magic"></i> Chân Ái Của Bạn
+                <i class="fas fa-magic"></i> {{ t('suggestions.match_badge') }}
               </span>
               <h2 class="result-title anim-item">{{ dish.name }}</h2>
               <p class="result-desc anim-item">"{{ dish.description }}"</p>
@@ -29,7 +29,7 @@
               <div class="bento-box anim-item" style="--stagger: 1;">
                 <div class="bento-icon"><i class="fas fa-clock"></i></div>
                 <div class="bento-text">
-                  <span class="bento-lbl">Thời gian</span>
+                  <span class="bento-lbl">{{ t('suggestions.lbl_time') }}</span>
                   <span class="bento-val">{{ dish.time }}</span>
                 </div>
               </div>
@@ -37,7 +37,7 @@
               <div class="bento-box anim-item" style="--stagger: 2;">
                 <div class="bento-icon"><i class="fas fa-fire"></i></div>
                 <div class="bento-text">
-                  <span class="bento-lbl">Độ khó</span>
+                  <span class="bento-lbl">{{ t('suggestions.lbl_diff') }}</span>
                   <span class="bento-val">{{ dish.difficulty }}</span>
                 </div>
               </div>
@@ -45,18 +45,18 @@
               <div class="bento-box anim-item" style="--stagger: 3;">
                 <div class="bento-icon"><i class="fas fa-leaf"></i></div>
                 <div class="bento-text">
-                  <span class="bento-lbl">Phong cách</span>
-                  <span class="bento-val">{{ dish.flavor || 'Tinh Tế' }}</span>
+                  <span class="bento-lbl">{{ t('suggestions.lbl_flavor') }}</span>
+                  <span class="bento-val">{{ dish.flavor || t('suggestions.default_flavor') }}</span>
                 </div>
               </div>
             </div>
             
             <div class="info-actions anim-item">
               <button class="btn-primary-glow" @click="goToDetail">
-                <span>Vào Bếp Ngay</span> <i class="fas fa-chevron-right"></i>
+                <span>{{ t('suggestions.view_recipe') }}</span> <i class="fas fa-chevron-right"></i>
               </button>
               <button class="btn-outline-glass" @click="closeModal">
-                Thử Lại <i class="fas fa-redo"></i>
+                {{ t('suggestions.try_again') }} <i class="fas fa-redo"></i>
               </button>
             </div>
           </div>
@@ -69,6 +69,7 @@
 <script setup>
 import { ref, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { gsap } from 'gsap'
 
 const props = defineProps({
@@ -79,6 +80,7 @@ const props = defineProps({
 const emit = defineEmits(['close'])
 const router = useRouter()
 const modalCard = ref(null)
+const { t } = useI18n()
 
 const closeModal = () => { emit('close') }
 const goToDetail = () => {

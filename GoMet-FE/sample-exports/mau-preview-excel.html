@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mau Excel GoMet</title>
+  <style>
+    body { font-family: Segoe UI, Arial, sans-serif; margin: 24px; background: #f8fafc; color: #0f172a; }
+    .wrap { max-width: 1200px; margin: 0 auto; }
+    .hero { background: linear-gradient(135deg, #fff7ed, #ffffff); border: 1px solid #fed7aa; border-radius: 20px; padding: 24px; margin-bottom: 20px; }
+    h1 { margin: 0 0 8px; font-size: 30px; }
+    p { margin: 0 0 20px; color: #64748b; }
+    .meta { margin-bottom: 16px; font-size: 14px; color: #475569; }
+    .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+    .card { background: #fff; border-radius: 16px; padding: 16px; border: 1px solid #e2e8f0; }
+    .card-label { font-size: 12px; text-transform: uppercase; color: #64748b; margin-bottom: 6px; }
+    .card-value { font-size: 22px; font-weight: 800; }
+    .insights { display: grid; grid-template-columns: 1.1fr 1fr; gap: 16px; margin-bottom: 20px; }
+    .panel { background: #fff; border-radius: 18px; border: 1px solid #e2e8f0; padding: 18px; }
+    .panel h2 { margin: 0 0 12px; font-size: 18px; }
+    .pill-grid { display: grid; gap: 10px; }
+    .pill { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-radius: 14px; background: #f8fafc; border: 1px solid #e2e8f0; }
+    .pill strong { font-size: 15px; }
+    table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; }
+    th, td { padding: 12px 14px; border-bottom: 1px solid #e2e8f0; text-align: left; font-size: 14px; }
+    th { background: #0f172a; color: #fff; font-weight: 700; }
+    tr:nth-child(even) { background: #fcfcfd; }
+    .ok { color: #16a34a; font-weight: 700; }
+    .pending { color: #d97706; font-weight: 700; }
+    .cancel { color: #dc2626; font-weight: 700; }
+    .note { margin-top: 14px; font-size: 13px; }
+    @media (max-width: 900px) { .summary, .insights { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <h1>Preview mau Excel giao dich</h1>
+      <p>Bang nay mo phong workbook xuat Excel sau khi nang cap task 2, gom mot sheet tong quan KPI va mot sheet chi tiet giao dich duoc dinh dang ro rang hon.</p>
+      <div class="meta">Thoi diem xuat bao cao: 00:36 16/04/2026</div>
+      <div class="summary">
+        <div class="card"><div class="card-label">Tong doanh thu</div><div class="card-value">598.000 VND</div></div>
+        <div class="card"><div class="card-label">Tong giao dich</div><div class="card-value">4</div></div>
+        <div class="card"><div class="card-label">Thanh cong</div><div class="card-value">2</div></div>
+        <div class="card"><div class="card-label">Dang cho</div><div class="card-value">1</div></div>
+      </div>
+    </div>
+    <div class="insights">
+      <div class="panel">
+        <h2>Thong ke theo trang thai</h2>
+        <div class="pill-grid">
+          <div class="pill"><span>Da thanh toan</span><strong>2 giao dich</strong></div>
+          <div class="pill"><span>Dang cho</span><strong>1 giao dich</strong></div>
+          <div class="pill"><span>Da huy</span><strong>1 giao dich</strong></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Top goi Premium theo doanh thu</h2>
+        <div class="pill-grid">
+          <div class="pill"><span>Premium 1 nam</span><strong>499.000 VND</strong></div><div class="pill"><span>Premium 1 thang</span><strong>99.000 VND</strong></div>
+        </div>
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>STT</th>
+          <th>Ma giao dich</th>
+          <th>Khach hang</th>
+          <th>Email</th>
+          <th>Goi Premium</th>
+          <th>So tien</th>
+          <th>Trang thai</th>
+          <th>Tao luc</th>
+          <th>Thanh toan luc</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+  <tr>
+    <td>1</td>
+    <td>GM-20260415-001</td>
+    <td>Nguyen Van A</td>
+    <td>nguyenvana@gomet.vn</td>
+    <td>Premium 1 thang</td>
+    <td>99.000 VND</td>
+    <td>Da thanh toan</td>
+    <td>15/04/2026, 08:30</td>
+    <td>15/04/2026, 08:31</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>GM-20260415-002</td>
+    <td>Tran Thi B</td>
+    <td>tranthib@gomet.vn</td>
+    <td>Premium 1 nam</td>
+    <td>499.000 VND</td>
+    <td>Da thanh toan</td>
+    <td>15/04/2026, 10:15</td>
+    <td>15/04/2026, 10:18</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>GM-20260415-003</td>
+    <td>Le Minh C</td>
+    <td>leminhc@gomet.vn</td>
+    <td>Premium tron doi</td>
+    <td>999.000 VND</td>
+    <td>Dang cho</td>
+    <td>15/04/2026, 11:00</td>
+    <td>—</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>GM-20260415-004</td>
+    <td>Pham Thu D</td>
+    <td>phamthud@gomet.vn</td>
+    <td>Premium 1 thang</td>
+    <td>99.000 VND</td>
+    <td>Da huy</td>
+    <td>15/04/2026, 13:45</td>
+    <td>—</td>
+  </tr>
+      </tbody>
+    </table>
+    <p class="note">File XLSX di kem: mau-bao-cao-giao-dich-gomet.xlsx. Workbook gom 2 sheet: Tong_Quan_Bao_Cao va Chi_Tiet_Giao_Dich.</p>
+  </div>
+</body>
+</html>

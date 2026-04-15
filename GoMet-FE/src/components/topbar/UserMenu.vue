@@ -30,14 +30,14 @@
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14l-5-4.87 6.91-1.01L12 2z"/>
               </svg>
             </div>
-            <div class="user-email-pro">{{ authStore.user?.email || 'Chưa cập nhật email' }}</div>
-            <div class="user-id-badge">ID: {{ authStore.user?.id || authStore.user?.accountID }}</div>
+            <div class="user-email-pro">{{ authStore.user?.email || t('header.email_not_updated') }}</div>
+            <div class="user-id-badge">{{ t('header.user_id') }}: {{ authStore.user?.id || authStore.user?.accountID }}</div>
             
             <div v-if="!isPremiumUser && !isAdminUser" class="daily-view-limit-info">
-              <span class="limit-label">{{ isHolidayEventActive ? 'Sự kiện :' : 'Lượt xem hôm nay:' }}</span>
-              <span class="limit-count" :class="{ 'text-pink': isHolidayEventActive }">{{ isHolidayEventActive ? 'truy cập thả ga' : `${remainingViews}/3` }}</span>
+              <span class="limit-label">{{ isHolidayEventActive ? t('header.event_label') : t('header.daily_views_today') }}</span>
+              <span class="limit-count" :class="{ 'text-pink': isHolidayEventActive }">{{ isHolidayEventActive ? t('header.unlimited_access') : `${remainingViews}/3` }}</span>
               
-              <button v-if="!isHolidayEventActive" @click.stop="authStore.resetViews" class="btn-reset-views-demo" title="Reset (Demo)">
+              <button v-if="!isHolidayEventActive" @click.stop="authStore.resetViews" class="btn-reset-views-demo" :title="t('header.reset_demo')">
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
               </button>
             </div>
@@ -53,7 +53,7 @@
               <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
             </svg>
           </div>
-          <span>Trang quản trị</span>
+          <span>{{ t('header.admin_panel') }}</span>
         </li>
 
         <li @click="navigate('/profile')" class="menu-item-gsap">
@@ -62,7 +62,7 @@
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
             </svg>
           </div>
-          <span>Trang cá nhân</span>
+          <span>{{ t('header.my_profile') }}</span>
         </li>
 
         <li @click="emitAction('open-premium')" class="menu-item-gsap vip-text">
@@ -71,7 +71,7 @@
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
             </svg>
           </div>
-          <span>Nâng cấp VIP</span>
+          <span>{{ t('header.upgrade_vip') }}</span>
         </li>
 
         <div class="menu-divider-pro"></div>
@@ -87,7 +87,7 @@
               <circle cx="12" cy="12" r="4"></circle>
             </svg>
           </div>
-          <span>Hỗ trợ & Góp ý</span>
+          <span>{{ t('header.support_feedback') }}</span>
         </li>
       </ul>
 
@@ -98,7 +98,7 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
           </svg>
-          Đăng xuất
+          {{ t('header.logout') }}
         </button>
       </div>
     </div>
@@ -110,6 +110,7 @@
 <script setup>
 import { ref, computed, nextTick, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { toast } from '@/composables/useToast'
 import { usePostViewLimit } from '@/composables/usePostViewLimit'
@@ -117,6 +118,7 @@ import gsap from 'gsap'
 
 const authStore = useAuthStore()
 const router = useRouter()
+const { t } = useI18n()
 const isOpen = ref(false)
 const { remainingViews, isHolidayEventActive, checkGlobalHolidayStatus } = usePostViewLimit()
 
@@ -167,7 +169,7 @@ const navigate = (path) => {
   isOpen.value = false;
   
   if (path.startsWith('/admin') && window.innerWidth < 1024) {
-    toast.warn('Trang quản trị yêu cầu màn hình máy tính để thao tác tốt nhất sếp nhé! 🖥️');
+    toast.warn(t('header.admin_desktop_only'));
     return;
   }
   
@@ -183,7 +185,7 @@ const handleLogout = async () => {
   sessionStorage.removeItem('just_logged_in'); 
   authStore.user = null;
   authStore.isAuthenticated = false;
-  toast.success('Đăng xuất thành công. Hẹn gặp lại sếp nhé! 👋');
+  toast.success(t('header.logout_success'));
   const isMobileOrTablet = window.innerWidth < 1024;
   const redirectPath = isMobileOrTablet ? '/home' : '/';
   await router.push(redirectPath);

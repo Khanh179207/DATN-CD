@@ -10,12 +10,12 @@
             <div class="nav-left">
               <button @click="router.back()" class="btn-back-clean">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-                <span>Hủy bỏ</span>
+                <span>{{ t('create_post.cancel') }}</span>
               </button>
               <span class="nav-sep">/</span>
               <div class="category-badge-selector">
                 <select v-model="post.categoryID" class="category-select-clean">
-                  <option :value="null">CHỌN DANH MỤC</option>
+                  <option :value="null">{{ t('create_post.select_category') }}</option>
                   <option v-for="cat in categories" :key="cat.categoryID" :value="cat.categoryID">
                     {{ (cat.categoryName || '').toUpperCase() }}
                   </option>
@@ -25,8 +25,8 @@
             </div>
           </div>
 
-          <textarea v-model="post.title" class="recipe-title-display-input" placeholder="Tên món ăn..." rows="1" @input="autoResize"></textarea>
-          <textarea v-model="post.description" class="recipe-desc-text-input" placeholder="Kể câu chuyện về món ăn này..." rows="2" @input="autoResize"></textarea>
+          <textarea v-model="post.title" class="recipe-title-display-input" :placeholder="t('create_post.title_placeholder')" rows="1" @input="autoResize"></textarea>
+          <textarea v-model="post.description" class="recipe-desc-text-input" :placeholder="t('create_post.description_placeholder')" rows="2" @input="autoResize"></textarea>
 
           <div class="recipe-stats-group">
             <div class="stat-card-clean">
@@ -34,7 +34,7 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
               </div>
               <div class="stat-info">
-                <span class="s-label">THỜI GIAN (PHÚT)</span>
+                <span class="s-label">{{ t('create_post.time_minutes') }}</span>
                 <input type="number" v-model="post.cookingTime" class="s-val-input" placeholder="30" min="1">
               </div>
             </div>
@@ -44,11 +44,11 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 2.4 5.6a4.5 4.5 0 01-1.5 2.3A4.5 4.5 0 0110 21c-2.5 0-4-2-4-4s1.5-3 2.5-2.5z"></path></svg>
               </div>
               <div class="stat-info">
-                <span class="s-label">ĐỘ KHÓ</span>
+                <span class="s-label">{{ t('create_post.difficulty') }}</span>
                 <select v-model="post.level" class="s-val-select">
-                  <option value="Easy">Dễ</option>
-                  <option value="Medium">Vừa</option>
-                  <option value="Hard">Khó</option>
+                  <option value="Easy">{{ t('create_post.level_easy') }}</option>
+                  <option value="Medium">{{ t('create_post.level_medium') }}</option>
+                  <option value="Hard">{{ t('create_post.level_hard') }}</option>
                 </select>
               </div>
             </div>
@@ -61,8 +61,8 @@
                 <div class="tick-badge"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
               </div>
               <div class="auth-text">
-                <span class="auth-sub">Đầu bếp thực hiện</span>
-                <span class="auth-name">{{ currentUser.fullName || currentUser.username || 'Đầu bếp GOMET' }}</span>
+                <span class="auth-sub">{{ t('create_post.author_label') }}</span>
+                <span class="auth-name">{{ currentUser.fullName || currentUser.username || t('create_post.author_fallback') }}</span>
               </div>
             </div>
           </div>
@@ -74,9 +74,9 @@
             <img v-if="post.image" :src="post.image" class="img-cover">
             <div v-else class="upload-placeholder">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-              <span>Nhấn để tải ảnh bìa (16:9)</span>
+              <span>{{ t('create_post.upload_cover') }}</span>
             </div>
-            <div v-if="post.image" class="hover-glass-overlay">Thay đổi ảnh bìa</div>
+            <div v-if="post.image" class="hover-glass-overlay">{{ t('create_post.change_cover') }}</div>
             <input type="file" ref="fileInput" class="hidden-input" accept="image/*" @change="handleImageUpload">
           </div>
         </div>
@@ -94,17 +94,17 @@
               <div class="card-header-dark">
                 <div class="h-left">
                   <span class="pulse-dot-neon"></span>
-                  <span class="caps-text">MASTERCLASS VIDEO (Tùy chọn)</span>
+                  <span class="caps-text">{{ t('create_post.video_optional') }}</span>
                 </div>
               </div>
               <div class="video-aspect-frame uploader-video" @click="!post.video && triggerVideoUpload()">
                 <div v-if="!post.video" class="video-placeholder-dark">
                   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
-                  <span>Tải Video Lên (Max 50MB)</span>
+                  <span>{{ t('create_post.upload_video') }}</span>
                 </div>
                 <template v-else>
                   <video :src="post.video" controls playsinline class="html5-player"></video>
-                  <button class="btn-remove-media-float" @click.stop="removeVideo">Gỡ Video</button>
+                  <button class="btn-remove-media-float" @click.stop="removeVideo">{{ t('create_post.remove_video') }}</button>
                 </template>
                 <input type="file" ref="videoInput" class="hidden-input" accept="video/*" @change="handleVideoUpload">
               </div>
@@ -117,20 +117,20 @@
                     <div class="icon-box">
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
                     </div>
-                    <h3>Nguyên liệu cần có</h3>
+                    <h3>{{ t('create_post.ingredients_title') }}</h3>
                   </div>
                 </div>
                 <div class="ingredients-list-clean">
                   <TransitionGroup name="list-anim">
                     <div v-for="(ing, index) in post.ingredients" :key="index" class="clean-check-row input-mode">
                       <div class="checkbox-visual"></div>
-                      <input v-model="ing.name" class="i-name-input" placeholder="VD: 500g thịt bò..." @keyup.enter="addIngredient" ref="ingredientInputs">
+                      <input v-model="ing.name" class="i-name-input" :placeholder="t('create_post.ingredient_placeholder')" @keyup.enter="addIngredient" ref="ingredientInputs">
                       <button class="btn-remove-ing" @click="removeIngredient(index)" v-if="post.ingredients.length > 1">✕</button>
                     </div>
                   </TransitionGroup>
                 </div>
                 <button class="btn-gradient-orange w-full" @click="addIngredient">
-                  <span>+ Thêm nguyên liệu</span>
+                  <span>+ {{ t('create_post.add_ingredient') }}</span>
                 </button>
               </div>
             </div>
@@ -142,9 +142,9 @@
           <div class="process-editorial-section">
             
             <div class="process-header">
-              <h2 class="serif-title">Quy trình thực hiện</h2>
+              <h2 class="serif-title">{{ t('create_post.process_title') }}</h2>
               <div class="header-actions">
-                <span class="step-count-badge">{{ post.steps.length }} BƯỚC</span>
+                <span class="step-count-badge">{{ t('create_post.steps_count', { count: post.steps.length }) }}</span>
               </div>
             </div>
 
@@ -159,20 +159,20 @@
                   
                   <div class="timeline-content">
                     <div class="step-header-row">
-                      <h4 class="step-subtitle">BƯỚC {{ index + 1 }}</h4>
-                      <button class="btn-del-text" @click="removeStep(index)" v-if="post.steps.length > 1">Xóa bước này</button>
+                      <h4 class="step-subtitle">{{ t('create_post.step_label', { count: index + 1 }) }}</h4>
+                      <button class="btn-del-text" @click="removeStep(index)" v-if="post.steps.length > 1">{{ t('create_post.delete_step') }}</button>
                     </div>
                     
-                    <textarea v-model="step.desc" class="step-desc-input" placeholder="Chi tiết cách làm ở bước này..." rows="2" @input="autoResize"></textarea>
+                    <textarea v-model="step.desc" class="step-desc-input" :placeholder="t('create_post.step_placeholder')" rows="2" @input="autoResize"></textarea>
                     
                     <div class="step-gallery" @click="triggerStepUpload(index)">
                       <div class="gallery-img-box-lg uploader" :class="{'has-img': step.image}">
                         <img v-if="step.image" :src="step.image">
                         <div v-else class="upload-placeholder-small">
                           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                          Tải ảnh minh họa lên
+                          {{ t('create_post.upload_step_image') }}
                         </div>
-                        <div v-if="step.image" class="hover-zoom"><span>Đổi ảnh</span></div>
+                        <div v-if="step.image" class="hover-zoom"><span>{{ t('create_post.change_step_image') }}</span></div>
                       </div>
                       <input type="file" :ref="el => stepInputRefs[index] = el" class="hidden-input" accept="image/*" @change="handleStepUpload($event, index)">
                     </div>
@@ -182,7 +182,7 @@
               </transition-group>
             </div>
 
-            <button class="btn-add-step-large" @click="addStep">+ Thêm bước chế biến tiếp theo</button>
+            <button class="btn-add-step-large" @click="addStep">+ {{ t('create_post.add_step') }}</button>
 
           </div>
         </main>
@@ -192,8 +192,8 @@
 
     <div class="floating-action-bar-center">
       <div class="fab-inner">
-        <button class="btn-cancel-lux" @click="router.back()">Hủy bỏ</button>
-        <button class="btn-publish-lux" @click="handlePublish">🚀 Xuất bản bài viết</button>
+        <button class="btn-cancel-lux" @click="router.back()">{{ t('create_post.cancel') }}</button>
+        <button class="btn-publish-lux" @click="handlePublish">🚀 {{ t('create_post.publish') }}</button>
       </div>
     </div>
 
@@ -203,6 +203,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { getCategories } from '@/services/categoryService'
 import { createPost } from '@/services/postService'
@@ -213,6 +214,7 @@ import { toast } from '@/composables/useToast'
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const { t } = useI18n()
 
 const eventId = route.query.eventId
 const fileInput = ref(null)
@@ -236,7 +238,7 @@ const userAvatar = computed(() => {
   const user = currentUser.value;
   const photo = user.avatar || user.image || user.photo || user.avatarUrl;
   if (photo) return photo;
-  const nameForAvatar = user.fullName || user.username || 'Chef';
+  const nameForAvatar = user.fullName || user.username || t('create_post.author_fallback');
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(nameForAvatar)}&background=EA580C&color=fff&bold=true`;
 })
 const handleAvatarError = (e) => { e.target.src = `https://ui-avatars.com/api/?name=User&background=64748B&color=fff`; }
@@ -256,7 +258,7 @@ const cleanupUrls = () => { localUrls.forEach(url => URL.revokeObjectURL(url)); 
 onBeforeUnmount(() => cleanupUrls())
 
 onMounted(async () => {
-  try { categories.value = await getCategories() } catch (e) { toast.error('Lỗi lấy danh mục!') }
+  try { categories.value = await getCategories() } catch (e) { toast.error(t('create_post.load_categories_failed')) }
 })
 
 // HANDLERS UPLOAD (LOCAL PREVIEW)
@@ -269,7 +271,7 @@ const handleImageUpload = (e) => {
 const triggerVideoUpload = () => videoInput.value.click()
 const handleVideoUpload = (e) => {
   const file = e.target.files[0]; if (!file) return;
-  if (file.size > 50 * 1024 * 1024) return toast.warn('Video tối đa 50MB!');
+  if (file.size > 50 * 1024 * 1024) return toast.warn(t('create_post.video_too_large'));
   videoFile.value = file; post.value.video = createSafeUrl(file);
 }
 const removeVideo = () => { videoFile.value = null; post.value.video = null; }
@@ -314,18 +316,18 @@ const checkContentPolicy = async (text) => {
 // ĐĂNG BÀI NỀN (BACKGROUND PUBLISH)
 // ==========================================
 const handlePublish = async () => {
-  if (!post.value.title.trim()) return toast.warn('Vui lòng nhập tên món ăn!')
-  if (!post.value.description.trim()) return toast.warn('Vui lòng nhập mô tả cho món ăn!')
-  if (!coverImageFile.value && !post.value.image) return toast.warn('Vui lòng thêm ảnh bìa cho bài viết!')
+  if (!post.value.title.trim()) return toast.warn(t('create_post.require_title'))
+  if (!post.value.description.trim()) return toast.warn(t('create_post.require_description'))
+  if (!coverImageFile.value && !post.value.image) return toast.warn(t('create_post.require_cover'))
 
   const validIngredients = post.value.ingredients.filter(i => i.name.trim() !== '')
-  if (validIngredients.length === 0) return toast.warn('Vui lòng nhập ít nhất 1 nguyên liệu!')
+  if (validIngredients.length === 0) return toast.warn(t('create_post.require_ingredient'))
 
   const validSteps = post.value.steps.filter(s => s.desc.trim() !== '')
-  if (validSteps.length === 0) return toast.warn('Vui lòng nhập ít nhất 1 bước chế biến!')
+  if (validSteps.length === 0) return toast.warn(t('create_post.require_step'))
 
   const accID = currentUser.value.accountID || currentUser.value.id || currentUser.value.accountId;
-  if (!accID) return toast.error('Lỗi phiên đăng nhập!');
+  if (!accID) return toast.error(t('create_post.session_error'));
 
   // Kiểm tra từ khóa cấm ở Frontend trước khi cho đăng
   const fullText = [
@@ -337,7 +339,7 @@ const handlePublish = async () => {
 
   const isViolating = await checkContentPolicy(fullText);
   if (isViolating) {
-    toast.error('Bài viết vi phạm tiêu chuẩn cộng đồng!');
+    toast.error(t('create_post.policy_violation'));
     return;
   }
 
@@ -356,7 +358,7 @@ const handlePublish = async () => {
 
   // 2. Hất ra trang chủ ngay lập tức
   router.push('/home');
-  toast.info('🚀 Đang tải bài viết lên hệ thống trong nền...');
+  toast.info(`🚀 ${t('create_post.publishing_bg')}`);
 
   // 3. Tiến trình upload ngầm
   (async () => {
@@ -387,15 +389,14 @@ const handlePublish = async () => {
          await api.post(`/api/events/submit`, { EventID: parseInt(currentEventId), PostID: newPostId });
       }
 
-      // Thông báo kết quả
       if (result?.isApproved === 1 || result?.data?.isApproved === 1) {
-         toast.success('🎉 Tuyệt vời! Bài viết đã được tự động duyệt và lên sóng!');
+        toast.success(`🎉 ${t('create_post.published_auto')}`);
       } else {
-         toast.success('✨ Đã tải bài lên thành công! Đang chờ Admin duyệt.');
+        toast.success(`✨ ${t('create_post.published_pending')}`);
       }
 
     } catch (err) {
-       const msg = err.response?.data?.message || '❌ Bài viết không hợp lệ hoặc thao tác quá nhanh. Vui lòng thử lại sau!';
+       const msg = err.response?.data?.message || `❌ ${t('create_post.publish_failed')}`;
        toast.error(msg);
     }
   })();

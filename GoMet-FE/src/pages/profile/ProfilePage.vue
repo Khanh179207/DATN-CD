@@ -20,13 +20,13 @@
               
               <div class="name-badge-row">
                 <h1 class="user-name">{{ user.name }}</h1>
-                <span v-if="user.isPremium === 1" class="luxury-badge-vip">PREMIUM</span>
+                <span v-if="user.isPremium === 1" class="luxury-badge-vip">{{ $t('profile.premium_badge') }}</span>
               </div>
               <p class="user-handle">@{{ user.handle }}</p>
               
               <div class="bio-box">
                 <p v-if="user.bio">{{ user.bio }}</p>
-                <p v-else class="bio-placeholder">{{ isOwnProfile ? 'Add a bio to tell others about yourself...' : 'No bio yet.' }}</p>
+                <p v-else class="bio-placeholder">{{ isOwnProfile ? $t('profile.no_bio_self') : $t('profile.no_bio_other') }}</p>
               </div>
 
               <div class="action-stack">
@@ -135,6 +135,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import RecipeCard from '@/components/common/RecipeCard.vue'
 import ProfileActions from '@/components/profile/ProfileActions.vue'
 import DeactivateAccountModal from '@/components/modals/DeactivateAccountModal.vue'
@@ -155,6 +156,7 @@ import api from '@/services/api'
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const { t } = useI18n()
 
 // State
 const user = ref({ name: '', handle: '', avatar: '', bio: '', postsCount: 0, followers: '0', following: 0, point: 0, totalLikes: 0, isPremium: 0 })
@@ -183,7 +185,7 @@ async function loadProfile(forcedId = null) {
   try {
     const [profile, userPosts] = await Promise.all([getUserProfile(targetId), getPostsByUser(targetId)])
     user.value = {
-      name: profile.username || 'Chef', handle: (profile.username || 'chef').toLowerCase().replace(/\s+/g, '_'),
+      name: profile.username || t('profile.chef_fallback'), handle: (profile.username || 'chef').toLowerCase().replace(/\s+/g, '_'),
       avatar: profile.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.username||'G')}&background=EA580C&color=fff`,
       bio: profile.bio || '', postsCount: profile.postCount || 0,
       followers: profile.followerCount > 999 ? `${(profile.followerCount/1000).toFixed(1)}k` : `${profile.followerCount || 0}`,
@@ -200,7 +202,7 @@ async function loadProfile(forcedId = null) {
       try { const status = await checkFollow(authStore.user?.accountID, targetId); isFollowing.value = status === true || status?.following === true } catch { isFollowing.value = false }
     }
   } catch (err) {
-    if (err.response?.status === 404) { toast.error('Tài khoản không tồn tại.'); router.push('/home') }
+    if (err.response?.status === 404) { toast.error(t('profile.account_missing')); router.push('/home') }
     postsLoading.value = false
   }
 }
@@ -215,13 +217,13 @@ async function openFollowList(type) {
     const endpoint = type === 'followers' ? '/api/follows/followers-list' : '/api/follows/following-list'
     const paramKey = type === 'followers' ? 'followeeID' : 'followerID'
     const res = await api.get(endpoint, { params: { [paramKey]: targetId } }); followList.value = res.data
-  } catch (err) { toast.error('Lỗi tải danh sách.') } finally { followLoadingList.value = false }
+  } catch (err) { toast.error(t('profile.follow_list_failed')) } finally { followLoadingList.value = false }
 }
 
 function goToUserProfile(id) { showFollowModal.value = false; router.push({ name: 'Profile', params: { id } }) }
 
 async function togglePostVisibility(post) {
-  try { const res = await togglePostActive(post.id); post.isActive = res.isActive; toast.success(post.isActive === 1 ? 'Đã hiển thị!' : 'Đã ẩn.') } catch { toast.error('Lỗi.') }
+  try { const res = await togglePostActive(post.id); post.isActive = res.isActive; toast.success(post.isActive === 1 ? t('profile.post_visible') : t('profile.post_hidden')) } catch { toast.error(t('profile.generic_error')) }
 }
 
 function openPostEditModal(post) {
@@ -237,8 +239,8 @@ async function savePostInfo() {
     let finalMediaUrl = postEditForm.value.mediaPreview
     if (postEditForm.value.mediaFile) finalMediaUrl = await uploadMedia(postEditForm.value.mediaFile, 'posts')
     await updatePost(postEditForm.value.id, { ...postEditForm.value, media: finalMediaUrl, accountID: authStore.user?.accountID })
-    toast.success('Đã cập nhật bài viết!'); showPostEditModal.value = false; loadProfile() 
-  } catch { toast.error('Lỗi.') } finally { postSaving.value = false }
+    toast.success(t('profile.post_updated')); showPostEditModal.value = false; loadProfile() 
+  } catch { toast.error(t('profile.generic_error')) } finally { postSaving.value = false }
 }
 
 function openEditModal() { editForm.value = { username: user.value.name, bio: user.value.bio || '', avatarFile: null, avatarPreview: '' }; showEditModal.value = true }
@@ -254,8 +256,8 @@ async function saveProfile() {
     await updateUserProfile(targetId, { username: editForm.value.username, bio: editForm.value.bio, avatar: finalAvatarUrl })
     await loadProfile()
     if (authStore.user) { authStore.user.avatar = finalAvatarUrl; authStore.user.name = editForm.value.username; localStorage.setItem('user', JSON.stringify(authStore.user)) }
-    showEditModal.value = false; toast.success('Đã lưu hồ sơ!')
-  } catch { toast.error('Lỗi lưu trữ.') } finally { editSaving.value = false }
+    showEditModal.value = false; toast.success(t('profile.profile_saved'))
+  } catch { toast.error(t('profile.save_failed')) } finally { editSaving.value = false }
 }
 
 onMounted(loadProfile)

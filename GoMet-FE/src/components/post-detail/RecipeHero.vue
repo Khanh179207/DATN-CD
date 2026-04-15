@@ -8,19 +8,19 @@
           <div class="nav-left">
             <button @click="router.push('/home')" class="btn-back-clean">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-              <span>Quay lại</span>
+              <span>{{ t('recipe.back') }}</span>
             </button>
             <span class="nav-sep">/</span>
             <span class="category-tag">{{ displayCategory }}</span>
           </div>
 
-          <button class="btn-icon-minimal" @click="openReportModal" title="Báo cáo vi phạm" :disabled="!isPostInteractive">
+          <button class="btn-icon-minimal" @click="openReportModal" :title="t('post_detail.report_violation')" :disabled="!isPostInteractive">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
           </button>
         </div>
 
         <h1 class="recipe-title-display">{{ post.title }}</h1>
-        <p class="recipe-desc-text">{{ post.description || 'Chưa có mô tả chi tiết cho công thức này.' }}</p>
+        <p class="recipe-desc-text">{{ post.description || t('post_detail.no_description') }}</p>
 
         <div class="recipe-stats-group">
           <div class="stat-card-clean">
@@ -28,7 +28,7 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
             </div>
             <div class="stat-info">
-              <span class="s-label">THỜI GIAN</span>
+              <span class="s-label">{{ t('recipe.time_label') }}</span>
               <span class="s-val">{{ post.time || '30 min' }}</span>
             </div>
           </div>
@@ -38,7 +38,7 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 2.4 5.6a4.5 4.5 0 01-1.5 2.3A4.5 4.5 0 0110 21c-2.5 0-4-2-4-4s1.5-3 2.5-2.5z"></path></svg>
             </div>
             <div class="stat-info">
-              <span class="s-label">ĐỘ KHÓ</span>
+              <span class="s-label">{{ t('recipe.difficulty_label') }}</span>
               <span class="s-val">{{ post.difficulty || 'Medium' }}</span>
             </div>
           </div>
@@ -48,7 +48,7 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
             </div>
             <div class="stat-info">
-              <span class="s-label">ĐÁNH GIÁ</span>
+              <span class="s-label">{{ t('admin.posts.stats_rating') }}</span>
               <span class="s-val">{{ displayAvgRating }} ({{ displayRatingCount }})</span>
             </div>
           </div>
@@ -62,7 +62,7 @@
               <div class="tick-badge"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
             </div>
             <div class="auth-text">
-              <span class="auth-sub">Công thức bởi</span>
+              <span class="auth-sub">{{ t('recipe.by') }}</span>
               <span class="auth-name">{{ post.author }}</span>
             </div>
           </div>
@@ -72,14 +72,14 @@
             <div class="action-btn-group">
               <button class="btn-like-clean" :class="{ 'is-liked': isLiked, 'animating': isLikeAnimating }" @click="handleLike" :disabled="isLikeLoading || !isPostInteractive">
                 <svg width="18" height="18" viewBox="0 0 24 24" :fill="isLiked ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-                <span>{{ isLiked ? 'Đã thích' : 'Thích' }}</span>
+                <span>{{ isLiked ? t('comment.liked') : t('comment.like') }}</span>
               </button>
 
               <button class="btn-save-clean" :class="{ 'active': isFavorite }" @click="toggleFavorite" :disabled="isSaving || !isPostInteractive">
                 <svg width="18" height="18" viewBox="0 0 24 24" :fill="isFavorite ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
               </button>
 
-              <button class="btn-share-clean" @click="openShareModal" title="Chia sẻ" :disabled="!isPostInteractive">
+              <button class="btn-share-clean" @click="openShareModal" :title="t('comment.share')" :disabled="!isPostInteractive">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
               </button>
             </div>
@@ -90,8 +90,8 @@
                 <div class="more-avt" v-if="localLikeCount > 3">+{{ localLikeCount - 3 }}</div>
               </div>
               <span class="liked-text">
-                Được thích bởi <b>{{ likedUsersList[0]?.name }}</b>
-                <template v-if="localLikeCount > 1"> và <b>{{ formatNumber(localLikeCount - 1) }} người khác</b></template>
+                {{ t('post_detail.liked_by') }} <b>{{ likedUsersList[0]?.name }}</b>
+                <template v-if="localLikeCount > 1"> {{ t('post_detail.and_others', { count: formatNumber(localLikeCount - 1) }) }}</template>
               </span>
             </div>
 
@@ -104,7 +104,7 @@
         <div class="clean-image-frame">
           <img :src="post.image" :alt="post.title" class="img-cover">
           
-          <div v-if="isNewToday" class="badge-new-top-left">NEW</div>
+          <div v-if="isNewToday" class="badge-new-top-left">{{ t('post_detail.new_badge') }}</div>
 
           <div class="bottom-glass-stats">
             <div class="stat-item">
@@ -113,7 +113,7 @@
             </div>
             <div class="stat-item">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-              <span>{{ formatNumber(post.views) }} xem</span>
+              <span>{{ formatNumber(post.views) }} {{ t('recipe.views_suffix') }}</span>
             </div>
           </div>
         </div>
@@ -126,11 +126,11 @@
         <div v-if="showLikesModal" class="likes-modal-backdrop" @click.self="showLikesModal = false">
           <div class="likes-modal-content">
             <div class="modal-header">
-              <h3>Lượt thích ({{ localLikeCount }})</h3>
+              <h3>{{ t('recipe.likes_title') }} ({{ localLikeCount }})</h3>
               <button class="btn-close-modal" @click="showLikesModal = false">&times;</button>
             </div>
             <div class="modal-body custom-scroll">
-              <div v-if="isFetchingLikes" class="loading-state">Đang tải danh sách...</div>
+              <div v-if="isFetchingLikes" class="loading-state">{{ t('recipe.likes_loading') }}</div>
               <ul v-else class="likes-list">
                 <li v-for="user in likedUsersList" :key="user.id" class="like-user-item" @click="goToProfile(user.id)">
                   <img :src="user.avatar" alt="avt" class="u-avt">
@@ -151,6 +151,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue' 
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { toast } from '@/composables/useToast'
 import api from '@/services/api'
@@ -172,6 +173,7 @@ const props = defineProps({
 })
 const router = useRouter()
 const authStore = useAuthStore()
+const { t } = useI18n()
 
 // --- STATES CƠ BẢN ---
 const isFavorite = ref(false)
@@ -210,7 +212,7 @@ const isPostInteractive = computed(() => {
 
 // --- ACTIONS ---
 const openShareModal = () => {
-    if (!isPostInteractive.value) { toast.warn('Bài viết đang bị ẩn hoặc chờ duyệt, không thể chia sẻ!'); return; }
+    if (!isPostInteractive.value) { toast.warn(t('post_detail.share_disabled')); return; }
     if (!authStore.isAuthenticated) {
         window.dispatchEvent(new CustomEvent('ui:open-login'))
         return
@@ -220,7 +222,7 @@ const openShareModal = () => {
 const goToProfile = (id) => { showLikesModal.value = false; router.push(`/profile/${id}`); }
 
 const openReportModal = () => {
-  if (!isPostInteractive.value) { toast.warn('Bài viết đang bị ẩn hoặc chờ duyệt, không thể thao tác!'); return; }
+  if (!isPostInteractive.value) { toast.warn(t('post_detail.action_disabled')); return; }
   if (!authStore.isAuthenticated) {
     window.dispatchEvent(new CustomEvent('ui:open-login'))
     return
@@ -239,7 +241,7 @@ const fetchLikesList = async () => {
     if (response.data && Array.isArray(response.data)) {
       likedUsersList.value = response.data.map(u => ({
         id: u.accountID || u.userId || u.id,
-        name: u.fullName || u.username || u.name || 'Người dùng',
+        name: u.fullName || u.username || u.name || t('recipe.anonymous_user'),
         avatar: u.avatar || `https://ui-avatars.com/api/?name=${u.fullName || 'U'}&background=ea580c&color=fff`
       }));
       localLikeCount.value = likedUsersList.value.length;
@@ -287,7 +289,7 @@ onUnmounted(() => {
 
 // --- XỬ LÝ NÚT LIKE ---
 const handleLike = async () => {
-  if (!isPostInteractive.value) { toast.warn('Bài viết đang bị ẩn hoặc chờ duyệt, không thể thao tác!'); return; }
+  if (!isPostInteractive.value) { toast.warn(t('post_detail.action_disabled')); return; }
   
   if (!authStore.isAuthenticated) {
     window.dispatchEvent(new CustomEvent('ui:open-login'))
@@ -307,7 +309,7 @@ const handleLike = async () => {
     localLikeCount.value += 1;
     likedUsersList.value.unshift({
       id: myId,
-      name: currentUser.fullName || currentUser.name || 'Bạn',
+      name: currentUser.fullName || currentUser.name || t('recipe.you'),
       avatar: currentUser.avatar || `https://ui-avatars.com/api/?name=U`
     });
   } else {
@@ -324,12 +326,12 @@ const handleLike = async () => {
     isLiked.value = prevLiked; 
     if (prevLiked) {
       localLikeCount.value += 1;
-      likedUsersList.value.unshift({ id: myId, name: currentUser.fullName || 'Bạn', avatar: currentUser.avatar });
+      likedUsersList.value.unshift({ id: myId, name: currentUser.fullName || t('recipe.you'), avatar: currentUser.avatar });
     } else {
       localLikeCount.value = Math.max(0, localLikeCount.value - 1);
       likedUsersList.value = likedUsersList.value.filter(u => u.id !== myId);
     }
-    toast.error("Thao tác thất bại!"); 
+    toast.error(t('post_detail.action_failed')); 
   } finally { 
     isLikeLoading.value = false 
   }
@@ -337,7 +339,7 @@ const handleLike = async () => {
 
 // 🔥 XỬ LÝ NÚT LƯU ĐÃ FIX LỖI BYPASS
 const toggleFavorite = async () => {
-  if (!isPostInteractive.value) { toast.warn('Bài viết đang bị ẩn hoặc chờ duyệt, không thể thao tác!'); return; }
+  if (!isPostInteractive.value) { toast.warn(t('post_detail.action_disabled')); return; }
 
   if (!authStore.isAuthenticated) {
     window.dispatchEvent(new CustomEvent('ui:open-login'))
@@ -359,7 +361,7 @@ const toggleFavorite = async () => {
     if (isFavorite.value) {
       await removeFavorite(uid, pid); 
       isFavorite.value = false;
-      toast.success("Đã bỏ lưu công thức!");
+      toast.success(t('post_detail.unsaved_recipe'));
       window.dispatchEvent(new CustomEvent('sync-favorite', { detail: { id: pid, status: false } }));
     } else {
       if (!hasUnlimitedSave) {
@@ -368,7 +370,7 @@ const toggleFavorite = async () => {
         const currentCount = Array.isArray(favData) ? favData.length : (favData.totalElements || 0);
 
         if (currentCount >= 5) {
-          toast.warn("Bộ sưu tập đã đầy (5/5)! Nâng cấp Premium để lưu không giới hạn sếp nhé.");
+          toast.warn(t('post_detail.favorite_limit_reached'));
           window.dispatchEvent(new CustomEvent('ui:open-premium'));
           isSaving.value = false;
           return; 
@@ -377,12 +379,12 @@ const toggleFavorite = async () => {
       
       await addFavorite(uid, pid); 
       isFavorite.value = true; 
-      toast.success("Đã lưu vào bộ sưu tập!");
+      toast.success(t('post_detail.saved_recipe'));
       window.dispatchEvent(new CustomEvent('sync-favorite', { detail: { id: pid, status: true } }));
     }
   } catch (e) { 
     console.error("Lỗi khi lưu bài:", e);
-    toast.error("Lỗi hệ thống!"); 
+    toast.error(t('post_detail.system_error')); 
   } finally {
     isSaving.value = false;
   }

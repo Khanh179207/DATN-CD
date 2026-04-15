@@ -4,7 +4,7 @@
       
       <div class="modal-lux-card" @click.stop>
         
-        <button class="btn-x-lux" @click="$emit('close')" title="Đóng">
+        <button class="btn-x-lux" @click="$emit('close')" :title="t('appeal.close')">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
 
@@ -12,28 +12,28 @@
           <div class="icon-danger-circle">
             <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
           </div>
-          <h2 class="appeal-title">Khiếu Nại Tài Khoản</h2>
-          <p class="appeal-subtitle">Nếu bạn tin rằng tài khoản của mình bị khóa do nhầm lẫn, vui lòng gửi yêu cầu gỡ ban tới Quản trị viên.</p>
+          <h2 class="appeal-title">{{ t('appeal.title') }}</h2>
+          <p class="appeal-subtitle">{{ t('appeal.subtitle') }}</p>
         </div>
 
         <form @submit.prevent="handleSubmit" class="appeal-form-lux">
           
           <div class="form-group-lux">
-            <label for="appeal-email">Email đăng ký tài khoản <span class="req">*</span></label>
+            <label for="appeal-email">{{ t('appeal.email_label') }}</label>
             <div class="input-wrapper">
               <span class="input-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
               </span>
-              <input v-model="formData.email" type="email" id="appeal-email" placeholder="Nhập chính xác email của bạn..." required class="input-lux" :disabled="isSubmitting"/>
+              <input v-model="formData.email" type="email" id="appeal-email" :placeholder="t('appeal.email_placeholder')" required class="input-lux" :disabled="isSubmitting"/>
             </div>
           </div>
 
           <div class="form-group-lux mt-4">
             <div class="label-row">
-              <label for="appeal-reason">Lý do khiếu nại (Trình bày chi tiết) <span class="req">*</span></label>
+              <label for="appeal-reason">{{ t('appeal.reason_label') }}</label>
               <span class="char-count" :class="{'text-red': formData.reason.length >= 2000}">{{ formData.reason.length }}/2000</span>
             </div>
-            <textarea v-model="formData.reason" id="appeal-reason" placeholder="Ví dụ: Tôi không hề vi phạm nội quy" required rows="4" class="input-lux textarea-lux" :disabled="isSubmitting" maxlength="2000"></textarea>
+            <textarea v-model="formData.reason" id="appeal-reason" :placeholder="t('appeal.reason_placeholder')" required rows="4" class="input-lux textarea-lux" :disabled="isSubmitting" maxlength="2000"></textarea>
           </div>
 
           <div v-if="submitError" class="alert-box error-alert mt-4">
@@ -43,20 +43,20 @@
 
           <div v-if="submitSuccess" class="alert-box success-alert mt-4">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            <span>Yêu cầu đã được gửi thành công! Admin sẽ phản hồi bạn qua Email trong 24h tới.</span>
+            <span>{{ t('appeal.success_banner') }}</span>
           </div>
 
           <div class="form-actions-lux mt-6">
             <button v-if="!submitSuccess" type="button" class="btn-lux btn-cancel" @click="$emit('close')">
-              Hủy bỏ
+              {{ t('appeal.cancel') }}
             </button>
             <button v-if="!submitSuccess" type="submit" class="btn-lux btn-submit" :disabled="isSubmitting || !formData.email.trim() || !formData.reason.trim()">
               <svg v-if="isSubmitting" class="spinner" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>
-              {{ isSubmitting ? 'Đang gửi đi...' : 'Gửi Yêu Cầu Gỡ Ban' }}
+              {{ isSubmitting ? t('appeal.sending') : t('appeal.submit') }}
             </button>
             
             <button v-if="submitSuccess" type="button" class="btn-lux btn-submit w-full" @click="$emit('close')">
-              Xong & Đóng Cửa Sổ
+              {{ t('appeal.done_close') }}
             </button>
           </div>
         </form>
@@ -67,10 +67,12 @@
 
 <script setup>
 import { ref, onMounted, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { toast } from '@/composables/useToast'
 import { createAppeal } from '@/services/appealService'
 
 const emit = defineEmits(['close'])
+const { t } = useI18n()
 const overlayRef = ref(null)
 
 const isOpen = ref(false)
@@ -85,7 +87,7 @@ const formData = ref({
 
 const handleSubmit = async () => {
   if (!formData.value.email.trim() || !formData.value.reason.trim()) {
-    submitError.value = 'Vui lòng điền đầy đủ thông tin'
+    submitError.value = t('appeal.required')
     return
   }
 
@@ -107,12 +109,12 @@ const handleSubmit = async () => {
   } catch (error) {
     if (error.response?.status === 404) {
       submitSuccess.value = true
-      toast.success('Khiếu nại đã gửi! (Test Mode)')
+      toast.success(t('appeal.submit_ok_test'))
       setTimeout(() => emit('close'), 3000)
       return
     }
 
-    submitError.value = error.response?.data?.message || error.message || 'Lỗi khi gửi khiếu nại. Vui lòng thử lại.'
+    submitError.value = error.response?.data?.message || error.message || t('appeal.submit_failed')
   } finally {
     isSubmitting.value = false
   }

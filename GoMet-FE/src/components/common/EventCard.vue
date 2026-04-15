@@ -25,11 +25,11 @@
       <div class="event-meta">
         <div class="meta-row">
           <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-          <span>Thời gian: <strong>{{ event.time }}</strong></span>
+          <span>{{ t('events.time_label') }} <strong>{{ event.time }}</strong></span>
         </div>
         <div class="meta-row">
           <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-          <span>Đã có <strong>{{ event.totalAttendees }}</strong> bài dự thi</span>
+          <span>{{ t('events.entries_ready', { count: event.totalAttendees }) }}</span>
         </div>
       </div>
 
@@ -40,12 +40,12 @@
         </div>
         
         <button v-if="event.category !== 'ended'" class="btn-action btn-join" :class="{ joined: event.isJoined }" @click.stop="handleJoin">
-          <span>{{ event.isJoined ? 'Đã tham gia' : 'Tham gia' }}</span>
+          <span>{{ event.isJoined ? t('events.joined') : t('events.join') }}</span>
           <svg v-if="!event.isJoined" class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
         </button>
         
         <button v-else class="btn-action btn-view" @click.stop="goToDetail">
-          <span>Xem kết quả</span>
+          <span>{{ t('events.view_results') }}</span>
           <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
         </button>
       </div>
@@ -57,27 +57,29 @@
 <script setup>
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps({ event: Object })
 const router = useRouter()
+const { t } = useI18n()
 
 const timeLeftText = computed(() => {
-  if (props.event.category === 'ended') return 'Đã kết thúc'
-  if (props.event.category === 'upcoming') return 'Sắp mở cổng'
-  if (!props.event.rawEndAt) return 'Đang diễn ra'
+  if (props.event.category === 'ended') return t('events.countdown_ended')
+  if (props.event.category === 'upcoming') return t('events.countdown_upcoming')
+  if (!props.event.rawEndAt) return t('events.active')
 
   const end = new Date(props.event.rawEndAt)
   const now = new Date()
   const diffTime = Math.abs(end - now)
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
-  return `Còn lại ${diffDays} ngày`
+  return t('events.remaining_days', { count: diffDays })
 })
 
 const statusText = computed(() => {
-  if (props.event.category === 'active') return 'Đang diễn ra'
-  if (props.event.category === 'upcoming') return 'Sắp diễn ra'
-  return 'Đã kết thúc'
+  if (props.event.category === 'active') return t('events.active')
+  if (props.event.category === 'upcoming') return t('events.upcoming')
+  return t('events.ended')
 })
 
 const goToDetail = () => {

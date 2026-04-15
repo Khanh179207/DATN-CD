@@ -5,11 +5,11 @@
 
     <div class="dash-header animate-fade-down">
       <div class="header-left">
-        <h1 class="page-title">Trạm Điều Hành</h1>
-        <p class="page-subtitle">Giám sát hoạt động và vận hành hệ thống GoMet <span class="live-dot"></span></p>
+        <h1 class="page-title">{{ t('admin.dashboard.title') }}</h1>
+        <p class="page-subtitle">{{ t('admin.dashboard.subtitle') }} <span class="live-dot"></span></p>
       </div>
       <button class="btn-refresh" @click="fetchAll" :disabled="loading">
-        <RefreshCcw :size="16" :class="{'spinning': loading}" /> Đồng bộ dữ liệu
+        <RefreshCcw :size="16" :class="{'spinning': loading}" /> {{ t('admin.dashboard.refresh') }}
       </button>
     </div>
 
@@ -17,12 +17,12 @@
       
       <div class="bento-card col-span-2 post-card animate-stagger" style="--i:1">
         <div class="card-header">
-          <div class="h-title"><div class="icon-wrap bg-orange"><FileSignature :size="18" /></div> Chờ phê duyệt</div>
-          <router-link to="/admin/posts" class="btn-pill">Quản lý ({{ stats.pendingPosts }})</router-link>
+          <div class="h-title"><div class="icon-wrap bg-orange"><FileSignature :size="18" /></div> {{ t('admin.dashboard.pending_posts') }}</div>
+          <router-link to="/admin/posts" class="btn-pill">{{ t('admin.dashboard.manage') }} ({{ stats.pendingPosts }})</router-link>
         </div>
         <div class="card-body scrollable">
-          <div v-if="loading" class="loading-state"><Loader2 :size="18" class="spinning" style="margin-right: 8px;" /> Đang tải dữ liệu...</div>
-          <div v-else-if="data.posts.length === 0" class="empty-state">Không có bài viết nào chờ duyệt</div>
+          <div v-if="loading" class="loading-state"><Loader2 :size="18" class="spinning" style="margin-right: 8px;" /> {{ t('admin.dashboard.loading') }}</div>
+          <div v-else-if="data.posts.length === 0" class="empty-state">{{ t('admin.dashboard.no_pending_posts') }}</div>
           
           <div v-for="post in data.posts" :key="post.id" class="list-item-row">
             <img :src="post.image" class="item-thumb" />
@@ -30,12 +30,12 @@
               <span class="i-title">{{ post.title }}</span>
               <div class="i-author">
                 <img :src="post.authorAvatar" class="avatar-xs" />
-                <span class="i-sub">Bởi <b class="text-dark">{{ post.author }}</b> • {{ post.time }}</span>
+                <span class="i-sub">{{ t('admin.dashboard.by') }} <b class="text-dark">{{ post.author }}</b> • {{ post.time }}</span>
               </div>
             </div>
             <div class="item-actions">
-              <button @click="approvePost(post.id)" class="btn-act check" title="Duyệt bài"><Check :size="16" /></button>
-              <button @click="askRejectPost(post)" class="btn-act cross" title="Từ chối"><X :size="16" /></button>
+              <button @click="approvePost(post.id)" class="btn-act check" :title="t('admin.dashboard.approve_action')"><Check :size="16" /></button>
+              <button @click="askRejectPost(post)" class="btn-act cross" :title="t('admin.dashboard.reject_action')"><X :size="16" /></button>
             </div>
           </div>
         </div>
@@ -43,11 +43,11 @@
 
       <div class="bento-card border-red animate-stagger" style="--i:2">
         <div class="card-header">
-          <div class="h-title text-red"><div class="icon-wrap bg-red"><Flag :size="18" /></div> Khiếu Nại</div>
+          <div class="h-title text-red"><div class="icon-wrap bg-red"><Flag :size="18" /></div> {{ t('admin.dashboard.appeals') }}</div>
           <span class="count-badge red">{{ stats.pendingAppeals }}</span>
         </div>
         <div class="card-body scrollable">
-          <div v-if="data.appeals.length === 0" class="empty-state-sm">Không có khiếu nại</div>
+          <div v-if="data.appeals.length === 0" class="empty-state-sm">{{ t('admin.dashboard.no_appeals') }}</div>
           <div v-for="ap in data.appeals" :key="ap.id" class="report-row">
             <div class="rp-info">
               <div class="rp-top-line">
@@ -63,11 +63,11 @@
 
       <div class="bento-card border-cyan animate-stagger" style="--i:3">
         <div class="card-header">
-          <div class="h-title text-cyan"><div class="icon-wrap bg-cyan"><Headset :size="18" /></div> Hỗ Trợ (Tickets)</div>
+          <div class="h-title text-cyan"><div class="icon-wrap bg-cyan"><Headset :size="18" /></div> {{ t('admin.dashboard.tickets') }}</div>
           <span class="count-badge cyan">{{ stats.openTickets }}</span>
         </div>
         <div class="card-body scrollable">
-          <div v-if="data.tickets.length === 0" class="empty-state-sm">Hộp thư rỗng</div>
+          <div v-if="data.tickets.length === 0" class="empty-state-sm">{{ t('admin.dashboard.empty_inbox') }}</div>
           <div v-for="tk in data.tickets" :key="tk.id" class="report-row cyan-row">
             <div class="rp-info">
               <span class="tag-reason cyan-tag">{{ tk.typeLabel }}</span>
@@ -81,11 +81,11 @@
 
       <div class="bento-card comment-card animate-stagger" style="--i:4">
         <div class="card-header">
-          <div class="h-title"><div class="icon-wrap bg-purple"><MessageSquare :size="18" /></div> Bình luận mới</div>
+          <div class="h-title"><div class="icon-wrap bg-purple"><MessageSquare :size="18" /></div> {{ t('admin.dashboard.new_comments') }}</div>
           <router-link to="/admin/comments" class="icon-link"><ExternalLink :size="16" /></router-link>
         </div>
         <div class="card-body scrollable">
-          <div v-if="data.comments.length === 0" class="empty-state-sm">Chưa có bình luận</div>
+          <div v-if="data.comments.length === 0" class="empty-state-sm">{{ t('admin.dashboard.no_comments') }}</div>
           <div v-for="cmt in data.comments" :key="cmt.id" class="chat-bubble-wrap">
             <img :src="cmt.avatar" class="chat-avatar" />
             <div class="chat-bubble">
@@ -98,11 +98,11 @@
 
       <div class="bento-card user-card animate-stagger" style="--i:5">
         <div class="card-header">
-          <div class="h-title"><div class="icon-wrap bg-green"><UserPlus :size="18" /></div> Hội viên mới</div>
+          <div class="h-title"><div class="icon-wrap bg-green"><UserPlus :size="18" /></div> {{ t('admin.dashboard.new_members') }}</div>
           <router-link to="/admin/users" class="icon-link"><ExternalLink :size="16" /></router-link>
         </div>
         <div class="card-body scrollable row-flex">
-          <div v-if="data.users.length === 0" class="empty-state-sm">Chưa có người dùng mới</div>
+          <div v-if="data.users.length === 0" class="empty-state-sm">{{ t('admin.dashboard.no_new_users') }}</div>
           <div v-for="u in data.users" :key="u.id" class="user-chip">
             <img :src="u.avatar" class="avatar-sm" />
             <div class="u-info">
@@ -115,11 +115,11 @@
 
       <div class="bento-card event-card animate-stagger" style="--i:6">
         <div class="card-header">
-          <div class="h-title"><div class="icon-wrap bg-blue"><CalendarCheck :size="18" /></div> Sự kiện</div>
+          <div class="h-title"><div class="icon-wrap bg-blue"><CalendarCheck :size="18" /></div> {{ t('admin.dashboard.events') }}</div>
           <router-link to="/admin/events" class="icon-link"><ExternalLink :size="16" /></router-link>
         </div>
         <div class="card-body scrollable">
-          <div v-if="data.events.length === 0" class="empty-state-sm">Không có sự kiện</div>
+          <div v-if="data.events.length === 0" class="empty-state-sm">{{ t('admin.dashboard.no_events') }}</div>
           <div v-for="ev in data.events" :key="ev.id" class="event-block">
             <div class="date-box">
               <span class="d">{{ ev.date.d }}</span><span class="m">{{ ev.date.m }}</span>
@@ -134,11 +134,11 @@
 
       <div class="bento-card noti-card col-span-2 animate-stagger" style="--i:7">
         <div class="card-header">
-          <div class="h-title"><div class="icon-wrap bg-slate"><Zap :size="18" /></div> Hoạt động gần đây</div>
-          <router-link to="/admin/notifications" class="link-text">Xem tất cả</router-link>
+          <div class="h-title"><div class="icon-wrap bg-slate"><Zap :size="18" /></div> {{ t('admin.dashboard.recent_activity') }}</div>
+          <router-link to="/admin/notifications" class="link-text">{{ t('admin.dashboard.view_all') }}</router-link>
         </div>
         <div class="card-body h-flex scrollable">
-          <div v-if="data.notifications.length === 0" class="empty-state-sm">Hệ thống đang yên tĩnh</div>
+          <div v-if="data.notifications.length === 0" class="empty-state-sm">{{ t('admin.dashboard.quiet_system') }}</div>
           <div v-for="notif in data.notifications" :key="notif.id" class="noti-pill">
             <div class="dot"></div> 
             <div class="n-content">
@@ -158,25 +158,25 @@
           <div class="action-icon bg-red-light text-red">
             <Ban :size="28" />
           </div>
-          <h3>Từ chối bài viết?</h3>
-          <p>Xác nhận từ chối bài viết <strong>"{{ rejectModal.title }}"</strong>?</p>
+          <h3>{{ t('admin.dashboard.reject_title') }}</h3>
+          <p>{{ t('admin.dashboard.reject_confirm', { title: rejectModal.title }) }}</p>
           
           <div class="reason-input-group">
-            <label for="rejectReason">Lý do từ chối (bắt buộc):</label>
+            <label for="rejectReason">{{ t('admin.dashboard.reject_reason') }}</label>
             <textarea 
               id="rejectReason" 
               v-model="rejectModal.reason" 
-              placeholder="Vui lòng nhập lý do từ chối..." 
+              :placeholder="t('admin.dashboard.reject_reason_placeholder')" 
               rows="3" 
               class="reason-textarea"
             ></textarea>
-            <span v-if="rejectModal.showError" class="error-msg">Bạn phải nhập lý do!</span>
+            <span v-if="rejectModal.showError" class="error-msg">{{ t('admin.dashboard.reject_reason_required') }}</span>
           </div>
 
           <div class="action-btns">
-            <button class="btn-cancel" @click="rejectModal.show = false">Hủy bỏ</button>
+            <button class="btn-cancel" @click="rejectModal.show = false">{{ t('admin.posts.cancel') }}</button>
             <button class="btn-confirm btn-danger" @click="confirmRejectPost">
-              Xác nhận
+              {{ t('admin.common.confirm') }}
             </button>
           </div>
         </div>
@@ -186,7 +186,8 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted } from 'vue'
+import { reactive, ref, onMounted, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
 import { toast } from '@/composables/useToast'
 import {
@@ -199,10 +200,11 @@ const stats = reactive({ pendingPosts: 0, pendingAppeals: 0, openTickets: 0 })
 const data = reactive({ posts: [], appeals: [], tickets: [], events: [], users: [], comments: [], notifications: [] })
 const loading = ref(true)
 const authStore = useAuthStore()
+const { t, locale } = useI18n()
+const currentLocale = computed(() => locale.value === 'vi' ? 'vi-VN' : 'en-US')
 
 const rejectModal = ref({ show: false, postId: null, title: '', reason: '', showError: false })
 
-// Hàm helper dịch Status Khiếu nại (Appeals)
 const getAppealStatusClass = (status) => {
   const s = String(status).toUpperCase();
   if (s === 'PENDING' || s === '0') return 'tag-pending';
@@ -213,10 +215,31 @@ const getAppealStatusClass = (status) => {
 
 const getAppealStatusLabel = (status) => {
   const s = String(status).toUpperCase();
-  if (s === 'PENDING' || s === '0') return 'Chờ duyệt';
-  if (s === 'APPROVED' || s === '1') return 'Đã mở khóa';
-  if (s === 'REJECTED' || s === '2' || s === '-1') return 'Từ chối';
-  return 'Không rõ';
+  if (s === 'PENDING' || s === '0') return t('admin.dashboard.appeal_pending');
+  if (s === 'APPROVED' || s === '1') return t('admin.dashboard.appeal_approved');
+  if (s === 'REJECTED' || s === '2' || s === '-1') return t('admin.dashboard.appeal_rejected');
+  return t('admin.dashboard.appeal_unknown');
+}
+
+const formatDate = (value, fallbackKey = 'admin.dashboard.recently') => {
+  if (!value) return t(fallbackKey)
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return t(fallbackKey)
+  return new Intl.DateTimeFormat(currentLocale.value, {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  }).format(date)
+}
+
+const getEventDateParts = (value) => {
+  if (!value) return { d: '--', m: '--' }
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return { d: '--', m: '--' }
+  return {
+    d: new Intl.DateTimeFormat(currentLocale.value, { day: '2-digit' }).format(date),
+    m: new Intl.DateTimeFormat(currentLocale.value, { month: 'short' }).format(date)
+  }
 }
 
 const fetchAll = async () => {
@@ -246,7 +269,7 @@ const fetchAll = async () => {
           title: p.title, 
           author: authorName,
           authorAvatar: authorAvatar,
-          time: p.createdAt ? new Date(p.createdAt).toLocaleDateString('vi-VN') : 'Mới đây',
+          time: formatDate(p.createdAt, 'admin.dashboard.just_now'),
           image: p.image || p.media || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.title?.charAt(0) || 'P')}&background=f8fafc`
         }
       })
@@ -260,10 +283,10 @@ const fetchAll = async () => {
       // Lấy 4 cái mới nhất (Không bắt buộc phải là PENDING)
       data.appeals = allAppeals.slice(0, 4).map(a => ({
         id: a.appealID || a.id,
-        email: a.email || 'Không rõ',
+        email: a.email || t('admin.dashboard.appeal_unknown'),
         statusRaw: a.status,
         statusLabel: getAppealStatusLabel(a.status),
-        time: a.createdAt ? new Date(a.createdAt).toLocaleDateString('vi-VN') : 'Gần đây'
+        time: formatDate(a.createdAt, 'admin.dashboard.recently')
       }));
 
       // Đếm riêng số PENDING cho cái Badge màu đỏ trên đỉnh card
@@ -280,9 +303,9 @@ const fetchAll = async () => {
       // Hiển thị 3 cái mới nhất
       data.tickets = allTickets.slice(0, 3).map(t => ({
         id: t.ticketID || t.id, 
-        typeLabel: t.ticketType || t.issueType || 'Hỗ trợ', 
+        typeLabel: t.ticketType || t.issueType || t('admin.dashboard.support'), 
         title: t.title || t.description || `Ticket #${t.ticketID || t.id}`,
-        sender: t.username || t.accountName || t.account?.username || 'Khách'
+        sender: t.username || t.accountName || t.account?.username || t('admin.dashboard.guest')
       }))
     }
 
@@ -296,7 +319,7 @@ const fetchAll = async () => {
           id: c.commentID || c.id, 
           user: username, 
           content: c.content || c.text,
-          time: c.createdAt ? new Date(c.createdAt).toLocaleDateString('vi-VN') : '',
+          time: formatDate(c.createdAt, 'admin.dashboard.just_now'),
           avatar: avatar
         }
       })
@@ -306,14 +329,13 @@ const fetchAll = async () => {
     if (usersRes.status === 'fulfilled') {
       data.users = (usersRes.value.data || []).slice(-4).reverse().map(u => ({
         id: u.accountID, name: u.username, 
-        role: u.isAdmin ? 'Admin' : (u.isPremium ? 'Premium' : 'Member'),
+        role: u.isAdmin ? t('admin.dashboard.role_admin') : (u.isPremium ? t('admin.dashboard.role_premium') : t('admin.dashboard.role_member')),
         avatar: u.avatar || `https://ui-avatars.com/api/?name=${u.username}&background=10B981&color=fff`
       }))
     }
 
     // 6. SỰ KIỆN (EVENTS)
     if (eventsRes.status === 'fulfilled') {
-      const monthAbbr = ['Th1','Th2','Th3','Th4','Th5','Th6','Th7','Th8','Th9','Th10','Th11','Th12']
       const now = new Date()
       data.events = (eventsRes.value.data || []).slice(0, 3).map(e => {
         const start = e.startAt ? new Date(e.startAt) : null
@@ -321,7 +343,7 @@ const fetchAll = async () => {
         const isActive = start && end && now >= start && now <= end
         return {
           id: e.eventID, title: e.eventName,
-          date: start ? { d: String(start.getDate()).padStart(2,'0'), m: monthAbbr[start.getMonth()] } : { d: '--', m: '--' },
+          date: getEventDateParts(start),
           participants: isActive ? Math.floor(Math.random() * 40) + 40 : 100
         }
       })
@@ -332,7 +354,7 @@ const fetchAll = async () => {
       data.notifications = (notifRes.value.data || []).slice(0, 4).map(n => ({
         id: n.notificationID || n.id, 
         content: n.content || n.title || n.message, 
-        time: n.createdAt ? new Date(n.createdAt).toLocaleDateString('vi-VN') : 'Gần đây'
+        time: formatDate(n.createdAt, 'admin.dashboard.recently')
       }))
     }
 
@@ -352,8 +374,8 @@ const approvePost = async (id) => {
     await api.put(`/api/admin/posts/approve/${id}`, payload)
     data.posts = data.posts.filter(p => p.id !== id)
     stats.pendingPosts = Math.max(0, stats.pendingPosts - 1)
-    toast.success('Đã duyệt bài viết')
-  } catch (e) { toast.error('Lỗi duyệt bài: ' + (e.response?.data?.message || e.message)) }
+    toast.success(t('admin.dashboard.approve_ok'))
+  } catch (e) { toast.error(`${t('admin.dashboard.approve_fail_prefix')} ${(e.response?.data?.message || e.message)}`) }
 }
 
 const askRejectPost = (post) => {
@@ -376,9 +398,9 @@ const confirmRejectPost = async () => {
     await api.put(`/api/admin/posts/${rejectModal.value.postId}/reject`, payload)
     data.posts = data.posts.filter(p => p.id !== rejectModal.value.postId)
     stats.pendingPosts = Math.max(0, stats.pendingPosts - 1)
-    toast.info('Đã từ chối bài viết')
+    toast.info(t('admin.dashboard.reject_ok'))
     rejectModal.value.show = false
-  } catch (e) { toast.error('Lỗi từ chối: ' + (e.response?.data?.message || e.message)) }
+  } catch (e) { toast.error(`${t('admin.dashboard.reject_fail_prefix')} ${(e.response?.data?.message || e.message)}`) }
 }
 
 onMounted(fetchAll)

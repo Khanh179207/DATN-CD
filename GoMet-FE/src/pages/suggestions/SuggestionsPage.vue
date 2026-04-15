@@ -9,16 +9,16 @@
     <div class="vault-interface">
       <header class="vault-header">
         <div class="brand-box">
-          <span class="brand-sub">GoMet Premium</span>
+          <span class="brand-sub">{{ t('suggestions.brand_sub') }}</span>
           <h1 class="brand-main">
-            {{ activeMode === 'hub' ? 'Khu Vui Chơi' : 
-               (activeMode === 'spin' ? 'Vòng Số Phận' : 
-               (activeMode === 'quiz' ? 'Khám Phá Khẩu Vị' : 'Bài Tarot Ẩm Thực')) }}
+            {{ activeMode === 'hub' ? t('suggestions.title_hub') : 
+               (activeMode === 'spin' ? t('suggestions.spin_title') : 
+               (activeMode === 'quiz' ? t('suggestions.quiz_title') : t('suggestions.tarot_title'))) }}
           </h1>
         </div>
         
         <button v-if="activeMode !== 'hub'" class="btn-back-elegant" @click="returnToHub">
-          <span>Trở về</span>
+          <span>{{ t('suggestions.go_back') }}</span>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -29,7 +29,7 @@
       <transition name="fade-up" mode="out-in">
         <div v-if="activeMode === 'hub'" class="hub-container">
           <div class="hub-intro">
-            <p>Khám phá định mệnh ẩm thực của bạn qua những thẻ bài ma thuật.</p>
+            <p>{{ t('suggestions.hub_intro') }}</p>
           </div>
 
           <div class="cards-wrapper">
@@ -39,13 +39,13 @@
                   <div class="card-visual">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6V12L16 14"/></svg>
                   </div>
-                  <h3>Vòng Số Phận</h3>
-                  <div class="tap-hint">Chạm để xem chi tiết</div>
+                  <h3>{{ t('suggestions.spin_title') }}</h3>
+                  <div class="tap-hint">{{ t('suggestions.card_tap_hint') }}</div>
                 </div>
                 <div class="flip-card-back">
                   <div class="back-content">
-                    <p>Để vũ trụ xoay vần và chọn ra món ăn hoàn hảo cho bạn một cách ngẫu nhiên nhất.</p>
-                    <button class="btn-play-now" @click.stop="enterGame('spin')">Bắt đầu quay</button>
+                    <p>{{ t('suggestions.spin_long_desc') }}</p>
+                    <button class="btn-play-now" @click.stop="enterGame('spin')">{{ t('suggestions.spin_cta') }}</button>
                   </div>
                 </div>
               </div>
@@ -57,13 +57,13 @@
                   <div class="card-visual">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
                   </div>
-                  <h3>Khám Phá Khẩu Vị</h3>
-                  <div class="tap-hint">Chạm để xem chi tiết</div>
+                  <h3>{{ t('suggestions.quiz_title') }}</h3>
+                  <div class="tap-hint">{{ t('suggestions.card_tap_hint') }}</div>
                 </div>
                 <div class="flip-card-back">
                   <div class="back-content">
-                    <p>Trả lời 3 câu hỏi tinh tế về tâm trạng và sở thích để tìm ra hương vị chân ái.</p>
-                    <button class="btn-play-now" @click.stop="enterGame('quiz')">Bắt đầu giải đố</button>
+                    <p>{{ t('suggestions.quiz_long_desc') }}</p>
+                    <button class="btn-play-now" @click.stop="enterGame('quiz')">{{ t('suggestions.quiz_cta') }}</button>
                   </div>
                 </div>
               </div>
@@ -75,13 +75,13 @@
                   <div class="card-visual">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                   </div>
-                  <h3>Bài Tarot Ẩm Thực</h3>
-                  <div class="tap-hint">Chạm để xem chi tiết</div>
+                  <h3>{{ t('suggestions.tarot_title') }}</h3>
+                  <div class="tap-hint">{{ t('suggestions.card_tap_hint') }}</div>
                 </div>
                 <div class="flip-card-back">
                   <div class="back-content">
-                    <p>Kết nối năng lượng cá nhân với vũ trụ để nhận thông điệp qua những lá bài định mệnh.</p>
-                    <button class="btn-play-now" @click.stop="enterGame('tarot')">Trải bài ngay</button>
+                    <p>{{ t('suggestions.tarot_long_desc') }}</p>
+                    <button class="btn-play-now" @click.stop="enterGame('tarot')">{{ t('suggestions.tarot_cta') }}</button>
                   </div>
                 </div>
               </div>
@@ -106,18 +106,18 @@
             </div>
             <div class="modal-info-col">
               <div class="info-top">
-                <span class="match-badge">Tuyệt tác được chọn</span>
+                <span class="match-badge">{{ t('suggestions.match_badge') }}</span>
                 <h2>{{ resultDish.name }}</h2>
                 <p>"{{ resultDish.description }}"</p>
               </div>
               <div class="info-grid">
-                <div class="i-item"><label>Thời gian</label><span>{{ resultDish.time }}</span></div>
-                <div class="i-item"><label>Độ khó</label><span>{{ resultDish.difficulty }}</span></div>
-                <div class="i-item"><label>Phong cách</label><span>{{ resultDish.flavor || 'Tinh tế' }}</span></div>
+                <div class="i-item"><label>{{ t('suggestions.lbl_time') }}</label><span>{{ resultDish.time }}</span></div>
+                <div class="i-item"><label>{{ t('suggestions.lbl_diff') }}</label><span>{{ resultDish.difficulty }}</span></div>
+                <div class="i-item"><label>{{ t('suggestions.lbl_flavor') }}</label><span>{{ resultDish.flavor || t('suggestions.default_flavor') }}</span></div>
               </div>
               <div class="info-actions">
-                <button class="btn-premium-action" @click="goToDetail">Xem Công Thức</button>
-                <button class="btn-outline-action" @click="closeResult">Thử Lại</button>
+                <button class="btn-premium-action" @click="goToDetail">{{ t('suggestions.view_recipe') }}</button>
+                <button class="btn-outline-action" @click="closeResult">{{ t('suggestions.try_again') }}</button>
               </div>
             </div>
           </div>
@@ -130,6 +130,7 @@
 <script setup>
 import { ref, onMounted, defineAsyncComponent } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { getSuggestedPosts } from '@/services/postService'
 
 const SpinGame = defineAsyncComponent(() => import('@/components/suggestions/SpinGame.vue'))
@@ -137,6 +138,7 @@ const QuizGame = defineAsyncComponent(() => import('@/components/suggestions/Qui
 const TarotGame = defineAsyncComponent(() => import('@/components/suggestions/TarotGame.vue'))
 
 const router = useRouter()
+const { t } = useI18n()
 const dishes = ref([])
 const activeMode = ref('hub')
 const flippedCard = ref(null) // Quản lý thẻ nào đang lật
@@ -163,8 +165,8 @@ onMounted(async () => {
     dishes.value = raw.map(dto => ({
       id: dto.postID, name: dto.title, category: dto.categoryName || 'Premium',
       time: dto.cookingTime ? `${dto.cookingTime} min` : '—',
-      difficulty: { 1: 'Dễ', 2: 'Vừa', 3: 'Khó' }[dto.level] || 'Vừa',
-      image: dto.media, description: dto.description || 'Tuyệt tác ẩm thực GoMet.'
+      difficulty: { 1: t('compare.diff_easy'), 2: t('compare.diff_medium'), 3: t('compare.diff_hard') }[dto.level] || t('compare.diff_medium'),
+      image: dto.media, description: dto.description || t('suggestions.hint')
     }))
   } catch (e) {}
 })

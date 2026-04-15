@@ -7,22 +7,22 @@
           
           <div v-if="!isThankYouScreen" key="expired" class="card-content">
             <div class="icon-box">⚠️</div>
-            <h3 class="expired-title">Gói Premium đã hết hạn!</h3>
-            <p class="expired-desc">Phiên trải nghiệm Premium của bạn đã kết thúc. Hãy nâng cấp để tiếp tục sử dụng các đặc quyền không giới hạn.</p>
+            <h3 class="expired-title">{{ t('expired_modal.title') }}</h3>
+            <p class="expired-desc">{{ t('expired_modal.description') }}</p>
             
             <div class="action-buttons">
-              <button class="btn-renew" @click="handleRenew">Gia hạn ngay</button>
-              <button class="btn-cancel" @click="handleCancelClick">Quay về bản Free</button>
+              <button class="btn-renew" @click="handleRenew">{{ t('expired_modal.renew') }}</button>
+              <button class="btn-cancel" @click="handleCancelClick">{{ t('expired_modal.back_to_free') }}</button>
             </div>
           </div>
 
           <div v-else key="thankyou" class="card-content">
             <div class="icon-box">💖</div>
-            <h3 class="expired-title">Cảm ơn bạn!</h3>
-            <p class="expired-desc">Hy vọng bạn đã có những giây phút trải nghiệm tuyệt vời. Tài khoản của bạn đã được chuyển về phiên bản miễn phí.</p>
+            <h3 class="expired-title">{{ t('expired_modal.thanks_title') }}</h3>
+            <p class="expired-desc">{{ t('expired_modal.thanks_description') }}</p>
             
             <div class="action-buttons">
-              <button class="btn-renew" @click="handleCloseFinal">Tiếp tục sử dụng GoMet</button>
+              <button class="btn-renew" @click="handleCloseFinal">{{ t('expired_modal.continue_using') }}</button>
             </div>
           </div>
           
@@ -36,6 +36,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 
 const props = defineProps({ isOpen: Boolean });
@@ -43,6 +44,7 @@ const emit = defineEmits(['renew', 'cancel']);
 
 const authStore = useAuthStore()
 const router = useRouter()
+const { t } = useI18n()
 
 const isThankYouScreen = ref(false)
 

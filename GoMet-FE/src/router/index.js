@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { toast } from '@/composables/useToast'
+import i18n from '@/i18n'
 
 // --- 1. LAYOUTS (Giữ DefaultLayout nạp trực tiếp để trang chủ hiện ngay lập tức) ---
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
@@ -189,11 +190,11 @@ router.beforeEach((to, from, next) => {
 // 1. Admin-only routes
   if (to.matched.some(r => r.meta?.requiresAdmin)) {
     if (!isLoggedIn) {
-      toast.error('Vui lòng đăng nhập để truy cập trang này')
+      toast.error(i18n.global.t('route_guard.login_for_page'))
       return next({ path: '/', query: { redirect: to.fullPath } })
     }
     if (!isAdmin) {
-      toast.error('Bạn không có quyền truy cập trang quản trị')
+      toast.error(i18n.global.t('route_guard.no_access'))
       return next({ path: '/home' })
     }
 
@@ -204,7 +205,7 @@ router.beforeEach((to, from, next) => {
     // Kiểm tra tên route hiện tại có nằm trong danh sách cấm không, và ID có phải là 1 không
     // (Dùng Number() để đề phòng trường hợp ID lưu dưới dạng chuỗi '1')
     if (superAdminRoutes.includes(to.name) && Number(user?.accountID) !== 1 && Number(user?.id) !== 1) {
-      toast.error('Cấm truy cập! Chỉ Giám đốc hệ thống mới có quyền xem khu vực này.');
+      toast.error(i18n.global.t('route_guard.super_admin_only'));
       return next({ path: '/admin/dashboard' }); // Đá văng về trang Dashboard chung của Admin
     }
   }
@@ -214,7 +215,7 @@ router.beforeEach((to, from, next) => {
       return next(); // Ngoại lệ cho VNPAY Callback
     }
     if (!isLoggedIn) {
-      toast.error('Vui lòng đăng nhập để xem chi tiết')
+      toast.error(i18n.global.t('route_guard.login_for_detail'))
       return next({ path: '/home', query: { login: '1' } })
     }
   }
@@ -222,11 +223,11 @@ router.beforeEach((to, from, next) => {
   // 3. Premium-only routes
   if (to.matched.some(r => r.meta?.requiresPremium)) {
     if (!isLoggedIn) {
-      toast.warn('Vui lòng đăng nhập để sử dụng tính năng Premium')
+      toast.warn(i18n.global.t('route_guard.login_for_premium'))
       return next({ path: '/home', query: { login: '1' } })
     }
     if (!isPremium && !isAdmin) { // Admin cũng được phép xem Premium
-      toast.warn('Tính năng này chỉ dành cho Premium users')
+      toast.warn(i18n.global.t('route_guard.premium_only'))
       return next({ path: '/home' })
     }
   }

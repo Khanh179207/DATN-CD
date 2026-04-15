@@ -10,39 +10,39 @@
         <div class="auth-top-row">
           <div class="name-group" @click="goToChefProfile">
             <h3 class="auth-name">{{ post.author }}</h3>
-            <span class="verified-dot" title="Đầu bếp uy tín">
+            <span class="verified-dot" :title="t('recipe.trusted_chef')">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="4"><polyline points="20 6 9 17 4 12"></polyline></svg>
             </span>
           </div>
 
           <div class="action-buttons">
-            <button class="btn-icon-monochrome hide-on-mobile" @click="handleContactChef" title="Nhắn tin cho tác giả">
+            <button class="btn-icon-monochrome hide-on-mobile" @click="handleContactChef" :title="t('post_detail.contact_author')">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
             </button>
 
             <button class="btn-follow-black" :class="{ 'is-following': isFollowing }" @click="toggleFollow">
-              <span v-if="isFollowing">Đang theo dõi</span>
-              <span v-else>Theo dõi</span>
+              <span v-if="isFollowing">{{ t('post_detail.following') }}</span>
+              <span v-else>{{ t('post_detail.follow') }}</span>
             </button>
           </div>
         </div>
 
-        <p class="auth-bio-text">{{ realBio || 'Đầu bếp này rất ngại ngùng, chưa để lại tiểu sử nào...' }}</p>
+        <p class="auth-bio-text">{{ realBio || t('post_detail.author_bio_fallback') }}</p>
 
         <div class="auth-stats-inline">
           <div class="s-item">
             <span class="s-val">{{ authorStats.posts }}</span>
-            <span class="s-label">Công thức</span>
+            <span class="s-label">{{ t('recipe.recipes_count') }}</span>
           </div>
           <div class="s-divider"></div>
           <div class="s-item">
             <span class="s-val">{{ authorStats.followers }}</span>
-            <span class="s-label">Người theo dõi</span>
+            <span class="s-label">{{ t('post_detail.followers_count') }}</span>
           </div>
           <div class="s-divider"></div>
           <div class="s-item highlight">
             <span class="s-val">{{ authorStats.totalLikes }}</span>
-            <span class="s-label">Đã được thích</span>
+            <span class="s-label">{{ t('recipe.liked_total') }}</span>
           </div>
         </div>
 
@@ -110,24 +110,24 @@ watch(() => props.post, (newPost) => { loadSocialState(newPost) }, { immediate: 
 const handleContactChef = async () => {
   // Ngăn chặn nếu người dùng cố tình click (dù nút đã ẩn CSS) trên thiết bị mobile
   if (window.innerWidth <= 1024) {
-    toast.info('Chức năng nhắn tin hiện chỉ hỗ trợ trên Máy tính!');
+    toast.info(t('post_detail.desktop_chat_only'));
     return;
   }
 
-  if (!authStore.isAuthenticated) { toast.warn(t('toast.need_login') || 'Vui lòng đăng nhập!'); return }
+  if (!authStore.isAuthenticated) { toast.warn(t('toast.need_login')); return }
   const currentUserId = authStore.user?.accountID || authStore.user?.id
   const chefId = props.post?.authorID || props.post?.authorId
 
   if (currentUserId === chefId) { 
-    toast.info('Sếp không thể tự nhắn tin cho chính mình đâu nha!'); return 
+    toast.info(t('post_detail.self_chat_blocked')); return 
   }
   
   try {
     const res = await api.post('/api/conversations/access', { user1Id: currentUserId, user2Id: chefId })
     chatStore.openChat({ id: res.data.conversationID, name: props.post.author, avatar: props.post.authorAvatar, online: true })
     chatStore.isMessengerOpen = true
-    toast.success(`Đang kết nối với ${props.post.author}...`)
-  } catch (err) { toast.error('Lỗi kết nối chat!') }
+    toast.success(t('post_detail.connecting_with', { name: props.post.author }))
+  } catch (err) { toast.error(t('post_detail.chat_connect_error')) }
 }
 
 const goToChefProfile = () => { 
@@ -136,7 +136,7 @@ const goToChefProfile = () => {
 }
 
 const toggleFollow = async () => {
-  if (!authStore.isAuthenticated) { toast.warn(t('toast.need_login') || 'Vui lòng đăng nhập!'); return }
+  if (!authStore.isAuthenticated) { toast.warn(t('toast.need_login')); return }
   const uid = authStore.user.accountID || authStore.user.id
   const authorID = props.post?.authorID || props.post?.authorId
   if (!authorID || uid === authorID) return
@@ -151,7 +151,7 @@ const toggleFollow = async () => {
       isFollowing.value = true; 
       authorStats.value.followers++;
     }
-  } catch (err) { toast.error('Lỗi Follow!') }
+  } catch (err) { toast.error(t('post_detail.follow_error')) }
 }
 </script>
 
@@ -241,7 +241,7 @@ const toggleFollow = async () => {
     background: transparent; color: var(--color-neutral-900, #0F172A);
     &:hover { background: #fee2e2; color: #dc2626; border-color: #dc2626; }
     &:hover span { display: none; }
-    &:hover::after { content: "Hủy theo dõi"; }
+    &:hover::after { content: "Unfollow"; }
   }
 }
 

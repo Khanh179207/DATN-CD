@@ -71,28 +71,26 @@
         </div>
         
         <h1 class="main-title">
-          Gia nhập cộng đồng <br> 
-          <span class="text-gradient shine-effect">Ẩm Thực Tinh Hoa</span>
+          {{ t('auth.community_title') }} <br> 
+          <span class="text-gradient shine-effect">{{ t('auth.community_highlight') }}</span>
         </h1>
         
-        <p class="description">
-          Hơn <strong>100.000+ thành viên</strong> đang chia sẻ đặc quyền, công thức và niềm đam mê nấu nướng mỗi ngày. Đừng bỏ lỡ cơ hội tỏa sáng!
-        </p>
+        <p class="description">{{ t('auth.community_desc') }}</p>
         
         <div class="stats-grid">
           <div class="stat-item">
             <strong>15K+</strong>
-            <span>Công thức</span>
+            <span>{{ t('auth.stat_recipes') }}</span>
           </div>
           <div class="stat-sep"></div>
           <div class="stat-item">
             <strong>1M+</strong>
-            <span>Lượt yêu thích</span>
+            <span>{{ t('auth.stat_favorites') }}</span>
           </div>
           <div class="stat-sep"></div>
           <div class="stat-item">
             <strong>24/7</strong>
-            <span>Hỗ trợ VIP</span>
+            <span>{{ t('auth.stat_support') }}</span>
           </div>
         </div>
       </div>
@@ -101,33 +99,33 @@
         <div class="auth-card glass-panel">
           
           <div class="auth-tabs" v-if="activeTab !== 'forgot-password'">
-            <button class="tab-btn" :class="{ active: activeTab === 'login' }" @click="switchTab('login')">Đăng Nhập</button>
-            <button class="tab-btn" :class="{ active: activeTab === 'register' }" @click="switchTab('register')">Đăng Ký</button>
+            <button class="tab-btn" :class="{ active: activeTab === 'login' }" @click="switchTab('login')">{{ t('auth.login') }}</button>
+            <button class="tab-btn" :class="{ active: activeTab === 'register' }" @click="switchTab('register')">{{ t('auth.register') }}</button>
           </div>
 
           <div class="form-content">
             <h3 class="form-title" v-if="activeTab !== 'forgot-password'">
-              {{ activeTab === 'login' ? 'Chào mừng trở lại!' : 'Tạo tài khoản mới' }}
+              {{ activeTab === 'login' ? t('auth.welcome_back') : t('auth.create_account') }}
             </h3>
 
             <form @submit.prevent="handleSubmit">
               
               <div v-if="activeTab === 'register'" class="fade-in-anim">
                 <div class="input-group">
-                  <label>Tên đăng nhập</label>
-                  <input v-model="registerForm.username" type="text" placeholder="VD: masterchef_vn" class="input-field" required />
+                  <label>{{ t('auth.username') }}</label>
+                  <input v-model="registerForm.username" type="text" :placeholder="t('auth.register_name_placeholder')" class="input-field" required />
                 </div>
                 <div class="input-group">
-                  <label>Email</label>
+                  <label>{{ t('auth.email') }}</label>
                   <input v-model="registerForm.email" type="email" placeholder="name@example.com" class="input-field" required />
                 </div>
                 <div class="input-group">
-                  <label>Mật khẩu</label>
-                  <input v-model="registerForm.password" type="password" placeholder="Tối thiểu 6 ký tự" class="input-field" required />
+                  <label>{{ t('auth.password') }}</label>
+                  <input v-model="registerForm.password" type="password" :placeholder="t('auth.register_password_placeholder')" class="input-field" required />
                 </div>
                 <div class="input-group">
-                  <label>Xác nhận mật khẩu</label>
-                  <input v-model="registerForm.confirmPassword" type="password" placeholder="Nhập lại mật khẩu" class="input-field" required />
+                  <label>{{ t('auth.confirm_pw') }}</label>
+                  <input v-model="registerForm.confirmPassword" type="password" :placeholder="t('auth.register_confirm_placeholder')" class="input-field" required />
                 </div>
 
                 <div class="input-group-checkbox">
@@ -135,7 +133,7 @@
                     <input type="checkbox" v-model="registerForm.agreeTerms" required>
                     <span class="checkmark"></span>
                     <span class="label-text">
-                      Tôi đồng ý với <router-link to="/terms-and-policy">Điều khoản</router-link> và <router-link to="/terms-and-policy">Chính sách bảo mật</router-link>
+                      {{ t('auth.agree_terms') }} <router-link to="/terms-and-policy">{{ t('auth.terms') }}</router-link> và <router-link to="/terms-and-policy">{{ t('auth.privacy_policy') }}</router-link>
                     </span>
                   </label>
                 </div>
@@ -143,31 +141,31 @@
 
               <div v-else-if="activeTab === 'login'" class="fade-in-anim">
                 <div class="input-group">
-                  <label>Email</label>
+                  <label>{{ t('auth.email') }}</label>
                   <input v-model="loginForm.email" type="email" placeholder="name@example.com" class="input-field" required />
                 </div>
                 <div class="input-group">
-                  <label>Mật khẩu</label>
-                  <input v-model="loginForm.password" type="password" placeholder="Nhập mật khẩu..." class="input-field" required />
+                  <label>{{ t('auth.password') }}</label>
+                  <input v-model="loginForm.password" type="password" :placeholder="t('auth.login_password_placeholder')" class="input-field" required />
                 </div>
                 <div class="form-actions">
-                  <label class="remember"><input type="checkbox"> Ghi nhớ tôi</label>
-                  <a href="#" class="forgot-pass" @click.prevent="activeTab = 'forgot-password'; forgotState = 'idle'; forgotError = ''; forgotIdentifier = '';">Quên mật khẩu?</a>
+                  <label class="remember"><input type="checkbox"> {{ t('auth.remember') }}</label>
+                  <a href="#" class="forgot-pass" @click.prevent="activeTab = 'forgot-password'; forgotState = 'idle'; forgotError = ''; forgotIdentifier = '';">{{ t('auth.forgot') }}</a>
                 </div>
 
                 <transition name="fade-slide" mode="out-in">
                   <div v-if="isBannedBoxVisible" key="banned-local" class="banned-alert-box">
-                    <button type="button" class="btn-close-alert" @click="closeBannedAlert" title="Đóng">
+                    <button type="button" class="btn-close-alert" @click="closeBannedAlert" :title="t('auth.close')">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                     </button>
                     <div class="banned-header">
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                      <h4>TÀI KHOẢN BỊ KHÓA</h4>
+                      <h4>{{ t('auth.banned_title') }}</h4>
                     </div>
                     <div class="banned-body">
                       <template v-if="bannedDetails">
-                        <div class="b-row" v-if="bannedDetails.time"><span class="b-lbl">Thời gian:</span> <span class="b-val">{{ bannedDetails.time }}</span></div>
-                        <div class="b-row"><span class="b-lbl">Lý do khóa:</span> <span class="b-val reason-text">{{ bannedDetails.reason }}</span></div>
+                        <div class="b-row" v-if="bannedDetails.time"><span class="b-lbl">{{ t('auth.banned_time') }}:</span> <span class="b-val">{{ bannedDetails.time }}</span></div>
+                        <div class="b-row"><span class="b-lbl">{{ t('auth.banned_reason') }}:</span> <span class="b-val reason-text">{{ bannedDetails.reason }}</span></div>
                       </template>
                       <template v-else>
                         <p class="banned-msg">{{ loginError }}</p>
@@ -175,28 +173,25 @@
                     </div>
                     <div class="banned-footer">
                       <button type="button" class="btn-appeal-lux" @click="openAppealAction">
-                        Phát hiện nhầm lẫn? <span>Gửi khiếu nại ngay</span>
+                        {{ t('auth.banned_cta_label') }} <span>{{ t('auth.banned_cta_action') }}</span>
                       </button>
                     </div>
                   </div>
 
                   <div v-else-if="isDeactivatedBoxVisible" key="deactivated-local" class="deactivated-alert-box">
-                    <button type="button" class="btn-close-alert" @click="closeDeactivatedAlert" title="Đóng">
+                    <button type="button" class="btn-close-alert" @click="closeDeactivatedAlert" :title="t('auth.close')">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                     </button>
                     <div class="deactivated-header">
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 6L5 20"></path><path d="M5 6l14 14"></path></svg>
-                      <h4>TÀI KHOẢN ĐÃ XÓA MỀM</h4>
+                      <h4>{{ t('auth.deactivated_title') }}</h4>
                     </div>
                     <div class="deactivated-body">
-                      <p class="deactivated-msg">
-                        Tài khoản này đã được yêu cầu xóa vào ngày <b>{{ deactivatedDetails?.time }}</b>. 
-                        Bạn vẫn có thể khôi phục lại toàn bộ dữ liệu trước khi tài khoản bị xóa vĩnh viễn.
-                      </p>
+                      <p class="deactivated-msg">{{ t('auth.deactivated_message', { date: deactivatedDetails?.time }) }}</p>
                     </div>
                     <div class="deactivated-footer">
                       <button type="button" class="btn-restore-lux" @click="triggerRestoration">
-                        Khôi phục tài khoản ngay
+                        {{ t('auth.restore_now') }}
                       </button>
                     </div>
                   </div>
@@ -208,7 +203,7 @@
                 <transition name="fade-slide">
                   <div v-if="!isBannedBoxVisible && wrongPasswordCount >= 3" class="appeal-hint">
                     <button type="button" class="btn-appeal-link" @click.prevent="activeTab = 'forgot-password'; forgotState = 'idle'; forgotError = ''; forgotIdentifier = '';">
-                      Quên mật khẩu? → Lấy lại mật khẩu
+                      {{ t('auth.forgot_password_hint') }}
                     </button>
                   </div>
                 </transition>
@@ -223,29 +218,29 @@
                       <path class="check-path" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
                     </svg>
                   </div>
-                  <h3 class="form-title" style="margin-top: 15px">Đã gửi Email</h3>
-                  <p class="description" style="text-align: center; margin-bottom: 20px; font-size: 0.9rem; color: #1C1917">Nếu tài khoản có tồn tại thì chúng tôi sẽ gửi link đặt lại mật khẩu.</p>
-                  <button type="button" class="btn-submit" @click="activeTab = 'login'">Quay lại Đăng nhập</button>
+                  <h3 class="form-title" style="margin-top: 15px">{{ t('auth.forgot_sent_title') }}</h3>
+                  <p class="description" style="text-align: center; margin-bottom: 20px; font-size: 0.9rem; color: #1C1917">{{ t('auth.forgot_sent_sub') }}</p>
+                  <button type="button" class="btn-submit" @click="activeTab = 'login'">{{ t('auth.forgot_back_login') }}</button>
                 </div>
 
                 <div v-else>
-                  <h3 class="form-title">Khôi phục mật khẩu</h3>
-                  <p class="description" style="text-align: center; margin-bottom: 20px; font-size: 0.9rem; color: #78716C">Nhập email của bạn, chúng tôi sẽ gửi link khôi phục.</p>
+                  <h3 class="form-title">{{ t('auth.forgot_title') }}</h3>
+                  <p class="description" style="text-align: center; margin-bottom: 20px; font-size: 0.9rem; color: #78716C">{{ t('auth.forgot_sub') }}</p>
 
                   <div class="input-group">
-                    <label>Email của bạn</label>
-                    <input v-model="forgotIdentifier" type="email" placeholder="name@example.com" class="input-field" required :disabled="forgotState === 'loading'" />
+                    <label>{{ t('auth.email') }}</label>
+                    <input v-model="forgotIdentifier" type="email" :placeholder="t('auth.forgot_email_placeholder')" class="input-field" required :disabled="forgotState === 'loading'" />
                   </div>
 
                   <div v-if="forgotError" class="auth-error-msg">{{ forgotError }}</div>
 
                   <button type="submit" class="btn-submit" :disabled="!forgotIdentifier.trim() || forgotState === 'loading'">
                     <span v-if="forgotState === 'loading'" class="spinner-border" role="status" aria-hidden="true"></span>
-                    <span v-else>Gửi yêu cầu</span>
+                    <span v-else>{{ t('auth.forgot_btn') }}</span>
                   </button>
 
                   <button type="button" class="btn-back" @click="switchTab('login')">
-                    ← Quay lại
+                    {{ t('auth.forgot_back') }}
                   </button>
                 </div>
               </div>
@@ -257,15 +252,15 @@
                 :disabled="isLoading || (activeTab === 'register' && !registerForm.agreeTerms)"
               >
                 <span v-if="isLoading" class="spinner-border" role="status" aria-hidden="true"></span>
-                <span v-else>{{ activeTab === 'login' ? 'Đăng Nhập Ngay' : 'Đăng Ký Miễn Phí' }}</span>
+                <span v-else>{{ activeTab === 'login' ? t('auth.sign_in_btn') : t('auth.register_btn') }}</span>
               </button>
 
-              <div class="divider" v-if="activeTab !== 'forgot-password'"><span>Hoặc tiếp tục với</span></div>
+              <div class="divider" v-if="activeTab !== 'forgot-password'"><span>{{ t('auth.continue_with') }}</span></div>
               
               <div class="social-buttons custom-google-wrapper" v-if="activeTab !== 'forgot-password'">
                 <button type="button" class="social-btn google custom-ui-btn">
                   <img src="https://cdn-icons-png.flaticon.com/512/2991/2991148.png" width="20" alt="Google">
-                  {{ activeTab === 'login' ? 'Đăng nhập với Google' : 'Đăng ký với Google' }}
+                  {{ activeTab === 'login' ? t('auth.login_google') : t('auth.register_google') }}
                 </button>
 
                 <div class="invisible-google-btn">
@@ -281,7 +276,7 @@
         </div>
         
         <div class="form-footer">
-          <p>© 2026 GoMet Elite. Privacy & Security First.</p>
+          <p>{{ t('auth.footer_note') }}</p>
         </div>
       </div>
 
@@ -298,6 +293,7 @@
 <script setup>
 import { ref, reactive, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { toast } from '@/composables/useToast'
 import * as authService from '@/services/authService'
@@ -311,6 +307,7 @@ gsap.registerPlugin(ScrollTrigger)
 
 const router = useRouter()
 const authStore = useAuthStore()
+const { t, locale } = useI18n()
 
 const activeTab = ref('login')
 const showOtpModal = ref(false)
@@ -344,6 +341,8 @@ const switchTab = (tab) => {
   loginError.value = '';
   isBannedBoxVisible.value = false;
   bannedDetails.value = null;
+  isDeactivatedBoxVisible.value = false;
+  deactivatedDetails.value = null;
   forgotError.value = '';
   if (tab === 'login') {
     wrongPasswordCount.value = 0;
@@ -417,16 +416,17 @@ const processBannedError = (errData, errorMessage) => {
   isDeactivatedBoxVisible.value = false;
   loginError.value = ''; 
 
-  const banReason = errData.banReason || 'Vi phạm chính sách và tiêu chuẩn cộng đồng GOMET.';
-  const bannedBy = errData.bannedByName || 'Quản trị viên hệ thống';
+  const banReason = errData.banReason || t('auth.banned_reason_default');
+  const bannedBy = errData.bannedByName || t('auth.banned_by_admin');
   let rawTimeStr = '';
   
   if (errData.bannedAt) {
       const d = new Date(errData.bannedAt);
-      rawTimeStr = `${d.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})} ngày ${d.toLocaleDateString('vi-VN')}`;
+      const localeCode = locale.value === 'vi' ? 'vi-VN' : 'en-US'
+      rawTimeStr = `${d.toLocaleTimeString(localeCode, {hour: '2-digit', minute:'2-digit'})} ${d.toLocaleDateString(localeCode)}`;
   }
   bannedDetails.value = { reason: banReason, by: bannedBy, time: rawTimeStr };
-  toast.error(`🚨 Đăng nhập thất bại do tài khoản đã bị khóa!`, { timeout: 8000 })
+  toast.error(t('auth.account_locked'), { timeout: 8000 })
 }
 
 const processDeactivatedError = (errData) => {
@@ -434,16 +434,16 @@ const processDeactivatedError = (errData) => {
   isBannedBoxVisible.value = false;
   loginEmailForRestore.value = errData.email || loginForm.email;
   
-  let timeStr = 'Vừa qua';
+  let timeStr = t('auth.soft_deleted_recent');
   if (errData.deletedAt) {
     const d = new Date(errData.deletedAt);
-    timeStr = d.toLocaleDateString('vi-VN');
+    timeStr = d.toLocaleDateString(locale.value === 'vi' ? 'vi-VN' : 'en-US');
     deactivatedDetails.value = { time: timeStr, rawDate: errData.deletedAt };
   } else {
     deactivatedDetails.value = { time: timeStr };
   }
   
-  toast.info('Tài khoản này đang trong trạng thái xóa mềm.');
+  toast.info(t('auth.soft_deleted_info'));
 }
 
 const handleSubmit = async () => {
@@ -454,10 +454,10 @@ const handleSubmit = async () => {
     try {
       await authService.forgotPassword(forgotIdentifier.value.trim())
       forgotState.value = 'sent'
-      toast.success('Đã gửi Email khôi phục!')
+      toast.success(t('auth.forgot_sent_toast'))
     } catch (err) {
       forgotState.value = 'idle'
-      forgotError.value = err.fullData?.message || err.response?.data?.message || 'Có lỗi xảy ra khi gửi yêu cầu.'
+      forgotError.value = err.fullData?.message || err.response?.data?.message || t('auth.forgot_generic_error')
       toast.error(forgotError.value)
     }
     return
@@ -469,14 +469,14 @@ const handleSubmit = async () => {
     
     try {
       const role = await authStore.login(loginForm.email, loginForm.password)
-      toast.success('Đăng nhập thành công!')
+      toast.success(t('toast.login_ok'))
       wrongPasswordCount.value = 0
       sessionStorage.setItem('just_logged_in', 'true')
       
       // 🔥 LOGIC ĐIỀU HƯỚNG MỚI: Chặn Admin vào dashboard trên Mobile/Tablet
       if (role === 'admin') {
         if (window.innerWidth < 1024) {
-          toast.info('Bạn đang dùng thiết bị di động, hệ thống sẽ chuyển bạn vào trang người dùng nhé! 📱');
+          toast.info(t('auth.mobile_admin_redirect'));
           router.push('/home');
         } else {
           router.push('/admin');
@@ -496,7 +496,7 @@ const handleSubmit = async () => {
         processDeactivatedError(errData)
       } else {
         wrongPasswordCount.value++
-        loginError.value = backendMsg || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.'
+        loginError.value = backendMsg || t('auth.login_failed_detail')
         toast.error(loginError.value)
       }
     } finally {
@@ -505,21 +505,21 @@ const handleSubmit = async () => {
 
   } else if (activeTab.value === 'register') {
     if (!registerForm.agreeTerms) {
-      toast.warn('Vui lòng đồng ý với điều khoản dịch vụ!')
+      toast.warn(t('auth.agree_terms_required'))
       return
     }
     if (registerForm.password !== registerForm.confirmPassword) {
-      toast.warn('Mật khẩu xác nhận không khớp!')
+      toast.warn(t('auth.error_pw_match'))
       return
     }
     isLoading.value = true
     try {
       await authService.sendOtp(registerForm.username, registerForm.email, registerForm.password)
-      toast.success('Mã xác nhận đã được gửi vào email của bạn!')
+      toast.success(t('toast.otp_sent'))
       otpCode.value = ''
       showOtpModal.value = true
     } catch (err) {
-      toast.error(err.fullData?.message || err.response?.data?.message || 'Có lỗi xảy ra khi gửi OTP.')
+      toast.error(err.fullData?.message || err.response?.data?.message || t('auth.otp_send_failed'))
     } finally {
       isLoading.value = false
     }
@@ -528,19 +528,19 @@ const handleSubmit = async () => {
 
 const handleVerifyOtp = async () => {
   if (otpCode.value.length < 6) {
-    toast.warn('Vui lòng nhập đủ 6 số OTP!')
+    toast.warn(t('auth.otp_incomplete'))
     return
   }
   try {
     const data = await authService.verifyOtp(registerForm.email, otpCode.value)
     authStore.setUser(data)
     
-    toast.success('Đăng ký thành công! Chào mừng bạn đến với GoMet.')
+    toast.success(t('toast.register_ok'))
     showOtpModal.value = false
     sessionStorage.setItem('just_logged_in', 'true')
     router.push('/home')
   } catch (err) {
-    toast.error(err.fullData?.message || err.response?.data?.message || 'Mã xác nhận không đúng hoặc đã hết hạn.')
+    toast.error(err.fullData?.message || err.response?.data?.message || t('toast.otp_invalid'))
   }
 }
 
@@ -550,14 +550,14 @@ const handleGoogleCallback = async (response) => {
   
   try {
     if (!response || !response.credential) {
-      throw new Error("Không nhận được token từ Google");
+      throw new Error(t('auth.google_token_missing'));
     }
 
     const idToken = response.credential;
     const data = await authService.googleLogin(idToken);
     authStore.setUser(data);
 
-    toast.success('Đăng nhập Google thành công!')
+    toast.success(t('toast.login_ok'))
     sessionStorage.setItem('just_logged_in', 'true')
 
     // 🔥 LOGIC ĐIỀU HƯỚNG MỚI CHO GOOGLE LOGIN
@@ -582,7 +582,7 @@ const handleGoogleCallback = async (response) => {
     } else if (errorString.includes('ACCOUNT_DEACTIVATED')) {
       processDeactivatedError(errData);
     } else {
-      loginError.value = errorMessage || 'Lỗi đăng nhập bằng Google. Vui lòng thử lại.'
+      loginError.value = errorMessage || t('auth.google_login_error')
       toast.error(loginError.value)
     }
   }

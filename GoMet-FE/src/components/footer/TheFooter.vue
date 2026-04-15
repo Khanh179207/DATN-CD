@@ -8,7 +8,7 @@
           <span class="brand-name">GOMET<span>.</span></span>
         </div>
         <p class="brand-desc">
-          Mạng xã hội chia sẻ công thức nấu ăn lớn nhất dành cho những tâm hồn đam mê ẩm thực.
+          {{ $t('footer.brand_desc') }}
         </p>
         
         <div class="socials">
@@ -25,31 +25,31 @@
       </div>
 
       <div class="footer-col">
-        <h4>Khám Phá</h4>
+        <h4>{{ $t('footer.explore_title') }}</h4>
         <ul class="footer-links">
-          <li><router-link to="/home">Trang Chủ</router-link></li>
-          <li><router-link to="/events">Sự Kiện Ẩm Thực</router-link></li>
-          <li><router-link to="/leaderboard">Bảng Vàng (Premium)</router-link></li>
+          <li><router-link to="/home">{{ $t('footer.home') }}</router-link></li>
+          <li><router-link to="/events">{{ $t('footer.food_events') }}</router-link></li>
+          <li><router-link to="/leaderboard">{{ $t('footer.explore_leaderboard') }}</router-link></li>
         </ul>
       </div>
 
       <div class="footer-col">
-        <h4>Tiện Ích</h4>
+        <h4>{{ $t('footer.utility_title') }}</h4>
         <ul class="footer-links">
-          <li><router-link to="/meal-plan">Lịch Trình Bữa Ăn</router-link></li>
-          <li><router-link to="/suggestions">Khu Vui Chơi Định Mệnh</router-link></li>
-          <li><router-link to="/terms-and-policy">Điều Khoản Dịch Vụ</router-link></li>
+          <li><router-link to="/meal-plan">{{ $t('footer.utility_mealplan') }}</router-link></li>
+          <li><router-link to="/suggestions">{{ $t('footer.utility_suggestions') }}</router-link></li>
+          <li><router-link to="/terms-and-policy">{{ $t('footer.utility_terms') }}</router-link></li>
         </ul>
       </div>
 
       <div class="footer-col contact-col">
-        <h4>Liên Hệ</h4>
+        <h4>{{ $t('footer.contact_title') }}</h4>
         <a href="mailto:contact@gomet.vn" class="contact-item">
-          <span class="label"><i class="fas fa-envelope"></i> Email</span>
+          <span class="label"><i class="fas fa-envelope"></i> {{ $t('footer.contact_email') }}</span>
           <span class="value">contact@gomet.vn</span>
         </a>
         <a href="tel:0823024745" class="contact-item">
-          <span class="label"><i class="fas fa-phone-alt"></i> Hotline</span>
+          <span class="label"><i class="fas fa-phone-alt"></i> {{ $t('footer.contact_hotline') }}</span>
           <span class="value">0823-024-745</span>
         </a>
       </div>
@@ -57,7 +57,7 @@
     </div>
     
     <div class="footer-bottom">
-      <p>&copy; 2024 GOMET. Đã đăng ký bản quyền.</p>
+      <p>{{ $t('footer.copyright') }}</p>
     </div>
   </footer>
 </template>

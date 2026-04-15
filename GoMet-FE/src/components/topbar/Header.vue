@@ -19,7 +19,7 @@
 
       <div class="icon-actions" v-if="authStore.isAuthenticated">
         <div class="action-wrapper" @click.stop>
-          <button class="btn-icon" :class="{ active: showShopping }" title="Shopping List" @click="toggleShopping">
+          <button class="btn-icon" :class="{ active: showShopping }" :title="$t('header.shopping_list')" @click="toggleShopping">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
               stroke-linecap="round" stroke-linejoin="round">
               <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
@@ -34,14 +34,14 @@
               <div class="dropdown-header">
                 <div class="header-left">
                   <h3>{{ $t('header.shopping_list') }}</h3>
-                  <span class="count-pill">{{ shoppingStore.items.length }} món</span>
+                  <span class="count-pill">{{ $t('header.items_count', { count: shoppingStore.items.length }) }}</span>
                 </div>
                 <div class="header-right">
                   <button v-if="shoppingStore.items.some(i => i.checked)" class="action-link danger-link"
                     @click="shoppingStore.removeCheckedItems()">
-                    🗑️ Xóa đã tick
+                    🗑️ {{ $t('header.remove_checked') }}
                   </button>
-                  <button class="action-link" @click="shoppingStore.clearItems()">Xóa hết</button>
+                  <button class="action-link" @click="shoppingStore.clearItems()">{{ $t('header.clear_all') }}</button>
                 </div>
               </div>
 
@@ -49,7 +49,7 @@
                 <div v-if="shoppingStore.items.length === 0" class="empty-state-container">
                   <div class="empty-cart-icon">🛒</div>
                   <p>{{ $t('header.shopping_empty') }}</p>
-                  <button class="btn-go-shop" @click="closeAllDropdowns">Lưu nguyên liệu ngay</button>
+                  <button class="btn-go-shop" @click="closeAllDropdowns">{{ $t('header.save_ingredients_now') }}</button>
                 </div>
 
                 <div v-else class="shopping-cards-stack">
@@ -64,7 +64,7 @@
                     </div>
                     <div class="card-info-area" @click="shoppingStore.toggleItem(idx)">
                       <span class="item-name-text">{{ item.name }}</span>
-                      <span class="item-qty-text">Bài viết: {{ item.quantity }}</span>
+                      <span class="item-qty-text">{{ $t('header.post_label') }}: {{ item.quantity }}</span>
                     </div>
                   </div>
                 </div>
@@ -75,7 +75,7 @@
                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                     <circle cx="12" cy="10" r="3"></circle>
                   </svg>
-                  <span>Tìm Siêu thị / Chợ gần đây</span>
+                  <span>{{ $t('header.nearby_markets') }}</span>
                 </button>
               </div>
             </div>
@@ -158,6 +158,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useChatStore } from '@/stores/chat'
 import { useShoppingStore } from '@/stores/shopping'
@@ -177,6 +178,7 @@ const chatStore = useChatStore();
 const shoppingStore = useShoppingStore();
 const router = useRouter();
 const route = useRoute();
+const { t, locale } = useI18n();
 
 const showShopping = ref(false);
 const showNoti = ref(false);
@@ -241,7 +243,7 @@ const toggleShopping = () => {
   const isAdmin = ( role === 'admin' || ['true', '1', 1, true].includes(authStore.user?.isAdmin) || ['true', '1', 1, true].includes(authStore.user?.IsAdmin) );
   
   if (!isPremiumUser && !isAdmin) {
-    toast.warn('Tính năng Giỏ đi chợ là đặc quyền chỉ dành cho tài khoản Premium sếp nhé!');
+    toast.warn(t('post_detail.shopping_premium_only'));
     window.dispatchEvent(new CustomEvent('ui:open-premium'));
     return;
   }
@@ -259,7 +261,7 @@ const loadNotifications = async () => {
     const data = await getNotifications(authStore.user.accountID)
     notifications.value = data.map(n => ({
       id: n.notificationID, user: n.title, action: n.content,
-      time: n.createdAt ? new Date(n.createdAt).toLocaleDateString() : '',
+      time: n.createdAt ? new Date(n.createdAt).toLocaleDateString(locale.value === 'vi' ? 'vi-VN' : 'en-US') : '',
       isRead: n.isRead === 1, type: n.type || 'like',
       avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(n.title)}&background=EA580C&color=fff`,
       link: n.link

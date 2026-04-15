@@ -8,13 +8,13 @@
             <ShieldAlert :size="28" stroke-width="2.5" />
           </div>
           <div class="header-text">
-            <h2 class="title">Bộ lọc Từ khóa</h2>
-            <p class="subtitle">Quản lý danh sách từ ngữ cấm trên toàn hệ thống GoMet</p>
+            <h2 class="title">{{ t('admin.blacklist.title') }}</h2>
+            <p class="subtitle">{{ t('admin.blacklist.subtitle') }}</p>
           </div>
         </div>
         <div class="stats-badge" v-if="!loading && !error">
           <span class="stats-number">{{ words.length }}</span>
-          <span class="stats-label">Từ khóa</span>
+          <span class="stats-label">{{ t('admin.blacklist.stats_label') }}</span>
         </div>
       </div>
     </div>
@@ -27,7 +27,7 @@
             v-model="newWord" 
             @keyup.enter="addWord"
             type="text" 
-            placeholder="Nhập từ khóa muốn cấm (VD: cờ bạc, 18+, vcl...)" 
+            :placeholder="t('admin.blacklist.input_placeholder')" 
             :disabled="isAdding"
             autocomplete="off"
           />
@@ -35,12 +35,12 @@
         <button class="btn-lux-add" @click="addWord" :disabled="!newWord.trim() || isAdding">
           <Loader2 v-if="isAdding" :size="20" class="spin-icon" />
           <Plus v-else :size="20" stroke-width="3" />
-          <span>Thêm vào Blacklist</span>
+          <span>{{ t('admin.blacklist.add') }}</span>
         </button>
       </div>
     </div>
 
-    <div v-if="loading" class="empty-state-lux"><Loader2 :size="40" class="spin-icon text-orange" /> <p>Đang tải bộ lọc từ khóa...</p></div>
+    <div v-if="loading" class="empty-state-lux"><Loader2 :size="40" class="spin-icon text-orange" /> <p>{{ t('admin.blacklist.loading') }}</p></div>
     <div v-else-if="error" class="empty-state-lux error"><AlertTriangle :size="40" /> <p>{{ error }}</p></div>
 
     <div v-else class="words-grid anim-fade-up" style="--delay: 0.1s">
@@ -48,17 +48,17 @@
         <div v-for="item in words" :key="item.id" class="word-card-lux">
           <div class="word-content">
             <span class="word-text">"{{ item.word }}"</span>
-            <small class="word-date">Đã thêm: {{ formatDate(item.createdAt) }}</small>
+            <small class="word-date">{{ t('admin.blacklist.added_at', { date: formatDate(item.createdAt) }) }}</small>
           </div>
-          <button class="btn-remove" @click="removeWord(item.id)" title="Gỡ bỏ lệnh cấm">
+          <button class="btn-remove" @click="removeWord(item.id)" :title="t('admin.blacklist.remove_title')">
             <Trash2 :size="18" stroke-width="2.5" />
           </button>
         </div>
 
         <div v-if="words.length === 0" class="empty-state-lux full-width" key="empty">
           <div class="empty-icon-box success-bg"><ShieldCheck :size="48" stroke-width="2" /></div>
-          <h3 class="empty-title">Môi trường trong sạch!</h3>
-          <p class="empty-desc">Hệ thống hiện tại chưa có từ khóa cấm nào.</p>
+          <h3 class="empty-title">{{ t('admin.blacklist.empty_title') }}</h3>
+          <p class="empty-desc">{{ t('admin.blacklist.empty_desc') }}</p>
         </div>
       </TransitionGroup>
     </div>
@@ -68,7 +68,7 @@
         <CheckCircle v-if="toast.type === 'success'" :size="24" stroke-width="2.5" />
         <AlertTriangle v-else :size="24" stroke-width="2.5" />
         <div class="toast-content">
-          <span class="toast-title">{{ toast.type === 'success' ? 'Thành công' : 'Thất bại' }}</span>
+          <span class="toast-title">{{ toast.type === 'success' ? t('admin.blacklist.toast_success') : t('admin.blacklist.toast_error') }}</span>
           <span class="toast-desc">{{ toast.msg }}</span>
         </div>
       </div>
@@ -79,10 +79,11 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ShieldAlert, Plus, Trash2, Loader2, AlertTriangle, CheckCircle, AlertOctagon, ShieldCheck } from 'lucide-vue-next'
-import api from '@/services/api' // Sếp nhớ đảm bảo import này đúng đường dẫn axios của sếp nhé
+import api from '@/services/api'
 
-// --- STATE ---
+const { t, locale } = useI18n()
 const words = ref([])
 const newWord = ref('')
 const loading = ref(false)
@@ -90,21 +91,19 @@ const isAdding = ref(false)
 const error = ref('')
 
 const formatDate = (d) => {
-  if (!d) return 'Vừa xong'
+  if (!d) return t('admin.blacklist.just_now')
   const dt = new Date(d)
-  return dt.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+  return dt.toLocaleDateString(locale.value === 'vi' ? 'vi-VN' : 'en-US', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
-// --- LẤY DANH SÁCH TỪ KHÓA TỪ BACKEND ---
 const fetchWords = async () => {
   loading.value = true
   error.value = ''
   try {
     const res = await api.get('/api/admin/blacklist')
-    // Sắp xếp ID mới nhất lên đầu nếu backend chưa sort
     words.value = res.data.sort((a, b) => b.id - a.id)
   } catch (e) {
-    error.value = 'Lỗi tải danh sách từ cấm: ' + (e.response?.data?.message || e.message)
+    error.value = t('admin.blacklist.load_failed_prefix') + (e.response?.data?.message || e.message)
   } finally {
     loading.value = false
   }
@@ -112,7 +111,6 @@ const fetchWords = async () => {
 
 onMounted(fetchWords)
 
-// --- THÊM TỪ KHÓA MỚI ---
 const addWord = async () => {
   const word = newWord.value.trim()
   if (!word) return
@@ -120,34 +118,31 @@ const addWord = async () => {
   isAdding.value = true
   try {
     const res = await api.post('/api/admin/blacklist', { word: word })
-    words.value.unshift(res.data) // Đẩy từ mới lên đầu danh sách ngay lập tức
+    words.value.unshift(res.data)
     newWord.value = ''
-    showToast('Đã thêm từ khóa vào Blacklist!')
+    showToast(t('admin.blacklist.add_ok'))
   } catch (e) {
-    showToast(e.response?.data?.message || 'Từ khóa này đã tồn tại!', 'error')
+    showToast(e.response?.data?.message || t('admin.blacklist.add_failed_default'), 'error')
   } finally {
     isAdding.value = false
   }
 }
 
-// --- XÓA TỪ KHÓA ---
 const removeWord = async (id) => {
-  if (!confirm('Bạn có chắc chắn muốn gỡ lệnh cấm cho từ khóa này? Hành động này sẽ cho phép người dùng bình luận từ này.')) return
+  if (!confirm(t('admin.blacklist.remove_confirm'))) return
   try {
     await api.delete(`/api/admin/blacklist/${id}`)
-    // 🔥 Đã sửa w.wordID thành w.id
     words.value = words.value.filter(w => w.id !== id)
-    showToast('Đã gỡ từ khóa thành công!')
+    showToast(t('admin.blacklist.remove_ok'))
   } catch (e) {
-    showToast(e.response?.data?.message || 'Lỗi khi xóa từ khóa.', 'error')
+    showToast(e.response?.data?.message || t('admin.blacklist.remove_failed_default'), 'error')
   }
 }
 
-// --- HỆ THỐNG TOAST ---
 const toast = ref({ show: false, msg: '', type: 'success' })
 const showToast = (msg, type = 'success') => {
   toast.value = { show: true, msg, type }
-  setTimeout(() => toast.value.show = false, 4000) // Kéo dài thời gian hiện Toast lên 4s
+  setTimeout(() => toast.value.show = false, 4000)
 }
 </script>
 
