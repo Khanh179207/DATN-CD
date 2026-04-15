@@ -30,4 +30,24 @@ public interface NotificationService {
     void notifyPostDisabled(Integer postId);
 
     void notifyLike(String likerUsername, Integer postOwnerId, Integer postId);
+
+    void notifyCommentReply(String replierUsername, Integer parentCommentAuthorId, Integer postId, Integer commentId);
+
+    void notifyCommentLike(String likerUsername, Integer commentAuthorId, Integer postId, Integer commentId);
+
+    void notifyMention(String mentionerUsername, Integer mentionedAccountId, Integer postId, Integer commentId);
+
+    void notifyTicketUpdate(Integer ticketId, Integer newStatus, Integer accountId);
+
+    void notifyAppealUpdate(Integer appealId, String status, Integer accountId);
+
+    void notifyCommentStatusChange(Integer commentId, Integer accountId, String action);
+
+    void notifyReward(Integer accountId, Integer points, Integer premiumDays, String source);
+
+    void notifyPaymentStatus(Integer accountId, boolean isSuccess, String orderCode);
+
+    void notifyEventWinner(Integer accountId, Integer eventId, Integer rank);
+
+    void notifyAccountStatus(Integer accountId, String status, String reason);
 }

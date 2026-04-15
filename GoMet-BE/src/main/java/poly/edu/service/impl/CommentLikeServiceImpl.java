@@ -11,6 +11,7 @@ import poly.edu.entity.Account;
 import poly.edu.entity.Comment;
 import poly.edu.entity.CommentLike;
 import poly.edu.service.CommentLikeService;
+import poly.edu.service.NotificationService;
 
 import java.util.Optional; // QUAN TRỌNG: Phải có import này
 
@@ -21,6 +22,7 @@ public class CommentLikeServiceImpl implements CommentLikeService {
     private final CommentLikeDAO commentLikeDAO;
     private final CommentDAO commentDAO;
     private final AccountDAO accountDAO;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional
@@ -59,6 +61,13 @@ public class CommentLikeServiceImpl implements CommentLikeService {
             comment.setLikes(currentLikes + 1);
 
             commentDAO.save(comment);
+
+            if (comment.getAccount() != null && !account.getAccountID().equals(comment.getAccount().getAccountID())) {
+                Integer postId = comment.getPost() != null ? comment.getPost().getPostID() : null;
+                notificationService.notifyCommentLike(account.getUsername(), comment.getAccount().getAccountID(),
+                        postId, commentId);
+            }
+
             return true;
         }
     }

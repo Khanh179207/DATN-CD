@@ -10,10 +10,8 @@ import poly.edu.dto.AdminTicketDTO;
 import poly.edu.entity.Account;
 import poly.edu.entity.Ticket;
 import poly.edu.service.TicketService;
-
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/admin/tickets")
@@ -63,8 +61,7 @@ public class AdminTicketController {
                     status,
                     admin.getAccountID(),
                     admin.getUsername(),
-                    adminNote
-            );
+                    adminNote);
 
             return ResponseEntity.ok(updatedTicket);
         } catch (RuntimeException e) {

@@ -109,6 +109,10 @@ public class AppealServiceImpl implements AppealService {
         try {
             // Đã cập nhật truyền thêm biến "note"
             emailService.sendAppealDecisionEmail(appeal.getEmail(), status, note);
+            if (appeal.getAccount() != null) {
+                notificationService.notifyAppealUpdate(appeal.getAppealID(), status,
+                        appeal.getAccount().getAccountID());
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -141,6 +145,10 @@ public class AppealServiceImpl implements AppealService {
             // Khi gỡ ban, truyền thêm 1 câu nhắc nhở hoặc truyền appeal.getNote()
             String welcomeBackNote = "Chào mừng bạn quay trở lại với GoMet!";
             emailService.sendAppealDecisionEmail(appeal.getEmail(), "Approved", welcomeBackNote);
+            if (appeal.getAccount() != null) {
+                notificationService.notifyAppealUpdate(appeal.getAppealID(), "Approved",
+                        appeal.getAccount().getAccountID());
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

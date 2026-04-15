@@ -287,14 +287,14 @@ CREATE TABLE Notification (
 	Content NVARCHAR(MAX) NOT NULL,
 	Type NVARCHAR(100) NOT NULL,
 
-	IsGlobal BIT DEFAULT 0
+	IsGlobal BIT DEFAULT 0,
 	AccountID INT,
 	ActorID INT NULL, 
 	Link NVARCHAR(500) NULL,
 	PostID INT NULL, 
 	isRead INT DEFAULT 0,
 	ReadAt DATETIME,
-	ParentNotificationID INT NULL
+	ParentNotificationID INT NULL,
 	CreatedAt DATETIME DEFAULT GETDATE(),
 
 	CONSTRAINT FK_Notification_Account FOREIGN KEY (AccountID) REFERENCES Account(AccountID),

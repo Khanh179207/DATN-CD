@@ -96,6 +96,7 @@ import { useAuthStore } from '@/stores/auth'
 import SockJS from 'sockjs-client'
 import Stomp from 'stompjs'
 import api from '@/services/api'
+import { ensureBrowserNotificationPermission, showBrowserNotification } from '@/services/browserNotificationService'
 import MiniPostCard from './MiniPostCard.vue'
 
 const chatStore = useChatStore()
@@ -203,7 +204,7 @@ const connectWebSocket = (conversationId) => {
       if (senderId !== currentUserId.value) {
         messages.value.push(mapMessage(receivedMsg))
         playIncomingMessageSound()
-        showIncomingMessageNotification(receivedMsg)
+        showIncomingMessageNotificationUnified(receivedMsg)
         scrollToBottom()
       }
     })
@@ -305,6 +306,36 @@ const scrollToBottom = async () => {
   }
 }
 
+const showIncomingMessageNotificationUnified = (message) => {
+  const conversationId = Number(message?.conversation?.conversationID || chatStore.activeChat?.id || chatStore.activeChat?.conversationID)
+  const messageId = Number(message?.messageID)
+  const senderId = Number(message?.sender?.accountID || message?.senderID)
+  const senderName = message?.sender?.username || chatStore.activeChat?.name || 'Tin nháº¯n má»›i'
+  const senderAvatar = message?.sender?.avatar || chatStore.activeChat?.avatar || 'https://ui-avatars.com/api/?name=User&background=EA580C&color=fff'
+  const messageContent = message?.content || 'Báº¡n cÃ³ tin nháº¯n má»›i'
+
+  showBrowserNotification({
+    title: senderName,
+    body: messageContent,
+    icon: senderAvatar,
+    tag: messageId ? `chat-${messageId}` : `chat-${conversationId}`,
+    dedupeKey: messageId
+      ? `chat:${messageId}`
+      : `chat:${conversationId}:${senderId}:${message?.createdAt || messageContent}`,
+    onClick: () => {
+      if (!conversationId) return
+      chatStore.openChat({
+        id: conversationId,
+        conversationID: conversationId,
+        name: senderName,
+        avatar: senderAvatar,
+        online: true
+      })
+      isMinimized.value = false
+    }
+  })
+}
+
 // 🚀 [MỚI]: Tách logic xử lý hàng chờ ra hàm riêng để dùng chung
 const processSpecialQueue = () => {
     if (!chatStore.specialMessageQueue || chatStore.specialMessageQueue.length === 0) return;
@@ -332,6 +363,7 @@ watch(() => chatStore.specialMessageQueue, () => {
 }, { deep: true });
 
 onMounted(() => {
+    ensureBrowserNotificationPermission()
     // Không dùng Event nữa vì đã có Pinia Watcher xử lý
 });
 

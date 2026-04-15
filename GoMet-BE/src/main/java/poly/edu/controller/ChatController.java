@@ -92,6 +92,21 @@ public class ChatController {
             // Quan trọng: Gửi savedMessage đã có đầy đủ ID và thông tin Sender
             messagingTemplate.convertAndSend("/topic/" + savedMessage.getConversation().getConversationID(), savedMessage);
 
+            Conversation conversation = savedMessage.getConversation();
+            if (conversation != null) {
+                if (conversation.getUserOne() != null && conversation.getUserOne().getAccountID() != null) {
+                    messagingTemplate.convertAndSend(
+                            "/topic/chat-user/" + conversation.getUserOne().getAccountID(),
+                            savedMessage);
+                }
+
+                if (conversation.getUserTwo() != null && conversation.getUserTwo().getAccountID() != null) {
+                    messagingTemplate.convertAndSend(
+                            "/topic/chat-user/" + conversation.getUserTwo().getAccountID(),
+                            savedMessage);
+                }
+            }
+
         } catch (Exception e) {
             System.err.println("❌ Lỗi gửi tin nhắn: " + e.getMessage());
         }

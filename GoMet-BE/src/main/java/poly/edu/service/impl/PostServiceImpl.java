@@ -13,12 +13,15 @@ import poly.edu.entity.Post;
 import poly.edu.entity.CookingSteps;
 import poly.edu.service.PostService;
 import poly.edu.service.BlacklistService;
-
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import poly.edu.service.NotificationService;
 
 @Service
 @RequiredArgsConstructor
@@ -34,14 +37,17 @@ public class PostServiceImpl implements PostService {
     private final AccountDAO accountDAO;
     private final CookingStepsDAO cookingStepsDAO;
     private final BlacklistService blacklistService;
+    private final NotificationService notificationService;
 
     @Override
     public List<PostDTO> getPostsByAccountId(Integer accountId) {
-        if (accountId == null) return List.of();
+        if (accountId == null)
+            return List.of();
         // 🔥 Lấy TOÀN BỘ (Cả isActive = 0) để User có thể quản lý ẩn/hiện trong Profile
         List<Post> posts = postDAO.findByAccount_AccountIDOrderByCreatedAtDesc(accountId);
 
-        // 🔥 MA TRẬN: Trả về bài (1 1), (1 0), (0 1), (0 0). CHỈ CHẶN bài bị Admin gỡ (-1 x)
+        // 🔥 MA TRẬN: Trả về bài (1 1), (1 0), (0 1), (0 0). CHỈ CHẶN bài bị Admin gỡ
+        // (-1 x)
         return posts.stream()
                 .filter(p -> p.getIsActive() != -1)
                 .map(this::convertToDTO)
@@ -63,7 +69,8 @@ public class PostServiceImpl implements PostService {
             if (!lastPosts.isEmpty() && lastPosts.get(0).getCreatedAt() != null) {
                 long seconds = Duration.between(lastPosts.get(0).getCreatedAt(), LocalDateTime.now()).getSeconds();
                 if (seconds < 180) {
-                    throw new RuntimeException("Hệ thống chống Spam: Sếp đăng bài quá nhanh! Vui lòng đợi " + (180 - seconds) + " giây nữa.");
+                    throw new RuntimeException("Hệ thống chống Spam: Sếp đăng bài quá nhanh! Vui lòng đợi "
+                            + (180 - seconds) + " giây nữa.");
                 }
             }
         }
@@ -114,6 +121,9 @@ public class PostServiceImpl implements PostService {
             }
         }
 
+        // Notify mentioned users
+        extractAndNotifyMentions(contentToCheck.toString(), acc.getUsername(), savedPost.getPostID(), null);
+
         return convertToDTO(savedPost);
     }
 
@@ -128,7 +138,6 @@ public class PostServiceImpl implements PostService {
             throw new RuntimeException("Bài viết này đã bị Admin khóa/gỡ, không thể chỉnh sửa!");
         }
 
-
         mapDtoToEntity(dto, post);
 
         if (dto.getCategoryID() != null) {
@@ -137,7 +146,20 @@ public class PostServiceImpl implements PostService {
             post.setCategory(cat);
         }
 
-        return convertToDTO(postDAO.save(post));
+        Post savedPost = postDAO.save(post);
+
+        StringBuilder contentToCheck = new StringBuilder();
+        contentToCheck.append(dto.getTitle() != null ? dto.getTitle() : "").append(" ")
+                .append(dto.getDescription() != null ? dto.getDescription() : "").append(" ")
+                .append(dto.getIngredients() != null ? dto.getIngredients() : "");
+        if (dto.getSteps() != null) {
+            for (StepRequestDTO step : dto.getSteps()) {
+                contentToCheck.append(" ").append(step.getDesc());
+            }
+        }
+        extractAndNotifyMentions(contentToCheck.toString(), post.getAccount().getUsername(), savedPost.getPostID(), null);
+
+        return convertToDTO(savedPost);
     }
 
     @Override
@@ -150,7 +172,8 @@ public class PostServiceImpl implements PostService {
             throw new RuntimeException("Bài viết này đã bị Admin xử lý, không thể thay đổi trạng thái!");
         }
 
-        // 🔥 MA TRẬN: Đảo trạng thái 1 thành 0, 0 thành 1 (Chức năng User tự ẩn/hiện bài)
+        // 🔥 MA TRẬN: Đảo trạng thái 1 thành 0, 0 thành 1 (Chức năng User tự ẩn/hiện
+        // bài)
         post.setIsActive(post.getIsActive() == 1 ? 0 : 1);
         postDAO.save(post);
     }
@@ -160,7 +183,7 @@ public class PostServiceImpl implements PostService {
     public PostDTO toggleActive(Integer postId) {
         Post post = postDAO.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy bài viết!"));
-        
+
         // Đảo trạng thái: 1 -> 0 hoặc 0 -> 1
         post.setIsActive(post.getIsActive() == 1 ? 0 : 1);
         return convertToDTO(postDAO.save(post));
@@ -172,7 +195,8 @@ public class PostServiceImpl implements PostService {
                 .orElseThrow(() -> new RuntimeException("Bài viết không tồn tại!"));
 
         // 🔥 Chặn xem public nếu bài không phải (1 1).
-        // Nếu sếp muốn tác giả được xem bài của họ, hãy handle thêm logic ID người gọi API ở đây.
+        // Nếu sếp muốn tác giả được xem bài của họ, hãy handle thêm logic ID người gọi
+        // API ở đây.
         if (post.getIsActive() != 1 || post.getIsApproved() != 1) {
             throw new RuntimeException("Bài viết này đang chờ duyệt hoặc đã bị gỡ!");
         }
@@ -228,7 +252,8 @@ public class PostServiceImpl implements PostService {
         LocalDateTime startDate;
         LocalDateTime now = LocalDateTime.now();
 
-        if (timeframe == null) timeframe = "month";
+        if (timeframe == null)
+            timeframe = "month";
 
         switch (timeframe.toLowerCase()) {
             case "day":
@@ -245,5 +270,21 @@ public class PostServiceImpl implements PostService {
         }
 
         return interactionLogDAO.findTopTrending(startDate, limit);
+    }
+
+    private void extractAndNotifyMentions(String content, String mentioner, Integer postId, Integer commentId) {
+        if (content == null || content.isEmpty()) return;
+        Pattern pattern = Pattern.compile("(?<=^|(?<=[^a-zA-Z0-9-_\\.]))@([A-Za-z0-9_]+)");
+        Matcher matcher = pattern.matcher(content);
+        List<String> mentionedUsernames = new ArrayList<>();
+        while (matcher.find()) {
+            String username = matcher.group(1);
+            if (!mentionedUsernames.contains(username) && !username.equals(mentioner)) {
+                mentionedUsernames.add(username);
+                accountDAO.findByUsername(username).ifPresent(acc -> {
+                    notificationService.notifyMention(mentioner, acc.getAccountID(), postId, commentId);
+                });
+            }
+        }
     }
 }

@@ -347,6 +347,131 @@ public class NotificationServiceImpl implements NotificationService {
         createNotification(title, content, type, postOwner.getAccountID(), null, postId, link);
     }
 
+    @Override
+    public void notifyCommentReply(String replierUsername, Integer parentCommentAuthorId, Integer postId,
+            Integer commentId) {
+        Optional<Account> replierOpt = accountDAO.findByUsername(replierUsername);
+        if (replierOpt.isEmpty())
+            return;
+        Integer replierId = replierOpt.get().getAccountID();
+
+        String title = "Trả lời bình luận";
+        String content = " đã trả lời bình luận của bạn.";
+        String type = "COMMENT_REPLY";
+        String link = commentId != null ? "/post/" + postId + "#comment-" + commentId : "/post/" + postId;
+        createNotification(title, content, type, parentCommentAuthorId, replierId, postId, link);
+    }
+
+    @Override
+    public void notifyCommentLike(String likerUsername, Integer commentAuthorId, Integer postId, Integer commentId) {
+        Optional<Account> likerOpt = accountDAO.findByUsername(likerUsername);
+        if (likerOpt.isEmpty())
+            return;
+        Integer likerId = likerOpt.get().getAccountID();
+
+        String title = "Lượt thích bình luận";
+        String content = " đã thích bình luận của bạn.";
+        String type = "COMMENT_LIKE";
+        String link = commentId != null ? "/post/" + postId + "#comment-" + commentId : "/post/" + postId;
+        createNotification(title, content, type, commentAuthorId, likerId, postId, link);
+    }
+
+    @Override
+    public void notifyMention(String mentionerUsername, Integer mentionedAccountId, Integer postId, Integer commentId) {
+        Optional<Account> mentionerOpt = accountDAO.findByUsername(mentionerUsername);
+        if (mentionerOpt.isEmpty())
+            return;
+        Integer mentionerId = mentionerOpt.get().getAccountID();
+
+        String title = "Nhắc đến bạn";
+        String content = " đã nhắc đến bạn trong một " + (commentId != null ? "bình luận." : "bài viết.");
+        String type = "MENTION";
+        String link = commentId != null ? "/post/" + postId + "#comment-" + commentId : "/post/" + postId;
+        createNotification(title, content, type, mentionedAccountId, mentionerId, postId, link);
+    }
+
+    @Override
+    public void notifyTicketUpdate(Integer ticketId, Integer newStatus, Integer accountId) {
+        String title = "Cập nhật phiếu hỗ trợ";
+        String content = newStatus == 1 ? "Phiếu hỗ trợ #" + ticketId + " đang được xử lý."
+                : newStatus == 2 ? "Phiếu hỗ trợ #" + ticketId + " đã được giải quyết."
+                        : "Phiếu hỗ trợ #" + ticketId + " đã bị từ chối.";
+        String type = "TICKET_UPDATE";
+        String link = null;
+        createNotification(title, content, type, accountId, null, null, link);
+    }
+
+    @Override
+    public void notifyAppealUpdate(Integer appealId, String status, Integer accountId) {
+        String title = "Cập nhật khiếu nại";
+        String content;
+        if ("Approved".equalsIgnoreCase(status)) {
+            content = "Khiếu nại của bạn đã được duyệt và tài khoản đã được mở khóa.";
+        } else if ("Rejected".equalsIgnoreCase(status)) {
+            content = "Khiếu nại của bạn đã bị từ chối.";
+        } else {
+            content = "Đơn khiếu nại của bạn đã được cập nhật trạng thái: " + status;
+        }
+        String type = "APPEAL_UPDATE";
+        String link = "/appeal"; // Adjust link
+        createNotification(title, content, type, accountId, null, null, link);
+    }
+
+    @Override
+    public void notifyCommentStatusChange(Integer commentId, Integer accountId, String action) {
+        String title = action.equals("DELETE") ? "Bình luận bị xóa" : "Bình luận được khôi phục";
+        String content = action.equals("DELETE")
+                ? "Một bình luận của bạn đã bị quản trị viên ẩn/xóa do vi phạm nội quy."
+                : "Bình luận của bạn đã được quản trị viên khôi phục.";
+        String type = "COMMENT_STATUS";
+        // No direct link to a deleted comment, just link to notifications or profile
+        createNotification(title, content, type, accountId, null, null, null);
+    }
+
+    @Override
+    public void notifyReward(Integer accountId, Integer points, Integer premiumDays, String source) {
+        String title = "Nhận thưởng thành công";
+        StringBuilder content = new StringBuilder("Bạn vừa nhận được ");
+        if (points != null && points > 0)
+            content.append(points + " GoMet Point ");
+        if (points != null && points > 0 && premiumDays != null && premiumDays > 0)
+            content.append("và ");
+        if (premiumDays != null && premiumDays > 0)
+            content.append(premiumDays + " ngày Premium ");
+        content.append("từ " + source + ".");
+
+        String type = "REWARD";
+        createNotification(title, content.toString(), type, accountId, null, null, "/profile/points");
+    }
+
+    @Override
+    public void notifyPaymentStatus(Integer accountId, boolean isSuccess, String orderCode) {
+        String title = isSuccess ? "Thanh toán thành công" : "Thanh toán thất bại";
+        String content = isSuccess ? "Giao dịch " + orderCode + " đã hoàn tất. Cảm ơn bạn!"
+                : "Giao dịch " + orderCode + " đã thất bại hoặc bị hủy.";
+        String type = "PAYMENT_STATUS";
+        createNotification(title, content, type, accountId, null, null, isSuccess ? "/premium" : "/upgrade");
+    }
+
+    @Override
+    public void notifyEventWinner(Integer accountId, Integer eventId, Integer rank) {
+        String title = "Kết quả sự kiện";
+        String content = "Chúc mừng! Bạn đã đạt " + (rank == 1 ? "Giải Nhất" : rank == 2 ? "Giải Nhì" : "Giải Ba")
+                + " trong sự kiện!";
+        String type = "EVENT_WINNER";
+        createNotification(title, content, type, accountId, null, null, "/events");
+    }
+
+    @Override
+    public void notifyAccountStatus(Integer accountId, String status, String reason) {
+        String title = status.equals("BANNED") ? "Kỷ luật tài khoản" : "Tài khoản được mở khóa";
+        String content = status.equals("BANNED")
+                ? "Tài khoản của bạn đã bị cấm/đình chỉ. Lý do: " + (reason != null ? reason : "Vi phạm nội quy")
+                : "Tài khoản của bạn đã được ân xá/mở khóa.";
+        String type = "ACCOUNT_STATUS";
+        createNotification(title, content, type, accountId, null, null, "/login");
+    }
+
     /**
      * Send a real-time notification to a specific user via WebSocket
      * Uses topic-based delivery to avoid principal mismatch issues

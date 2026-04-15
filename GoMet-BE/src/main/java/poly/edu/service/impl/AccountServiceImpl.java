@@ -12,7 +12,7 @@ import poly.edu.entity.Account;
 import poly.edu.service.AccountService;
 import poly.edu.service.EmailService;
 import poly.edu.service.ModerationLogService;
-
+import poly.edu.service.NotificationService;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +31,7 @@ public class AccountServiceImpl implements AccountService {
     private final ModerationLogService moderationLogService;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final NotificationService notificationService;
 
     // Bộ nhớ tạm lưu OTP (Key: Email, Value: Code)
     private final Map<String, String> otpStore = new ConcurrentHashMap<>();
@@ -39,7 +40,8 @@ public class AccountServiceImpl implements AccountService {
      * Map Entity sang DTO
      */
     private AdminAccountDTO toDTO(Account acc) {
-        if (acc == null) return null;
+        if (acc == null)
+            return null;
         AdminAccountDTO dto = new AdminAccountDTO();
         dto.setAccountID(acc.getAccountID());
         dto.setUsername(acc.getUsername());
@@ -79,7 +81,6 @@ public class AccountServiceImpl implements AccountService {
                 .collect(Collectors.toList());
     }
 
-
     @Override
     public AdminAccountDTO findById(Integer id) {
         return accountDAO.findById(id)
@@ -94,12 +95,18 @@ public class AccountServiceImpl implements AccountService {
         if (dto.getAccountID() != null) {
             // CẬP NHẬT TÀI KHOẢN CŨ
             acc = accountDAO.findById(dto.getAccountID()).orElseThrow();
-            if (dto.getUsername() != null) acc.setUsername(dto.getUsername());
-            if (dto.getEmail() != null) acc.setEmail(dto.getEmail());
-            if (dto.getAvatar() != null) acc.setAvatar(dto.getAvatar());
-            if (dto.getIsPremium() != null) acc.setIsPremium(dto.getIsPremium());
-            if (dto.getIsActive() != null) acc.setIsActive(dto.getIsActive());
-            if (dto.getIsAdmin() != null) acc.setIsAdmin(dto.getIsAdmin());
+            if (dto.getUsername() != null)
+                acc.setUsername(dto.getUsername());
+            if (dto.getEmail() != null)
+                acc.setEmail(dto.getEmail());
+            if (dto.getAvatar() != null)
+                acc.setAvatar(dto.getAvatar());
+            if (dto.getIsPremium() != null)
+                acc.setIsPremium(dto.getIsPremium());
+            if (dto.getIsActive() != null)
+                acc.setIsActive(dto.getIsActive());
+            if (dto.getIsAdmin() != null)
+                acc.setIsAdmin(dto.getIsAdmin());
             if (dto.getRole() != null) {
                 acc.setIsAdmin("ADMIN".equalsIgnoreCase(dto.getRole()) ? 1 : 0);
             }
@@ -119,7 +126,8 @@ public class AccountServiceImpl implements AccountService {
                     .avatar(dto.getAvatar())
                     .isPremium(dto.getIsPremium() != null ? dto.getIsPremium() : 0)
                     .isActive(dto.getIsActive() != null ? dto.getIsActive() : 1)
-                    .isAdmin(dto.getIsAdmin() != null ? dto.getIsAdmin() : ("ADMIN".equalsIgnoreCase(dto.getRole()) ? 1 : 0))
+                    .isAdmin(dto.getIsAdmin() != null ? dto.getIsAdmin()
+                            : ("ADMIN".equalsIgnoreCase(dto.getRole()) ? 1 : 0))
                     .point(0)
                     .createdAt(LocalDateTime.now())
                     .build();
@@ -142,6 +150,7 @@ public class AccountServiceImpl implements AccountService {
 
         moderationLogService.logAction(id, "ACCOUNT", "BAN", adminId, adminName, reason);
         log.warn("Tài khoản {} đã bị khóa bởi Admin {} vì lý do: {}", acc.getUsername(), adminName, reason);
+        notificationService.notifyAccountStatus(id, "BANNED", reason);
     }
 
     @Override
@@ -156,6 +165,7 @@ public class AccountServiceImpl implements AccountService {
         // Ghi lại nhật ký mở khóa
         moderationLogService.logAction(id, "ACCOUNT", "UNBAN", adminId, adminName, "Đã ân xá, gỡ lệnh cấm");
         log.info("Tài khoản {} đã được mở khóa bởi Admin {}", acc.getUsername(), adminName);
+        notificationService.notifyAccountStatus(id, "UNBANNED", adminName);
     }
 
     @Override
@@ -193,12 +203,12 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public void verifyAndDeactivate(Integer accountId, String password, String otp) {
         Account acc = accountDAO.findById(accountId).orElseThrow();
-        
+
         // 🛡️ BỎ YÊU CẦU MẬT KHẨU THEO YÊU CẦU NHÓM TRƯỞNG (OTP LÀ LỚP BẢO VỆ DUY NHẤT)
         // if (password != null && !password.trim().isEmpty()) {
-        //     if (!passwordEncoder.matches(password, acc.getPassword())) {
-        //         throw new RuntimeException("Mật khẩu không chính xác!");
-        //     }
+        // if (!passwordEncoder.matches(password, acc.getPassword())) {
+        // throw new RuntimeException("Mật khẩu không chính xác!");
+        // }
         // }
 
         String savedOtp = otpStore.get(acc.getEmail());
@@ -218,8 +228,10 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public void sendRestoreOTP(String email) {
         Account acc = accountDAO.findByEmail(email).orElse(null);
-        if (acc == null) throw new RuntimeException("Không tìm thấy tài khoản với Email này!");
-        if (acc.getIsActive() != 0) throw new RuntimeException("Tài khoản này không ở trạng thái cần khôi phục!");
+        if (acc == null)
+            throw new RuntimeException("Không tìm thấy tài khoản với Email này!");
+        if (acc.getIsActive() != 0)
+            throw new RuntimeException("Tài khoản này không ở trạng thái cần khôi phục!");
 
         String otp = generateOtp();
         otpStore.put(email, otp);
@@ -229,13 +241,14 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public void verifyAndRestore(String email, String password, String otp) {
         Account acc = accountDAO.findByEmail(email).orElse(null);
-        if (acc == null) throw new RuntimeException("Tài khoản không tồn tại!");
-        
+        if (acc == null)
+            throw new RuntimeException("Tài khoản không tồn tại!");
+
         // 🛡️ BỎ YÊU CẦU MẬT KHẨU THEO YÊU CẦU NHÓM TRƯỞNG (OTP LÀ LỚP BẢO VỆ DUY NHẤT)
         // if (password != null && !password.trim().isEmpty()) {
-        //     if (!passwordEncoder.matches(password, acc.getPassword())) {
-        //         throw new RuntimeException("Mật khẩu không chính xác!");
-        //     }
+        // if (!passwordEncoder.matches(password, acc.getPassword())) {
+        // throw new RuntimeException("Mật khẩu không chính xác!");
+        // }
         // }
 
         String savedOtp = otpStore.get(email);

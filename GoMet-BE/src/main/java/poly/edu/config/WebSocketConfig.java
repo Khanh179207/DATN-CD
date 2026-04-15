@@ -60,10 +60,16 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             public Message<?> preSend(Message<?> message, MessageChannel channel) {
                 StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
 
-                if (StompCommand.CONNECT.equals(accessor.getCommand()) || StompCommand.SEND.equals(accessor.getCommand())) {
+                if (StompCommand.CONNECT.equals(accessor.getCommand())
+                        || StompCommand.SEND.equals(accessor.getCommand())) {
                     List<String> authorization = accessor.getNativeHeader("Authorization");
+                    if ((authorization == null || authorization.isEmpty())) {
+                        // Some clients may send lowercase header names
+                        authorization = accessor.getNativeHeader("authorization");
+                    }
 
-                    if (authorization != null && !authorization.isEmpty() && authorization.get(0).startsWith("Bearer ")) {
+                    if (authorization != null && !authorization.isEmpty()
+                            && authorization.get(0).startsWith("Bearer ")) {
                         String jwt = authorization.get(0).substring(7);
 
                         try {
@@ -92,7 +98,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
             public Message<?> beforeHandle(Message<?> message, MessageChannel channel, MessageHandler handler) {
                 StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
 
-                // Bây giờ nó đã nằm trên cùng luồng với @PreAuthorize, nhét vào đây là ông bảo vệ thấy ngay!
+                // Bây giờ nó đã nằm trên cùng luồng với @PreAuthorize, nhét vào đây là ông bảo
+                // vệ thấy ngay!
                 if (accessor != null && accessor.getUser() != null) {
                     SecurityContextHolder.getContext().setAuthentication((Authentication) accessor.getUser());
                 }
@@ -101,7 +108,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
             // Bước 3: Dọn dẹp túi áo khi Controller chạy xong (Bảo mật)
             @Override
-            public void afterMessageHandled(Message<?> message, MessageChannel channel, MessageHandler handler, Exception ex) {
+            public void afterMessageHandled(Message<?> message, MessageChannel channel, MessageHandler handler,
+                    Exception ex) {
                 SecurityContextHolder.clearContext();
             }
         });

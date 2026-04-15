@@ -11,15 +11,16 @@ import poly.edu.entity.Comment;
 import poly.edu.entity.InteractionLog;
 import poly.edu.entity.Post;
 import poly.edu.service.CommentService;
-import poly.edu.service.ModerationLogService; // 🔥 IMPORT MỚI
+import poly.edu.service.ModerationLogService;
 import poly.edu.service.NotificationService;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -128,13 +129,27 @@ public class CommentServiceImpl implements CommentService {
             System.err.println("Lỗi lưu InteractionLog: " + e.getMessage());
         }
 
-        if (post.getAccount() != null && !account.getAccountID().equals(post.getAccount().getAccountID())) {
+        if (post.getAccount() != null && !account.getAccountID().equals(post.getAccount().getAccountID())
+                && parentComment == null) {
             notificationService.notifyComment(
                     account.getUsername(),
                     post.getAccount().getAccountID(),
                     post.getPostID(),
                     saved.getCommentID());
         }
+
+        // Send reply notification
+        if (parentComment != null && parentComment.getAccount() != null
+                && !account.getAccountID().equals(parentComment.getAccount().getAccountID())) {
+            notificationService.notifyCommentReply(
+                    account.getUsername(),
+                    parentComment.getAccount().getAccountID(),
+                    post.getPostID(),
+                    saved.getCommentID());
+        }
+
+        // Notify mentioned users
+        extractAndNotifyMentions(req.getContent(), account.getUsername(), post.getPostID(), saved.getCommentID());
 
         return toDTO(saved);
     }
@@ -154,11 +169,17 @@ public class CommentServiceImpl implements CommentService {
 
         // 3. Tự động lấy nội dung làm lý do (Giữ nguyên logic của sếp)
         String content = comment.getContent() != null ? comment.getContent() : "[Chỉ có hình ảnh/Đánh giá]";
-        if (content.length() > 50) content = content.substring(0, 50) + "...";
+        if (content.length() > 50)
+            content = content.substring(0, 50) + "...";
         String autoReason = "Xóa bình luận vi phạm: '" + content + "'";
 
         // 4. Ghi vào Moderation Log (Giữ nguyên logic của sếp)
         moderationLogService.logAction(id, "COMMENT", "DELETE", adminId, adminName, autoReason);
+
+        // Notify the author
+        if (comment.getAccount() != null) {
+            notificationService.notifyCommentStatusChange(id, comment.getAccount().getAccountID(), "DELETE");
+        }
     }
 
     @Override
@@ -185,6 +206,11 @@ public class CommentServiceImpl implements CommentService {
 
         // Ghi thẳng vào Sổ Nam Tào
         moderationLogService.logAction(id, "COMMENT", "RESTORE", adminId, adminName, "Khôi phục bình luận bị xóa nhầm");
+
+        // Notify the author
+        if (comment.getAccount() != null) {
+            notificationService.notifyCommentStatusChange(id, comment.getAccount().getAccountID(), "RESTORE");
+        }
     }
 
     @Override
@@ -284,5 +310,22 @@ public class CommentServiceImpl implements CommentService {
 
         dto.setCreatedAt(c.getCreatedAt());
         return dto;
+    }
+
+    private void extractAndNotifyMentions(String content, String mentioner, Integer postId, Integer commentId) {
+        if (content == null || content.isEmpty())
+            return;
+        Pattern pattern = Pattern.compile("(?<=^|(?<=[^a-zA-Z0-9-_\\.]))@([A-Za-z0-9_]+)");
+        Matcher matcher = pattern.matcher(content);
+        List<String> mentionedUsernames = new ArrayList<>();
+        while (matcher.find()) {
+            String username = matcher.group(1);
+            if (!mentionedUsernames.contains(username) && !username.equals(mentioner)) {
+                mentionedUsernames.add(username);
+                accountDAO.findByUsername(username).ifPresent(acc -> {
+                    notificationService.notifyMention(mentioner, acc.getAccountID(), postId, commentId);
+                });
+            }
+        }
     }
 }

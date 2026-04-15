@@ -42,7 +42,8 @@ public class FollowController {
             if (f.getStatus() == 1) {
                 return ResponseEntity.ok(Map.of("message", "Đã follow trước đó"));
             }
-            // 2. Nếu đã tồn tại nhưng Status = 0 (đã unfollow trước đó), thì UPDATE lại thành 1
+            // 2. Nếu đã tồn tại nhưng Status = 0 (đã unfollow trước đó), thì UPDATE lại
+            // thành 1
             f.setStatus(1);
             f.setFollowedAt(LocalDate.now());
             followDAO.save(f);

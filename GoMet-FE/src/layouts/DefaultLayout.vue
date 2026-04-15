@@ -93,7 +93,7 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import SockJS from 'sockjs-client'
 import Stomp from 'stompjs'
-import api from '@/services/api'
+import { ensureBrowserNotificationPermission, showBrowserNotification } from '@/services/browserNotificationService'
 
 import Sidebar from '@/components/sidebar/Sidebar.vue'
 import Header from '@/components/topbar/Header.vue' 
@@ -163,8 +163,7 @@ const aiChatRef = ref(null);
 const showMealplanModal = ref(false);
 const mealplanData = ref(null);
 const chatRealtimeClient = ref(null)
-const chatSubscriptions = ref(new Map())
-const chatSyncTimer = ref(null)
+const chatRealtimeConnecting = ref(false)
 
 const getCurrentUserId = () => {
   const id = authStore.user?.accountID || authStore.user?.id
@@ -248,7 +247,7 @@ const handleGlobalIncomingChat = (message) => {
   if (!shouldNotifyGlobally(message)) return
 
   playChatNotificationSound()
-  showChatBrowserNotification(message)
+  showChatBrowserNotificationUnified(message)
   chatStore.setUnreadCount((chatStore.totalUnreadCount || 0) + 1)
 }
 
@@ -349,6 +348,83 @@ const connectGlobalChatRealtime = () => {
   )
 }
 
+const showChatBrowserNotificationUnified = (message) => {
+  const conversationId = Number(message?.conversation?.conversationID)
+  const messageId = Number(message?.messageID)
+  const senderId = Number(message?.sender?.accountID || message?.senderID)
+  const senderName = message?.sender?.username || 'Tin nháº¯n má»›i'
+  const senderAvatar = message?.sender?.avatar || 'https://ui-avatars.com/api/?name=User&background=EA580C&color=fff'
+  const body = message?.content || 'Báº¡n cÃ³ tin nháº¯n má»›i'
+
+  showBrowserNotification({
+    title: senderName,
+    body,
+    icon: senderAvatar,
+    tag: messageId ? `chat-${messageId}` : `chat-${conversationId}`,
+    dedupeKey: messageId
+      ? `chat:${messageId}`
+      : `chat:${conversationId}:${senderId}:${message?.createdAt || body}`,
+    onClick: () => {
+      if (!Number.isFinite(conversationId)) return
+      chatStore.openChat({
+        id: conversationId,
+        conversationID: conversationId,
+        name: senderName,
+        avatar: senderAvatar,
+        online: true
+      })
+    }
+  })
+}
+
+const disconnectUnifiedGlobalChatRealtime = () => {
+  if (chatRealtimeClient.value) {
+    try {
+      chatRealtimeClient.value.disconnect()
+    } catch (error) {
+      console.warn('Lá»—i Ä‘Ã³ng global chat socket:', error)
+    }
+    chatRealtimeClient.value = null
+  }
+  chatRealtimeConnecting.value = false
+}
+
+const connectUnifiedGlobalChatRealtime = () => {
+  if (!authStore.isAuthenticated || !authStore.user?.token || chatRealtimeClient.value?.connected || chatRealtimeConnecting.value) {
+    return
+  }
+
+  const userId = getCurrentUserId()
+  if (!userId) return
+
+  chatRealtimeConnecting.value = true
+
+  const socket = new SockJS('http://localhost:8080/ws-chat')
+  chatRealtimeClient.value = Stomp.over(socket)
+  chatRealtimeClient.value.debug = () => {}
+
+  chatRealtimeClient.value.connect(
+    getChatAuthHeaders(),
+    () => {
+      chatRealtimeConnecting.value = false
+      chatRealtimeClient.value.subscribe(`/topic/chat-user/${userId}`, (payload) => {
+        try {
+          const incomingMessage = JSON.parse(payload.body)
+          handleGlobalIncomingChat(incomingMessage)
+        } catch (error) {
+          console.error('Lá»—i parse global chat message:', error)
+        }
+      })
+    },
+    () => {
+      disconnectUnifiedGlobalChatRealtime()
+      setTimeout(() => {
+        if (authStore.isAuthenticated) connectUnifiedGlobalChatRealtime()
+      }, 3000)
+    }
+  )
+}
+
 const handleStartTestTimer = () => { setTimeout(() => { showExpired.value = true; isEnforcingRenewal.value = true; }, 12000); };
 const handleRenew = () => { showExpired.value = false; showPremium.value = true; };
 const handleClosePremium = () => { showPremium.value = false; if (isEnforcingRenewal.value) { showExpired.value = true; toast.error("Bạn cần gia hạn Premium để tiếp tục sử dụng các tính năng cao cấp!"); } };
@@ -376,6 +452,7 @@ const handleRestorePrompt = (e) => {
 
 onMounted(() => {
   if (sessionStorage.getItem('just_logged_in') === 'true') startLoadingAnimation();
+  ensureBrowserNotificationPermission()
   
   /* Global Event Listeners */
   window.addEventListener('ui:open-premium', () => { showPremium.value = true; })
@@ -385,7 +462,7 @@ onMounted(() => {
   window.addEventListener('auth:restore-login-prompt', handleRestorePrompt)
 
   if (authStore.isAuthenticated) {
-    connectGlobalChatRealtime()
+    connectUnifiedGlobalChatRealtime()
   }
 })
 
@@ -401,7 +478,7 @@ watch(() => route.fullPath, () => {
 onUnmounted(() => {
   clearTimeout(safetyTimer);
   if (ctx) ctx.revert();
-  disconnectGlobalChatRealtime();
+  disconnectUnifiedGlobalChatRealtime();
   // 🔥 DỌN DẸP EVENT LISTENER
   window.removeEventListener('ui:open-mealplan', handleOpenMealplan);
   window.removeEventListener('auth:restore-login-prompt', handleRestorePrompt);
@@ -411,9 +488,9 @@ watch(
   () => authStore.isAuthenticated,
   (isAuthenticated) => {
     if (isAuthenticated) {
-      connectGlobalChatRealtime()
+      connectUnifiedGlobalChatRealtime()
     } else {
-      disconnectGlobalChatRealtime()
+      disconnectUnifiedGlobalChatRealtime()
     }
   }
 )

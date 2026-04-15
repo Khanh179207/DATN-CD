@@ -6,13 +6,12 @@ import org.springframework.security.access.prepost.PreAuthorize; // 🔥 IMPORT 
 import org.springframework.web.bind.annotation.*;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.scheduling.annotation.Scheduled;
-
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import poly.edu.config.VnPayConfig;
-
+import poly.edu.service.NotificationService;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -29,6 +28,9 @@ public class PaymentController {
 
     @Autowired
     private VnPayConfig vnPayConfig;
+
+    @Autowired
+    private NotificationService notificationService;
 
     // ==========================================
     // 1. TẠO LINK THANH TOÁN
@@ -68,12 +70,13 @@ public class PaymentController {
 
             String vnp_TxnRef = vnPayConfig.getRandomNumber(8) + "_" + System.currentTimeMillis();
 
-            String insertTxSql = "INSERT INTO PaymentTransaction (AccountID, OrderCode, Amount, PlanType, Status, CreatedAt) " +
+            String insertTxSql = "INSERT INTO PaymentTransaction (AccountID, OrderCode, Amount, PlanType, Status, CreatedAt) "
+                    +
                     "VALUES (:accId, :orderCode, :amount, :planType, 'PENDING', :now)";
             entityManager.createNativeQuery(insertTxSql)
                     .setParameter("accId", accountId)
                     .setParameter("orderCode", vnp_TxnRef)
-                    .setParameter("amount", (int)amount)
+                    .setParameter("amount", (int) amount)
                     .setParameter("planType", planType)
                     .setParameter("now", LocalDateTime.now())
                     .executeUpdate();
@@ -100,7 +103,8 @@ public class PaymentController {
                 String value = entry.getValue();
                 if (value != null && !value.isEmpty()) {
                     String encodedKey = URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8.toString());
-                    String encodedValue = URLEncoder.encode(value, StandardCharsets.UTF_8.toString()).replace("+", "%20");
+                    String encodedValue = URLEncoder.encode(value, StandardCharsets.UTF_8.toString()).replace("+",
+                            "%20");
                     joiner.add(encodedKey + "=" + encodedValue);
                 }
             }
@@ -129,7 +133,9 @@ public class PaymentController {
         if ("00".equals(vnp_ResponseCode)) {
             Integer realPlanType = 1;
             try {
-                entityManager.createNativeQuery("UPDATE PaymentTransaction SET Status = 'PAID', PaidAt = :now WHERE OrderCode = :code")
+                entityManager
+                        .createNativeQuery(
+                                "UPDATE PaymentTransaction SET Status = 'PAID', PaidAt = :now WHERE OrderCode = :code")
                         .setParameter("now", LocalDateTime.now())
                         .setParameter("code", vnp_TxnRef)
                         .executeUpdate();
@@ -146,6 +152,7 @@ public class PaymentController {
                     realPlanType = ((Number) row[2]).intValue();
 
                     updateAccountToPremium(accId, realPlanType, transId);
+                    notificationService.notifyPaymentStatus(accId, true, vnp_TxnRef);
                 }
             } catch (Exception e) {
                 System.err.println("Lỗi DB Callback: " + e.getMessage());
@@ -157,10 +164,20 @@ public class PaymentController {
                     + "&planType=" + realPlanType);
         } else {
             try {
-                entityManager.createNativeQuery("UPDATE PaymentTransaction SET Status = 'FAILED' WHERE OrderCode = :code")
+                entityManager
+                        .createNativeQuery("UPDATE PaymentTransaction SET Status = 'FAILED' WHERE OrderCode = :code")
                         .setParameter("code", vnp_TxnRef)
                         .executeUpdate();
-            } catch (Exception e) {}
+
+                String findSql = "SELECT AccountID FROM PaymentTransaction WHERE OrderCode = :code";
+                List<?> results = entityManager.createNativeQuery(findSql).setParameter("code", vnp_TxnRef)
+                        .getResultList();
+                if (!results.isEmpty()) {
+                    Integer accId = ((Number) results.get(0)).intValue();
+                    notificationService.notifyPaymentStatus(accId, false, vnp_TxnRef);
+                }
+            } catch (Exception e) {
+            }
             response.sendRedirect("http://localhost:5173/payment-success?status=cancel&vnp_TxnRef=" + vnp_TxnRef);
         }
     }
@@ -170,7 +187,7 @@ public class PaymentController {
     // ==========================================
     private void updateAccountToPremium(Integer accountId, Integer planType, Integer transactionId) {
         Object currentStatusObj = entityManager.createNativeQuery(
-                        "SELECT isPremium FROM Account WHERE AccountID = :accId")
+                "SELECT isPremium FROM Account WHERE AccountID = :accId")
                 .setParameter("accId", accountId)
                 .getSingleResult();
 
@@ -180,17 +197,22 @@ public class PaymentController {
         if (currentIsPremium == 1) {
             try {
                 String checkSql = "SELECT TOP 1 EndAt FROM Subscription WHERE AccountID = :accId AND isActive = 1 ORDER BY EndAt DESC";
-                Object result = entityManager.createNativeQuery(checkSql).setParameter("accId", accountId).getSingleResult();
+                Object result = entityManager.createNativeQuery(checkSql).setParameter("accId", accountId)
+                        .getSingleResult();
                 if (result != null) {
-                    if (result instanceof java.time.LocalDateTime) currentEndDate = (java.time.LocalDateTime) result;
-                    else if (result instanceof java.sql.Timestamp) currentEndDate = ((java.sql.Timestamp) result).toLocalDateTime();
+                    if (result instanceof java.time.LocalDateTime)
+                        currentEndDate = (java.time.LocalDateTime) result;
+                    else if (result instanceof java.sql.Timestamp)
+                        currentEndDate = ((java.sql.Timestamp) result).toLocalDateTime();
                 }
-            } catch (Exception e) {}
+            } catch (Exception e) {
+            }
         }
 
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime startDate = (currentIsPremium == 1 && currentEndDate != null && currentEndDate.isAfter(now))
-                ? currentEndDate : now;
+                ? currentEndDate
+                : now;
 
         LocalDateTime endDate = switch (planType) {
             case 0 -> startDate.plusSeconds(15);
@@ -206,8 +228,10 @@ public class PaymentController {
         entityManager.createNativeQuery("UPDATE Subscription SET isActive = 0 WHERE AccountID = :accId")
                 .setParameter("accId", accountId).executeUpdate();
 
-        entityManager.createNativeQuery("INSERT INTO Subscription (AccountID, PlanType, StartAt, EndAt, isActive, TransactionID) " +
-                        "VALUES (:accId, :planType, :start, :end, 1, :transId)")
+        entityManager
+                .createNativeQuery(
+                        "INSERT INTO Subscription (AccountID, PlanType, StartAt, EndAt, isActive, TransactionID) " +
+                                "VALUES (:accId, :planType, :start, :end, 1, :transId)")
                 .setParameter("accId", accountId)
                 .setParameter("planType", planType)
                 .setParameter("start", startDate)
@@ -228,7 +252,8 @@ public class PaymentController {
             Integer pType = Integer.parseInt(payload.get("planType").toString());
 
             String mockOrderCode = "DEV_MOCK_" + System.currentTimeMillis();
-            String insertMockSql = "INSERT INTO PaymentTransaction (AccountID, OrderCode, Amount, PlanType, Status, CreatedAt, PaidAt) " +
+            String insertMockSql = "INSERT INTO PaymentTransaction (AccountID, OrderCode, Amount, PlanType, Status, CreatedAt, PaidAt) "
+                    +
                     "VALUES (:accId, :code, 0, :pType, 'PAID', :now, :now)";
 
             entityManager.createNativeQuery(insertMockSql)
@@ -238,7 +263,8 @@ public class PaymentController {
                     .setParameter("now", LocalDateTime.now())
                     .executeUpdate();
 
-            Object newIdObj = entityManager.createNativeQuery("SELECT TransactionID FROM PaymentTransaction WHERE OrderCode = :code")
+            Object newIdObj = entityManager
+                    .createNativeQuery("SELECT TransactionID FROM PaymentTransaction WHERE OrderCode = :code")
                     .setParameter("code", mockOrderCode)
                     .getSingleResult();
 
@@ -256,18 +282,25 @@ public class PaymentController {
     public void autoCancelExpiredSubscriptions() {
         LocalDateTime now = LocalDateTime.now();
         try {
-            entityManager.createNativeQuery("UPDATE Subscription SET isActive = 0 WHERE EndAt < :now AND isActive = 1").setParameter("now", now).executeUpdate();
-            entityManager.createNativeQuery("UPDATE Account SET isPremium = 0 WHERE AccountID NOT IN (SELECT AccountID FROM Subscription WHERE isActive = 1)").executeUpdate();
-        } catch (Exception e) {}
+            entityManager.createNativeQuery("UPDATE Subscription SET isActive = 0 WHERE EndAt < :now AND isActive = 1")
+                    .setParameter("now", now).executeUpdate();
+            entityManager.createNativeQuery(
+                    "UPDATE Account SET isPremium = 0 WHERE AccountID NOT IN (SELECT AccountID FROM Subscription WHERE isActive = 1)")
+                    .executeUpdate();
+        } catch (Exception e) {
+        }
     }
 
     @PreAuthorize("isAuthenticated()") // 🟡 USER: Chỉ chủ tài khoản mới check được hạn dùng
     @GetMapping("/check-expiry/{accountId}")
     public ResponseEntity<?> checkPremiumExpiry(@PathVariable Integer accountId) {
         try {
-            Object result = entityManager.createNativeQuery("SELECT TOP 1 EndAt FROM Subscription WHERE AccountID = :accId AND isActive = 1 ORDER BY EndAt DESC")
+            Object result = entityManager.createNativeQuery(
+                    "SELECT TOP 1 EndAt FROM Subscription WHERE AccountID = :accId AND isActive = 1 ORDER BY EndAt DESC")
                     .setParameter("accId", accountId).getSingleResult();
             return ResponseEntity.ok(Map.of("success", true, "endAt", result.toString()));
-        } catch (Exception e) { return ResponseEntity.ok(Map.of("success", false)); }
+        } catch (Exception e) {
+            return ResponseEntity.ok(Map.of("success", false));
+        }
     }
 }

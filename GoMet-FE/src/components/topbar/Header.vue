@@ -167,8 +167,15 @@ import LangSwitcher from '@/components/common/LangSwitcher.vue'
 import MapModal from '@/components/modals/MapModal.vue'
 import FeedbackModal from '@/components/modals/FeedbackModal.vue'
 import SearchBox from '@/components/common/SearchBox.vue'
-import { getNotifications, markNotificationRead, markAllNotificationsRead as apiMarkAllRead } from '@/services/notificationService'
+import {
+  getNotifications,
+  getNotificationId,
+  markNotificationRead,
+  markAllNotificationsRead as apiMarkAllRead,
+  resolveNotificationLink
+} from '@/services/notificationService'
 import webSocketService from '@/services/webSocketService'
+import { ensureBrowserNotificationPermission, showBrowserNotification } from '@/services/browserNotificationService'
 import { toast } from '@/composables/useToast'
 
 const emit = defineEmits(['open-login', 'open-register', 'open-premium'])
@@ -208,20 +215,32 @@ const increaseBadge = () => {
   notifications.value = [...notifications.value];
 };
 
-const addNotificationToDropdown = (notification) => {
-  const newNotification = {
-    id: notification.notificationId,
+const normalizeNotification = (notification = {}) => {
+  const id = getNotificationId(notification)
+
+  return {
+    id,
     title: notification.title,
     content: notification.content,
-    username: notification.username,
-    avatar: notification.avatarUrl,
-    time: notification.createdAt ? new Date(notification.createdAt).toLocaleDateString() : new Date().toLocaleDateString(),
-    isRead: notification.isRead === 1,
-    type: notification.type || 'like',
-    link: notification.link
-  };
+    username: notification.username || 'Hệ thống',
+    avatar: notification.avatarUrl || notification.avatar || null,
+    time: notification.createdAt
+      ? new Date(notification.createdAt).toLocaleString()
+      : new Date().toLocaleString(),
+    isRead: notification.isRead === 1 || notification.isRead === true,
+    type: notification.type || 'GENERAL',
+    link: resolveNotificationLink(notification)
+  }
+}
+
+const addNotificationToDropdown = (notification) => {
+  const newNotification = normalizeNotification(notification)
+  if (newNotification.id && notifications.value.some(item => item.id === newNotification.id)) {
+    return false
+  }
   console.log('New notification added:', newNotification);
   notifications.value.unshift(newNotification);
+  return true
 };
 
 const playNotificationSound = () => {
@@ -296,23 +315,14 @@ const loadNotifications = async () => {
   try {
     const data = await getNotifications(authStore.user.accountID)
     console.log("Notification API:", data);
-    notifications.value = data.map(n => ({
-      id: n.notificationID,
-      title: n.title,
-      content: n.content,
-      username: n.username,
-      avatar: n.avatarUrl,
-      time: n.createdAt ? new Date(n.createdAt).toLocaleDateString() : '',
-      isRead: n.isRead === 1,
-      type: n.type || 'like',
-      link: n.link
-    }))
+    notifications.value = data.map(normalizeNotification)
     console.log("Mapped notifications:", notifications.value);
+    updateTabTitle();
   } catch (err) { }
 }
 
 const handleNotiClick = async (n) => {
-  if (!n.isRead) {
+  if (!n.isRead && n.id) {
     n.isRead = true;
     await markNotificationRead(n.id).catch(() => { });
   }
@@ -329,7 +339,8 @@ const openGoogleMaps = () => { showMapModal.value = true; closeAllDropdowns(); }
 const handleRealtimeNotification = (event) => {
   const notificationDTO = event.detail;
 
-  addNotificationToDropdown(notificationDTO);
+  const added = addNotificationToDropdown(notificationDTO);
+  if (!added) return
   playNotificationSound();
   increaseBadge();
   updateTabTitle();
@@ -339,13 +350,19 @@ const handleRealtimeNotification = (event) => {
     notificationChannel.value.postMessage(notificationDTO);
   }
 
-  // Optionally show a toast or browser notification
-  if ('Notification' in window && Notification.permission === 'granted') {
-    new Notification(notificationDTO.title, {
-      body: notificationDTO.content,
-      icon: `https://ui-avatars.com/api/?name=${encodeURIComponent(notificationDTO.title)}&background=EA580C&color=fff`
-    });
-  }
+  showBrowserNotification({
+    title: notificationDTO.title,
+    body: notificationDTO.content,
+    icon: notificationDTO.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(notificationDTO.title)}&background=EA580C&color=fff`,
+    tag: notificationDTO.notificationID ? `notification-${notificationDTO.notificationID}` : undefined,
+    dedupeKey: notificationDTO.notificationID ? `notification:${notificationDTO.notificationID}` : undefined,
+    onClick: () => {
+      const link = resolveNotificationLink(notificationDTO)
+      if (link) {
+        router.push(link)
+      }
+    }
+  })
 };
 
 onMounted(() => {
@@ -409,9 +426,7 @@ watch(() => authStore.isAuthenticated, (isAuthenticated) => {
 
 // Request browser notification permission
 const requestNotificationPermission = () => {
-  if ('Notification' in window && Notification.permission === 'default') {
-    Notification.requestPermission();
-  }
+  ensureBrowserNotificationPermission()
 };
 
 const vClickOutside = {

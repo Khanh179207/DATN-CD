@@ -147,7 +147,14 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import webSocketService from '@/services/webSocketService'
-import { getNotifications, markNotificationRead, markAllNotificationsRead } from '@/services/notificationService'
+import {
+  getNotifications,
+  getNotificationId,
+  markNotificationRead,
+  markAllNotificationsRead,
+  resolveNotificationLink
+} from '@/services/notificationService'
+import { ensureBrowserNotificationPermission, showBrowserNotification as pushBrowserNotification } from '@/services/browserNotificationService'
 
 const route = useRoute()
 const router = useRouter()
@@ -180,14 +187,26 @@ const updatePageTitle = () => {
 const getLinkForNotificationType = (notification) => {
   const type = notification.type?.toUpperCase() || ''
 
+  if (type === 'TICKET_UPDATE') return null
   if (type === 'TICKET') return '/admin/tickets'
   if (type === 'POST_PENDING_APPROVAL') return '/admin/posts'
   if (type === 'FEEDBACK') return '/admin/feedback'
   if (type === 'REPORT') return '/admin/reports'
 
-  // Default to the link from notification or admin page
-  return notification.link || '/admin'
+  return resolveNotificationLink(notification)
 }
+
+const normalizeNotification = (notification = {}) => ({
+  notificationID: getNotificationId(notification),
+  title: notification.title || 'Notification',
+  content: notification.content || '',
+  username: notification.username || 'Hệ thống',
+  avatar: notification.avatarUrl || notification.avatar || null,
+  type: notification.type || 'ADMIN',
+  isRead: notification.isRead === 1 || notification.isRead === true ? 1 : 0,
+  createdAt: notification.createdAt || new Date().toISOString(),
+  link: getLinkForNotificationType(notification)
+})
 
 /**
  * Load notifications from API
@@ -198,17 +217,7 @@ const loadNotifications = async () => {
   try {
     const data = await getNotifications(auth.currentUser.accountID)
     console.log('Notification API:', data);
-    notifications.value = data.map(n => ({
-      notificationID: n.notificationID,
-      title: n.title,
-      content: n.content,
-      username: n.username,
-      avatar: n.avatarUrl,
-      type: n.type || 'admin',
-      isRead: n.isRead === 1 ? 1 : 0,
-      createdAt: n.createdAt,
-      link: getLinkForNotificationType(n)
-    }))
+    notifications.value = data.map(normalizeNotification)
     console.log('✅ Loaded admin notifications:', notifications.value);
     updatePageTitle()
   } catch (error) {
@@ -221,16 +230,12 @@ const loadNotifications = async () => {
  */
 const handleRealtimeAlert = (event) => {
   const alertData = event.detail
-
-  const newNotification = {
-    notificationID: alertData.notificationID,
-    title: alertData.title || 'System Alert',
-    content: alertData.content || alertData.message || '',
-    type: alertData.type || 'alert',
-    isRead: 0,
-    createdAt: alertData.createdAt || new Date().toISOString(),
-    link: getLinkForNotificationType(alertData)
-  }
+  const newNotification = normalizeNotification({
+    ...alertData,
+    title: alertData?.title || 'System Alert',
+    content: alertData?.content || alertData?.message || '',
+    isRead: 0
+  })
 
   if (newNotification.notificationID) {
     const exists = notifications.value.some(n => n.notificationID === newNotification.notificationID)
@@ -251,16 +256,10 @@ const handleRealtimeAlert = (event) => {
  */
 const handleRealtimeAdminNotification = (event) => {
   const notificationData = event.detail
-
-  const newNotification = {
-    notificationID: notificationData.notificationID,
-    title: notificationData.title || 'Notification',
-    content: notificationData.content || '',
-    type: notificationData.type || 'notification',
-    isRead: 0,
-    createdAt: notificationData.createdAt || new Date().toISOString(),
-    link: getLinkForNotificationType(notificationData)
-  }
+  const newNotification = normalizeNotification({
+    ...notificationData,
+    isRead: 0
+  })
 
   if (newNotification.notificationID) {
     const exists = notifications.value.some(n => n.notificationID === newNotification.notificationID)
@@ -361,19 +360,23 @@ const playNotificationSound = () => {
 }
 
 const requestNotificationPermission = () => {
-  if ('Notification' in window && Notification.permission === 'default') {
-    Notification.requestPermission();
-  }
+  ensureBrowserNotificationPermission()
 };
 
 const showBrowserNotification = (notification) => {
-  if ('Notification' in window && Notification.permission === 'granted') {
-    new Notification(notification.title, {
-      body: notification.content,
-      icon: notification.avatar ||
-        `https://ui-avatars.com/api/?name=${encodeURIComponent(notification.title)}&background=EA580C&color=fff`
-    });
-  }
+  pushBrowserNotification({
+    title: notification.title,
+    body: notification.content,
+    icon: notification.avatar ||
+      `https://ui-avatars.com/api/?name=${encodeURIComponent(notification.title)}&background=EA580C&color=fff`,
+    tag: notification.notificationID ? `notification-${notification.notificationID}` : undefined,
+    dedupeKey: notification.notificationID ? `notification:${notification.notificationID}` : undefined,
+    onClick: () => {
+      if (notification.link) {
+        router.push(notification.link)
+      }
+    }
+  })
 };
 
 /**

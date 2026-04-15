@@ -141,23 +141,9 @@ public class TicketServiceImpl implements TicketService {
 
     private void sendUserStatusNotification(Ticket ticket, Integer newStatus) {
         try {
-            String title, content, type;
-            if (newStatus == 1) {
-                title = "Ticket accepted";
-                content = "Your support ticket #" + ticket.getTicketID() + " is now being processed.";
-                type = "TICKET_ACCEPTED";
-            } else if (newStatus == 2) {
-                title = "Ticket resolved";
-                content = "Your support ticket #" + ticket.getTicketID() + " has been resolved.";
-                type = "TICKET_RESOLVED";
-            } else {
-                title = "Ticket rejected";
-                content = "Your support ticket #" + ticket.getTicketID() + " has been rejected.";
-                type = "TICKET_REJECTED";
-            }
             if (ticket.getAccount() != null) {
-                notificationService.createNotification(title, content, type, ticket.getAccount().getAccountID(), null,
-                        null, null);
+                notificationService.notifyTicketUpdate(ticket.getTicketID(), newStatus,
+                        ticket.getAccount().getAccountID());
             } else {
                 System.err
                         .println("sendUserStatusNotification: Ticket has no account, skip user notification for ticket "

@@ -35,6 +35,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Cho phép các yêu cầu Pre-flight (OPTIONS) đi qua hết
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/api/admin/notifications/**").authenticated()
 
                         // ✅ DANH SÁCH CỬA TỰ DO HOÀN TOÀN (Ai cũng được gọi mọi method GET/POST...)
                         .requestMatchers(
@@ -59,7 +60,7 @@ public class SecurityConfig {
                         ).permitAll()
 
                         // 🔒 PHÂN QUYỀN ĐẶC BIỆT
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/admin/**", "/api/admin/**").hasRole("ADMIN")
 
                         // 🔒 TẤT CẢ CÁC REQUEST CÒN LẠI: Phải đăng nhập (Có Token hợp lệ)
                         // Ví dụ: POST /api/posts (Đăng bài), PUT /api/users (Sửa profile) sẽ rơi vào đây

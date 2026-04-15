@@ -1,507 +1,510 @@
 <template>
-  <div class="page-container">
-    <div class="page-header">
+  <div class="notification-sovereign-wrapper">
+    <div class="page-header-lux">
       <div>
-        <h2 class="title">
-          <Bell :size="20" style="vertical-align:middle;margin-right:6px" /> System Notifications
-        </h2>
-        <p class="subtitle">Broadcast announcements to all users</p>
+        <h1 class="page-title">Quản lý Thông báo</h1>
+        <p class="page-subtitle">Trung tâm tạo, theo dõi và kiểm soát thông báo hệ thống của GOMET</p>
       </div>
-      <button @click="openCreate" class="btn-create">+ Create Notification</button>
+      <button class="btn-action-lux" @click="openCreateModal">
+        <Plus :size="20" stroke-width="3" />
+        Tạo Thông báo
+      </button>
     </div>
 
-    <!-- Loading / Error -->
-    <div v-if="loading" class="empty-state">
-      <Loader2 :size="16" class="spin-icon" /> Loading notifications...
-    </div>
-    <div v-else-if="error" class="empty-state error-msg">
-      <AlertTriangle :size="16" /> {{ error }}
-    </div>
-
-    <div v-else>
-      <div v-if="notifs.length === 0" class="empty-state">No notifications yet. Create the first one!</div>
-      <div v-for="n in notifs" :key="n.notificationID" class="notif-item">
-        <div class="icon-box" :class="getTypeClass(n.type)">
-          <component
-            :is="{ MAINTENANCE: Wrench, PROMOTION: PartyPopper, GENERAL: Megaphone }[n.type] || Megaphone"
-            :size="18" />
+    <div class="stats-grid" v-if="!loading && !error">
+      <div class="stat-card">
+        <div class="icon-wrap all"><Layers :size="22" /></div>
+        <div class="stat-info">
+          <span class="label">Tổng Thông báo</span>
+          <h3 class="value">{{ notifications.length }}</h3>
         </div>
-        <div class="content">
-          <h4>{{ n.title }}</h4>
-          <span class="manual-badge">Manual Notification</span>
-          <p>{{ n.content }}</p>
-          <small>{{ formatDate(n.createdAt) }} · <span class="type-tag">{{ n.type || 'GENERAL' }}</span></small>
-        </div>
-        <button @click="deleteNotif(n.notificationID)" class="btn-del" title="Delete notification">
-          <Trash2 :size="15" />
-        </button>
       </div>
-    </div>
 
-    <!-- CREATE MODAL -->
-    <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
-      <div class="modal-box">
-        <button class="btn-close" @click="closeModal">✕</button>
-        <h3>
-          <Megaphone :size="18" style="vertical-align:middle;margin-right:6px" /> Broadcast Notification
-        </h3>
-        <p class="modal-hint">This notification will be sent to ALL users.</p>
+      <div class="stat-card">
+        <div class="icon-wrap broadcast"><Send :size="22" /></div>
+        <div class="stat-info">
+          <span class="label">Broadcast</span>
+          <h3 class="value">{{ broadcastCount }}</h3>
+        </div>
+      </div>
 
-        <div class="form-group">
-          <label>Title *</label>
-          <input v-model="form.title" type="text" placeholder="e.g. System maintenance at midnight" />
-        </div>
-        <div class="form-group">
-          <label>Content *</label>
-          <textarea v-model="form.content" rows="4" placeholder="Describe what users need to know..."></textarea>
-        </div>
-        <div class="form-group">
-          <label>Type</label>
-          <select v-model="form.type">
-            <option value="GENERAL">General</option>
-            <option value="MAINTENANCE">Maintenance</option>
-            <option value="PROMOTION">Promotion</option>
-          </select>
-        </div>
-
-        <div class="modal-footer">
-          <button @click="closeModal" class="btn-cancel">Cancel</button>
-          <button @click="sendNotif" :disabled="sending" class="btn-send">
-            {{ sending ? 'Sending...' : 'Send to All Users' }}
-          </button>
+      <div class="stat-card highlight-card">
+        <div class="icon-wrap target"><Zap :size="22" /></div>
+        <div class="stat-info">
+          <span class="label">Nhắm riêng</span>
+          <h3 class="value">{{ targetedCount }}</h3>
         </div>
       </div>
     </div>
 
-    <!-- Toast -->
-    <transition name="toast">
-      <div v-if="toast.show" :class="['toast-msg', toast.type]">{{ toast.msg }}</div>
-    </transition>
+    <div v-if="loading" class="grid-list">
+      <div v-for="n in 6" :key="n" class="lux-noti-card skeleton">
+        <div class="skel-img"></div>
+        <div class="skel-body">
+          <div class="skel-line"></div>
+          <div class="skel-line short"></div>
+        </div>
+      </div>
+    </div>
+
+    <div v-else-if="error" class="error-banner">
+      <AlertTriangle :size="20" />
+      <span>{{ error }}</span>
+      <button @click="fetchNotifications">Thử lại</button>
+    </div>
+
+    <div v-else class="grid-list">
+      <div
+        v-for="notification in notifications"
+        :key="notification.notificationID"
+        class="lux-noti-card clickable-card"
+        @click="openDetailModal(notification.notificationID)"
+      >
+        <div class="card-img-wrap">
+          <div class="hero-icon">
+            <Megaphone :size="42" />
+          </div>
+
+          <div class="post-count-badge">
+            {{ notification.isGlobal ? 'Broadcast' : 'Targeted' }}
+          </div>
+
+          <div class="hidden-badge" v-if="notification.type">{{ notification.type }}</div>
+
+          <div class="overlay-actions">
+            <button class="btn-act view" @click.stop="openDetailModal(notification.notificationID)" title="Xem chi tiết">
+              <Eye :size="20" />
+            </button>
+            <button class="btn-act delete" @click.stop="deleteNotificationItem(notification)" title="Xóa thông báo">
+              <Trash2 :size="20" />
+            </button>
+          </div>
+        </div>
+
+        <div class="card-content">
+          <h3 class="cat-name">{{ notification.title || '(Không có tiêu đề)' }}</h3>
+          <div class="meta-row">
+            <span class="ratio-text">Người nhận</span>
+            <span class="ratio-pct">{{ getRecipientLabel(notification) }}</span>
+          </div>
+          <p class="content-preview">{{ notification.content || 'Không có nội dung' }}</p>
+          <div class="progress-bar">
+            <div class="fill" :style="{ width: notification.isGlobal ? '100%' : '52%' }"></div>
+          </div>
+          <div class="view-posts-hint">{{ formatDate(notification.createdAt) }} →</div>
+        </div>
+      </div>
+
+      <div v-if="notifications.length === 0" class="empty-state">
+        Hệ thống chưa có thông báo thủ công nào.
+      </div>
+    </div>
+
+    <Teleport to="body">
+      <Transition name="fade-glass">
+        <div v-if="showCreateModal" class="modal-glass-backdrop" @click.self="closeCreateModal">
+          <div class="modal-lux-content" @click.stop>
+            <div class="modal-header-lux">
+              <h3>
+                <Megaphone :size="18" style="vertical-align:middle;margin-right:8px" />
+                Khởi tạo Thông báo
+              </h3>
+              <button class="btn-x" @click="closeCreateModal"><X :size="24" /></button>
+            </div>
+
+            <div class="modal-body-lux">
+              <div class="form-group-lux">
+                <label>Người nhận</label>
+                <div class="recipient-switch">
+                  <label><input type="radio" value="all" v-model="form.sendTo" /> Toàn bộ người dùng</label>
+                  <label><input type="radio" value="user" v-model="form.sendTo" /> Một tài khoản cụ thể</label>
+                </div>
+              </div>
+
+              <div v-if="form.sendTo === 'user'" class="form-group-lux">
+                <label>Tài khoản đích <span class="req">*</span></label>
+                <input v-model="form.targetAccountId" type="number" class="input-lux" placeholder="VD: 123">
+              </div>
+
+              <div class="form-group-lux">
+                <label>Tiêu đề <span class="req">*</span></label>
+                <input v-model="form.title" type="text" class="input-lux" placeholder="VD: Bảo trì hệ thống đêm nay...">
+              </div>
+
+              <div class="form-group-lux">
+                <label>Nội dung <span class="req">*</span></label>
+                <textarea v-model="form.content" rows="5" class="input-lux" placeholder="Nhập nội dung thông báo..."></textarea>
+              </div>
+
+              <div class="form-group-lux">
+                <label>Loại</label>
+                <select v-model="form.type" class="input-lux">
+                  <option value="GENERAL">General</option>
+                  <option value="MAINTENANCE">Maintenance</option>
+                  <option value="PROMOTION">Promotion</option>
+                </select>
+              </div>
+
+              <div class="form-group-lux">
+                <label>Link điều hướng</label>
+                <input v-model="form.link" type="text" class="input-lux" placeholder="/post/123 hoặc /admin/...">
+              </div>
+            </div>
+
+            <div class="modal-footer-lux">
+              <button @click="closeCreateModal" class="btn-lux btn-reject">Đóng</button>
+              <button @click="submitNotification" class="btn-lux btn-resolve" :disabled="sending">
+                <span v-if="sending" class="spinner"></span>
+                {{ sending ? 'Đang gửi...' : 'Hoàn tất' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <Teleport to="body">
+      <Transition name="fade-glass">
+        <div v-if="showDetailModal" class="modal-glass-backdrop" @click.self="closeDetailModal">
+          <div class="modal-lux-content detail-modal" @click.stop>
+            <div class="modal-header-lux">
+              <h3>Chi tiết Thông báo</h3>
+              <button class="btn-x" @click="closeDetailModal"><X :size="24" /></button>
+            </div>
+
+            <div v-if="detailLoading" class="detail-state">
+              <Loader2 :size="18" class="spin-icon" />
+              <span>Đang tải chi tiết thông báo...</span>
+            </div>
+
+            <div v-else-if="detailError" class="detail-state error-msg">
+              <AlertTriangle :size="18" />
+              <span>{{ detailError }}</span>
+            </div>
+
+            <div v-else-if="selectedDetail" class="modal-body-lux detail-body">
+              <div class="detail-summary-card">
+                <div class="detail-headline">
+                  <div>
+                    <span class="meta-kicker">Thông tin cơ bản</span>
+                    <h4>{{ selectedDetail.title || '(Không có tiêu đề)' }}</h4>
+                  </div>
+                  <span class="manual-badge" :class="{ targeted: !selectedDetail.isGlobal }">
+                    {{ selectedDetail.isGlobal ? 'Broadcast' : 'Targeted' }}
+                  </span>
+                </div>
+
+                <div class="detail-grid">
+                  <div class="detail-box">
+                    <span class="label">Loại</span>
+                    <strong>{{ selectedDetail.type || 'GENERAL' }}</strong>
+                  </div>
+                  <div class="detail-box">
+                    <span class="label">Thời gian tạo</span>
+                    <strong>{{ formatDate(selectedDetail.createdAt) }}</strong>
+                  </div>
+                  <div class="detail-box">
+                    <span class="label">Người nhận</span>
+                    <strong>{{ selectedDetail.isGlobal ? 'Toàn bộ người dùng' : (selectedDetail.recipientUsername || 'Một tài khoản cụ thể') }}</strong>
+                  </div>
+                  <div class="detail-box">
+                    <span class="label">Đã đọc</span>
+                    <strong>{{ selectedDetail.readCount || 0 }} người</strong>
+                  </div>
+                </div>
+
+                <div class="detail-content-block">
+                  <span class="label">Nội dung</span>
+                  <p>{{ selectedDetail.content || 'Không có nội dung' }}</p>
+                </div>
+
+                <div class="detail-content-block">
+                  <span class="label">Link</span>
+                  <p>{{ selectedDetail.link || 'Không có link điều hướng' }}</p>
+                </div>
+              </div>
+
+              <div class="detail-readers-card">
+                <div class="reader-header">
+                  <div>
+                    <span class="meta-kicker">Người đã đọc</span>
+                    <h4>Danh sách tài khoản đã đọc thông báo</h4>
+                  </div>
+                  <span class="reader-count">{{ selectedDetail.readCount || 0 }}</span>
+                </div>
+
+                <div v-if="!selectedDetail.readers?.length" class="empty-reader-state">
+                  Chưa có người dùng nào đọc thông báo này.
+                </div>
+
+                <div v-else class="reader-list">
+                  <div v-for="reader in selectedDetail.readers" :key="reader.accountID" class="reader-item">
+                    <div class="reader-avatar-wrap">
+                      <img v-if="reader.avatar" :src="reader.avatar" :alt="reader.username || 'User'" class="reader-avatar">
+                      <div v-else class="reader-avatar fallback-avatar">{{ getInitial(reader.username) }}</div>
+                    </div>
+                    <div class="reader-info">
+                      <strong>{{ reader.username || 'Unknown user' }}</strong>
+                      <p>{{ reader.email || 'Chưa có email' }}</p>
+                    </div>
+                    <span class="reader-time">{{ formatDate(reader.readAt) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="modal-footer-lux">
+              <button @click="closeDetailModal" class="btn-lux btn-reject">Đóng</button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { Bell, Loader2, AlertTriangle, Trash2, Wrench, PartyPopper, Megaphone, Send } from 'lucide-vue-next'
-import api from '@/services/api'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import {
+  AlertTriangle,
+  Eye,
+  Layers,
+  Loader2,
+  Megaphone,
+  Plus,
+  Send,
+  Trash2,
+  X,
+  Zap
+} from 'lucide-vue-next'
+import webSocketService from '@/services/webSocketService'
+import {
+  deleteAdminNotification,
+  getAdminNotificationDetail,
+  getAdminNotifications,
+  getNotificationId,
+  resolveNotificationLink,
+  sendAdminNotificationToAll,
+  sendAdminNotificationToUser
+} from '@/services/notificationService'
+import { toast } from '@/composables/useToast'
 
-const notifs = ref([])
-const loading = ref(false)
-const error = ref('')
-const showModal = ref(false)
+const notifications = ref([])
+const loading = ref(true)
+const error = ref(null)
+const showCreateModal = ref(false)
+const showDetailModal = ref(false)
 const sending = ref(false)
+const detailLoading = ref(false)
+const detailError = ref('')
+const selectedDetail = ref(null)
+const selectedNotificationId = ref(null)
 
-const form = ref({ title: '', content: '', type: 'ADMIN_MANUAL' })
+const form = ref({
+  sendTo: 'all',
+  targetAccountId: null,
+  title: '',
+  content: '',
+  type: 'GENERAL',
+  link: null
+})
 
-const toast = ref({ show: false, msg: '', type: 'success' })
-const showToast = (msg, type = 'success') => {
-  toast.value = { show: true, msg, type }
-  setTimeout(() => toast.value.show = false, 3500)
-}
+const broadcastCount = computed(() => notifications.value.filter(item => item.isGlobal).length)
+const targetedCount = computed(() => notifications.value.filter(item => !item.isGlobal).length)
 
-const formatDate = (d) => {
-  if (!d) return ''
-  return new Date(d).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-}
-
-const getTypeIcon = (type) => {
-  return type || 'GENERAL'
-}
-
-const getTypeClass = (type) => {
-  const map = { MAINTENANCE: 'bg-orange', PROMOTION: 'bg-green', GENERAL: 'bg-blue' }
-  return map[type] || 'bg-blue'
-}
-
-const fetchNotifs = async () => {
-  loading.value = true
-  error.value = ''
+const formatDate = (value) => {
+  if (!value) return 'N/A'
   try {
-    const res = await api.get('/api/admin/notifications')
-    notifs.value = (res.data || []).filter(n => n.type === 'ADMIN_MANUAL')
+    return new Date(value).toLocaleString('vi-VN')
+  } catch {
+    return String(value)
+  }
+}
+
+const getInitial = (value) => String(value || 'U').trim().charAt(0).toUpperCase()
+
+const getRecipientLabel = (notification) => {
+  if (notification.isGlobal) return 'Toàn bộ người dùng'
+  if (notification.recipientUsername) return notification.recipientUsername
+  if (notification.accountID) return `Tài khoản #${notification.accountID}`
+  return 'Nhắm riêng'
+}
+
+const normalizeSummary = (notification = {}) => ({
+  notificationID: getNotificationId(notification),
+  title: notification.title,
+  content: notification.content,
+  type: notification.type || 'GENERAL',
+  createdAt: notification.createdAt,
+  isGlobal: notification.isGlobal === true || notification.isGlobal === 1 || notification.isGlobal === '1',
+  link: resolveNotificationLink(notification),
+  accountID: notification.accountID || null,
+  recipientUsername: notification.recipientUsername || null
+})
+
+const normalizeDetail = (detail = {}) => ({
+  notificationID: detail.notificationID,
+  title: detail.title,
+  content: detail.content,
+  type: detail.type || 'GENERAL',
+  createdAt: detail.createdAt,
+  isGlobal: detail.isGlobal === true || detail.isGlobal === 1 || detail.isGlobal === '1',
+  link: resolveNotificationLink(detail),
+  accountID: detail.accountID || null,
+  recipientUsername: detail.recipientUsername || null,
+  recipientEmail: detail.recipientEmail || null,
+  recipientAvatar: detail.recipientAvatar || null,
+  readCount: detail.readCount || 0,
+  readers: (detail.readers || []).map(reader => ({
+    accountID: reader.accountID,
+    username: reader.username,
+    email: reader.email,
+    avatar: reader.avatar,
+    readAt: reader.readAt
+  }))
+})
+
+const fetchNotifications = async () => {
+  loading.value = true
+  error.value = null
+
+  try {
+    const data = await getAdminNotifications()
+    notifications.value = (data || []).map(normalizeSummary)
   } catch (e) {
-    error.value = 'Failed to load notifications. ' + (e.response?.data?.message || e.message)
+    error.value = 'Hệ thống thông báo đang bận, vui lòng thử lại sau.'
   } finally {
     loading.value = false
   }
 }
 
-const deleteNotif = async (id) => {
-  if (!confirm('Delete this notification?')) return
+const openCreateModal = () => {
+  form.value = {
+    sendTo: 'all',
+    targetAccountId: null,
+    title: '',
+    content: '',
+    type: 'GENERAL',
+    link: null
+  }
+  showCreateModal.value = true
+}
+
+const closeCreateModal = () => {
+  showCreateModal.value = false
+}
+
+const openDetailModal = async (notificationID) => {
+  selectedNotificationId.value = notificationID
+  detailLoading.value = true
+  detailError.value = ''
+  selectedDetail.value = null
+  showDetailModal.value = true
+
   try {
-    await api.delete(`/api/admin/notifications/${id}`)
-    notifs.value = notifs.value.filter(n => n.notificationID !== id)
-    showToast('Notification deleted')
+    const data = await getAdminNotificationDetail(notificationID)
+    selectedDetail.value = normalizeDetail(data)
   } catch (e) {
-    showToast('Delete failed: ' + (e.response?.data?.message || e.message), 'error')
+    detailError.value = 'Không thể tải chi tiết thông báo lúc này.'
+  } finally {
+    detailLoading.value = false
   }
 }
 
-const openCreate = () => {
-  form.value = { title: '', content: '', type: 'GENERAL' }
-  showModal.value = true
+const closeDetailModal = () => {
+  showDetailModal.value = false
+  selectedDetail.value = null
+  detailError.value = ''
+  selectedNotificationId.value = null
 }
 
-const closeModal = () => { showModal.value = false }
-
-const sendNotif = async () => {
-  if (!form.value.title.trim() || !form.value.content.trim()) {
-    showToast('Title and content are required!', 'error')
+const submitNotification = async () => {
+  if (!form.value.title?.trim() || !form.value.content?.trim()) {
+    toast.warn('Vui lòng nhập đầy đủ tiêu đề và nội dung thông báo!')
     return
   }
+
+  if (form.value.sendTo === 'user') {
+    const accountId = Number(form.value.targetAccountId)
+    if (!accountId || Number.isNaN(accountId) || accountId <= 0) {
+      toast.warn('Vui lòng nhập Account ID hợp lệ!')
+      return
+    }
+  }
+
   sending.value = true
+
   try {
-    await api.post('/api/admin/notifications/all', form.value)
-    showToast('Notification sent to all users!')
-    closeModal()
-    fetchNotifs()
+    const payload = {
+      title: form.value.title.trim(),
+      content: form.value.content.trim(),
+      type: form.value.type,
+      postID: null,
+      link: form.value.link?.trim() || null
+    }
+
+    if (form.value.sendTo === 'all') {
+      await sendAdminNotificationToAll(payload)
+      toast.success('Đã gửi thông báo broadcast thành công!')
+    } else {
+      const accountId = Number(form.value.targetAccountId)
+      await sendAdminNotificationToUser(accountId, payload)
+      toast.success(`Đã gửi thông báo cho tài khoản #${accountId}!`)
+    }
+
+    closeCreateModal()
+    await fetchNotifications()
   } catch (e) {
-    showToast('Send failed: ' + (e.response?.data?.message || e.message), 'error')
+    toast.error(e.response?.data?.message || 'Gửi thông báo thất bại.')
   } finally {
     sending.value = false
   }
 }
 
-onMounted(fetchNotifs)
+const deleteNotificationItem = async (notification) => {
+  if (!window.confirm(`Bạn có chắc chắn muốn xóa thông báo "${notification.title || 'không tiêu đề'}" không?`)) {
+    return
+  }
+
+  try {
+    await deleteAdminNotification(notification.notificationID)
+    notifications.value = notifications.value.filter(item => item.notificationID !== notification.notificationID)
+
+    if (selectedNotificationId.value === notification.notificationID) {
+      closeDetailModal()
+    }
+
+    toast.success('Đã xóa thông báo thành công.')
+  } catch (e) {
+    toast.error(e.response?.data?.message || 'Không thể xóa thông báo lúc này.')
+  }
+}
+
+const handleRealtimeAdminAlert = (event) => {
+  const dto = event.detail || {}
+  if (String(dto.type || '').toUpperCase() !== 'ADMIN_MANUAL') return
+
+  const id = getNotificationId(dto)
+  if (!id || notifications.value.some(item => item.notificationID === id)) return
+
+  notifications.value.unshift(normalizeSummary(dto))
+}
+
+const handleRealtimeAdminNotification = (event) => {
+  handleRealtimeAdminAlert(event)
+}
+
+onMounted(async () => {
+  await fetchNotifications()
+  webSocketService.connect()
+  window.addEventListener('admin-alert', handleRealtimeAdminAlert)
+  window.addEventListener('admin-notification', handleRealtimeAdminNotification)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('admin-alert', handleRealtimeAdminAlert)
+  window.removeEventListener('admin-notification', handleRealtimeAdminNotification)
+})
 </script>
 
-<style scoped>
-.page-container {
-  padding: 25px;
-  font-family: 'Quicksand', sans-serif;
-  color: #334155;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  margin-bottom: 25px;
-}
-
-.title {
-  font-size: 1.8rem;
-  font-weight: 800;
-  color: #1E293B;
-  margin: 0;
-}
-
-.subtitle {
-  color: #64748B;
-  margin: 5px 0 0;
-}
-
-.btn-create {
-  background: linear-gradient(135deg, #3B82F6, #6366F1);
-  color: white;
-  border: none;
-  padding: 11px 22px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: 700;
-  font-family: inherit;
-  font-size: 0.95rem;
-  transition: 0.2s;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-}
-
-.btn-create:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(99, 102, 241, 0.4);
-}
-
-.empty-state {
-  text-align: center;
-  padding: 50px;
-  color: #94A3B8;
-  font-style: italic;
-  font-size: 1.05rem;
-  background: white;
-  border-radius: 12px;
-}
-
-.error-msg {
-  color: #DC2626 !important;
-}
-
-.notif-item {
-  display: flex;
-  gap: 18px;
-  background: white;
-  padding: 18px 20px;
-  border-radius: 14px;
-  margin-bottom: 12px;
-  align-items: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  border: 1px solid #F1F5F9;
-  transition: 0.2s;
-}
-
-.notif-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07);
-}
-
-.icon-box {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.3rem;
-  flex-shrink: 0;
-}
-
-.bg-blue {
-  background: #EFF6FF;
-}
-
-.bg-orange {
-  background: #FFF7ED;
-}
-
-.bg-green {
-  background: #F0FDF4;
-}
-
-.bg-yellow {
-  background: #FEFCE8;
-}
-
-.content {
-  flex: 1;
-}
-
-.content h4 {
-  margin: 0 0 4px 0;
-  font-size: 1rem;
-  color: #0F172A;
-}
-
-.content p {
-  margin: 0 0 6px 0;
-  color: #64748B;
-  font-size: 0.9rem;
-}
-
-.content small {
-  color: #94A3B8;
-  font-size: 0.8rem;
-}
-
-.type-tag,
-.manual-badge {
-  background: #F1F5F9;
-  color: #475569;
-  padding: 1px 8px;
-  border-radius: 10px;
-  font-weight: 700;
-  font-size: 0.72rem;
-}
-
-.manual-badge {
-  background: #DBEAFE;
-  color: #1E40AF;
-}
-
-.btn-del {
-  background: transparent;
-  border: 1px solid #EF4444;
-  color: #EF4444;
-  padding: 7px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: 0.2s;
-  font-size: 1rem;
-}
-
-.btn-del:hover {
-  background: #EF4444;
-  color: white;
-}
-
-/* MODAL */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  backdrop-filter: blur(3px);
-}
-
-.modal-box {
-  background: white;
-  width: 500px;
-  max-width: 95%;
-  border-radius: 20px;
-  padding: 30px;
-  position: relative;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
-  animation: slideUp 0.3s ease;
-}
-
-.btn-close {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  background: #F1F5F9;
-  border: none;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  cursor: pointer;
-  font-weight: bold;
-  transition: 0.2s;
-}
-
-.btn-close:hover {
-  background: #EF4444;
-  color: white;
-}
-
-.modal-box h3 {
-  margin: 0 0 6px;
-  font-size: 1.3rem;
-  color: #0F172A;
-}
-
-.modal-hint {
-  color: #64748B;
-  font-size: 0.875rem;
-  margin: 0 0 22px;
-}
-
-.form-group {
-  margin-bottom: 18px;
-}
-
-.form-group label {
-  display: block;
-  font-weight: 700;
-  font-size: 0.875rem;
-  color: #374151;
-  margin-bottom: 6px;
-}
-
-.form-group input,
-.form-group textarea,
-.form-group select {
-  width: 100%;
-  padding: 10px 14px;
-  border: 1px solid #CBD5E1;
-  border-radius: 8px;
-  font-family: inherit;
-  font-size: 0.95rem;
-  color: #0F172A;
-  box-sizing: border-box;
-  transition: 0.2s;
-}
-
-.form-group input:focus,
-.form-group textarea:focus,
-.form-group select:focus {
-  outline: none;
-  border-color: #3B82F6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.form-group textarea {
-  resize: vertical;
-}
-
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 24px;
-}
-
-.btn-cancel {
-  background: #F1F5F9;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 700;
-  color: #64748B;
-  font-family: inherit;
-  transition: 0.2s;
-}
-
-.btn-cancel:hover {
-  background: #E2E8F0;
-}
-
-.btn-send {
-  background: linear-gradient(135deg, #3B82F6, #6366F1);
-  color: white;
-  border: none;
-  padding: 10px 22px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 700;
-  font-family: inherit;
-  transition: 0.2s;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-}
-
-.btn-send:hover:not(:disabled) {
-  transform: translateY(-2px);
-}
-
-.btn-send:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Toast */
-.toast-msg {
-  position: fixed;
-  bottom: 30px;
-  right: 30px;
-  padding: 14px 24px;
-  border-radius: 12px;
-  font-weight: 700;
-  z-index: 9999;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
-}
-
-.toast-msg.success {
-  background: #DCFCE7;
-  color: #15803D;
-  border: 1px solid #86EFAC;
-}
-
-.toast-msg.error {
-  background: #FEE2E2;
-  color: #B91C1C;
-  border: 1px solid #FCA5A5;
-}
-
-.toast-enter-active,
-.toast-leave-active {
-  transition: all 0.3s ease;
-}
-
-.toast-enter-from,
-.toast-leave-to {
-  opacity: 0;
-  transform: translateY(20px);
-}
-
-@keyframes slideUp {
-  from {
-    transform: translateY(20px);
-    opacity: 0;
-  }
-
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-</style>
+<style scoped lang="scss" src="./NotificationManagement.scss"></style>
