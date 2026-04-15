@@ -96,32 +96,6 @@ public class TicketServiceImpl implements TicketService {
 
         Ticket savedTicket = ticketDAO.save(ticket);
 
-        // Send real-time notification to ticket owner if status changed to
-        // ACCEPTED/RESOLVED/REJECTED
-        if (oldStatus != null && !oldStatus.equals(newStatus) && (newStatus == 1 || newStatus == 2 || newStatus == 3)) {
-            try {
-                String link = null;
-                String title, content, type;
-
-                if (newStatus == 1) {
-                    title = "Ticket accepted";
-                    content = "Your support ticket is now being processed.";
-                    type = "TICKET_ACCEPTED";
-                } else if (newStatus == 2) {
-                    title = "Ticket resolved";
-                    content = "Your support ticket has been resolved.";
-                    type = "TICKET_RESOLVED";
-                } else { // 3
-                    title = "Ticket rejected";
-                    content = "Your support ticket has been rejected by admin.";
-                    type = "TICKET_REJECTED";
-                }
-
-                notificationService.createNotification(title, content, type, ticket.getAccount().getAccountID(), null,
-                        null, link);
-            } catch (Exception e) {
-                System.err.println("Failed to send ticket status notification: " + e.getMessage());
-            }
         // 3. Gửi thông báo Real-time cho User
         if (oldStatus != null && !oldStatus.equals(newStatus)) {
             sendUserStatusNotification(savedTicket, newStatus);
@@ -179,7 +153,7 @@ public class TicketServiceImpl implements TicketService {
                 content = "Your support ticket #" + ticket.getTicketID() + " has been rejected.";
                 type = "TICKET_REJECTED";
             }
-            notificationService.createNotification(title, content, type, ticket.getAccount().getAccountID(), null, null);
+            notificationService.createNotification(title, content, type, ticket.getAccount().getAccountID(), null, null, null);
         } catch (Exception e) {
             System.err.println("Failed to send notification: " + e.getMessage());
         }

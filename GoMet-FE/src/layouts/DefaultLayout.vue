@@ -87,9 +87,13 @@
 import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useChatStore } from '@/stores/chat' 
+import { useAuthStore } from '@/stores/auth'
 import { toast } from '@/composables/useToast' 
 import gsap from 'gsap' 
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import SockJS from 'sockjs-client'
+import Stomp from 'stompjs'
+import api from '@/services/api'
 
 import Sidebar from '@/components/sidebar/Sidebar.vue'
 import Header from '@/components/topbar/Header.vue' 
@@ -110,6 +114,7 @@ gsap.registerPlugin(ScrollTrigger)
 const router = useRouter()
 const route = useRoute()
 const chatStore = useChatStore() 
+const authStore = useAuthStore()
 
 // --- 🚀 LOGIC LOADING TỐI ƯU ---
 const isLoading = ref(false)
@@ -157,6 +162,192 @@ const aiChatRef = ref(null);
 // 🔥 TRẠNG THÁI CHO MEALPLAN MODAL
 const showMealplanModal = ref(false);
 const mealplanData = ref(null);
+const chatRealtimeClient = ref(null)
+const chatSubscriptions = ref(new Map())
+const chatSyncTimer = ref(null)
+
+const getCurrentUserId = () => {
+  const id = authStore.user?.accountID || authStore.user?.id
+  return id ? Number(id) : null
+}
+
+const getChatAuthHeaders = () => ({
+  Authorization: `Bearer ${authStore.user?.token || ''}`
+})
+
+const playChatNotificationSound = () => {
+  try {
+    const audio = new Audio('/sounds/notification.mp3')
+    audio.volume = 0.6
+    audio.play().catch((err) => {
+      console.warn('Không thể tự động phát âm thanh chat:', err)
+    })
+  } catch (error) {
+    console.error('Lỗi phát âm thanh chat:', error)
+  }
+}
+
+const showChatBrowserNotification = (message) => {
+  if (!('Notification' in window)) return
+
+  const conversationId = Number(message?.conversation?.conversationID)
+  const senderName = message?.sender?.username || 'Tin nhắn mới'
+  const senderAvatar = message?.sender?.avatar || 'https://ui-avatars.com/api/?name=User&background=EA580C&color=fff'
+  const body = message?.content || 'Bạn có tin nhắn mới'
+  const icon = senderAvatar
+
+  const openConversationFromNotification = () => {
+    if (!Number.isFinite(conversationId)) return
+
+    window.focus()
+    chatStore.openChat({
+      id: conversationId,
+      conversationID: conversationId,
+      name: senderName,
+      avatar: senderAvatar,
+      online: true
+    })
+  }
+
+  const createDesktopNotification = () => {
+    const notification = new Notification(senderName, { body, icon })
+    notification.onclick = () => {
+      openConversationFromNotification()
+      notification.close()
+    }
+  }
+
+  if (Notification.permission === 'granted') {
+    createDesktopNotification()
+    return
+  }
+
+  if (Notification.permission === 'default') {
+    Notification.requestPermission().then((permission) => {
+      if (permission === 'granted') {
+        createDesktopNotification()
+      }
+    })
+  }
+}
+
+const shouldNotifyGlobally = (message) => {
+  const senderId = Number(message?.sender?.accountID || message?.senderID)
+  const currentUserId = getCurrentUserId()
+
+  if (!currentUserId || senderId === currentUserId) return false
+
+  const incomingConversationId = Number(message?.conversation?.conversationID)
+  const activeConversationId = Number(chatStore.activeChat?.id || chatStore.activeChat?.conversationID)
+
+  // Nếu đang mở đúng cuộc chat thì MiniChatBox đã xử lý sound/notification riêng.
+  return incomingConversationId !== activeConversationId
+}
+
+const handleGlobalIncomingChat = (message) => {
+  if (!shouldNotifyGlobally(message)) return
+
+  playChatNotificationSound()
+  showChatBrowserNotification(message)
+  chatStore.setUnreadCount((chatStore.totalUnreadCount || 0) + 1)
+}
+
+const cleanupChatSubscriptions = () => {
+  chatSubscriptions.value.forEach((subscription) => {
+    try {
+      subscription.unsubscribe()
+    } catch (error) {
+      console.warn('Lỗi unsubscribe chat topic:', error)
+    }
+  })
+  chatSubscriptions.value.clear()
+}
+
+const syncChatTopicSubscriptions = async () => {
+  if (!chatRealtimeClient.value?.connected) return
+  const userId = getCurrentUserId()
+  if (!userId) return
+
+  try {
+    const res = await api.get(`/api/conversations/user/${userId}`)
+    const conversations = Array.isArray(res.data) ? res.data : []
+    const activeTopicSet = new Set(
+      conversations
+        .map((c) => Number(c.id || c.conversationID))
+        .filter((id) => Number.isFinite(id))
+        .map((id) => `/topic/${id}`)
+    )
+
+    // Unsubscribe các topic không còn tồn tại
+    Array.from(chatSubscriptions.value.keys()).forEach((topic) => {
+      if (!activeTopicSet.has(topic)) {
+        try {
+          chatSubscriptions.value.get(topic)?.unsubscribe()
+        } catch (error) {
+          console.warn('Lỗi bỏ subscribe topic:', error)
+        }
+        chatSubscriptions.value.delete(topic)
+      }
+    })
+
+    // Subscribe các topic mới
+    activeTopicSet.forEach((topic) => {
+      if (chatSubscriptions.value.has(topic)) return
+      const subscription = chatRealtimeClient.value.subscribe(topic, (payload) => {
+        try {
+          const incomingMessage = JSON.parse(payload.body)
+          handleGlobalIncomingChat(incomingMessage)
+        } catch (error) {
+          console.error('Lỗi parse global chat message:', error)
+        }
+      })
+      chatSubscriptions.value.set(topic, subscription)
+    })
+  } catch (error) {
+    console.error('Lỗi đồng bộ chat topics:', error)
+  }
+}
+
+const disconnectGlobalChatRealtime = () => {
+  if (chatSyncTimer.value) {
+    clearInterval(chatSyncTimer.value)
+    chatSyncTimer.value = null
+  }
+
+  cleanupChatSubscriptions()
+
+  if (chatRealtimeClient.value) {
+    try {
+      chatRealtimeClient.value.disconnect()
+    } catch (error) {
+      console.warn('Lỗi đóng global chat socket:', error)
+    }
+    chatRealtimeClient.value = null
+  }
+}
+
+const connectGlobalChatRealtime = () => {
+  if (!authStore.isAuthenticated || !authStore.user?.token || chatRealtimeClient.value?.connected) return
+
+  const socket = new SockJS('http://localhost:8080/ws-chat')
+  chatRealtimeClient.value = Stomp.over(socket)
+  chatRealtimeClient.value.debug = () => {}
+
+  chatRealtimeClient.value.connect(
+    getChatAuthHeaders(),
+    async () => {
+      await syncChatTopicSubscriptions()
+      if (chatSyncTimer.value) clearInterval(chatSyncTimer.value)
+      chatSyncTimer.value = setInterval(syncChatTopicSubscriptions, 15000)
+    },
+    () => {
+      disconnectGlobalChatRealtime()
+      setTimeout(() => {
+        if (authStore.isAuthenticated) connectGlobalChatRealtime()
+      }, 3000)
+    }
+  )
+}
 
 const handleStartTestTimer = () => { setTimeout(() => { showExpired.value = true; isEnforcingRenewal.value = true; }, 12000); };
 const handleRenew = () => { showExpired.value = false; showPremium.value = true; };
@@ -192,6 +383,10 @@ onMounted(() => {
   // 🔥 LẮNG NGHE CÁC SỰ KIỆN TỪ HỆ THỐNG
   window.addEventListener('ui:open-mealplan', handleOpenMealplan)
   window.addEventListener('auth:restore-login-prompt', handleRestorePrompt)
+
+  if (authStore.isAuthenticated) {
+    connectGlobalChatRealtime()
+  }
 })
 
 watch(() => route.fullPath, () => {
@@ -206,10 +401,22 @@ watch(() => route.fullPath, () => {
 onUnmounted(() => {
   clearTimeout(safetyTimer);
   if (ctx) ctx.revert();
+  disconnectGlobalChatRealtime();
   // 🔥 DỌN DẸP EVENT LISTENER
   window.removeEventListener('ui:open-mealplan', handleOpenMealplan);
   window.removeEventListener('auth:restore-login-prompt', handleRestorePrompt);
 })
+
+watch(
+  () => authStore.isAuthenticated,
+  (isAuthenticated) => {
+    if (isAuthenticated) {
+      connectGlobalChatRealtime()
+    } else {
+      disconnectGlobalChatRealtime()
+    }
+  }
+)
 
 // --- LOGIC LOCK PREMIUM CHO NÚT GOMET ASSISTANT ---
 const openAiChat = () => { 

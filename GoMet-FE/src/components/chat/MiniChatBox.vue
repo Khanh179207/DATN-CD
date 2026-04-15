@@ -138,6 +138,44 @@ const mapMessage = (msg) => {
   };
 }
 
+const playIncomingMessageSound = () => {
+  try {
+    const audio = new Audio('/sounds/notification.mp3')
+    audio.volume = 0.6
+    audio.play().catch((err) => {
+      console.warn('Không thể tự động phát âm thanh chat:', err)
+    })
+  } catch (error) {
+    console.error('Lỗi phát âm thanh tin nhắn:', error)
+  }
+}
+
+const showIncomingMessageNotification = (message) => {
+  if (!('Notification' in window)) return
+
+  const senderName = message?.sender?.username || chatStore.activeChat?.name || 'Tin nhắn mới'
+  const messageContent = message?.content || 'Bạn có tin nhắn mới'
+
+  if (Notification.permission === 'granted') {
+    new Notification(senderName, {
+      body: messageContent,
+      icon: message?.sender?.avatar || chatStore.activeChat?.avatar || 'https://ui-avatars.com/api/?name=User&background=EA580C&color=fff'
+    })
+    return
+  }
+
+  if (Notification.permission === 'default') {
+    Notification.requestPermission().then((permission) => {
+      if (permission === 'granted') {
+        new Notification(senderName, {
+          body: messageContent,
+          icon: message?.sender?.avatar || chatStore.activeChat?.avatar || 'https://ui-avatars.com/api/?name=User&background=EA580C&color=fff'
+        })
+      }
+    })
+  }
+}
+
 // 🚀 [THÊM MỚI]: Detect & Extract Post ID from special message pattern [POST_SHARE_ID:123]
 const isPostShare = (text) => text && text.startsWith('[POST_SHARE_ID:') && text.endsWith(']')
 const getPostId = (text) => {
@@ -164,6 +202,8 @@ const connectWebSocket = (conversationId) => {
       // Chỉ push nếu là tin nhắn của đối phương 
       if (senderId !== currentUserId.value) {
         messages.value.push(mapMessage(receivedMsg))
+        playIncomingMessageSound()
+        showIncomingMessageNotification(receivedMsg)
         scrollToBottom()
       }
     })

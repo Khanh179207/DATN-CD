@@ -12,7 +12,6 @@ import poly.edu.service.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -51,14 +50,12 @@ public class AppealServiceImpl implements AppealService {
             for (Account admin : admins) {
                 notificationService.createNotification(
                         "Khiếu nại mới",
-                        "Người dùng " + email + " đã nộp khiếu nại: " + reason,
+                        "Người dùng " + trimEmail + " đã nộp khiếu nại: " + reason,
                         "appeal",
                         admin.getAccountID(),
                         null, // actorId - null for system notification
                         null, // postId
                         "/admin/appeals");
-                        "Người dùng " + trimEmail + " vừa nộp đơn xin gỡ Ban.",
-                        "appeal", admin.getAccountID(), null, "/admin/appeals");
             }
         } catch (Exception e) {
             System.err.println("Error notifying admins: " + e.getMessage());

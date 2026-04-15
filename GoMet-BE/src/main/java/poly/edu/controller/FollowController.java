@@ -19,7 +19,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/follows")
 @RequiredArgsConstructor
-@PreAuthorize("isAuthenticated()") // 🔥 CHỐT CHẶN VÀNG: Bắt buộc đăng nhập cho TẤT CẢ các hàm bên dưới
+@PreAuthorize("isAuthenticated()")
 public class FollowController {
 
     private final FollowDAO followDAO;
@@ -34,11 +34,7 @@ public class FollowController {
         if (followerID.equals(followeeID)) {
             return ResponseEntity.badRequest().body(Map.of("message", "Không thể tự follow"));
         }
-        Optional<Follow> existing = followDAO.findByFollower_AccountIDAndFollowee_AccountIDAndStatus(followerID,
-                followeeID, 1);
-
         // 1. Tìm bản ghi dựa trên cặp ID (KHÔNG lọc theo Status ở bước này)
-        // Bạn cần thêm hàm findByFollower_AccountIDAndFollowee_AccountID vào FollowDAO
         Optional<Follow> existing = followDAO.findByFollower_AccountIDAndFollowee_AccountID(followerID, followeeID);
 
         if (existing.isPresent()) {
