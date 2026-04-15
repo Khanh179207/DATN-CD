@@ -49,13 +49,21 @@
                 <p class="section-subtitle">Chia sẻ cảm nhận và hình ảnh thực tế của bạn</p>
               </div>
 
+              <div v-if="!isPostInteractive" class="status-alert-banner">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                  <line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                <span>{{ postStatusMessage }}</span>
+              </div>
+
               <ReviewSummary 
                 :avgRating="avgRating" 
                 :totalRatings="totalRatings" 
                 :ratingDistribution="ratingDistribution" 
               />
 
-              <div class="review-input-luxury">
+              <div class="review-input-luxury" v-if="isPostInteractive">
                 <div class="input-header">
                   <img :src="currentUserAvatar" class="current-user-avt" alt="User">
                   
@@ -207,7 +215,6 @@ const currentUserReview = computed(() => {
 const hasUserRated = computed(() => !!currentUserReview.value);
 const ratedComments = computed(() => rawCommentsList.value.filter(c => c.rating > 0))
 
-// --- TÌM ĐẾN DÒNG 207 VÀ THAY THẾ CỤM COMPUTED RATING BẰNG ĐOẠN NÀY ---
 const avgRating = computed(() => {
   if (!ratedComments.value.length) return 0
   const sum = ratedComments.value.reduce((acc, curr) => acc + curr.rating, 0)
@@ -218,7 +225,6 @@ const liveAvgRating = computed(() => {
   if (hasFetchedComments.value && totalRatings.value > 0) {
     return avgRating.value;
   }
-  // Fallback lấy dữ liệu từ DB nếu chưa load xong hoặc danh sách bình luận (có rating) trống
   return post.value?.avgRating > 0 ? Number(post.value.avgRating).toFixed(1) : 'Mới';
 })
 
@@ -229,7 +235,6 @@ const liveRatingCount = computed(() => {
   return post.value?.ratingCount || 0;
 })
 
-// Bí danh để giữ nguyên cấu trúc hiển thị của Template hiện tại
 const displayAvgRating = computed(() => liveAvgRating.value)
 const displayRatingCount = computed(() => liveRatingCount.value)
 
@@ -247,10 +252,32 @@ const isSubmitDisabled = computed(() => {
   const hasText = !!newComment.value.trim();
   const hasPhoto = selectedPhotos.value.length > 0;
   
-  if (userRating.value > 0 && userRating.value < 3 && !hasText) return true; // Dưới 3 sao bắt buộc phải nhập text
-  if (!hasText && !hasPhoto && userRating.value === 0) return true; // Trống rỗng thì không cho gửi
+  if (userRating.value > 0 && userRating.value < 3 && !hasText) return true;
+  if (!hasText && !hasPhoto && userRating.value === 0) return true;
   return false;
 });
+
+// --- COMPUTED: KIỂM SOÁT TRẠNG THÁI VÀ QUYỀN TƯƠNG TÁC BÀI VIẾT ---
+const isPostInteractive = computed(() => {
+  if (!post.value) return false;
+  return post.value.isActive === 1 && post.value.isApproved === 1;
+});
+
+const postStatusMessage = computed(() => {
+  if (!post.value || isPostInteractive.value) return '';
+  
+  const isActive = post.value.isActive;
+  const isApproved = post.value.isApproved;
+
+  if (isActive === 1 && isApproved === 0) return 'Bài viết đang chờ Admin duyệt. Bạn có thể xem nhưng không thể tương tác lúc này.';
+  if (isActive === 0 && isApproved === 0) return 'Bài viết đã được bạn ẩn trong lúc chờ duyệt. Không thể tương tác.';
+  if (isActive === 0 && isApproved === 1) return 'Bài viết đang được bạn cấu hình ẩn. Không thể tương tác.';
+  if (isActive === -1 && isApproved === 1) return 'Bài viết đã bị Admin gỡ khỏi hệ thống hiển thị. Không thể tương tác.';
+  if (isActive === -1 && isApproved === 0) return 'Bài viết đã bị Admin từ chối phê duyệt. Không thể tương tác.';
+  
+  return 'Bài viết hiện không khả dụng để tương tác.';
+});
+
 
 // --- TIỆN ÍCH FORM ---
 const autoResize = () => {
@@ -291,7 +318,6 @@ const fetchComments = async (postId) => {
     isCommentsLoading.value = false
     hasFetchedComments.value = true
 
-    // Cuộn đến và làm nổi bật bình luận nếu có hash trên URL
     const targetHash = route.hash || window.location.hash;
     if (targetHash && targetHash.startsWith('#comment-')) {
       let attempts = 0
@@ -301,16 +327,16 @@ const fetchComments = async (postId) => {
           clearInterval(findAndScroll)
           element.scrollIntoView({ behavior: 'smooth', block: 'center' })
           element.style.transition = 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)'
-          element.style.backgroundColor = '#fff7ed' // Màu cam siêu nhạt highlight
+          element.style.backgroundColor = '#fff7ed'
           element.style.borderRadius = '16px'
-          element.style.boxShadow = '0 0 0 12px #fff7ed' // Phủ tràn viền bo góc
+          element.style.boxShadow = '0 0 0 12px #fff7ed'
           setTimeout(() => {
             element.style.backgroundColor = 'transparent'
             element.style.boxShadow = '0 0 0 0 transparent'
-          }, 3000) // Tắt highlight sau 3s
+          }, 3000)
         }
         attempts++
-        if (attempts > 10) { // Thử tìm tối đa 10 lần (5 giây), nếu không có thì bỏ qua
+        if (attempts > 10) { 
           clearInterval(findAndScroll)
         }
       }, 500)
@@ -333,7 +359,6 @@ async function loadPost(id) {
     /* END */
 
     post.value = {
-      // ... (Phần map dữ liệu post.value này SẾP GIỮ NGUYÊN HOÀN TOÀN nhé) ...
       id: dto.postID,
       postID: dto.postID,
       title: dto.title,
@@ -354,12 +379,29 @@ async function loadPost(id) {
       favoriteCount: dto.favoriteCount || 0,
       views: dto.views || 0,
       isPremium: dto.isPremium || dto.IsPremium || false,
+      
+      // 🔥 BỔ SUNG LẤY 2 TRƯỜNG STATUS NÀY TỪ API:
+      isActive: dto.isActive ?? dto.IsActive ?? 1, 
+      isApproved: dto.isApproved ?? dto.IsApproved ?? 1,
+
       steps: (dto.steps || []).map(s => ({
         stepNumber: s.stepNumber,
         desc: s.content || '',
         images: s.image ? [s.image] : [],
         video: s.video || null
       }))
+    }
+
+    // 🔥 LOGIC CHẶN TRUY CẬP BÀI VIẾT KHÔNG CÔNG KHAI
+    const currentUserId = authStore.user?.accountID || authStore.user?.id;
+    const isAuthor = currentUserId === post.value.authorID;
+    const isAdmin = authStore.user?.isAdmin || authStore.user?.role === 'ADMIN' || authStore.user?.role === 'admin';
+
+    // Nếu bài viết KHÔNG phải (1, 1) VÀ người xem KHÔNG phải Tác giả VÀ KHÔNG phải Admin
+    if (!isPostInteractive.value && !isAuthor && !isAdmin) {
+      toast.error('Bài viết này không tồn tại, đang chờ duyệt hoặc đã bị ẩn!');
+      router.push('/home'); // Đẩy người dùng lạ về trang chủ
+      return; // Dừng luôn việc tải bình luận và các bài viết liên quan
     }
 
     const related = await getRelatedPosts(id, 4)
@@ -383,6 +425,7 @@ async function loadPost(id) {
     }
     recordPostView(id).catch(err => console.warn('Không ghi nhận được view:', err));
 
+console.log("Dữ liệu gốc từ API trả về:", dto);
   } catch (err) {
     console.warn('PostDetail: load error', err)
   }
@@ -392,16 +435,18 @@ async function loadPost(id) {
 const checkContentPolicy = async (text) => {
   if (!text) return false;
   try {
-    // 🔥 Giữ code của sếp: Dùng 'api' thay vì hardcode localhost của ông bạn
     const res = await api.post('/api/blacklist/check', { content: text });
     return res.data.hasBadWord; 
   } catch (error) {
     console.warn("Lỗi kiểm duyệt nội dung:", error);
-    return false; // Nếu BE sập thì tạm cho qua
+    return false; 
   }
 };
+
 // --- LOGIC API ---
 const submitComment = async () => {
+  if (!isPostInteractive.value) { toast.warn('Không thể thao tác trên bài viết này!'); return; }
+
   let content = newComment.value.trim()
   
   if (userRating.value > 0 && userRating.value < 3 && !content) {
@@ -417,7 +462,6 @@ const submitComment = async () => {
   
   isUploading.value = true
 
-  // 🔥 TÍNH NĂNG CHUYỂN ĐỔI BAD WORD
   const isViolating = await checkContentPolicy(content);
   if (isViolating) {
     content = "chỉ cần bạn đăng bài, ngon hay dở không quan trong!";
@@ -450,6 +494,8 @@ const submitComment = async () => {
 }
 
 const handleSubmitReply = async ({ parentId, content }) => {
+  if (!isPostInteractive.value) { toast.warn('Không thể thao tác trên bài viết này!'); return; }
+
   let textContent = content;
   if (!textContent || !textContent.trim()) return
   if (!authStore.isAuthenticated) {
@@ -457,7 +503,6 @@ const handleSubmitReply = async ({ parentId, content }) => {
     return
   }
 
-  // 🔥 TÍNH NĂNG CHUYỂN ĐỔI BAD WORD CHO REPLY
   const isViolating = await checkContentPolicy(textContent);
   if (isViolating) {
     textContent = "chỉ cần bạn đăng bài, ngon hay dở không quan trong!";
@@ -479,6 +524,8 @@ const handleSubmitReply = async ({ parentId, content }) => {
 }
 
 const handleDeleteComment = async (commentId) => {
+  if (!isPostInteractive.value) { toast.warn('Không thể thao tác trên bài viết này!'); return; }
+
   if (!authStore.isAuthenticated) {
     window.dispatchEvent(new CustomEvent('ui:open-login'))
     return
@@ -486,7 +533,6 @@ const handleDeleteComment = async (commentId) => {
   
   try {
     const userId = authStore.user.accountID || authStore.user.id;
-    // 🔥 Lấy tên thật của Admin từ AuthStore (sửa fullname thành fullName)
     const adminName = authStore.user.username || authStore.user.fullName || 'Admin';
     const isAdmin = authStore.user.isAdmin || authStore.user.role === 'ADMIN' || authStore.user.role === 'admin';
     
@@ -494,7 +540,6 @@ const handleDeleteComment = async (commentId) => {
     const isOwnComment = targetComment && (targetComment.accountID === userId || targetComment.userId === userId);
 
     if (isAdmin && !isOwnComment) {
-      // ✅ ADMIN XÓA: Truyền đủ params để Backend ghi Log
       await api.delete(`/api/comments/${commentId}`, {
         params: {
           adminId: userId,
@@ -502,15 +547,13 @@ const handleDeleteComment = async (commentId) => {
         }
       });
       
-      // Cập nhật nội dung ngay trên giao diện để sếp thấy kết quả luôn
       if (targetComment) {
         targetComment.content = "[Bình luận này đã bị ẩn vì vi phạm chính sách của GoMet]";
         targetComment.imageUrls = [];
-        targetComment.rating = 0; // Xóa rating của comment vi phạm khỏi tính toán
+        targetComment.rating = 0; 
       }
       toast.success('Đã ẩn bình luận vi phạm!');
     } else {
-      // ✅ USER TỰ XÓA
       await api.delete(`/api/comments/user/${commentId}?currentAccountID=${userId}`);
       rawCommentsList.value = rawCommentsList.value.filter(c => (c.commentID || c.id) !== commentId);
       toast.success('Đã xóa bình luận!');
@@ -521,6 +564,8 @@ const handleDeleteComment = async (commentId) => {
 }
 
 const handleToggleLikeComment = async (comment) => {
+  if (!isPostInteractive.value) { toast.warn('Không thể thao tác trên bài viết này!'); return; }
+
   if (!authStore.isAuthenticated) {
     window.dispatchEvent(new CustomEvent('ui:open-login'))
     return
@@ -623,6 +668,26 @@ const goToDetail = (id) => {
 }
 .section-subtitle {
   color: #64748b; font-size: 1.05rem; font-weight: 500; margin: 0;
+}
+
+/* --- BANNER CẢNH BÁO TRẠNG THÁI BÀI VIẾT --- */
+.status-alert-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background-color: #fffbeb;
+  border: 1px solid #fcd34d;
+  color: #b45309;
+  padding: 16px 20px;
+  border-radius: 16px;
+  margin-bottom: 24px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.1);
+}
+.status-alert-banner svg {
+  color: #d97706;
+  flex-shrink: 0;
 }
 
 /* --- FORM NHẬP BÌNH LUẬN LUXURY --- */

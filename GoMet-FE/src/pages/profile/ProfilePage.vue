@@ -200,7 +200,7 @@ async function loadProfile(forcedId = null) {
       try { const status = await checkFollow(authStore.user?.accountID, targetId); isFollowing.value = status === true || status?.following === true } catch { isFollowing.value = false }
     }
   } catch (err) {
-    if (err.response?.status === 404) { toast.error('Tài khoản không tồn tại.'); router.push('/') }
+    if (err.response?.status === 404) { toast.error('Tài khoản không tồn tại.'); router.push('/home') }
     postsLoading.value = false
   }
 }

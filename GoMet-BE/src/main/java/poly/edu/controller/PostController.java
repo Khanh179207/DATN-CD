@@ -259,6 +259,8 @@ public class PostController {
         dto.setLevel(p.getLevel());
         dto.setCookingTime(p.getCookingTime());
         dto.setViews(p.getViews());
+        dto.setIsActive(p.getIsActive());
+        dto.setIsApproved(p.getIsApproved());
         dto.setCreatedAt(p.getCreatedAt()); // 🔥 Sẽ tự map LocalDateTime
 
         if (p.getAccount() != null) {
