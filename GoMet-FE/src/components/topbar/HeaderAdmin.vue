@@ -742,12 +742,15 @@ const vClickOutside = {
 .z-body {
   max-height: 400px;
   overflow-y: auto;
+  overflow-x: hidden;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .z-card {
   display: flex;
   gap: 16px;
-  padding: 18px 20px;
+  padding: 14px 16px;
   border-bottom: 1px solid var(--z-panel-border);
   cursor: pointer;
   transition: 0.3s;
@@ -834,6 +837,7 @@ const vClickOutside = {
 
 .card-desc {
   flex: 1;
+  min-width: 0;
 }
 
 .title-row {
@@ -845,9 +849,16 @@ const vClickOutside = {
 
 .title-row p {
   margin: 0;
-  font-weight: 700;
-  color: var(--z-text-main);
+  font-weight: 600;
+  color: var(--z-text-sub);
   font-size: 14px;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.title-row p b {
+  color: var(--z-text-main);
 }
 
 .badge-new {
@@ -1088,11 +1099,8 @@ const vClickOutside = {
 }
 
 .custom-scroll::-webkit-scrollbar {
-  width: 4px;
-}
-
-.custom-scroll::-webkit-scrollbar-thumb {
-  background: var(--z-panel-border);
-  border-radius: 10px;
+  width: 0;
+  height: 0;
+  display: none;
 }
 </style>

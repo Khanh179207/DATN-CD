@@ -91,7 +91,7 @@
           </button>
         </div>
 
-        <div class="action-wrapper" @click.stop>
+        <div class="action-wrapper" @click.stop v-click-outside="closeNotiDropdown">
           <button class="btn-icon" :class="{ active: showNoti }" @click="toggleNoti">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
@@ -289,6 +289,7 @@ const toggleShopping = () => {
 const toggleNoti = () => { showShopping.value = false; showNoti.value = !showNoti.value; if (showNoti.value) loadNotifications(); }
 const toggleChat = () => { chatStore.isMessengerOpen = !chatStore.isMessengerOpen; closeAllDropdowns(); }
 const closeAllDropdowns = () => { showNoti.value = false; showShopping.value = false; }
+const closeNotiDropdown = () => { showNoti.value = false; }
 
 const loadNotifications = async () => {
   if (!authStore.user?.accountID) return
@@ -412,6 +413,20 @@ const requestNotificationPermission = () => {
     Notification.requestPermission();
   }
 };
+
+const vClickOutside = {
+  mounted(el, binding) {
+    el.__clickOutsideHandler__ = (event) => {
+      if (!(el === event.target || el.contains(event.target))) {
+        binding.value(event)
+      }
+    }
+    document.body.addEventListener('click', el.__clickOutsideHandler__)
+  },
+  unmounted(el) {
+    document.body.removeEventListener('click', el.__clickOutsideHandler__)
+  }
+}
 </script>
 
 <style scoped lang="scss" src="./Header.scss"></style>

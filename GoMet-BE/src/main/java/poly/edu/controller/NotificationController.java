@@ -38,10 +38,10 @@ public class NotificationController {
     public ResponseEntity<List<Map<String, Object>>> getUserNotifications(
             @PathVariable Integer accountID) {
 
+        // Use DAO method with fetch-join to avoid N+1 and return ordered results
         List<Map<String, Object>> result = notificationDAO
-                .findByAccount_AccountID(accountID)
+                .findByAccount_AccountIDWithActorAndParentOrderByCreatedAtDesc(accountID)
                 .stream()
-                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
                 .map(n -> {
                     Map<String, Object> map = new HashMap<>();
                     map.put("notificationID", n.getNotificationID());
@@ -49,7 +49,10 @@ public class NotificationController {
                     map.put("content", n.getContent());
                     map.put("type", n.getType());
                     map.put("isRead", n.getIsRead());
-                    map.put("createdAt", n.getCreatedAt().toString());
+                    map.put("isGlobal", n.getIsGlobal() != null ? n.getIsGlobal() : false);
+                    map.put("parentNotificationID",
+                            n.getParentNotification() != null ? n.getParentNotification().getNotificationID() : null);
+                    map.put("createdAt", n.getCreatedAt() != null ? n.getCreatedAt().toString() : null);
                     map.put("postID", n.getPost() != null ? n.getPost().getPostID() : 0);
                     map.put("link", n.getLink()); // Can be null
                     map.put("username", n.getActor() != null ? n.getActor().getUsername() : "Hệ thống");

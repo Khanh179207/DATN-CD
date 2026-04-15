@@ -27,10 +27,14 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public Notification createNotification(String title, String content, String type, Integer receiverId,
             Integer actorId, Integer postId, String link) {
-        // Get the receiver (person receiving the notification)
-        Optional<Account> receiverOpt = accountDAO.findById(receiverId);
-        if (receiverOpt.isEmpty()) {
-            throw new RuntimeException("Receiver not found with ID: " + receiverId);
+        // Get the receiver (person receiving the notification). receiverId may be null
+        // for global notifications
+        Optional<Account> receiverOpt = Optional.empty();
+        if (receiverId != null) {
+            receiverOpt = accountDAO.findById(receiverId);
+            if (receiverOpt.isEmpty()) {
+                throw new RuntimeException("Receiver not found with ID: " + receiverId);
+            }
         }
 
         // Get the actor (person who triggered the action)
@@ -52,23 +56,37 @@ public class NotificationServiceImpl implements NotificationService {
             post = postOpt.get();
         }
 
-        // Create the notification
-        Notification notification = Notification.builder()
+        // Create the notification. If receiverOpt is empty, this becomes a global
+        // notification (account == null)
+        Notification.NotificationBuilder nb = Notification.builder()
                 .title(title)
                 .content(content)
                 .type(type)
-                .account(receiverOpt.get())
                 .actor(actor)
                 .post(post)
                 .isRead(0) // Default to unread
                 .createdAt(LocalDateTime.now())
-                .link(link)
-                .build();
+                .link(link);
+
+        if (receiverOpt.isPresent()) {
+            nb.account(receiverOpt.get()).isGlobal(false);
+        } else {
+            nb.account(null).isGlobal(true);
+        }
+
+        Notification notification = nb.build();
 
         Notification savedNotification = notificationDAO.save(notification);
 
-        // Send real-time notification via WebSocket
-        sendRealtimeNotification(receiverId, convertToDTO(savedNotification));
+        // Send real-time notification via WebSocket only for user-specific
+        // notifications
+        if (receiverOpt.isPresent()) {
+            sendRealtimeNotification(receiverId, convertToDTO(savedNotification));
+        } else {
+            // Global notification saved. No per-user realtime send here (admin/manual flows
+            // may broadcast separately).
+            System.out.println("Saved global notification (no user target)");
+        }
 
         return savedNotification;
     }
@@ -386,6 +404,10 @@ public class NotificationServiceImpl implements NotificationService {
                 .link(notification.getLink())
                 .createdAt(notification.getCreatedAt())
                 .isRead(notification.getIsRead())
+                .isGlobal(notification.getIsGlobal() != null ? notification.getIsGlobal() : false)
+                .parentNotificationID(notification.getParentNotification() != null
+                        ? notification.getParentNotification().getNotificationID()
+                        : null)
                 .username(username)
                 .avatarUrl(avatarUrl)
                 .build();

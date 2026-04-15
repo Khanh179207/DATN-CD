@@ -21,11 +21,16 @@ import java.util.stream.Collectors;
 @Transactional
 public class AppealServiceImpl implements AppealService {
 
-    @Autowired private AppealDAO appealDAO;
-    @Autowired private AccountDAO accountDAO;
-    @Autowired private NotificationService notificationService;
-    @Autowired private AccountService accountService;
-    @Autowired private EmailService emailService;
+    @Autowired
+    private AppealDAO appealDAO;
+    @Autowired
+    private AccountDAO accountDAO;
+    @Autowired
+    private NotificationService notificationService;
+    @Autowired
+    private AccountService accountService;
+    @Autowired
+    private EmailService emailService;
 
     @Override
     public AppealDTO createAppeal(String email, String reason) {
@@ -35,7 +40,8 @@ public class AppealServiceImpl implements AppealService {
                 .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại trong hệ thống."));
 
         if (account.getIsActive() != -1) {
-            throw new RuntimeException("Tài khoản của bạn đang hoạt động bình thường, vui lòng dùng tính năng phiếu hỗ trợ trong web để được hỗ trợ!");
+            throw new RuntimeException(
+                    "Tài khoản của bạn đang hoạt động bình thường, vui lòng dùng tính năng phiếu hỗ trợ trong web để được hỗ trợ!");
         }
 
         if (!canCreateAppeal(trimEmail)) {
@@ -139,7 +145,6 @@ public class AppealServiceImpl implements AppealService {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         return true;
     }
 
@@ -159,7 +164,8 @@ public class AppealServiceImpl implements AppealService {
         AppealDTO dto = new AppealDTO();
         dto.setAppealID(appeal.getAppealID());
         dto.setEmail(appeal.getEmail());
-        if(appeal.getAccount() != null) dto.setAccountID(appeal.getAccount().getAccountID());
+        if (appeal.getAccount() != null)
+            dto.setAccountID(appeal.getAccount().getAccountID());
         dto.setReason(appeal.getReason());
         dto.setStatus(appeal.getStatus());
         dto.setNote(appeal.getNote());

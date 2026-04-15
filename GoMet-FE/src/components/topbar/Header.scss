@@ -186,6 +186,20 @@
   .unread-dot { width: 8px; height: 8px; background: var(--color-primary-600); border-radius: var(--radius-full); }
 }
 
+// Ẩn hoàn toàn thanh cuộn trong dropdown thông báo (ngang + dọc)
+.common-dropdown.noti-width .scroll-body {
+  overflow-y: auto;
+  overflow-x: hidden;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.common-dropdown.noti-width .scroll-body::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
 // ── 6. FOOTERS & TRẠNG THÁI TRỐNG ────────────────────────────
 
 .dropdown-footer-v3, .dropdown-footer {
