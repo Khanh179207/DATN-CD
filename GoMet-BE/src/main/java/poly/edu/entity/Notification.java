@@ -28,7 +28,11 @@ public class Notification {
 
     @ManyToOne
     @JoinColumn(name = "AccountID", nullable = false)
-    private Account account;
+    private Account account; // Receiver of notification
+
+    @ManyToOne
+    @JoinColumn(name = "ActorID", nullable = true)
+    private Account actor; // Person who triggered the action
 
     @ManyToOne
     @JoinColumn(name = "PostID")

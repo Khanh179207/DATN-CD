@@ -46,16 +46,22 @@ public class AppealServiceImpl implements AppealService {
         Appeal appeal = new Appeal(trimEmail, reason, account);
         Appeal saved = appealDAO.save(appeal);
 
+        // 🔥 Đoạn code đã được gộp từ nhánh feature của bạn kia
         try {
             List<Account> admins = accountDAO.findByIsAdmin(1);
             for (Account admin : admins) {
                 notificationService.createNotification(
                         "Khiếu nại mới",
-                        "Người dùng " + trimEmail + " vừa nộp đơn xin gỡ Ban.",
-                        "appeal", admin.getAccountID(), null, "/admin/appeals");
+                        "Người dùng " + trimEmail + " đã nộp khiếu nại: " + reason,
+                        "appeal",
+                        admin.getAccountID(),
+                        null, // actorId - null for system notification
+                        null, // postId
+                        "/admin/appeals");
             }
         } catch (Exception e) {
-            System.err.println("Error notifying admins: " + e.getMessage());
+            System.err.println("Error notifying admins about appeal: " + e.getMessage());
+            e.printStackTrace();
         }
 
         return convertToDTO(saved);
