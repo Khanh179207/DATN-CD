@@ -1,262 +1,212 @@
-import SockJS from 'sockjs-client';
-import Stomp from 'stompjs';
-import { useAuthStore } from '@/stores/auth';
+import SockJS from 'sockjs-client'
+import Stomp from 'stompjs'
+import { useAuthStore } from '@/stores/auth'
 
-// 🚀 1. KHỞI TẠO ÂM THANH (PRE-LOAD) Ở ĐẦU FILE
+// 🚀 1. KHỞI TẠO ÂM THANH (PRE-LOAD)
 const globalMsgSound = new Audio('/sounds/ting.mp3');
+const notificationSound = new Audio('/sounds/notification.mp3');
 
 class WebSocketService {
-    constructor() {
-        this.stompClient = null;
-        this.connected = false;
-        this.subscriptions = new Map();
+  constructor() {
+    this.stompClient = null
+    this.connected = false
+    this.connecting = false
+    this.subscriptions = new Map()
+  }
+
+  connect() {
+    const authStore = useAuthStore()
+
+    if (!authStore.isAuthenticated || !authStore.user?.accountID) {
+      console.warn('Cannot connect to WebSocket: User not authenticated')
+      return
     }
 
-    /**
-     * Connect to WebSocket server
-     */
-    connect() {
-        const authStore = useAuthStore();
+    if (this.connected && this.stompClient) {
+      console.log('WebSocket already connected')
+      return
+    }
 
-        if (!authStore.isAuthenticated || !authStore.user?.accountID) {
-            console.warn('Cannot connect to WebSocket: User not authenticated');
-            return;
+    if (this.connecting) {
+      console.log('WebSocket connection is already being established')
+      return
+    }
+
+    try {
+      this.connecting = true
+
+      const socket = new SockJS('http://localhost:8080/ws')
+      this.stompClient = Stomp.over(socket)
+      this.stompClient.debug = () => {} // Tắt log debug của Stomp
+
+      const headers = {}
+      if (authStore.user?.token) {
+        headers.Authorization = `Bearer ${authStore.user.token}`
+      }
+
+      this.stompClient.connect(
+        headers,
+        () => {
+          console.log('WebSocket connected successfully')
+          this.connected = true
+          this.connecting = false
+          this.setupSubscriptions()
+        },
+        (error) => {
+          console.error('WebSocket connection error:', error)
+          this.connected = false
+          this.connecting = false
+          this.stompClient = null
+
+          setTimeout(() => {
+            console.log('Retrying WebSocket connection...')
+            this.connect()
+          }, 5000)
         }
+      )
+    } catch (error) {
+      console.error('Error creating WebSocket connection:', error)
+      this.connected = false
+      this.connecting = false
+      this.stompClient = null
+      setTimeout(() => this.connect(), 5000)
+    }
+  }
 
-        if (this.connected && this.stompClient) {
-            console.log('WebSocket already connected');
-            return;
-        }
-
+  disconnect() {
+    try {
+      this.subscriptions.forEach((subscription) => {
         try {
-            // Create SockJS connection
-            const socket = new SockJS('http://localhost:8080/ws');
-            this.stompClient = Stomp.over(socket);
+          subscription?.unsubscribe?.()
+        } catch {}
+      })
+      this.subscriptions.clear()
 
-            // Disable debug logs in production
-            this.stompClient.debug = () => { };
+      if (this.stompClient) {
+        this.stompClient.disconnect(() => {
+          console.log('WebSocket disconnected')
+        })
+      }
+    } catch (error) {
+      console.error('Error disconnecting WebSocket:', error)
+    } finally {
+      this.connected = false
+      this.connecting = false
+      this.stompClient = null
+    }
+  }
 
-            this.stompClient.connect(
-                {}, // headers
-                (frame) => {
-                    console.log('✅ WebSocket connected successfully');
-                    this.connected = true;
-                    // Setup subscriptions after a brief delay to ensure full connection
-                    this.setupSubscriptions();
-                },
-                (error) => {
-                    console.error('❌ WebSocket connection error:', error);
-                    this.connected = false;
+  setupSubscriptions() {
+    const authStore = useAuthStore()
+    const accountId = authStore.user?.accountID
 
-                    // Retry connection after 5 seconds
-                    console.log('⏳ Retrying connection in 5 seconds...');
-                    setTimeout(() => {
-                        console.log('🔄 Attempting to reconnect...');
-                        this.connect();
-                    }, 5000);
-                }
-            );
-        } catch (error) {
-            console.error('❌ Error creating WebSocket connection:', error);
-            this.connected = false;
-
-            // Retry after 5 seconds
-            setTimeout(() => this.connect(), 5000);
-        }
+    if (!accountId || !this.stompClient) {
+      console.warn('No authenticated user, cannot setup subscriptions')
+      return
     }
 
-    /**
-     * Disconnect from WebSocket server
-     */
-    disconnect() {
-        try {
-            if (this.stompClient && this.connected) {
-                this.stompClient.disconnect(() => {
-                    console.log('✅ WebSocket disconnected');
-                    this.connected = false;
-                    this.subscriptions.clear();
-                    this.stompClient = null;
-                });
-            } else if (this.stompClient) {
-                this.stompClient.disconnect();
-                this.connected = false;
-                this.subscriptions.clear();
-                this.stompClient = null;
-            }
-        } catch (error) {
-            console.error('Error disconnecting WebSocket:', error);
-            this.connected = false;
-            this.subscriptions.clear();
-            this.stompClient = null;
-        }
+    // Delay nhỏ để đảm bảo connection đã ổn định
+    setTimeout(() => {
+      try {
+        // 🔔 1. Thông báo người dùng cụ thể
+        this.subscribe('notifications', `/topic/notifications/${accountId}`, (message) => {
+          const notification = JSON.parse(message.body)
+          this.handleNotification(notification)
+        })
+
+        // 🛡️ 2. Thông báo Admin cụ thể
+        this.subscribe('admin-notifications', `/topic/admin-notifications/${accountId}`, (message) => {
+          const notification = JSON.parse(message.body)
+          this.handleAdminNotification(notification)
+        })
+
+        // 📢 3. Cảnh báo Admin toàn hệ thống (Broadcast)
+        this.subscribe('admin-alerts', '/topic/admin-alerts', (message) => {
+          const alert = JSON.parse(message.body)
+          this.handleAdminAlert(alert)
+        })
+
+        // 💬 4. Kênh Chat toàn cầu (Báo âm thanh khi có tin nhắn mới)
+        this.subscribe('global-chat', `/topic/global-chat/${accountId}`, (message) => {
+          const chatData = JSON.parse(message.body)
+          this.handleGlobalChatAlert(chatData)
+        })
+
+        console.log('All WebSocket subscriptions setup successfully')
+      } catch (error) {
+        console.error('Error during subscription setup:', error)
+        setTimeout(() => this.setupSubscriptions(), 2000)
+      }
+    }, 200)
+  }
+
+  subscribe(key, destination, handler) {
+    if (!this.stompClient) return
+
+    try {
+      // Unsubscribe cái cũ nếu tồn tại
+      if (this.subscriptions.has(key)) {
+        this.subscriptions.get(key).unsubscribe()
+      }
+    } catch (e) {
+        console.warn(`Error unsubscribing key ${key}:`, e)
     }
 
-    /**
-     * Setup subscriptions for notifications
-     */
-    setupSubscriptions() {
-        const authStore = useAuthStore();
+    const subscription = this.stompClient.subscribe(destination, (message) => {
+      try {
+        handler(message)
+      } catch (error) {
+        console.error(`Error handling WebSocket message for ${destination}:`, error)
+      }
+    })
 
-        if (!authStore.user?.accountID) {
-            console.warn('No user authenticated, cannot setup subscriptions');
-            return;
-        }
+    this.subscriptions.set(key, subscription)
+    console.log(`Subscribed to: ${destination}`)
+  }
 
-        const accountId = authStore.user.accountID;
+  handleNotification(notificationDTO) {
+    this.playNotificationSound()
+    window.dispatchEvent(new CustomEvent('realtime-notification', { detail: notificationDTO }))
+  }
 
-        // Add a small delay to ensure the connection is fully established
-        // before sending subscription requests
-        setTimeout(() => {
-            try {
-                // ==========================================
-                // 🚀 2. KÊNH LẮNG NGHE CHAT TOÀN CẦU (BÁO ÂM THANH)
-                // ==========================================
-                const globalChatTopic = `/topic/global-chat/${accountId}`;
-                const chatSubscription = this.stompClient.subscribe(
-                    globalChatTopic,
-                    (message) => {
-                        try {
-                            const chatData = JSON.parse(message.body);
-                            console.log('💬 Nhận được tin nhắn ở chế độ Global:', chatData);
-                            
-                            // PHÁT ÂM THANH
-                            globalMsgSound.currentTime = 0; // Trả về đầu bài để phát liên tục
-                            globalMsgSound.play().catch((err) => {
-                                console.warn("Trình duyệt chặn autoplay âm thanh:", err);
-                            });
+  handleAdminNotification(notificationDTO) {
+    this.playNotificationSound()
+    window.dispatchEvent(new CustomEvent('admin-notification', { detail: notificationDTO }))
+  }
 
-                            // Phát CustomEvent nếu cần làm Badge báo tin nhắn mới
-                            const event = new CustomEvent('global-chat-alert', { detail: chatData });
-                            window.dispatchEvent(event);
-                            
-                        } catch (error) {
-                            console.error('Error parsing global chat alert:', error);
-                        }
-                    }
-                );
-                this.subscriptions.set('global-chat', chatSubscription);
-                console.log('Subscribed to: ' + globalChatTopic);
+  handleAdminAlert(alertDTO) {
+    this.playNotificationSound()
+    window.dispatchEvent(new CustomEvent('admin-alert', { detail: alertDTO }))
+  }
 
-                // ==========================================
-                // CODE CŨ - GIỮ NGUYÊN HOÀN TOÀN
-                // ==========================================
+  handleGlobalChatAlert(chatData) {
+    this.playChatSound()
+    window.dispatchEvent(new CustomEvent('global-chat-alert', { detail: chatData }))
+  }
 
-                // Subscribe to user-specific notifications using topic-based approach
-                const notificationTopic = `/topic/notifications/${accountId}`;
-                const notificationSubscription = this.stompClient.subscribe(
-                    notificationTopic,
-                    (message) => {
-                        try {
-                            const notification = JSON.parse(message.body);
-                            console.log('Received notification:', notification);
-                            this.handleNotification(notification);
-                        } catch (error) {
-                            console.error('Error parsing notification:', error);
-                        }
-                    }
-                );
-                this.subscriptions.set('notifications', notificationSubscription);
-                console.log('Subscribed to: ' + notificationTopic);
+  playNotificationSound() {
+    notificationSound.currentTime = 0
+    notificationSound.volume = 0.5
+    notificationSound.play().catch(err => console.warn('Notification sound blocked:', err))
+  }
 
-                // Subscribe to admin notifications (for admin users)
-                const adminNotificationTopic = `/topic/admin-notifications/${accountId}`;
-                const adminNotificationSubscription = this.stompClient.subscribe(
-                    adminNotificationTopic,
-                    (message) => {
-                        try {
-                            const notification = JSON.parse(message.body);
-                            console.log('Received admin notification:', notification);
-                            this.handleAdminNotification(notification);
-                        } catch (error) {
-                            console.error('Error parsing admin notification:', error);
-                        }
-                    }
-                );
-                this.subscriptions.set('admin-notifications', adminNotificationSubscription);
-                console.log('Subscribed to: ' + adminNotificationTopic);
+  playChatSound() {
+    globalMsgSound.currentTime = 0
+    globalMsgSound.play().catch(err => console.warn('Chat sound blocked:', err))
+  }
 
-                // Subscribe to broadcast admin alerts (all admins get these)
-                const adminAlertSubscription = this.stompClient.subscribe(
-                    `/topic/admin-alerts`,
-                    (message) => {
-                        try {
-                            const alert = JSON.parse(message.body);
-                            console.log('Received admin alert (broadcast):', alert);
-                            this.handleAdminAlert(alert);
-                        } catch (error) {
-                            console.error('Error parsing admin alert:', error);
-                        }
-                    }
-                );
-                this.subscriptions.set('admin-alerts', adminAlertSubscription);
-                console.log('Subscribed to: /topic/admin-alerts');
-
-                console.log('All WebSocket subscriptions setup successfully');
-            } catch (error) {
-                console.error('Error during subscription setup:', error);
-                // Retry subscriptions after 2 seconds
-                setTimeout(() => this.setupSubscriptions(), 2000);
-            }
-        }, 200); // Wait 200ms for connection to fully stabilize
+  send(destination, body = {}) {
+    if (this.stompClient && this.connected) {
+      this.stompClient.send(destination, {}, JSON.stringify(body))
+    } else {
+      console.warn('WebSocket not connected, cannot send message')
     }
+  }
 
-    /**
-     * Handle incoming notification
-     */
-    handleNotification(notificationDTO) {
-        this.playNotificationSound();
-        // Emit custom event for components to listen to
-        const event = new CustomEvent('realtime-notification', {
-            detail: notificationDTO
-        });
-        window.dispatchEvent(event);
-    }
-
-    /**
-     * Handle incoming admin notification (user-specific)
-     */
-    handleAdminNotification(notificationDTO) {
-        this.playNotificationSound();
-        // Emit custom event for admin components to listen to
-        const event = new CustomEvent('admin-notification', {
-            detail: notificationDTO
-        });
-        window.dispatchEvent(event);
-    }
-
-
-    playNotificationSound() {
-        try {
-            const audio = new Audio('/sounds/notification.mp3');
-            audio.volume = 0.5;
-            audio.play().catch(err => {
-                console.warn('Autoplay bị chặn:', err);
-            });
-        } catch (error) {
-            console.error('Lỗi phát âm thanh:', error);
-        }
-    }
-
-    /**
-     * Send a message to a destination
-     */
-    send(destination, body = {}) {
-        if (this.stompClient && this.connected) {
-            this.stompClient.send(destination, {}, JSON.stringify(body));
-        } else {
-            console.warn('WebSocket not connected, cannot send message');
-        }
-    }
-
-    /**
-     * Check if WebSocket is connected
-     */
-    isConnected() {
-        return this.connected;
-    }
+  isConnected() {
+    return this.connected
+  }
 }
 
-// Create singleton instance
-const webSocketService = new WebSocketService();
-
-export default webSocketService;
+const webSocketService = new WebSocketService()
+export default webSocketService

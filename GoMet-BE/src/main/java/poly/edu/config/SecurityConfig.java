@@ -54,7 +54,6 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Cho phép các yêu cầu Pre-flight (OPTIONS) đi qua hết
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
                         // ✅ DANH SÁCH CỬA TỰ DO HOÀN TOÀN
                         .requestMatchers(
                                 "/api/auth/**",
@@ -78,7 +77,7 @@ public class SecurityConfig {
                         ).permitAll()
 
                         // 🔒 PHÂN QUYỀN ĐẶC BIỆT
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/admin/**", "/api/admin/**").hasRole("ADMIN")
 
                         // 🔒 TẤT CẢ CÁC REQUEST CÒN LẠI: Phải đăng nhập (Có Token hợp lệ)
                         .anyRequest().authenticated()

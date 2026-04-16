@@ -10,7 +10,6 @@ import poly.edu.dao.FollowDAO;
 import poly.edu.entity.Account;
 import poly.edu.entity.Follow;
 import poly.edu.service.NotificationService;
-
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
@@ -20,7 +19,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/follows")
 @RequiredArgsConstructor
-@PreAuthorize("isAuthenticated()") // 🔥 CHỐT CHẶN VÀNG: Bắt buộc đăng nhập cho TẤT CẢ các hàm bên dưới
+@PreAuthorize("isAuthenticated()")
 public class FollowController {
 
     private final FollowDAO followDAO;
@@ -35,9 +34,7 @@ public class FollowController {
         if (followerID.equals(followeeID)) {
             return ResponseEntity.badRequest().body(Map.of("message", "Không thể tự follow"));
         }
-
         // 1. Tìm bản ghi dựa trên cặp ID (KHÔNG lọc theo Status ở bước này)
-        // Bạn cần thêm hàm findByFollower_AccountIDAndFollowee_AccountID vào FollowDAO
         Optional<Follow> existing = followDAO.findByFollower_AccountIDAndFollowee_AccountID(followerID, followeeID);
 
         if (existing.isPresent()) {
@@ -45,7 +42,8 @@ public class FollowController {
             if (f.getStatus() == 1) {
                 return ResponseEntity.ok(Map.of("message", "Đã follow trước đó"));
             }
-            // 2. Nếu đã tồn tại nhưng Status = 0 (đã unfollow trước đó), thì UPDATE lại thành 1
+            // 2. Nếu đã tồn tại nhưng Status = 0 (đã unfollow trước đó), thì UPDATE lại
+            // thành 1
             f.setStatus(1);
             f.setFollowedAt(LocalDate.now());
             followDAO.save(f);
@@ -92,7 +90,8 @@ public class FollowController {
     public ResponseEntity<?> checkFollow(
             @RequestParam Integer followerID,
             @RequestParam Integer followeeID) {
-        boolean isFollowing = followDAO.findByFollower_AccountIDAndFollowee_AccountIDAndStatus(followerID, followeeID, 1).isPresent();
+        boolean isFollowing = followDAO
+                .findByFollower_AccountIDAndFollowee_AccountIDAndStatus(followerID, followeeID, 1).isPresent();
         return ResponseEntity.ok(Map.of("isFollowing", isFollowing));
 
     }

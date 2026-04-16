@@ -15,7 +15,6 @@
     </div>
 
     <div class="header-right">
-
       <button class="btn-create-post" @click="handleCreatePost">
         <span class="plus-icon">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -28,6 +27,7 @@
       </button>
 
       <div class="icon-actions" v-if="authStore.isAuthenticated">
+        <!-- Shopping List Dropdown -->
         <div class="action-wrapper" @click.stop>
           <button class="btn-icon" :class="{ active: showShopping }" title="Shopping List" @click="toggleShopping">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -92,6 +92,7 @@
           </transition>
         </div>
 
+        <!-- Chat Button with Blinking Effect -->
         <div class="action-wrapper">
           <button class="btn-icon" :class="{ active: chatStore.isMessengerOpen, 'is-blinking': isChatBlinking }" @click.stop="toggleChat">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -101,7 +102,8 @@
           </button>
         </div>
 
-        <div class="action-wrapper" @click.stop>
+        <!-- Notification Dropdown -->
+        <div class="action-wrapper" @click.stop v-click-outside="closeNotiDropdown">
           <button class="btn-icon" :class="{ active: showNoti }" @click="toggleNoti">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
@@ -109,6 +111,7 @@
             </svg>
             <span v-if="unreadNotiCount > 0" class="badge-count">{{ unreadNotiCount }}</span>
           </button>
+          
           <transition name="dropdown-anim">
             <div v-if="showNoti" class="common-dropdown noti-width modern-noti-dropdown">
               <div class="dropdown-header">
@@ -118,6 +121,7 @@
                 </div>
                 <button v-if="unreadNotiCount > 0" class="action-link" @click="handleMarkAllRead">{{ $t('header.mark_all_read') }}</button>
               </div>
+
               <div class="dropdown-body scroll-body custom-scroll">
                 <div v-if="notifications.length === 0" class="empty-state-noti">
                   <div class="empty-noti-icon">🔕</div>
@@ -150,8 +154,7 @@
       <div class="divider-vertical"></div>
       <LangSwitcher />
 
-      <UserMenu v-if="authStore.isAuthenticated" @open-premium="emit('open-premium')"
-        @open-support="showFeedbackModal = true" />
+      <UserMenu v-if="authStore.isAuthenticated" @open-premium="emit('open-premium')" @open-support="showFeedbackModal = true" />
       <div v-else class="guest-actions">
         <button class="btn-login" @click="emit('open-login')">{{ $t('auth.login') }}</button>
         <button class="btn-signup" @click="emit('open-register')">{{ $t('auth.register') }}</button>
@@ -160,10 +163,10 @@
       <div v-if="showNoti || showShopping" class="click-outside-header" @click="closeAllDropdowns"></div>
     </div>
 
+    <!-- Modals & Audio -->
     <Teleport to="body">
       <MapModal v-if="showMapModal" @close="showMapModal = false" />
       <FeedbackModal v-if="showFeedbackModal" @close="showFeedbackModal = false" :form="feedbackForm" />
-      <audio id="notificationSound" src="/sounds/notification.mp3" preload="auto"></audio>
     </Teleport>
   </header>
 </template>
@@ -180,8 +183,15 @@ import LangSwitcher from '@/components/common/LangSwitcher.vue'
 import MapModal from '@/components/modals/MapModal.vue'
 import FeedbackModal from '@/components/modals/FeedbackModal.vue'
 import SearchBox from '@/components/common/SearchBox.vue'
-import { getNotifications, markNotificationRead, markAllNotificationsRead as apiMarkAllRead } from '@/services/notificationService'
+import {
+  getNotifications,
+  getNotificationId,
+  markNotificationRead,
+  markAllNotificationsRead as apiMarkAllRead,
+  resolveNotificationLink
+} from '@/services/notificationService'
 import webSocketService from '@/services/webSocketService'
+import { ensureBrowserNotificationPermission, showBrowserNotification } from '@/services/browserNotificationService'
 import { toast } from '@/composables/useToast'
 
 const emit = defineEmits(['open-login', 'open-register', 'open-premium', 'open-store'])
@@ -203,7 +213,7 @@ const feedbackForm = ref({ title: '', description: '', attachment: null });
 const originalTitle = ref(document.title);
 const notificationChannel = ref(null);
 
-// 🚀 BIẾN QUẢN LÝ TRẠNG THÁI NHẤP NHÁY NÚT CHAT
+// 🚀 TRẠNG THÁI NHẤP NHÁY NÚT CHAT
 const isChatBlinking = ref(false);
 let blinkTimeout = null;
 
@@ -213,90 +223,104 @@ const isDark = computed(() => {
   const premiumRoutes = ['/leaderboard', '/meal-plan', '/suggestions'];
   return premiumRoutes.some(path => route.path.startsWith(path));
 });
-const unreadNotiCount = computed(() => notifications.value.filter(n => !n.isRead).length)
 
-const increaseBadge = () => { notifications.value = [...notifications.value]; };
+const unreadNotiCount = computed(() => notifications.value.filter(n => !n.isRead).length);
 
-const addNotificationToDropdown = (notification) => {
-  const newNotification = {
-    id: notification.notificationId,
+const normalizeNotification = (notification = {}) => {
+  const id = getNotificationId(notification)
+  return {
+    id,
     title: notification.title,
     content: notification.content,
-    username: notification.username,
-    avatar: notification.avatarUrl,
-    time: notification.createdAt ? new Date(notification.createdAt).toLocaleDateString() : new Date().toLocaleDateString(),
-    isRead: notification.isRead === 1,
-    type: notification.type || 'like',
-    link: notification.link
-  };
-  console.log('New notification added:', newNotification);
-  notifications.value.unshift(newNotification);
-};
+    username: notification.username || 'Hệ thống GoMet',
+    avatar: notification.avatarUrl || notification.avatar || '/assets/images/logogoc.jpg',
+    time: notification.createdAt
+      ? new Date(notification.createdAt).toLocaleString()
+      : new Date().toLocaleString(),
+    isRead: notification.isRead === 1 || notification.isRead === true,
+    type: String(notification.type || 'GENERAL').toLowerCase(),
+    link: resolveNotificationLink(notification)
+  }
+}
 
-const playNotificationSound = () => {
-  const sound = document.getElementById("notificationSound");
-  if (sound) { sound.currentTime = 0; sound.play().catch(err => console.log('Sound play failed:', err)); }
+const addNotificationToDropdown = (notification) => {
+  const newNotification = normalizeNotification(notification)
+  if (newNotification.id && notifications.value.some(item => item.id === newNotification.id)) {
+    return false
+  }
+  notifications.value.unshift(newNotification);
+  updateTabTitle();
+  return true
 };
 
 const updateTabTitle = () => {
   const count = unreadNotiCount.value;
-  if (count > 0) { document.title = "(" + count + ") " + originalTitle.value; } 
-  else { document.title = originalTitle.value; }
+  document.title = count > 0 ? `(${count}) ${originalTitle.value}` : originalTitle.value;
 };
 
 const formatNotificationContent = (n) => {
-  // Using v-html, so make sure to sanitize if user content is ever included directly. Here it's safe.
   return `<strong>${n.username}</strong> ${n.content}`;
 }
 
-const resetBadge = () => { notifications.value.forEach(n => n.isRead = true); document.title = originalTitle.value; };
-
 const handleMarkAllRead = async () => {
   if (!authStore.user?.accountID) return
-  try { await apiMarkAllRead(authStore.user.accountID); resetBadge(); } catch (err) { }
+  try { 
+    await apiMarkAllRead(authStore.user.accountID); 
+    notifications.value.forEach(n => n.isRead = true);
+    updateTabTitle();
+  } catch (err) { }
 }
 
 const toggleShopping = () => { 
   if (!authStore.isAuthenticated) { emit('open-login'); return; }
   const role = String(authStore.user?.role || '').toLowerCase();
-  const isPremiumUser = ( role === 'premium' || ['true', '1', 1, true].includes(authStore.user?.isPremium) || ['true', '1', 1, true].includes(authStore.user?.IsPremium) );
-  const isAdmin = ( role === 'admin' || ['true', '1', 1, true].includes(authStore.user?.isAdmin) || ['true', '1', 1, true].includes(authStore.user?.IsAdmin) );
+  const isPremiumUser = ( role === 'premium' || [1, '1', true].includes(authStore.user?.isPremium));
+  const isAdmin = ( role === 'admin' || [1, '1', true].includes(authStore.user?.isAdmin));
   
   if (!isPremiumUser && !isAdmin) {
     toast.warn('Tính năng Giỏ đi chợ là đặc quyền chỉ dành cho tài khoản Premium.');
     window.dispatchEvent(new CustomEvent('ui:open-premium'));
     return;
   }
-  showNoti.value = false; showShopping.value = !showShopping.value; 
+  showNoti.value = false; 
+  showShopping.value = !showShopping.value; 
   if (showShopping.value) shoppingStore.fetchCart(); 
 }
 
-const toggleNoti = () => { showShopping.value = false; showNoti.value = !showNoti.value; if (showNoti.value) loadNotifications(); }
-const toggleChat = () => { chatStore.isMessengerOpen = !chatStore.isMessengerOpen; closeAllDropdowns(); }
-const closeAllDropdowns = () => { showNoti.value = false; showShopping.value = false; }
+const toggleNoti = () => { 
+  showShopping.value = false; 
+  showNoti.value = !showNoti.value; 
+  if (showNoti.value) loadNotifications(); 
+}
+
+const toggleChat = () => { 
+  chatStore.isMessengerOpen = !chatStore.isMessengerOpen; 
+  isChatBlinking.value = false;
+  closeAllDropdowns(); 
+}
+
+const closeAllDropdowns = () => { 
+  showNoti.value = false; 
+  showShopping.value = false; 
+}
+
+const closeNotiDropdown = () => { showNoti.value = false; }
 
 const loadNotifications = async () => {
   if (!authStore.user?.accountID) return
   try {
     const data = await getNotifications(authStore.user.accountID)
-    console.log("Notification API:", data);
-    notifications.value = data.map(n => ({
-      id: n.notificationID,
-      title: n.title,
-      content: n.content,
-      username: n.username,
-      avatar: n.avatarUrl,
-      time: n.createdAt ? new Date(n.createdAt).toLocaleDateString() : '',
-      isRead: n.isRead === 1,
-      type: n.type || 'like',
-      link: n.link
-    }))
-    console.log("Mapped notifications:", notifications.value);
+    notifications.value = data.map(normalizeNotification)
+    updateTabTitle();
   } catch (err) { }
 }
 
 const handleNotiClick = async (n) => {
-  if (!n.isRead) { n.isRead = true; await markNotificationRead(n.id).catch(() => { }); }
+  if (!n.isRead && n.id) {
+    n.isRead = true;
+    await markNotificationRead(n.id).catch(() => { });
+    updateTabTitle();
+  }
   showNoti.value = false;
   if (n.link) { router.push(n.link); }
 }
@@ -305,28 +329,35 @@ const handleScroll = () => { isScrolled.value = window.scrollY > 10 }
 const handleCreatePost = () => { authStore.isAuthenticated ? router.push('/create-post') : emit('open-login') }
 const openGoogleMaps = () => { showMapModal.value = true; closeAllDropdowns(); }
 
-// Handle real-time notifications
+// Xử lý thông báo Real-time
 const handleRealtimeNotification = (event) => {
   const notificationDTO = event.detail;
-  addNotificationToDropdown(notificationDTO);
-  playNotificationSound();
-  increaseBadge();
-  updateTabTitle();
-  if (notificationChannel.value) { notificationChannel.value.postMessage(notificationDTO); }
-  if ('Notification' in window && Notification.permission === 'granted') {
-    new Notification(notificationDTO.title, { body: notificationDTO.content, icon: `https://ui-avatars.com/api/?name=${encodeURIComponent(notificationDTO.title)}&background=EA580C&color=fff` });
+  const added = addNotificationToDropdown(notificationDTO);
+  if (!added) return
+
+  // Gửi qua BroadcastChannel cho các tab khác
+  if (notificationChannel.value) {
+    notificationChannel.value.postMessage(notificationDTO);
   }
+
+  // Hiển thị thông báo trình duyệt
+  showBrowserNotification({
+    title: notificationDTO.title,
+    body: notificationDTO.content,
+    icon: notificationDTO.avatarUrl || '/assets/images/logogoc.jpg',
+    onClick: () => {
+      const link = resolveNotificationLink(notificationDTO)
+      if (link) router.push(link)
+    }
+  })
 };
 
-// 🚀 HÀM XỬ LÝ NHÁY NÚT CHAT KHI NHẬN TÍN HIỆU TOÀN CẦU
-const handleGlobalChatAlert = (event) => {
-  // Bật nháy
+// Xử lý nháy nút Chat
+const handleGlobalChatAlert = () => {
+  if (chatStore.isMessengerOpen) return;
   isChatBlinking.value = true;
   clearTimeout(blinkTimeout);
-  // Tắt nháy sau 4 giây
-  blinkTimeout = setTimeout(() => {
-    isChatBlinking.value = false;
-  }, 4000); 
+  blinkTimeout = setTimeout(() => { isChatBlinking.value = false; }, 4000); 
 };
 
 onMounted(() => {
@@ -337,78 +368,58 @@ onMounted(() => {
     shoppingStore.fetchCart();
     loadNotifications(); 
     webSocketService.connect();
-    window.addEventListener('realtime-notification', handleRealtimeNotification);
     
-    // 🚀 ĐĂNG KÝ LẮNG NGHE TÍN HIỆU CHAT TOÀN CẦU ĐỂ NHÁY NÚT
+    window.addEventListener('realtime-notification', handleRealtimeNotification);
     window.addEventListener('global-chat-alert', handleGlobalChatAlert);
 
-    requestNotificationPermission();
+    ensureBrowserNotificationPermission();
     notificationChannel.value = new BroadcastChannel("notifications");
     notificationChannel.value.onmessage = (event) => {
-      const notification = event.data;
-      addNotificationToDropdown(notification);
-      playNotificationSound();
-      updateTabTitle();
+      addNotificationToDropdown(event.data);
     };
   }
 })
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll);
-  webSocketService.disconnect();
   window.removeEventListener('realtime-notification', handleRealtimeNotification);
-  
-  // 🚀 GỠ BỎ LẮNG NGHE KHI ĐÓNG COMPONENT
   window.removeEventListener('global-chat-alert', handleGlobalChatAlert);
   clearTimeout(blinkTimeout);
-
   if (notificationChannel.value) { notificationChannel.value.close(); }
 })
 
-watch(() => authStore.isAuthenticated, (isAuthenticated) => {
-  if (isAuthenticated) {
+watch(() => authStore.isAuthenticated, (val) => {
+  if (val) {
     webSocketService.connect();
-    window.addEventListener('realtime-notification', handleRealtimeNotification);
-    
-    // 🚀 LẮNG NGHE LẠI KHI ĐĂNG NHẬP LẠI
-    window.addEventListener('global-chat-alert', handleGlobalChatAlert);
-
-    requestNotificationPermission();
-    notificationChannel.value = new BroadcastChannel("notifications");
-    notificationChannel.value.onmessage = (event) => {
-      const notification = event.data;
-      addNotificationToDropdown(notification);
-      playNotificationSound();
-      updateTabTitle();
-    };
+    loadNotifications();
   } else {
     webSocketService.disconnect();
-    window.removeEventListener('realtime-notification', handleRealtimeNotification);
-    
-    // 🚀 GỠ LẮNG NGHE KHI ĐĂNG XUẤT
-    window.removeEventListener('global-chat-alert', handleGlobalChatAlert);
-
-    if (notificationChannel.value) { notificationChannel.value.close(); }
+    notifications.value = [];
   }
 });
 
-const requestNotificationPermission = () => {
-  if ('Notification' in window && Notification.permission === 'default') { Notification.requestPermission(); }
-};
+const vClickOutside = {
+  mounted(el, binding) {
+    el.__clickOutsideHandler__ = (event) => {
+      if (!(el === event.target || el.contains(event.target))) {
+        binding.value(event)
+      }
+    }
+    document.body.addEventListener('click', el.__clickOutsideHandler__)
+  },
+  unmounted(el) {
+    document.body.removeEventListener('click', el.__clickOutsideHandler__)
+  }
+}
 </script>
 
 <style scoped lang="scss" src="./Header.scss"></style>
 
 <style scoped>
-/* --- FIX LỆCH LAYOUT KHI GIỎ HÀNG TRỐNG --- */
+/* FIX LAYOUT & MODERN UI */
 .empty-state-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 20px;
-  text-align: center;
-  min-height: 200px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 40px 20px; text-align: center; min-height: 200px;
 }
 .empty-cart-icon { font-size: 3rem; margin-bottom: 12px; opacity: 0.5; }
 .empty-state-container p { color: #64748b; margin-bottom: 20px; font-weight: 600; }
@@ -418,122 +429,60 @@ const requestNotificationPermission = () => {
 }
 .btn-go-shop:hover { background: #ea580c; color: white; border-color: #ea580c; }
 
-/* 🚀 HIỆU ỨNG NHÁY NÚT CHAT (TINH TẾ & CHUYÊN NGHIỆP) */
+/* 🚀 HIỆU ỨNG NHÁY NÚT CHAT */
 @keyframes softRipple {
-  0% {
-    box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.4);
-  }
-  70% {
-    box-shadow: 0 0 0 8px rgba(234, 88, 12, 0); /* Vòng sóng tỏa ra rồi mờ dần */
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(234, 88, 12, 0);
-  }
+  0% { box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.4); }
+  70% { box-shadow: 0 0 0 8px rgba(234, 88, 12, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(234, 88, 12, 0); }
 }
 
 .btn-icon.is-blinking {
   animation: softRipple 1.5s infinite cubic-bezier(0.66, 0, 0, 1);
-  color: #ea580c; /* Đổi màu icon sang cam nhẹ nhàng */
-  background-color: transparent; /* Giữ nguyên nền, không làm chói mắt */
+  color: #ea580c;
 }
 
 .modern-noti-dropdown .dropdown-header {
-  padding: 16px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;
 }
-.modern-noti-dropdown .header-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.modern-noti-dropdown .header-left h3 {
-  font-size: 1.1rem;
-  font-weight: 700;
-}
+.modern-noti-dropdown .header-left { display: flex; align-items: center; gap: 10px; }
+.modern-noti-dropdown .header-left h3 { font-size: 1.1rem; font-weight: 700; }
 .modern-noti-dropdown .count-pill {
-  background-color: #fff1e9;
-  color: #ea580c;
-  padding: 2px 8px;
-  border-radius: 100px;
-  font-size: 0.75rem;
-  font-weight: 700;
+  background-color: #fff1e9; color: #ea580c; padding: 2px 8px;
+  border-radius: 100px; font-size: 0.75rem; font-weight: 700;
 }
 
 .empty-state-noti {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 20px;
-  text-align: center;
-  min-height: 200px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 40px 20px; text-align: center; min-height: 200px;
 }
-.empty-noti-icon {
-  font-size: 2.5rem;
-  margin-bottom: 12px;
-  opacity: 0.4;
-}
-.empty-state-noti p {
-  color: #64748b;
-  font-weight: 600;
-}
+.empty-noti-icon { font-size: 2.5rem; margin-bottom: 12px; opacity: 0.4; }
+.empty-state-noti p { color: #64748b; font-weight: 600; }
 
 .noti-item-v2 {
-  display: flex;
-  gap: 14px;
-  padding: 12px 20px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-  position: relative;
+  display: flex; gap: 14px; padding: 12px 20px; cursor: pointer;
+  transition: background-color 0.2s ease; position: relative;
 }
-.noti-item-v2:hover {
-  background-color: #f8fafc;
-}
-.noti-item-v2.is-unread {
-  background-color: #fff7ed;
-}
+.noti-item-v2:hover { background-color: #f8fafc; }
+.noti-item-v2.is-unread { background-color: #fff7ed; }
 
-.item-avatar {
-  position: relative;
-  flex-shrink: 0;
-}
-.item-avatar img {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  object-fit: cover;
-}
+.item-avatar { position: relative; flex-shrink: 0; }
+.item-avatar img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
 .type-icon {
-  position: absolute;
-  bottom: -2px;
-  right: -2px;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  border: 2px solid white;
+  position: absolute; bottom: -2px; right: -2px; width: 22px; height: 22px;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  color: white; border: 2px solid white;
 }
 .type-icon.like, .type-icon.event_vote { background-color: #ef4444; }
 .type-icon.comment, .type-icon.rating { background-color: #3b82f6; }
 .type-icon.follow { background-color: #16a34a; }
 
-.item-content {
-  flex: 1;
-  min-width: 0;
-}
+.item-content { flex: 1; min-width: 0; }
 .noti-title { margin: 0 0 4px; font-size: 0.9rem; color: #334155; line-height: 1.4; }
 .noti-title :deep(strong) { font-weight: 700; color: #0f172a; }
 .noti-time { font-size: 0.8rem; color: #94a3b8; font-weight: 500; }
 
-.unread-dot-pulse { width: 8px; height: 8px; background: #ea580c; border-radius: 50%; align-self: center; margin-left: auto; flex-shrink: 0; animation: softRipple 1.8s infinite; }
-
-.btn-icon.is-blinking svg {
-  stroke: #ea580c;
-  transition: stroke 0.3s ease;
+.unread-dot-pulse {
+  width: 8px; height: 8px; background: #ea580c; border-radius: 50%;
+  align-self: center; margin-left: auto; flex-shrink: 0; animation: softRipple 1.8s infinite;
 }
 </style>

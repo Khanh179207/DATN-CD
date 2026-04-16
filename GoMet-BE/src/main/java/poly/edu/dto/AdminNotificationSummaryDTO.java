@@ -11,17 +11,14 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class NotificationDTO {
+public class AdminNotificationSummaryDTO {
     private Integer notificationID;
     private String title;
     private String content;
     private String type;
-    private Integer postId;
-    private String link;
     private LocalDateTime createdAt;
-    private Integer isRead;
     private Boolean isGlobal;
-    private Integer parentNotificationID;
-    private String username;
-    private String avatarUrl;
+    private String link;
+    private Integer accountID;
+    private String recipientUsername;
 }

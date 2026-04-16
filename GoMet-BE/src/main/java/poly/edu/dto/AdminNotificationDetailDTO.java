@@ -6,22 +6,24 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class NotificationDTO {
+public class AdminNotificationDetailDTO {
     private Integer notificationID;
     private String title;
     private String content;
     private String type;
-    private Integer postId;
-    private String link;
     private LocalDateTime createdAt;
-    private Integer isRead;
     private Boolean isGlobal;
-    private Integer parentNotificationID;
-    private String username;
-    private String avatarUrl;
+    private String link;
+    private Integer accountID;
+    private String recipientUsername;
+    private String recipientEmail;
+    private String recipientAvatar;
+    private Integer readCount;
+    private List<AdminNotificationReaderDTO> readers;
 }

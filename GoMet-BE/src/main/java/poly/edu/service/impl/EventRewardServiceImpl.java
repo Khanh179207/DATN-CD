@@ -14,6 +14,7 @@ import poly.edu.entity.EventPosts;
 import poly.edu.entity.Account;
 import poly.edu.entity.Subscription;
 import poly.edu.service.EventRewardService;
+import poly.edu.service.NotificationService;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -27,6 +28,7 @@ public class EventRewardServiceImpl implements EventRewardService {
     private final EventPostsDAO eventPostsDAO;
     private final AccountDAO accountDAO;
     private final SubscriptionDAO subscriptionDAO;
+    private final NotificationService notificationService;
 
     private static final int MAX_REWARD_RANKS = 3;
 
@@ -132,6 +134,8 @@ public class EventRewardServiceImpl implements EventRewardService {
 
                     log.info("🎁 Rank #{}: Premium reward {} days for account {}",
                             rewardRank, premiumDays, account.getAccountID());
+
+                    notificationService.notifyReward(account.getAccountID(), 0, premiumDays, event.getEventName());
                 }
             } else if ("POINTS".equals(rewardConfig.type)) {
                 int points = rewardConfig.getPointsForRank(rewardRank);
@@ -141,8 +145,12 @@ public class EventRewardServiceImpl implements EventRewardService {
 
                     log.info("🎁 Rank #{}: Points reward {} for account {}",
                             rewardRank, points, account.getAccountID());
+
+                    notificationService.notifyReward(account.getAccountID(), points, 0, event.getEventName());
                 }
             }
+
+            notificationService.notifyEventWinner(account.getAccountID(), eventId, rewardRank);
 
             accountsToUpdate.add(account);
 
@@ -207,7 +215,8 @@ public class EventRewardServiceImpl implements EventRewardService {
         String[] parts = reward.split("\\|");
         String type = parts[0];
 
-        // 1. Xử lý giải PREMIUM (Chỉ có gói cố định, không cần tham số top1, top2, top3)
+        // 1. Xử lý giải PREMIUM (Chỉ có gói cố định, không cần tham số top1, top2,
+        // top3)
         if ("PREMIUM_1M".equals(type) || "PREMIUM_1Y".equals(type)) {
             return new RewardConfig(type, 0, 0, 0, 0, 0, 0);
         }
@@ -284,4 +293,3 @@ public class EventRewardServiceImpl implements EventRewardService {
         }
     }
 }
-

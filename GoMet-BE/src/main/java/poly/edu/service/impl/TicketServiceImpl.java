@@ -23,6 +23,8 @@ import java.util.stream.Collectors;
 public class TicketServiceImpl implements TicketService {
 
     private final TicketDAO ticketDAO;
+    // 🔥 Giữ lại cả AccountDAO, PostDAO (của sếp) và SimpMessagingTemplate (của
+    // develop)
     private final AccountDAO accountDAO;
     private final PostDAO postDAO;
     private final SimpMessagingTemplate messagingTemplate;
@@ -42,6 +44,8 @@ public class TicketServiceImpl implements TicketService {
             accountDAO.findById(dto.getAccountId()).ifPresent(ticket::setAccount);
         }
 
+        // 🔥 Logic của sếp: Tìm và gán bài viết bị báo cáo (Sử dụng targetPostId từ
+        // DTO)
         if (dto.getTargetPostId() != null) {
             postDAO.findById(dto.getTargetPostId()).ifPresent(ticket::setTargetPost);
         }
@@ -72,7 +76,8 @@ public class TicketServiceImpl implements TicketService {
      * 🔥 HÀM CỦA SẾP (Giữ nguyên 5 tham số để lưu vết Admin xử lý)
      */
     @Override
-    public Ticket updateTicketStatus(Integer ticketId, Integer newStatus, Integer adminId, String adminName, String adminNote) {
+    public Ticket updateTicketStatus(Integer ticketId, Integer newStatus, Integer adminId, String adminName,
+            String adminNote) {
         Ticket ticket = ticketDAO.findById(ticketId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy Ticket!"));
 
@@ -104,7 +109,7 @@ public class TicketServiceImpl implements TicketService {
     }
 
     /**
-     * Helper: Chuyển đổi Entity sang DTO (Giữ nguyên của Sếp)
+     * Helper: Chuyển đổi Entity sang DTO (Đã thêm thông tin Admin xử lý để FE hiển thị)
      */
     private AdminTicketDTO convertToAdminDTO(Ticket ticket) {
         AdminTicketDTO dto = new AdminTicketDTO();
@@ -139,26 +144,12 @@ public class TicketServiceImpl implements TicketService {
     // 🔥 Dùng hàm Notification 7 tham số của bản Dev kia
     private void sendUserStatusNotification(Ticket ticket, Integer newStatus) {
         try {
-            String title, content, type;
-            // Tạm thời để null nếu không có link cụ thể
-            String link = null;
-
-            if (newStatus == 1) {
-                title = "Ticket accepted";
-                content = "Your support ticket #" + ticket.getTicketID() + " is now being processed.";
-                type = "TICKET_ACCEPTED";
-            } else if (newStatus == 2) {
-                title = "Ticket resolved";
-                content = "Your support ticket #" + ticket.getTicketID() + " has been resolved.";
-                type = "TICKET_RESOLVED";
+            if (ticket.getAccount() != null) {
+                notificationService.notifyTicketUpdate(ticket.getTicketID(), newStatus,
+                        ticket.getAccount().getAccountID());
             } else {
-                title = "Ticket rejected";
-                content = "Your support ticket #" + ticket.getTicketID() + " has been rejected by admin.";
-                type = "TICKET_REJECTED";
+                System.err.println("sendUserStatusNotification: Ticket has no account, skip user notification for ticket " + ticket.getTicketID());
             }
-
-            // Hàm 7 tham số (title, content, type, receiverId, actorId, postId, link)
-            notificationService.createNotification(title, content, type, ticket.getAccount().getAccountID(), null, null, link);
         } catch (Exception e) {
             System.err.println("Failed to send ticket status notification: " + e.getMessage());
         }

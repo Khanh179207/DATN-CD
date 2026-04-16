@@ -105,11 +105,27 @@ public class ChatController {
             // Bắn vào phòng chat chung (cho MiniChatBox)
             messagingTemplate.convertAndSend("/topic/" + savedMessage.getConversation().getConversationID(), savedMessage);
 
+            Conversation conversation = savedMessage.getConversation();
+            if (conversation != null) {
+                // 🚀 BẮN CHO CẢ 2 ĐẦU (ĐỂ ĐỒNG BỘ SIDEBAR)
+                if (conversation.getUserOne() != null && conversation.getUserOne().getAccountID() != null) {
+                    messagingTemplate.convertAndSend(
+                            "/topic/chat-user/" + conversation.getUserOne().getAccountID(),
+                            savedMessage);
+                }
+
+                if (conversation.getUserTwo() != null && conversation.getUserTwo().getAccountID() != null) {
+                    messagingTemplate.convertAndSend(
+                            "/topic/chat-user/" + conversation.getUserTwo().getAccountID(),
+                            savedMessage);
+                }
+            }
+
             // 🚀 THÊM MỚI: BẮN TÍN HIỆU "TOÀN CẦU" ĐỂ PHÁT ÂM THANH
             Integer senderId = savedMessage.getSender().getAccountID();
-            Integer receiverId = savedMessage.getConversation().getUserOne().getAccountID().equals(senderId)
-                    ? savedMessage.getConversation().getUserTwo().getAccountID()
-                    : savedMessage.getConversation().getUserOne().getAccountID();
+            Integer receiverId = conversation.getUserOne().getAccountID().equals(senderId)
+                    ? conversation.getUserTwo().getAccountID()
+                    : conversation.getUserOne().getAccountID();
 
             // Gửi ra kênh riêng của người nhận
             messagingTemplate.convertAndSend("/topic/global-chat/" + receiverId, savedMessage);

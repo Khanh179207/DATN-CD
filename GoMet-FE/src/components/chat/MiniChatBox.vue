@@ -31,7 +31,7 @@
           <div class="intro">
             <img :src="chatStore.activeChat.avatar || 'https://ui-avatars.com/api/?name=User'" alt="Avatar">
             <h5>{{ chatStore.activeChat.name }}</h5>
-            <p v-if="isMutualFollow">{{ $t('chat.friends_on_gomet', 'Các bạn đã trở thành bạn bè trên Gomet') }}</p>
+            <p v-if="isMutualFollow">{{ $t('chat.friends_on_gomet') }}</p>
             <p v-else style="color: #ea580c; font-size: 0.8rem;">Hãy theo dõi nhau để mở khóa gọi video!</p>
           </div>
           
@@ -150,13 +150,12 @@
           <img :src="previewImageUrl" class="image-preview-full" @click.stop />
         </div>
       </transition>
-
     </div>
   </transition>
 </template>
 
 <script setup>
-import { ref, watch, nextTick, computed, onUnmounted } from 'vue'
+import { ref, watch, nextTick, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useChatStore } from '@/stores/chat'
 import { useAuthStore } from '@/stores/auth' 
@@ -164,8 +163,8 @@ import { toast } from '@/composables/useToast'
 import SockJS from 'sockjs-client'
 import Stomp from 'stompjs'
 import api from '@/services/api'
+import { ensureBrowserNotificationPermission, showBrowserNotification } from '@/services/browserNotificationService'
 import MiniPostCard from './MiniPostCard.vue'
-
 import EmojiPicker from 'vue3-emoji-picker'
 import 'vue3-emoji-picker/css'
 
@@ -252,7 +251,6 @@ const handleSendReaction = (msg, emoji) => {
   upsertReaction(msg, emoji, currentUserId.value, authStore.user?.username); 
 }
 
-// 🚀 HÀM XỬ LÝ GỠ TIN NHẮN (OPTIMISTIC UPDATE CỰC CHUẨN)
 const handleUnsend = (msg) => {
   if (msg.messageID > 1000000000000) {
     toast.warn("Chờ hệ thống xử lý tin nhắn rồi hãy gỡ nhé!");
@@ -262,21 +260,12 @@ const handleUnsend = (msg) => {
   
   if (stompClient.value?.connected) {
     const conversationId = chatStore.activeChat.id || chatStore.activeChat.conversationID;
-    const payload = { 
-        type: 'unsend', 
-        messageId: msg.messageID, 
-        conversationId: conversationId,
-        senderId: currentUserId.value 
-    };
-    
+    const payload = { type: 'unsend', messageId: msg.messageID, conversationId: conversationId, senderId: currentUserId.value };
     stompClient.value.send("/app/call.signaling", getAuthHeaders(), JSON.stringify(payload));
     
-    // Đổi giao diện lập tức cho bản thân mình
     msg.text = '[UNSENT]';
     msg.content = '[UNSENT]'; 
     msg.reactions = []; 
-    
-    // 🚀 Lập tức quét toàn bộ tin nhắn bên dưới xem có tin nào đang REPLY lại tin này không
     messages.value.forEach(childMsg => {
       if (childMsg.parent && childMsg.parent.messageID === msg.messageID) {
         childMsg.parent.content = '[UNSENT]';
@@ -360,17 +349,13 @@ const connectWebSocket = (conversationId) => {
     stompClient.value.subscribe(`/topic/${conversationId}`, (payload) => {
       const receivedMsg = JSON.parse(payload.body)
       
-      // 🚀 BẮT TÍN HIỆU GỠ TIN NHẮN (Đã chuyển lên đầu để check ngay lập tức)
       if (receivedMsg.type === 'unsend') {
-        // Cập nhật tin nhắn gốc thành UNSENT
         const targetMsg = messages.value.find(m => m.messageID === receivedMsg.messageId);
         if (targetMsg) {
           targetMsg.text = '[UNSENT]';
           targetMsg.content = '[UNSENT]';
           targetMsg.reactions = []; 
         }
-        
-        // 🚀 Cập nhật các tin nhắn đang Reply vào cái tin nhắn vừa bị gỡ
         messages.value.forEach(childMsg => {
           if (childMsg.parent && childMsg.parent.messageID === receivedMsg.messageId) {
             childMsg.parent.content = '[UNSENT]';
@@ -407,12 +392,42 @@ const connectWebSocket = (conversationId) => {
         } else {
           messages.value.push(mapMessage(receivedMsg));
           partnerIsTyping.value = false; 
+          playChatTingSound();
+          showIncomingMessageNotificationUnified(receivedMsg);
           scrollToBottom();
           if (!isMinimized.value) markAsRead(conversationId);
         }
       }
     })
   })
+}
+
+const showIncomingMessageNotificationUnified = (message) => {
+  const conversationId = Number(message?.conversation?.conversationID || chatStore.activeChat?.id || chatStore.activeChat?.conversationID)
+  const messageId = Number(message?.messageID)
+  const senderName = message?.sender?.username || chatStore.activeChat?.name || 'Tin nhắn mới'
+  const senderAvatar = message?.sender?.avatar || chatStore.activeChat?.avatar || 'https://ui-avatars.com/api/?name=User&background=EA580C&color=fff'
+  const messageContent = message?.content || 'Bạn có tin nhắn mới'
+
+  showBrowserNotification({
+    title: senderName,
+    body: messageContent,
+    icon: senderAvatar,
+    tag: messageId ? `chat-${messageId}` : `chat-${conversationId}`,
+    onClick: () => {
+      if (!conversationId) return
+      chatStore.openChat({ id: conversationId, conversationID: conversationId, name: senderName, avatar: senderAvatar, online: true })
+      isMinimized.value = false
+    }
+  })
+}
+
+const playChatTingSound = () => {
+  try {
+    const audio = new Audio('/sounds/ting.mp3')
+    audio.volume = 0.6
+    audio.play().catch(() => {})
+  } catch (error) {}
 }
 
 const fetchHistory = async (convId) => {
@@ -453,19 +468,13 @@ const formatTime = (dateInput) => {
   return isNaN(date.getTime()) ? 'vừa xong' : date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
 }
 
-// 🚀 HÀM MAP MESSAGE BẢN CHUẨN REAL-TIME
 const mapMessage = (msg) => {
   let parentSenderName = 'Người dùng';
-  let parentContent = msg.parent ? msg.parent.content : '';
-
+  let parentContent = msg.parent ? (msg.parent.content || msg.parent.text) : '';
   if (msg.parent) {
-    // 1. Nếu Backend trả về đầy đủ (khi reload trang)
-    if (msg.parent.sender && msg.parent.content) {
-      parentSenderName = Number(msg.parent.sender.accountID) === currentUserId.value ? 'Bạn' : msg.parent.sender.username;
-      parentContent = msg.parent.content;
-    } 
-    // 2. Nếu Real-time WebSocket chỉ trả về mỗi ID -> Tự động mò trong Local
-    else if (msg.parent.messageID) {
+    if (msg.parent.sender) {
+      parentSenderName = Number(msg.parent.sender.accountID) === currentUserId.value ? 'Bạn' : (msg.parent.sender.username || 'Người dùng');
+    } else if (msg.parent.messageID) {
       const localParentMsg = messages.value.find(m => m.messageID === msg.parent.messageID);
       if (localParentMsg) {
         parentContent = localParentMsg.content;
@@ -473,12 +482,11 @@ const mapMessage = (msg) => {
       }
     }
   }
-
   return {
     messageID: msg.messageID || msg.id, 
-    text: msg.content, 
-    content: msg.content, 
-    isMine: Number(msg.sender?.accountID) === currentUserId.value,
+    text: msg.content || msg.text, 
+    content: msg.content || msg.text, 
+    isMine: Number(msg.sender?.accountID || msg.senderID) === currentUserId.value,
     timeStr: formatTime(msg.createdAt),
     isRead: msg.isRead === true || msg.isRead === 1,
     sender: msg.sender,
@@ -490,6 +498,7 @@ const mapMessage = (msg) => {
     reactions: msg.reactions || [] 
   };
 }
+
 const isCallSystemMsg = (text) => text && text.startsWith('[SYS_CALL:') && text.endsWith(']');
 const getCallDuration = (text) => text.match(/\[SYS_CALL:(.+)\]/) ? text.match(/\[SYS_CALL:(.+)\]/)[1] : '00:00';
 const isPostShare = (text) => text && text.startsWith('[POST_SHARE_ID:') && text.endsWith(']');
@@ -497,9 +506,7 @@ const getPostId = (text) => text.match(/\[POST_SHARE_ID:(\d+)\]/) ? text.match(/
 
 const scrollToBottom = async () => {
   await nextTick();
-  if (msgContainer.value) {
-    msgContainer.value.scrollTop = msgContainer.value.scrollHeight;
-  }
+  if (msgContainer.value) msgContainer.value.scrollTop = msgContainer.value.scrollHeight;
 };
 
 const sendMsg = () => {
@@ -516,7 +523,7 @@ const sendMsg = () => {
 
   messages.value.push(locallyOptimisticMsg);
   inputMsg.value = ''; showEmojiPicker.value = false; cancelReply(); handleStopTyping(); scrollToBottom()
-  
+  playChatTingSound(); // Play sound on send
   if (stompClient.value?.connected) { stompClient.value.send("/app/chat.sendMessage", getAuthHeaders(), JSON.stringify(msgPayload)); }
   nextTick(() => { if (chatInput.value) chatInput.value.focus(); });
 }
@@ -524,19 +531,21 @@ const sendMsg = () => {
 const closeChat = () => { handleStopTyping(); if (stompClient.value) stompClient.value.disconnect(); chatStore.closeChat(); showEmojiPicker.value = false; previewImageUrl.value = null; replyingTo.value = null; }
 
 const processSpecialQueue = () => {
-    if (!chatStore.specialMessageQueue || chatStore.specialMessageQueue.length === 0) return;
-    const activeConvId = chatStore.activeChat?.id || chatStore.activeChat?.conversationID;
-    chatStore.specialMessageQueue.forEach(msg => {
-        if (msg.conversation.conversationID === activeConvId && stompClient.value?.connected) {
-            messages.value.push({ messageID: Date.now(), text: msg.content, content: msg.content, isMine: true, timeStr: formatTime(new Date()), isRead: false, reactions: [] });
-            scrollToBottom();
-            stompClient.value.send("/app/chat.sendMessage", getAuthHeaders(), JSON.stringify(msg));
-            chatStore.clearSpecialMessage(msg.timestamp);
-        }
-    });
+  if (!chatStore.specialMessageQueue || chatStore.specialMessageQueue.length === 0) return;
+  const activeConvId = chatStore.activeChat?.id || chatStore.activeChat?.conversationID;
+  chatStore.specialMessageQueue.forEach(msg => {
+    if (msg.conversation.conversationID === activeConvId && stompClient.value?.connected) {
+      messages.value.push({ messageID: Date.now(), text: msg.content, content: msg.content, isMine: true, timeStr: formatTime(new Date()), isRead: false, reactions: [] });
+      scrollToBottom();
+      stompClient.value.send("/app/chat.sendMessage", getAuthHeaders(), JSON.stringify(msg));
+      chatStore.clearSpecialMessage(msg.timestamp);
+    }
+  });
 };
 
 watch(() => chatStore.specialMessageQueue, () => { processSpecialQueue(); }, { deep: true });
+
+onMounted(() => { ensureBrowserNotificationPermission(); });
 onUnmounted(() => { handleStopTyping(); if (stompClient.value) stompClient.value.disconnect(); clearTimeout(typingTimeout); clearTimeout(partnerTypingTimeout); })
 </script>
 
@@ -559,5 +568,4 @@ onUnmounted(() => { handleStopTyping(); if (stompClient.value) stompClient.value
   border-color: #ffedd5 !important;
   color: #ffedd5 !important;
 }
-
 </style>

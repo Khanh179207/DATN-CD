@@ -27,10 +27,13 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public Notification createNotification(String title, String content, String type, Integer receiverId,
                                            Integer actorId, Integer postId, String link) {
-        // Lấy thông tin người nhận
-        Optional<Account> receiverOpt = accountDAO.findById(receiverId);
-        if (receiverOpt.isEmpty()) {
-            throw new RuntimeException("Không tìm thấy người nhận với ID: " + receiverId);
+        // Lấy thông tin người nhận. receiverId có thể null đối với thông báo toàn cầu
+        Optional<Account> receiverOpt = Optional.empty();
+        if (receiverId != null) {
+            receiverOpt = accountDAO.findById(receiverId);
+            if (receiverOpt.isEmpty()) {
+                throw new RuntimeException("Không tìm thấy người nhận với ID: " + receiverId);
+            }
         }
 
         // Lấy thông tin người thực hiện hành động (có thể null nếu là hệ thống)
@@ -53,22 +56,29 @@ public class NotificationServiceImpl implements NotificationService {
         }
 
         // Tạo thông báo
-        Notification notification = Notification.builder()
+        Notification.NotificationBuilder nb = Notification.builder()
                 .title(title)
                 .content(content)
                 .type(type)
-                .account(receiverOpt.get())
                 .actor(actor)
                 .post(post)
                 .isRead(0) // Mặc định là chưa đọc
                 .createdAt(LocalDateTime.now())
-                .link(link)
-                .build();
+                .link(link);
 
+        if (receiverOpt.isPresent()) {
+            nb.account(receiverOpt.get()).isGlobal(false);
+        } else {
+            nb.account(null).isGlobal(true);
+        }
+
+        Notification notification = nb.build();
         Notification savedNotification = notificationDAO.save(notification);
 
-        // Gửi thông báo real-time qua WebSocket
-        sendRealtimeNotification(receiverId, convertToDTO(savedNotification));
+        // Gửi thông báo real-time qua WebSocket chỉ cho thông báo gửi tới user cụ thể
+        if (receiverOpt.isPresent()) {
+            sendRealtimeNotification(receiverId, convertToDTO(savedNotification));
+        }
 
         return savedNotification;
     }
@@ -168,8 +178,6 @@ public class NotificationServiceImpl implements NotificationService {
             String type = "TICKET";
             String link = "/admin/tickets";
             Notification notification = createNotification(title, content, type, admin.getAccountID(), userId, null, link);
-
-            // 🔥 FIX LỖI SẾP BỊ QUÊN Ở ĐÂY: Đã thêm còi hú cho Admin
             sendAdminAlert(notification);
         }
     }
@@ -240,6 +248,7 @@ public class NotificationServiceImpl implements NotificationService {
 
         Post post = postOpt.get();
         Account postOwner = post.getAccount();
+        if (postOwner == null) return;
 
         String title = "Bài viết được duyệt";
         String content = "Bài viết của bạn đã được Quản trị viên duyệt.";
@@ -258,6 +267,7 @@ public class NotificationServiceImpl implements NotificationService {
 
         Post post = postOpt.get();
         Account postOwner = post.getAccount();
+        if (postOwner == null) return;
 
         String title = "Bài viết bị từ chối";
         String content = reason != null && !reason.trim().isEmpty()
@@ -278,6 +288,7 @@ public class NotificationServiceImpl implements NotificationService {
 
         Post post = postOpt.get();
         Account postOwner = post.getAccount();
+        if (postOwner == null) return;
 
         String title = "Bài viết bị vô hiệu hóa";
         String content = "Bài viết của bạn đã bị Quản trị viên vô hiệu hóa.";
@@ -287,51 +298,147 @@ public class NotificationServiceImpl implements NotificationService {
         createNotification(title, content, type, postOwner.getAccountID(), null, postId, link);
     }
 
-    /**
-     * Gửi thông báo Real-time cho một người dùng cụ thể
-     */
+    @Override
+    public void notifyCommentReply(String replierUsername, Integer parentCommentAuthorId, Integer postId, Integer commentId) {
+        Optional<Account> replierOpt = accountDAO.findByUsername(replierUsername);
+        if (replierOpt.isEmpty()) return;
+        Integer replierId = replierOpt.get().getAccountID();
+
+        String title = "Trả lời bình luận";
+        String content = " đã trả lời bình luận của bạn.";
+        String type = "COMMENT_REPLY";
+        String link = commentId != null ? "/post/" + postId + "#comment-" + commentId : "/post/" + postId;
+        createNotification(title, content, type, parentCommentAuthorId, replierId, postId, link);
+    }
+
+    @Override
+    public void notifyCommentLike(String likerUsername, Integer commentAuthorId, Integer postId, Integer commentId) {
+        Optional<Account> likerOpt = accountDAO.findByUsername(likerUsername);
+        if (likerOpt.isEmpty()) return;
+        Integer likerId = likerOpt.get().getAccountID();
+
+        String title = "Lượt thích bình luận";
+        String content = " đã thích bình luận của bạn.";
+        String type = "COMMENT_LIKE";
+        String link = commentId != null ? "/post/" + postId + "#comment-" + commentId : "/post/" + postId;
+        createNotification(title, content, type, commentAuthorId, likerId, postId, link);
+    }
+
+    @Override
+    public void notifyMention(String mentionerUsername, Integer mentionedAccountId, Integer postId, Integer commentId) {
+        Optional<Account> mentionerOpt = accountDAO.findByUsername(mentionerUsername);
+        if (mentionerOpt.isEmpty()) return;
+        Integer mentionerId = mentionerOpt.get().getAccountID();
+
+        String title = "Nhắc đến bạn";
+        String content = " đã nhắc đến bạn trong một " + (commentId != null ? "bình luận." : "bài viết.");
+        String type = "MENTION";
+        String link = commentId != null ? "/post/" + postId + "#comment-" + commentId : "/post/" + postId;
+        createNotification(title, content, type, mentionedAccountId, mentionerId, postId, link);
+    }
+
+    @Override
+    public void notifyTicketUpdate(Integer ticketId, Integer newStatus, Integer accountId) {
+        String title = "Cập nhật phiếu hỗ trợ";
+        String content = newStatus == 1 ? "Phiếu hỗ trợ #" + ticketId + " đang được xử lý."
+                : newStatus == 2 ? "Phiếu hỗ trợ #" + ticketId + " đã được giải quyết."
+                : "Phiếu hỗ trợ #" + ticketId + " đã bị từ chối.";
+        String type = "TICKET_UPDATE";
+        createNotification(title, content, type, accountId, null, null, null);
+    }
+
+    @Override
+    public void notifyAppealUpdate(Integer appealId, String status, Integer accountId) {
+        String title = "Cập nhật khiếu nại";
+        String content;
+        if ("Approved".equalsIgnoreCase(status)) {
+            content = "Khiếu nại của bạn đã được duyệt và tài khoản đã được mở khóa.";
+        } else if ("Rejected".equalsIgnoreCase(status)) {
+            content = "Khiếu nại của bạn đã bị từ chối.";
+        } else {
+            content = "Đơn khiếu nại của bạn đã được cập nhật trạng thái: " + status;
+        }
+        String type = "APPEAL_UPDATE";
+        createNotification(title, content, type, accountId, null, null, "/appeal");
+    }
+
+    @Override
+    public void notifyCommentStatusChange(Integer commentId, Integer accountId, String action) {
+        String title = action.equals("DELETE") ? "Bình luận bị xóa" : "Bình luận được khôi phục";
+        String content = action.equals("DELETE")
+                ? "Một bình luận của bạn đã bị quản trị viên ẩn/xóa do vi phạm nội quy."
+                : "Bình luận của bạn đã được quản trị viên khôi phục.";
+        String type = "COMMENT_STATUS";
+        createNotification(title, content, type, accountId, null, null, null);
+    }
+
+    @Override
+    public void notifyReward(Integer accountId, Integer points, Integer premiumDays, String source) {
+        String title = "Nhận thưởng thành công";
+        StringBuilder content = new StringBuilder("Bạn vừa nhận được ");
+        if (points != null && points > 0) content.append(points).append(" GoMet Point ");
+        if (points != null && points > 0 && premiumDays != null && premiumDays > 0) content.append("và ");
+        if (premiumDays != null && premiumDays > 0) content.append(premiumDays).append(" ngày Premium ");
+        content.append("từ ").append(source).append(".");
+
+        String type = "REWARD";
+        createNotification(title, content.toString(), type, accountId, null, null, "/profile/points");
+    }
+
+    @Override
+    public void notifyPaymentStatus(Integer accountId, boolean isSuccess, String orderCode) {
+        String title = isSuccess ? "Thanh toán thành công" : "Thanh toán thất bại";
+        String content = isSuccess ? "Giao dịch " + orderCode + " đã hoàn tất. Cảm ơn bạn!"
+                : "Giao dịch " + orderCode + " đã thất bại hoặc bị hủy.";
+        String type = "PAYMENT_STATUS";
+        createNotification(title, content, type, accountId, null, null, isSuccess ? "/premium" : "/upgrade");
+    }
+
+    @Override
+    public void notifyEventWinner(Integer accountId, Integer eventId, Integer rank) {
+        String title = "Kết quả sự kiện";
+        String content = "Chúc mừng! Bạn đã đạt " + (rank == 1 ? "Giải Nhất" : rank == 2 ? "Giải Nhì" : "Giải Ba")
+                + " trong sự kiện!";
+        String type = "EVENT_WINNER";
+        createNotification(title, content, type, accountId, null, null, "/events");
+    }
+
+    @Override
+    public void notifyAccountStatus(Integer accountId, String status, String reason) {
+        String title = status.equals("BANNED") ? "Kỷ luật tài khoản" : "Tài khoản được mở khóa";
+        String content = status.equals("BANNED")
+                ? "Tài khoản của bạn đã bị cấm/đình chỉ. Lý do: " + (reason != null ? reason : "Vi phạm nội quy")
+                : "Tài khoản của bạn đã được ân xá/mở khóa.";
+        String type = "ACCOUNT_STATUS";
+        createNotification(title, content, type, accountId, null, null, "/login");
+    }
+
     private void sendRealtimeNotification(Integer accountId, NotificationDTO notificationDTO) {
         try {
             String destination = "/topic/notifications/" + accountId;
             messagingTemplate.convertAndSend(destination, notificationDTO);
         } catch (Exception e) {
             System.err.println("Lỗi gửi thông báo real-time: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
-    /**
-     * Gửi cảnh báo Real-time cho toàn bộ Admin đang online
-     */
     private void sendAdminAlert(Notification notification) {
         try {
             NotificationDTO dto = convertToDTO(notification);
-
             messagingTemplate.convertAndSend("/topic/admin-alerts", dto);
-
-            Integer adminAccountId = notification.getAccount().getAccountID();
-            messagingTemplate.convertAndSend("/topic/admin-notifications/" + adminAccountId, dto);
-
+            if (notification.getAccount() != null) {
+                Integer adminAccountId = notification.getAccount().getAccountID();
+                messagingTemplate.convertAndSend("/topic/admin-notifications/" + adminAccountId, dto);
+            }
         } catch (Exception e) {
             System.err.println("Lỗi gửi cảnh báo cho Admin: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
-    /**
-     * Chuyển đổi Entity sang DTO
-     */
     private NotificationDTO convertToDTO(Notification notification) {
         Account actor = notification.getActor();
-
-        // 🔥 Chuẩn hóa tên: Nếu không có người gửi thì tên là "Hệ thống GoMet"
         String username = actor != null ? actor.getUsername() : "Hệ thống GoMet";
-
-        // 🔥 Sửa lỗi Avatar US: Thay vì để null, ta gán luôn một chiếc logo mặc định (Màu xanh, chữ GM)
-        // Sếp có thể thay URL này bằng đường dẫn Logo dự án của Sếp (ví dụ: "/assets/logo.png")
-        String avatarUrl = actor != null && actor.getAvatar() != null ?
-                actor.getAvatar() :
-                "/assets/images/logogoc.jpg";
+        String avatarUrl = (actor != null && actor.getAvatar() != null) ? actor.getAvatar() : "/assets/images/logogoc.jpg";
 
         return NotificationDTO.builder()
                 .notificationID(notification.getNotificationID())
@@ -342,6 +449,8 @@ public class NotificationServiceImpl implements NotificationService {
                 .link(notification.getLink())
                 .createdAt(notification.getCreatedAt())
                 .isRead(notification.getIsRead())
+                .isGlobal(notification.getIsGlobal() != null ? notification.getIsGlobal() : false)
+                .parentNotificationID(notification.getParentNotification() != null ? notification.getParentNotification().getNotificationID() : null)
                 .username(username)
                 .avatarUrl(avatarUrl)
                 .build();

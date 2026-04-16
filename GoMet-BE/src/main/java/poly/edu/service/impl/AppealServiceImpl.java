@@ -12,7 +12,6 @@ import poly.edu.service.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -22,11 +21,16 @@ import java.util.stream.Collectors;
 @Transactional
 public class AppealServiceImpl implements AppealService {
 
-    @Autowired private AppealDAO appealDAO;
-    @Autowired private AccountDAO accountDAO;
-    @Autowired private NotificationService notificationService;
-    @Autowired private AccountService accountService;
-    @Autowired private EmailService emailService;
+    @Autowired
+    private AppealDAO appealDAO;
+    @Autowired
+    private AccountDAO accountDAO;
+    @Autowired
+    private NotificationService notificationService;
+    @Autowired
+    private AccountService accountService;
+    @Autowired
+    private EmailService emailService;
 
     @Override
     public AppealDTO createAppeal(String email, String reason) {
@@ -36,7 +40,8 @@ public class AppealServiceImpl implements AppealService {
                 .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại trong hệ thống."));
 
         if (account.getIsActive() != -1) {
-            throw new RuntimeException("Tài khoản của bạn đang hoạt động bình thường, vui lòng dùng tính năng phiếu hỗ trợ trong web để được hỗ trợ!");
+            throw new RuntimeException(
+                    "Tài khoản của bạn đang hoạt động bình thường, vui lòng dùng tính năng phiếu hỗ trợ trong web để được hỗ trợ!");
         }
 
         if (!canCreateAppeal(trimEmail)) {
@@ -106,6 +111,10 @@ public class AppealServiceImpl implements AppealService {
         try {
             // Đã cập nhật truyền thêm biến "note"
             emailService.sendAppealDecisionEmail(appeal.getEmail(), status, note);
+            if (appeal.getAccount() != null) {
+                notificationService.notifyAppealUpdate(appeal.getAppealID(), status,
+                        appeal.getAccount().getAccountID());
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -132,17 +141,19 @@ public class AppealServiceImpl implements AppealService {
         // 🔥 Lưu Admin vào phiếu
         appeal.setAdminId(adminId);
         appeal.setAdminName(adminName);
-
         appealDAO.save(appeal);
 
         try {
             // Khi gỡ ban, truyền thêm 1 câu nhắc nhở hoặc truyền appeal.getNote()
             String welcomeBackNote = "Chào mừng bạn quay trở lại với GoMet!";
             emailService.sendAppealDecisionEmail(appeal.getEmail(), "Approved", welcomeBackNote);
+            if (appeal.getAccount() != null) {
+                notificationService.notifyAppealUpdate(appeal.getAppealID(), "Approved",
+                        appeal.getAccount().getAccountID());
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         return true;
     }
 
@@ -162,7 +173,8 @@ public class AppealServiceImpl implements AppealService {
         AppealDTO dto = new AppealDTO();
         dto.setAppealID(appeal.getAppealID());
         dto.setEmail(appeal.getEmail());
-        if(appeal.getAccount() != null) dto.setAccountID(appeal.getAccount().getAccountID());
+        if (appeal.getAccount() != null)
+            dto.setAccountID(appeal.getAccount().getAccountID());
         dto.setReason(appeal.getReason());
         dto.setStatus(appeal.getStatus());
         dto.setNote(appeal.getNote());

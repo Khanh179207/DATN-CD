@@ -45,32 +45,34 @@
               class="msg-item" 
               :class="{ 'mine': msg.isMine, 'is-last': i === messages.length - 1 || messages[i+1]?.isMine !== msg.isMine }"
             >
-              <div class="msg-content">
-                <div class="msg-avatar-container" v-if="!msg.isMine">
-                  <img v-if="i === messages.length - 1 || messages[i+1]?.isMine" src="https://api.dicebear.com/7.x/shapes/svg?seed=GometChef&backgroundColor=ea580c&shape1Color=ffffff&shape2Color=ffffff&shape3Color=ffffff" class="msg-avatar">
-                </div>
-                
-                <div class="bubble-wrapper">
-                  <div class="bubble" :class="{ 'ai-bubble': !msg.isMine }">
-                    <span v-html="formatMessageText(parseMsg(msg.text).cleanText)"></span>
+              <div class="bubble-container">
+                <div class="msg-content">
+                  <div class="msg-avatar-container" v-if="!msg.isMine">
+                    <img v-if="i === messages.length - 1 || messages[i+1]?.isMine" src="https://api.dicebear.com/7.x/shapes/svg?seed=GometChef&backgroundColor=ea580c&shape1Color=ffffff&shape2Color=ffffff&shape3Color=ffffff" class="msg-avatar">
+                  </div>
+                  
+                  <div class="bubble-wrapper">
+                    <div class="bubble" :class="{ 'ai-bubble': !msg.isMine }">
+                      <span v-html="formatMessageText(parseMsg(msg.text).cleanText)"></span>
 
-                    <div v-if="parseMsg(msg.text).linkId" 
-                         @click="goToRecipe(parseMsg(msg.text).linkId)"
-                         class="recipe-modern-card">
-                      <div class="card-tag">✨ Gợi ý từ Gomet</div>
-                      <div class="card-content">
-                        <div class="icon-box">👨‍🍳</div>
-                        <div class="text-box">
-                          <p class="title">Xem công thức chi tiết</p>
-                          <p class="subtitle">Bấm để khám phá ngay <span class="arrow">→</span></p>
+                      <div v-if="parseMsg(msg.text).linkId" 
+                           @click="goToRecipe(parseMsg(msg.text).linkId)"
+                           class="recipe-modern-card">
+                        <div class="card-tag">✨ Gợi ý từ Gomet</div>
+                        <div class="card-content">
+                          <div class="icon-box">👨‍🍳</div>
+                          <div class="text-box">
+                            <p class="title">Xem công thức chi tiết</p>
+                            <p class="subtitle">Bấm để khám phá ngay <span class="arrow">→</span></p>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-              <div class="msg-time" v-if="i === messages.length - 1 || messages[i+1]?.isMine !== msg.isMine">
-                {{ msg.timeStr }}
+                <div class="msg-time" v-if="i === messages.length - 1 || messages[i+1]?.isMine !== msg.isMine">
+                  {{ msg.timeStr }}
+                </div>
               </div>
             </div>
 

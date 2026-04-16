@@ -7,13 +7,10 @@ import poly.edu.service.AppealService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize; // 🔥 Import thẻ bảo vệ
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api")
@@ -35,12 +32,15 @@ public class AppealController {
             String email = request.get("email");
             String reason = request.get("reason");
             if (email == null || email.trim().isEmpty() || reason == null || reason.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Email và lý do không được bỏ trống"));
+                return ResponseEntity.badRequest()
+                        .body(Map.of("success", false, "message", "Email và lý do không được bỏ trống"));
             }
             AppealDTO appeal = appealService.createAppeal(email.trim(), reason.trim());
-            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("success", true, "message", "Thành công", "data", appeal));
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(Map.of("success", true, "message", "Thành công", "data", appeal));
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("success", false, "message", e.getMessage()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("success", false, "message", e.getMessage()));
         }
     }
 
@@ -70,12 +70,12 @@ public class AppealController {
                     status.trim(),
                     note != null ? note.trim() : "",
                     admin.getAccountID(),
-                    admin.getUsername()
-            );
+                    admin.getUsername());
 
             return ResponseEntity.ok(Map.of("success", true, "message", "Cập nhật thành công", "data", updated));
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("success", false, "message", e.getMessage()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("success", false, "message", e.getMessage()));
         }
     }
 
@@ -91,7 +91,8 @@ public class AppealController {
 
             return ResponseEntity.ok(Map.of("success", true, "message", "Gỡ ban thành công", "data", result));
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("success", false, "message", e.getMessage()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("success", false, "message", e.getMessage()));
         }
     }
 

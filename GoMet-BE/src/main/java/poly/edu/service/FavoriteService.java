@@ -1,7 +1,6 @@
 package poly.edu.service;
 
 import poly.edu.dto.FavoriteDTO;
-import poly.edu.entity.Favorite;
 import java.util.List;
 
 public interface FavoriteService {

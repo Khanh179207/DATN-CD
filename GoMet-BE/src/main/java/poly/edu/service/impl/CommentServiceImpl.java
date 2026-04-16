@@ -13,13 +13,14 @@ import poly.edu.entity.Post;
 import poly.edu.service.CommentService;
 import poly.edu.service.ModerationLogService;
 import poly.edu.service.NotificationService;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -43,7 +44,8 @@ public class CommentServiceImpl implements CommentService {
 
                     // Chỉ check like cho những comment đang hoạt động (isActive = 1)
                     if (currentAccountID != null && Integer.valueOf(1).equals(c.getIsActive())) {
-                        boolean liked = commentLikeDAO.findByAccountAndComment(currentAccountID, c.getCommentID()).isPresent();
+                        boolean liked = commentLikeDAO.findByAccountAndComment(currentAccountID, c.getCommentID())
+                                .isPresent();
                         dto.setIsLiked(liked);
                     } else {
                         dto.setIsLiked(false);
@@ -83,7 +85,8 @@ public class CommentServiceImpl implements CommentService {
             post = parentComment.getPost();
         }
 
-        if (post == null) throw new RuntimeException("Không tìm thấy bài viết");
+        if (post == null)
+            throw new RuntimeException("Không tìm thấy bài viết");
 
         // 🔥 CHỐT CHẶN BẢO MẬT: CHỐNG SPAM RATING
         if (finalRating != null && finalRating > 0) {
@@ -121,9 +124,10 @@ public class CommentServiceImpl implements CommentService {
             System.err.println("Lỗi lưu InteractionLog: " + e.getMessage());
         }
 
-        // 🔥 THÊM LOGIC THÔNG BÁO TỪ NHÁNH CỦA BẠN ĐÓ
+        // 🔥 THÊM LOGIC THÔNG BÁO TỪ NHÁNH CỦA BẠN ĐÓ (KÈM CHỐT CHẶN AN TOÀN)
         try {
-            if (post.getAccount() != null && !account.getAccountID().equals(post.getAccount().getAccountID())) {
+            if (post.getAccount() != null && !account.getAccountID().equals(post.getAccount().getAccountID())
+                    && parentComment == null) {
                 notificationService.notifyComment(
                         account.getUsername(),
                         post.getAccount().getAccountID(),
@@ -134,6 +138,19 @@ public class CommentServiceImpl implements CommentService {
         } catch (Exception e) {
             System.err.println("Lỗi gửi thông báo comment: " + e.getMessage());
         }
+
+        // Send reply notification
+        if (parentComment != null && parentComment.getAccount() != null
+                && !account.getAccountID().equals(parentComment.getAccount().getAccountID())) {
+            notificationService.notifyCommentReply(
+                    account.getUsername(),
+                    parentComment.getAccount().getAccountID(),
+                    post.getPostID(),
+                    saved.getCommentID());
+        }
+
+        // Notify mentioned users
+        extractAndNotifyMentions(req.getContent(), account.getUsername(), post.getPostID(), saved.getCommentID());
 
         return toDTO(saved);
     }
@@ -150,10 +167,16 @@ public class CommentServiceImpl implements CommentService {
         commentDAO.save(comment);
 
         String content = comment.getContent() != null ? comment.getContent() : "[Chỉ có hình ảnh/Đánh giá]";
-        if (content.length() > 50) content = content.substring(0, 50) + "...";
+        if (content.length() > 50)
+            content = content.substring(0, 50) + "...";
         String autoReason = "Xóa bình luận vi phạm: '" + content + "'";
 
         moderationLogService.logAction(id, "COMMENT", "DELETE", adminId, adminName, autoReason);
+
+        // Notify the author
+        if (comment.getAccount() != null) {
+            notificationService.notifyCommentStatusChange(id, comment.getAccount().getAccountID(), "DELETE");
+        }
     }
 
     @Override
@@ -178,6 +201,11 @@ public class CommentServiceImpl implements CommentService {
         commentDAO.save(comment);
 
         moderationLogService.logAction(id, "COMMENT", "RESTORE", adminId, adminName, "Khôi phục bình luận bị xóa nhầm");
+
+        // Notify the author
+        if (comment.getAccount() != null) {
+            notificationService.notifyCommentStatusChange(id, comment.getAccount().getAccountID(), "RESTORE");
+        }
     }
 
     @Override
@@ -228,7 +256,8 @@ public class CommentServiceImpl implements CommentService {
 
         for (Comment c : ratedComments) {
             int star = c.getRating();
-            if (star >= 1 && star <= 5) distribution[star - 1]++;
+            if (star >= 1 && star <= 5)
+                distribution[star - 1]++;
         }
 
         Map<String, Object> stats = new HashMap<>();
@@ -274,5 +303,22 @@ public class CommentServiceImpl implements CommentService {
 
         dto.setCreatedAt(c.getCreatedAt());
         return dto;
+    }
+
+    private void extractAndNotifyMentions(String content, String mentioner, Integer postId, Integer commentId) {
+        if (content == null || content.isEmpty())
+            return;
+        Pattern pattern = Pattern.compile("(?<=^|(?<=[^a-zA-Z0-9-_\\.]))@([A-Za-z0-9_]+)");
+        Matcher matcher = pattern.matcher(content);
+        List<String> mentionedUsernames = new ArrayList<>();
+        while (matcher.find()) {
+            String username = matcher.group(1);
+            if (!mentionedUsernames.contains(username) && !username.equals(mentioner)) {
+                mentionedUsernames.add(username);
+                accountDAO.findByUsername(username).ifPresent(acc -> {
+                    notificationService.notifyMention(mentioner, acc.getAccountID(), postId, commentId);
+                });
+            }
+        }
     }
 }

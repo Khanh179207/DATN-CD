@@ -9,7 +9,6 @@ import poly.edu.dao.InteractionLogDAO;
 import poly.edu.dto.LikesDTO;
 import poly.edu.entity.InteractionLog;
 import poly.edu.service.LikesService;
-
 import java.util.List;
 
 @RestController
