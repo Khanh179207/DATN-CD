@@ -55,9 +55,25 @@ public interface PostDAO extends JpaRepository<Post, Integer> {
     @Query("SELECT COUNT(p) FROM Post p WHERE p.account.accountID = :accountID AND p.isApproved = 1 AND p.isActive = 1")
     long countByAccountId(@Param("accountID") Integer accountID);
 
+    // ==========================================
+    // 🔥 LOGIC ẨN/HIỆN BÀI VIẾT THEO TÀI KHOẢN (CHUẨN MA TRẬN)
+    // ==========================================
+
+    // 1. User tự ẩn (Deactivate) -> Bài 1 thành -2
     @Modifying
-    @Query("UPDATE Post p SET p.isActive = 0 WHERE p.account.accountID = :accountId")
-    void deactivateAllPostsByAccountId(@Param("accountId") Integer accountId);
+    @Query("UPDATE Post p SET p.isActive = -2 WHERE p.account.accountID = :accountId AND p.isActive = 1")
+    void hidePostsDueToUserDeactivate(@Param("accountId") Integer accountId);
+
+    // 2. User khôi phục (Restore) -> Bài -2 thành 1
+    @Modifying
+    @Query("UPDATE Post p SET p.isActive = 1 WHERE p.account.accountID = :accountId AND p.isActive = -2")
+    void restorePostsDueToUserRestore(@Param("accountId") Integer accountId);
+
+    // 3. Admin Ban tài khoản -> Bài đang Public (1) hoặc đang ngủ (-2) đều bị chém thành Ban (-1)
+    @Modifying
+    @Query("UPDATE Post p SET p.isActive = -1 WHERE p.account.accountID = :accountId AND p.isActive IN (1, -2)")
+    void banAllPostsByAccountId(@Param("accountId") Integer accountId);
+
 
     // ==========================================
     // THÊM CÁC HÀM CHO ADMIN STATS CONTROLLER
