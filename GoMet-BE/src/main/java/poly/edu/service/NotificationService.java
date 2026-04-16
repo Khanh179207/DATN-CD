@@ -7,16 +7,18 @@ public interface NotificationService {
     /**
      * Creates a new notification
      * 
-     * @param title     The notification title
-     * @param content   The notification content
-     * @param type      The notification type
-     * @param accountId The account ID of the recipient
-     * @param postId    The post ID (optional, can be null)
-     * @param link      The link URL (optional, can be null)
+     * @param title      The notification title
+     * @param content    The notification content
+     * @param type       The notification type
+     * @param receiverId The account ID of the recipient (receiver)
+     * @param actorId    The account ID of the person who triggered the action
+     *                   (actor)
+     * @param postId     The post ID (optional, can be null)
+     * @param link       The link URL (optional, can be null)
      * @return The created notification
      */
-    Notification createNotification(String title, String content, String type, Integer accountId, Integer postId,
-            String link);
+    Notification createNotification(String title, String content, String type, Integer receiverId, Integer actorId,
+            Integer postId, String link);
 
     /**
      * Creates a follow notification when User A follows User B
@@ -109,4 +111,13 @@ public interface NotificationService {
      * @param postId The post ID that was disabled
      */
     void notifyPostDisabled(Integer postId);
+
+    /**
+     * Creates a like notification when User A likes a post by User B
+     * 
+     * @param likerUsername The username of the user who liked the post
+     * @param postOwnerId   The account ID of the post owner
+     * @param postId        The post ID
+     */
+    void notifyLike(String likerUsername, Integer postOwnerId, Integer postId);
 }
