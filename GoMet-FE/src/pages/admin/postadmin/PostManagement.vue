@@ -119,7 +119,7 @@
                   <button @click="approvePost(post.postID)" class="btn-action approve" title="Duyệt bài"><CheckCircle :size="16" /></button>
                 </template>
 
-                <template v-if="post._status === 'active' || post._status === 'pending'">
+                <template v-if="['active', 'pending', 'user_deactivated', 'hidden_pending', 'hidden_active'].includes(post._status)">
                   <button @click="askRejectAction(post)" class="btn-action ban" title="Từ chối/Gỡ bài"><Ban :size="16" /></button>
                 </template>
 
@@ -212,21 +212,30 @@
               </div>
             </div>
 
-            <div class="modal-action-zone" v-if="selectedPost._status === 'pending'">
+            <div class="modal-action-zone" v-if="['pending', 'active', 'user_deactivated', 'hidden_pending', 'hidden_active'].includes(selectedPost._status)">
               <div class="alert-ribbon">
-                <AlertCircle :size="18" /> Bài viết đang chờ duyệt. Bạn quyết định sao?
+                <AlertCircle :size="18" />
+                <span v-if="selectedPost._status === 'pending'">Bài viết đang chờ duyệt. Bạn quyết định sao?</span>
+                <span v-else-if="selectedPost._status === 'active'">Bài viết đang hiển thị. Bạn có muốn gỡ bài này?</span>
+                <span v-else-if="selectedPost._status === 'user_deactivated'">Bài viết này đang bị ẩn theo tài khoản. Bạn có muốn gỡ vĩnh viễn?</span>
+                <span v-else>Bài viết này đang được tác giả tự ẩn. Bạn có muốn gỡ vĩnh viễn?</span>
               </div>
-              <div class="btn-grid-lux">
-                <button @click="approvePost(selectedPost.postID); closeDetail()" class="btn-lux-primary">
+              <div class="btn-grid-lux" :class="{ 'single-action': selectedPost._status !== 'pending' }">
+                <button v-if="selectedPost._status === 'pending'" @click="approvePost(selectedPost.postID); closeDetail()" class="btn-lux-primary">
                   <CheckCircle :size="18" /> Duyệt bài ngay
                 </button>
                 <button @click="askRejectAction(selectedPost); closeDetail()" class="btn-lux-secondary">
-                  <Ban :size="18" /> Từ chối & Gỡ
+                  <Ban :size="18" /> 
+                  <span v-if="selectedPost._status === 'pending'">Từ chối & Gỡ</span>
+                  <span v-else>Gỡ bài viết</span>
                 </button>
               </div>
             </div>
 
-            <div class="modal-action-zone" v-if="selectedPost._status === 'banned' || selectedPost._status === 'rejected'" style="background: #f0f9ff; border-color: #e0f2fe; margin-top: 24px;">
+            <div 
+              class="modal-action-zone" 
+              v-if="selectedPost._status === 'banned' || selectedPost._status === 'rejected'" 
+              style="background: #f0f9ff; border-color: #e0f2fe; margin-top: 24px;">
               <div class="alert-ribbon" style="color: #0369a1;">
                 <AlertCircle :size="18" /> Bài viết đã bị gỡ. Bạn có muốn khôi phục lại không?
               </div>
@@ -317,7 +326,8 @@ const tabs = [
   { key: 'pending', label: 'Chờ duyệt' },
   { key: 'active', label: 'Đang hiển thị' },
   { key: 'hidden', label: 'User tự ẩn' },
-  { key: 'deactivated', label: 'Bị Admin gỡ' }
+  { key: 'deactivated', label: 'Bị Admin gỡ' },
+  { key: 'user_deactivated', label: 'User ẩn tài khoản' }
 ]
 
 // --- LOGIC ---
@@ -325,6 +335,7 @@ const getStatus = (post) => {
   const a = post.isActive;
   const ap = post.isApproved;
 
+  if (a === -2) return 'user_deactivated';
   if (a === 1 && ap === 1) return 'active';             
   if (a === 1 && ap === 0) return 'pending';            
   if (a === 0 && ap === 0) return 'hidden_pending';     
@@ -342,7 +353,8 @@ const getStatusLabel = (status) => {
     hidden_pending: 'User tự ẩn (Đang chờ)', 
     hidden_active: 'User tự ẩn', 
     banned: 'Bị Admin gỡ', 
-    rejected: 'Bị từ chối' 
+    rejected: 'Bị từ chối',
+    user_deactivated: 'User ẩn tài khoản'
   }
   return map[status] || 'Không xác định'
 }
@@ -652,6 +664,12 @@ const showToast = (msg, type = 'success') => {
 /* (-1 0) (-1 1) Admin gỡ -> Đỏ */
 .status-badge.banned, .status-badge.rejected { background: #FEF2F2; color: #DC2626; } 
 .status-badge.banned .status-dot, .status-badge.rejected .status-dot { background: #DC2626; }
+
+/* (-2) User ẩn tài khoản -> Tím */
+.status-badge.user_deactivated { background: #F5F3FF; color: #7C3AED; }
+.status-badge.user_deactivated .status-dot { background: #7C3AED; }
+
+.btn-grid-lux.single-action { grid-template-columns: 1fr; }
 
 /* Action Buttons */
 .action-group { display: flex; justify-content: flex-end; gap: 10px; }

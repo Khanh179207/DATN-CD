@@ -20,4 +20,9 @@ public class UserProfileDTO {
     private Long followingCount;
     private Long totalViews;
     private Double avgRating;
+
+    // 🔥 THÊM TRƯỜNG NÀY ĐỂ CHỨA TỔNG LƯỢT THÍCH
+    private Long totalLikes;
+    // Thêm 1 trường này vào DTO
+    private String provider; // 'local' hoặc 'google'
 }

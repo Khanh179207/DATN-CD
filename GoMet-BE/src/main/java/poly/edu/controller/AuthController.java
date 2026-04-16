@@ -43,7 +43,7 @@ public class AuthController {
         Map<String, Object> errorResponse = new HashMap<>();
         errorResponse.put("message", type); // ACCOUNT_BANNED hoặc ACCOUNT_DEACTIVATED
         errorResponse.put("email", acc.getEmail());
-        
+
         if ("ACCOUNT_BANNED".equals(type)) {
             errorResponse.put("banReason", acc.getBanReason());
             errorResponse.put("bannedAt", acc.getBannedAt() != null ? acc.getBannedAt().toString() : null);
@@ -89,8 +89,8 @@ public class AuthController {
                     finalUsername = finalUsername + "_" + new Random().nextInt(10000);
                 }
 
-                // Password ngẫu nhiên cho Google User cũng phải băm
-                String randomPassword = passwordEncoder.encode(UUID.randomUUID().toString());
+                // 🔥 ĐÃ SỬA: Đóng dấu "GOOGLE_" vào trước chuỗi băm để nhận diện
+                String randomPassword = "GOOGLE_" + passwordEncoder.encode(UUID.randomUUID().toString());
 
                 acc = Account.builder()
                         .username(finalUsername)
@@ -123,6 +123,13 @@ public class AuthController {
         }
 
         Account acc = opt.get();
+
+        // 🔥 ĐÃ SỬA: Nếu cố tình dùng form login thường cho acc Google chưa đổi pass -> Chặn
+        if (acc.getPassword() != null && acc.getPassword().startsWith("GOOGLE_")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "Tài khoản của bạn đăng ký qua Google. Vui lòng sử dụng nút 'Đăng nhập bằng Google' hoặc thiết lập mật khẩu mới trong Profile!"));
+        }
+
         boolean passwordOk;
 
         // Cơ chế đọ mật khẩu thông minh: Ưu tiên đọ pass đã băm, nếu không thì đọ pass thô (tài khoản cũ)
@@ -318,6 +325,14 @@ public class AuthController {
         res.setIsAdmin(acc.getIsAdmin());
         res.setIsPremium(acc.getIsPremium());
         res.setToken(jwtToken);
+
+        // 🔥 THÊM ĐÚNG ĐOẠN NÀY ĐỂ FRONTEND BIẾT LÀ ACC GOOGLE
+        String currentProvider = "local";
+        if (acc.getPassword() != null && acc.getPassword().startsWith("GOOGLE_")) {
+            currentProvider = "google";
+        }
+        res.setProvider(currentProvider);
+
         return res;
     }
 

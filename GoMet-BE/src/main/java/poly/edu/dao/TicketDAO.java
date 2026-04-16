@@ -1,24 +1,28 @@
 package poly.edu.dao;
 
 import poly.edu.entity.Ticket;
+import poly.edu.dto.TicketHistoryDTO;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
 public interface TicketDAO extends JpaRepository<Ticket, Integer> {
 
-    // Tìm các ticket đang chờ xử lý (status = 0)
-    List<Ticket> findByStatus(Integer status);
+    // 🔥 ĐÃ SỬA: Dùng t.description và t.adminNote khớp 100% với Entity Ticket
+    @Query("SELECT new poly.edu.dto.TicketHistoryDTO(t.ticketID, t.title, t.description, t.status, t.createdAt, t.adminNote) " +
+            "FROM Ticket t WHERE t.account.accountID = :accountId ORDER BY t.createdAt DESC")
+    List<TicketHistoryDTO> findHistoryByAccountId(@Param("accountId") Integer accountId);
 
-    // Tìm ticket theo loại
+    // Các hàm cũ của Sếp giữ nguyên
+    List<Ticket> findByAccount_AccountID(Integer accountId);
+    List<Ticket> findByStatus(Integer status);
     List<Ticket> findByTicketType(String ticketType);
 
-    // Ticket Summary: Nhóm theo loại lỗi
     @Query("SELECT t.ticketType, COUNT(t) FROM Ticket t GROUP BY t.ticketType")
     List<Object[]> countTicketsByType();
-    // Đếm Ticket/Khiếu nại theo Trạng thái
-    @Query(value = "SELECT t.Status, COUNT(t.TicketID) " +
-            "FROM Ticket t GROUP BY t.Status", nativeQuery = true)
+
+    @Query("SELECT t.status, COUNT(t) FROM Ticket t GROUP BY t.status")
     List<Object[]> countTicketsByStatus();
 }

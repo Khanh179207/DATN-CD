@@ -11,6 +11,7 @@ const HomeView = () => import('@/pages/home/HomeView.vue')
 const SearchPage = () => import('@/pages/search/SearchPage.vue')
 const PostDetail = () => import('@/pages/home/PostDetail.vue')
 const CreatePost = () => import('@/pages/CreatePost.vue')
+const EditPost = () => import('@/pages/EditPost.vue') // Đã thêm Import EditPost
 
 // --- 3. USER PAGES ---
 const ProfilePage = () => import('@/pages/profile/ProfilePage.vue')
@@ -79,6 +80,12 @@ const routes = [
         path: 'create-post',
         name: 'CreatePost',
         component: CreatePost,
+        meta: { requiresAuth: true }
+      },
+      { // Đã thêm Route cho EditPost
+        path: 'edit-post/:id',
+        name: 'EditPost',
+        component: EditPost,
         meta: { requiresAuth: true }
       },
       {

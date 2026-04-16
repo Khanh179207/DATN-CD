@@ -29,7 +29,7 @@
         <ul class="footer-links">
           <li><router-link to="/home">Trang Chủ</router-link></li>
           <li><router-link to="/events">Sự Kiện Ẩm Thực</router-link></li>
-          <li><router-link to="/leaderboard">Bảng Vàng (Premium)</router-link></li>
+          <li><router-link to="/leaderboard">Bảng xếp hạng</router-link></li>
         </ul>
       </div>
 
