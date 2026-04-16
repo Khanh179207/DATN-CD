@@ -384,6 +384,9 @@ async function loadPost(id) {
       views: dto.views || 0,
       isPremium: dto.isPremium || dto.IsPremium || false,
       
+      // 🔥 LẤY NGÀY ĐĂNG BÀI TỪ API:
+      createdAt: dto.createdAt || dto.createdDate || dto.publishDate,
+      
       // 🔥 BỔ SUNG LẤY 2 TRƯỜNG STATUS NÀY TỪ API:
       isActive: dto.isActive ?? dto.IsActive ?? 1, 
       isApproved: dto.isApproved ?? dto.IsApproved ?? 1,

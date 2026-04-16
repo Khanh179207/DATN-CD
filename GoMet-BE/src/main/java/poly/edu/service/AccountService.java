@@ -11,16 +11,16 @@ public interface AccountService {
 
     // 🔥 Yêu cầu truyền thêm người khóa và lý do
     void ban(Integer id, Integer adminId, String adminName, String adminEmail, String reason);
-    void unban(Integer id, Integer adminId, String adminName); 
+    void unban(Integer id, Integer adminId, String adminName);
     void delete(Integer id);
     void hardDelete(Integer id);
 
     // ─────────────────────────────────────────────────────────────────────────
     // NEW: Quản lý Xóa mềm & Khôi phục (Self-Service)
     // ─────────────────────────────────────────────────────────────────────────
-    
+
     /** Gửi OTP xác nhận Xóa tài khoản (Dành cho User đang đăng nhập) */
-    void sendDeactivateOTP(Integer accountId);
+    void sendDeactivateOTP(Integer accountId, String password); // 🔥 ĐÃ CẬP NHẬT: Thêm tham số password
 
     /** Thực hiện xóa mềm tài khoản */
     void verifyAndDeactivate(Integer accountId, String password, String otp);
@@ -30,4 +30,14 @@ public interface AccountService {
 
     /** Thực hiện khôi phục tài khoản */
     void verifyAndRestore(String email, String password, String otp);
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 🔥 NEW: API Đổi mật khẩu (Dành cho Profile Modal)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /** Gửi OTP để xác nhận Đổi mật khẩu */
+    void sendPasswordChangeOTP(Integer accountId);
+
+    /** Kiểm tra OTP đổi mật khẩu. Chỉ kiểm tra, việc lưu pass mới sẽ do Controller làm. */
+    void verifyPasswordChangeOTP(Integer accountId, String otp);
 }

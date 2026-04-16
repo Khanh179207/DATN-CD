@@ -11,7 +11,7 @@ import poly.edu.entity.Comment;
 import poly.edu.entity.InteractionLog;
 import poly.edu.entity.Post;
 import poly.edu.service.CommentService;
-import poly.edu.service.ModerationLogService; // 🔥 IMPORT MỚI
+import poly.edu.service.ModerationLogService;
 import poly.edu.service.NotificationService;
 
 import java.time.LocalDateTime;
@@ -33,7 +33,6 @@ public class CommentServiceImpl implements CommentService {
     private final NotificationService notificationService;
     private final InteractionLogDAO interactionLogDAO;
 
-    // 🔥 INJECT THÊM MÁY NGHE LÉN
     private final ModerationLogService moderationLogService;
 
     @Override
@@ -86,9 +85,8 @@ public class CommentServiceImpl implements CommentService {
 
         if (post == null) throw new RuntimeException("Không tìm thấy bài viết");
 
-        // 🔥 CHỐT CHẶN BẢO MẬT: CHỐNG SPAM RATING (Mỗi bài chỉ rate 1 lần) 🔥
+        // 🔥 CHỐT CHẶN BẢO MẬT: CHỐNG SPAM RATING
         if (finalRating != null && finalRating > 0) {
-            // Đếm xem user này đã từng rate bài này (với isActive = 1) chưa
             long existingRatings = commentDAO.countRatingsByUserAndPost(post.getPostID(), account.getAccountID());
             if (existingRatings > 0) {
                 throw new RuntimeException("Bạn đã đánh giá bài viết này rồi! Mỗi bài viết chỉ được đánh giá 1 lần.");
@@ -103,46 +101,46 @@ public class CommentServiceImpl implements CommentService {
                 .rating(finalRating)
                 .attachments(req.getImageUrls())
                 .likes(0)
-                .isActive(1) // Mặc định 1: Đang hoạt động
+                .isActive(1)
                 .build();
 
         Comment saved = commentDAO.save(comment);
 
+        // Lưu InteractionLog của Sếp
         try {
             if (finalRating != null && finalRating > 0) {
                 InteractionLog log = new InteractionLog();
                 log.setPostID(post.getPostID());
-                log.setType("RATING"); // Khớp với SQL 'RATE' của sếp
+                log.setType("RATING");
                 log.setValue(finalRating);
                 log.setCreatedAt(LocalDateTime.now());
-
-                // 🔥 Gắn CommentID vừa sinh ra vào ReferenceID
                 log.setReferenceId(saved.getCommentID());
-
                 interactionLogDAO.save(log);
             }
         } catch (Exception e) {
-            // Bọc trong try-catch để lỡ log có lỗi thì user vẫn comment được
             System.err.println("Lỗi lưu InteractionLog: " + e.getMessage());
         }
 
-        if (post.getAccount() != null && !account.getAccountID().equals(post.getAccount().getAccountID())) {
-            notificationService.notifyComment(
-                    account.getUsername(),
-                    post.getAccount().getAccountID(),
-                    post.getPostID(),
-                    saved.getCommentID()
-            );
+        // 🔥 THÊM LOGIC THÔNG BÁO TỪ NHÁNH CỦA BẠN ĐÓ
+        try {
+            if (post.getAccount() != null && !account.getAccountID().equals(post.getAccount().getAccountID())) {
+                notificationService.notifyComment(
+                        account.getUsername(),
+                        post.getAccount().getAccountID(),
+                        post.getPostID(),
+                        saved.getCommentID()
+                );
+            }
+        } catch (Exception e) {
+            System.err.println("Lỗi gửi thông báo comment: " + e.getMessage());
         }
 
         return toDTO(saved);
     }
 
-    // 🔥 ADMIN XÓA BÌNH LUẬN (-1) VÀ GHI LOG
     @Override
     @Transactional
     public void delete(Integer id, Integer adminId, String adminName) {
-        // 1. Tìm comment để kiểm tra tồn tại
         Comment comment = commentDAO.findById(id)
                 .orElseThrow(() -> new RuntimeException("Bình luận không tồn tại"));
 
@@ -151,12 +149,10 @@ public class CommentServiceImpl implements CommentService {
         comment.setIsActive(-1);
         commentDAO.save(comment);
 
-        // 3. Tự động lấy nội dung làm lý do (Giữ nguyên logic của sếp)
         String content = comment.getContent() != null ? comment.getContent() : "[Chỉ có hình ảnh/Đánh giá]";
         if (content.length() > 50) content = content.substring(0, 50) + "...";
         String autoReason = "Xóa bình luận vi phạm: '" + content + "'";
 
-        // 4. Ghi vào Moderation Log (Giữ nguyên logic của sếp)
         moderationLogService.logAction(id, "COMMENT", "DELETE", adminId, adminName, autoReason);
     }
 
@@ -172,7 +168,6 @@ public class CommentServiceImpl implements CommentService {
         commentDAO.save(comment);
     }
 
-    // 🔥 ADMIN KHÔI PHỤC BÌNH LUẬN (1) VÀ GHI LOG
     @Override
     @Transactional
     public void restore(Integer id, Integer adminId, String adminName) {
@@ -182,7 +177,6 @@ public class CommentServiceImpl implements CommentService {
         comment.setIsActive(1);
         commentDAO.save(comment);
 
-        // Ghi thẳng vào Sổ Nam Tào
         moderationLogService.logAction(id, "COMMENT", "RESTORE", adminId, adminName, "Khôi phục bình luận bị xóa nhầm");
     }
 
@@ -199,9 +193,7 @@ public class CommentServiceImpl implements CommentService {
                     dto.setCreatedAt(c.getCreatedAt());
                     dto.setImageUrls(c.getAttachments());
 
-                    // Trả về đúng trạng thái (1, 0, -1)
                     dto.setIsActive(c.getIsActive() != null ? c.getIsActive() : 1);
-
                     dto.setRating(c.getRating() != null ? c.getRating() : 0);
                     dto.setLikes(c.getLikes() != null ? c.getLikes() : 0);
                     dto.setHasAttachments(c.getAttachments() != null && !c.getAttachments().isEmpty());

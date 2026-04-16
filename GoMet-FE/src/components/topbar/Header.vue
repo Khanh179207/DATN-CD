@@ -110,33 +110,36 @@
             <span v-if="unreadNotiCount > 0" class="badge-count">{{ unreadNotiCount }}</span>
           </button>
           <transition name="dropdown-anim">
-            <div v-if="showNoti" class="common-dropdown noti-width">
+            <div v-if="showNoti" class="common-dropdown noti-width modern-noti-dropdown">
               <div class="dropdown-header">
-                <h3>{{ $t('header.notifications') }}</h3>
-                <span class="action-link" @click="handleMarkAllRead">{{ $t('header.mark_all_read') }}</span>
+                <div class="header-left">
+                  <h3>{{ $t('header.notifications') }}</h3>
+                  <span v-if="unreadNotiCount > 0" class="count-pill">{{ unreadNotiCount }} mới</span>
+                </div>
+                <button v-if="unreadNotiCount > 0" class="action-link" @click="handleMarkAllRead">{{ $t('header.mark_all_read') }}</button>
               </div>
-              <div class="dropdown-body scroll-body">
-                <div v-for="n in notifications" :key="n.id" class="list-item noti-item" :class="{ unread: !n.isRead }"
-                  @click="handleNotiClick(n)">
-                  <div class="avatar-wrap">
-                    <img :src="n.avatar">
-                    <div class="noti-type-icon" :class="n.type">
-                      <svg v-if="n.type === 'like'" width="10" height="10" viewBox="0 0 24 24" fill="white"
-                        stroke="white">
-                        <path
-                          d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
-                        </path>
-                      </svg>
-                      <svg v-else width="10" height="10" viewBox="0 0 24 24" fill="white" stroke="white">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                      </svg>
+              <div class="dropdown-body scroll-body custom-scroll">
+                <div v-if="notifications.length === 0" class="empty-state-noti">
+                  <div class="empty-noti-icon">🔕</div>
+                  <p>Sếp không có thông báo nào mới.</p>
+                </div>
+                <div v-else>
+                  <div v-for="n in notifications" :key="n.id" class="noti-item-v2" :class="{ 'is-unread': !n.isRead }" @click="handleNotiClick(n)">
+                    <div class="item-avatar">
+                      <img :src="n.avatar || 'https://ui-avatars.com/api/?name=User&background=EA580C&color=fff'" alt="User avatar">
+                      <div class="type-icon" :class="n.type">
+                        <svg v-if="n.type === 'like' || n.type === 'event_vote'" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                        <svg v-else-if="n.type === 'comment' || n.type === 'rating'" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                        <svg v-else-if="n.type === 'follow'" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="17" y1="11" x2="23" y2="11"></line></svg>
+                        <svg v-else width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                      </div>
                     </div>
+                    <div class="item-content">
+                      <p class="noti-title" v-html="formatNotificationContent(n)"></p>
+                      <span class="noti-time">{{ n.time }}</span>
+                    </div>
+                    <div v-if="!n.isRead" class="unread-dot-pulse"></div>
                   </div>
-                  <div class="item-info">
-                    <p class="noti-text"><b>{{ n.user }}</b> {{ n.action }}</p>
-                    <span class="time">{{ n.time }}</span>
-                  </div>
-                  <div v-if="!n.isRead" class="unread-dot"></div>
                 </div>
               </div>
             </div>
@@ -217,14 +220,16 @@ const increaseBadge = () => { notifications.value = [...notifications.value]; };
 const addNotificationToDropdown = (notification) => {
   const newNotification = {
     id: notification.notificationId,
-    user: notification.title,
-    action: notification.content,
+    title: notification.title,
+    content: notification.content,
+    username: notification.username,
+    avatar: notification.avatarUrl,
     time: notification.createdAt ? new Date(notification.createdAt).toLocaleDateString() : new Date().toLocaleDateString(),
     isRead: notification.isRead === 1,
     type: notification.type || 'like',
-    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(notification.title)}&background=EA580C&color=fff`,
     link: notification.link
   };
+  console.log('New notification added:', newNotification);
   notifications.value.unshift(newNotification);
 };
 
@@ -238,6 +243,11 @@ const updateTabTitle = () => {
   if (count > 0) { document.title = "(" + count + ") " + originalTitle.value; } 
   else { document.title = originalTitle.value; }
 };
+
+const formatNotificationContent = (n) => {
+  // Using v-html, so make sure to sanitize if user content is ever included directly. Here it's safe.
+  return `<strong>${n.username}</strong> ${n.content}`;
+}
 
 const resetBadge = () => { notifications.value.forEach(n => n.isRead = true); document.title = originalTitle.value; };
 
@@ -269,13 +279,19 @@ const loadNotifications = async () => {
   if (!authStore.user?.accountID) return
   try {
     const data = await getNotifications(authStore.user.accountID)
+    console.log("Notification API:", data);
     notifications.value = data.map(n => ({
-      id: n.notificationID, user: n.title, action: n.content,
+      id: n.notificationID,
+      title: n.title,
+      content: n.content,
+      username: n.username,
+      avatar: n.avatarUrl,
       time: n.createdAt ? new Date(n.createdAt).toLocaleDateString() : '',
-      isRead: n.isRead === 1, type: n.type || 'like',
-      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(n.title)}&background=EA580C&color=fff`,
+      isRead: n.isRead === 1,
+      type: n.type || 'like',
       link: n.link
     }))
+    console.log("Mapped notifications:", notifications.value);
   } catch (err) { }
 }
 
@@ -420,6 +436,101 @@ const requestNotificationPermission = () => {
   color: #ea580c; /* Đổi màu icon sang cam nhẹ nhàng */
   background-color: transparent; /* Giữ nguyên nền, không làm chói mắt */
 }
+
+.modern-noti-dropdown .dropdown-header {
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.modern-noti-dropdown .header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.modern-noti-dropdown .header-left h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+.modern-noti-dropdown .count-pill {
+  background-color: #fff1e9;
+  color: #ea580c;
+  padding: 2px 8px;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.empty-state-noti {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  min-height: 200px;
+}
+.empty-noti-icon {
+  font-size: 2.5rem;
+  margin-bottom: 12px;
+  opacity: 0.4;
+}
+.empty-state-noti p {
+  color: #64748b;
+  font-weight: 600;
+}
+
+.noti-item-v2 {
+  display: flex;
+  gap: 14px;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  position: relative;
+}
+.noti-item-v2:hover {
+  background-color: #f8fafc;
+}
+.noti-item-v2.is-unread {
+  background-color: #fff7ed;
+}
+
+.item-avatar {
+  position: relative;
+  flex-shrink: 0;
+}
+.item-avatar img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.type-icon {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  border: 2px solid white;
+}
+.type-icon.like, .type-icon.event_vote { background-color: #ef4444; }
+.type-icon.comment, .type-icon.rating { background-color: #3b82f6; }
+.type-icon.follow { background-color: #16a34a; }
+
+.item-content {
+  flex: 1;
+  min-width: 0;
+}
+.noti-title { margin: 0 0 4px; font-size: 0.9rem; color: #334155; line-height: 1.4; }
+.noti-title :deep(strong) { font-weight: 700; color: #0f172a; }
+.noti-time { font-size: 0.8rem; color: #94a3b8; font-weight: 500; }
+
+.unread-dot-pulse { width: 8px; height: 8px; background: #ea580c; border-radius: 50%; align-self: center; margin-left: auto; flex-shrink: 0; animation: softRipple 1.8s infinite; }
 
 .btn-icon.is-blinking svg {
   stroke: #ea580c;

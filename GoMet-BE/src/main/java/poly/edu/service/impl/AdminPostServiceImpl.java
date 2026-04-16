@@ -84,7 +84,6 @@ public class AdminPostServiceImpl implements AdminPostService {
 
         post.setIsApproved(1);
         post.setRejectReason(null);
-        // post.setRejectedAt(null); // Mở ra nếu DB có cột này
 
         postDAO.save(post);
 
@@ -113,9 +112,7 @@ public class AdminPostServiceImpl implements AdminPostService {
 
         // 🔥 MA TRẬN: Chỉ set isActive = -1. Tuyệt đối KHÔNG SỬA isApproved.
         post.setIsActive(-1);
-
         post.setRejectReason(reason);
-        // post.setRejectedAt(LocalDateTime.now()); // Mở ra nếu DB có cột này
 
         postDAO.save(post);
 
@@ -126,18 +123,23 @@ public class AdminPostServiceImpl implements AdminPostService {
     @Override
     @Transactional
     public void deactivePost(Integer id) {
-        // Hàm này có vẻ thừa với logic mới. Có thể tái sử dụng cho mục đích khác.
-        Post post = postDAO.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy bài viết!"));
-        post.setIsActive(-1);
-        postDAO.save(post);
+        // Có thể gọi trực tiếp sang Delete nếu cần, hoặc gỡ bỏ.
+        // Tạm thời em map nó sang logic xóa luôn cho gọn gàng.
+        deletePost(id);
     }
 
     @Override
     @Transactional
     public void deletePost(Integer id) {
         Post post = postDAO.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy bài viết!"));
+
+        // Đánh dấu Xóa hẳn: set cả isActive và isApproved về -1
         post.setIsActive(-1);
+        post.setIsApproved(-1);
         postDAO.save(post);
+
+        // Lưu log (Dùng ID admin mặc định hoặc lấy từ security context nếu Sếp truyền vào)
+        moderationLogService.logAction(id, "POST", "DELETE", null, "Hệ Thống", "Admin xóa bài viết");
     }
 
     @Override
@@ -147,10 +149,11 @@ public class AdminPostServiceImpl implements AdminPostService {
         Account author = post.getAccount();
         if (author == null) throw new RuntimeException("Tác giả không tồn tại!");
 
-        author.setIsActive(0); // Khóa tài khoản User
+        // 🔥 Khóa tài khoản User (Admin Ban là -1)
+        author.setIsActive(-1);
         accountDAO.save(author);
 
-        // Cần đảm bảo hàm deactivateAllPostsByAccountId set isActive = -1 cho toàn bộ bài của user này.
-        postDAO.deactivateAllPostsByAccountId(author.getAccountID());
+        // 🔥 Gọi đúng hàm mới trong PostDAO để "trảm" toàn bộ bài của user này về -1
+        postDAO.banAllPostsByAccountId(author.getAccountID());
     }
 }
