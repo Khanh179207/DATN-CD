@@ -51,6 +51,7 @@ public class AppealServiceImpl implements AppealService {
         Appeal appeal = new Appeal(trimEmail, reason, account);
         Appeal saved = appealDAO.save(appeal);
 
+        // 🔥 Đoạn code đã được gộp từ nhánh feature của bạn kia
         try {
             List<Account> admins = accountDAO.findByIsAdmin(1);
             for (Account admin : admins) {
@@ -64,7 +65,8 @@ public class AppealServiceImpl implements AppealService {
                         "/admin/appeals");
             }
         } catch (Exception e) {
-            System.err.println("Error notifying admins: " + e.getMessage());
+            System.err.println("Error notifying admins about appeal: " + e.getMessage());
+            e.printStackTrace();
         }
 
         return convertToDTO(saved);

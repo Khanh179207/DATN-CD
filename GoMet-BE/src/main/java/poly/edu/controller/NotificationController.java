@@ -4,12 +4,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize; // 🔥 IMPORT THẺ BẢO VỆ
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
-import poly.edu.dao.NotificationDAO;
 import poly.edu.dao.AccountDAO;
-import poly.edu.dto.AdminNotificationDTO;
+import poly.edu.dao.NotificationDAO;
+import poly.edu.entity.Account;
 import poly.edu.entity.Notification;
 import poly.edu.util.JwtUtils;
 
@@ -20,18 +21,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-/**
- * User-facing notification endpoints.
- * Endpoints:
- * GET /api/notifications/{accountID} - list notifications for a user
- * PUT /api/notifications/{id}/read - mark single notification as read
- * PUT /api/notifications/{accountID}/read-all - mark all as read for a user
- * DELETE /api/notifications/{id} - delete a notification
- */
 @RestController
 @RequestMapping("/api/notifications")
 @RequiredArgsConstructor
-@PreAuthorize("isAuthenticated()") // 🔥 CHỐT CHẶN VÀNG: Bắt buộc đăng nhập để thao tác với Thông báo
+@PreAuthorize("isAuthenticated()") // 🔥 Bắt buộc đăng nhập
 public class NotificationController {
 
     private final NotificationDAO notificationDAO;
@@ -39,20 +32,20 @@ public class NotificationController {
     private final JwtUtils jwtUtils;
     private final HttpServletRequest request;
 
-    private Optional<poly.edu.entity.Account> getCurrentAuthenticatedAccount() {
+    private Optional<Account> getCurrentAuthenticatedAccount() {
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
             if (jwtUtils.validateJwtToken(token)) {
                 String email = jwtUtils.getEmailFromJwtToken(token);
-                Optional<poly.edu.entity.Account> byEmailFromToken = accountDAO.findByEmail(email);
+                Optional<Account> byEmailFromToken = accountDAO.findByEmail(email);
                 if (byEmailFromToken.isPresent()) {
                     return byEmailFromToken;
                 }
             }
         }
 
-        var authentication = org.springframework.security.core.context.SecurityContextHolder
+        var authentication = SecurityContextHolder
                 .getContext()
                 .getAuthentication();
 
@@ -65,12 +58,12 @@ public class NotificationController {
             return Optional.empty();
         }
 
-        Optional<poly.edu.entity.Account> byEmail = accountDAO.findByEmail(principalName);
+        Optional<Account> byEmail = accountDAO.findByEmail(principalName);
         if (byEmail.isPresent()) {
             return byEmail;
         }
 
-        Optional<poly.edu.entity.Account> byUsername = accountDAO.findByUsername(principalName);
+        Optional<Account> byUsername = accountDAO.findByUsername(principalName);
         if (byUsername.isPresent()) {
             return byUsername;
         }
@@ -88,11 +81,24 @@ public class NotificationController {
         return notification.getLink();
     }
 
+    // 🔥 HÀM BẢO MẬT: Kiểm tra xem User có đang "nhìn trộm" dữ liệu của người khác không
+    private boolean isNotOwner(Integer requestAccountId) {
+        String usernameOrEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        Account currentUser = accountDAO.findByUsername(usernameOrEmail)
+                .orElseGet(() -> accountDAO.findByEmail(usernameOrEmail).orElse(null));
+        return currentUser == null || !currentUser.getAccountID().equals(requestAccountId);
+    }
+
     // 🟡 USER: Xem danh sách thông báo của mình ──────────────────────────────
     @GetMapping("/{accountID}")
     @Transactional
-    public ResponseEntity<List<Map<String, Object>>> getUserNotifications(
-            @PathVariable Integer accountID) {
+    public ResponseEntity<?> getUserNotifications(@PathVariable Integer accountID) {
+        // 🚨 CHỐT CHẶN CHỐNG NHÌN TRỘM (IDOR)
+        if (isNotOwner(accountID)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", "Từ chối truy cập: Không được phép xem thông báo của người khác!"));
+        }
+
         // Build a clean list for the user using clone-on-read semantics
         // 1) Fetch user-specific notifications (includes clones and targeted ones)
         List<Notification> userNotifications = notificationDAO
@@ -158,9 +164,15 @@ public class NotificationController {
         var account = accountOpt.get();
 
         return notificationDAO.findById(id).map(n -> {
+            // 🚨 CHỐT CHẶN CHỐNG NHÌN TRỘM (Tránh việc hacker tự ý đánh dấu đọc của người khác)
+            // If target is user-specific, check owner. Global notifications don't have an owner in the base record.
+            if (n.getAccount() != null && !n.getAccount().getAccountID().equals(account.getAccountID())) {
+                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("message", "Từ chối truy cập: Bạn không có quyền thao tác trên thông báo này!"));
+            }
+
             // If target is a global notification (no account) => clone-on-read
             if (Boolean.TRUE.equals(n.getIsGlobal()) || n.getAccount() == null) {
-                // check if clone already exists for this user
                 var existingClone = notificationDAO
                         .findByParentNotification_NotificationIDAndAccount_AccountID(n.getNotificationID(),
                                 account.getAccountID());
@@ -186,35 +198,25 @@ public class NotificationController {
                             .build();
                     notificationDAO.save(clone);
                 }
-                return ResponseEntity.ok(Map.of("message", "Marked as read (global cloned)"));
+                return ResponseEntity.ok(Map.of("message", "Đã đánh dấu là đã đọc (global cloned)"));
             } else {
-                // Non-global notification: ensure current user is owner
-                if (n.getAccount() != null && !n.getAccount().getAccountID().equals(account.getAccountID())) {
-                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                            .body(Map.of("message", "Cannot modify others' notification"));
-                }
                 n.setIsRead(1);
                 n.setReadAt(LocalDateTime.now());
                 notificationDAO.save(n);
-                return ResponseEntity.ok(Map.of("message", "Marked as read"));
+                return ResponseEntity.ok(Map.of("message", "Đã đánh dấu là đã đọc"));
             }
         }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("message", "Notification not found")));
+                .body(Map.of("message", "Không tìm thấy thông báo")));
     }
 
     // 🟡 USER: Đánh dấu TẤT CẢ thông báo là đã đọc ────────────────────────────
     @PutMapping("/{accountID}/read-all")
     @Transactional
     public ResponseEntity<?> markAllRead(@PathVariable Integer accountID) {
-        var currentAccountOpt = getCurrentAuthenticatedAccount();
-        if (currentAccountOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "User not found"));
-        }
-
-        var currentAccount = currentAccountOpt.get();
-        if (!currentAccount.getAccountID().equals(accountID)) {
+        // 🚨 CHỐT CHẶN CHỐNG NHÌN TRỘM
+        if (isNotOwner(accountID)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Cannot modify others' notifications"));
+                    .body(Map.of("message", "Từ chối truy cập: Bạn không có quyền thao tác trên dữ liệu của người khác!"));
         }
 
         // Mark existing user notifications as read
@@ -230,8 +232,7 @@ public class NotificationController {
         });
         notificationDAO.saveAll(unread);
 
-        // For global notifications: create clones marked as read for this user if not
-        // exists
+        // For global notifications: create clones marked as read for this user if not exists
         List<Notification> globals = notificationDAO.findGlobalNotificationsOrderByCreatedAtDesc();
         int created = 0;
         for (Notification g : globals) {
@@ -244,7 +245,7 @@ public class NotificationController {
                         .type(g.getType())
                         .actor(g.getActor())
                         .post(g.getPost())
-                        .account(null) // will set below via account lookup
+                        .account(null) // set below
                         .isRead(1)
                         .readAt(LocalDateTime.now())
                         .createdAt(g.getCreatedAt() != null ? g.getCreatedAt() : LocalDateTime.now())
@@ -253,7 +254,6 @@ public class NotificationController {
                         .parentNotification(g)
                         .build();
 
-                // attach account entity
                 var accountOpt = accountDAO.findById(accountID);
                 if (accountOpt.isPresent()) {
                     clone.setAccount(accountOpt.get());
@@ -264,19 +264,10 @@ public class NotificationController {
         }
 
         return ResponseEntity.ok(Map.of(
-                "message", "All notifications marked as read",
+                "message", "Đã đánh dấu tất cả là đã đọc",
                 "updatedCount", unread.size(),
                 "createdGlobalClones", created));
     }
 
-    // 🟡 USER: Xóa 1 thông báo ────────────────────────────────────────────
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteNotification(@PathVariable Integer id) {
-        if (!notificationDAO.existsById(id)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", "Notification not found"));
-        }
-        notificationDAO.deleteById(id);
-        return ResponseEntity.ok(Map.of("message", "Notification deleted"));
-    }
+    // 🔥 ĐÃ XÓA HOÀN TOÀN HÀM XÓA THÔNG BÁO THEO CHỈ ĐẠO CỦA SẾP!
 }

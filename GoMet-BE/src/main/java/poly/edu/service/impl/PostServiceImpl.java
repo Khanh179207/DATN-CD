@@ -41,15 +41,14 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public List<PostDTO> getPostsByAccountId(Integer accountId) {
-        if (accountId == null)
-            return List.of();
+        if (accountId == null) return List.of();
+
         // 🔥 Lấy TOÀN BỘ (Cả isActive = 0) để User có thể quản lý ẩn/hiện trong Profile
         List<Post> posts = postDAO.findByAccount_AccountIDOrderByCreatedAtDesc(accountId);
 
-        // 🔥 MA TRẬN: Trả về bài (1 1), (1 0), (0 1), (0 0). CHỈ CHẶN bài bị Admin gỡ
-        // (-1 x)
+        // 🔥 MA TRẬN: Trả về bài (1 1), (1 0), (0 1), (0 0). CHỈ CHẶN bài bị Admin gỡ (-1 x)
         return posts.stream()
-                .filter(p -> p.getIsActive() != -1)
+                .filter(p -> p.getIsActive() != null && p.getIsActive() != -1)
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
@@ -108,6 +107,12 @@ public class PostServiceImpl implements PostService {
         post.setIsApproved(autoApprove);
 
         Post savedPost = postDAO.save(post);
+
+        // 🔥 CỘNG 1 GOMETCOIN: Nếu bài được auto-approve (Admin/Premium) thì cộng điểm ngay
+        if (autoApprove == 1) {
+            acc.setPoint((acc.getPoint() == null ? 0 : acc.getPoint()) + 1);
+            accountDAO.save(acc);
+        }
 
         if (postDTO.getSteps() != null) {
             for (int i = 0; i < postDTO.getSteps().size(); i++) {
@@ -231,7 +236,7 @@ public class PostServiceImpl implements PostService {
         dto.setViews(post.getViews());
         dto.setLikeCount(post.getLikeCount());
         dto.setIsApproved(post.getIsApproved());
-        dto.setIsActive(post.getIsActive()); // 🔥 Trạng thái hiện tại
+        dto.setIsActive(post.getIsActive());
         dto.setCreatedAt(post.getCreatedAt());
 
         if (post.getAccount() != null) {

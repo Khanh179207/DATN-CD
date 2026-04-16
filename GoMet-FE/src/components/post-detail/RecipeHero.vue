@@ -14,7 +14,7 @@
             <span class="category-tag">{{ displayCategory }}</span>
           </div>
 
-          <button class="btn-icon-minimal" @click="openReportModal" title="Báo cáo vi phạm">
+          <button class="btn-icon-minimal" @click="openReportModal" title="Báo cáo vi phạm" :disabled="!isPostInteractive">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
           </button>
         </div>
@@ -70,21 +70,21 @@
           <div class="social-actions-row">
             
             <div class="action-btn-group">
-              <button class="btn-like-clean" :class="{ 'is-liked': isLiked, 'animating': isLikeAnimating }" @click="handleLike" :disabled="isLikeLoading">
+              <button class="btn-like-clean" :class="{ 'is-liked': isLiked, 'animating': isLikeAnimating }" @click="handleLike" :disabled="isLikeLoading || !isPostInteractive">
                 <svg width="18" height="18" viewBox="0 0 24 24" :fill="isLiked ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
                 <span>{{ isLiked ? 'Đã thích' : 'Thích' }}</span>
               </button>
 
-              <button class="btn-save-clean" :class="{ 'active': isFavorite }" @click="toggleFavorite" :disabled="isSaving">
+              <button class="btn-save-clean" :class="{ 'active': isFavorite }" @click="toggleFavorite" :disabled="isSaving || !isPostInteractive">
                 <svg width="18" height="18" viewBox="0 0 24 24" :fill="isFavorite ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
               </button>
 
-              <button class="btn-share-clean" @click="openShareModal" title="Chia sẻ">
+              <button class="btn-share-clean" @click="openShareModal" title="Chia sẻ" :disabled="!isPostInteractive">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
               </button>
             </div>
 
-            <div class="liked-by-stack" v-if="likedUsersList.length > 0" @click="showLikesModal = true">
+            <div class="liked-by-stack" v-if="likedUsersList.length > 0" @click="isPostInteractive ? showLikesModal = true : null" :style="!isPostInteractive ? 'cursor: default; opacity: 0.6;' : ''">
               <div class="avatar-stack">
                 <img v-for="(u, idx) in likedUsersList.slice(0, 3)" :key="idx" :src="u.avatar" :alt="u.name">
                 <div class="more-avt" v-if="localLikeCount > 3">+{{ localLikeCount - 3 }}</div>
@@ -149,12 +149,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch, computed } from 'vue' // Đã bổ sung onUnmounted
+import { ref, onMounted, onUnmounted, watch, computed } from 'vue' 
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { toast } from '@/composables/useToast'
 import api from '@/services/api'
-// 🔥 ĐÃ BỔ SUNG getFavorites VÀO IMPORT
 import { addFavorite, removeFavorite, checkFavorite, getFavorites } from '@/services/socialService'
 import { togglePostLike, checkPostLiked } from '@/services/likeService' 
 import FeedbackModal from '@/components/modals/FeedbackModal.vue'
@@ -176,7 +175,7 @@ const authStore = useAuthStore()
 
 // --- STATES CƠ BẢN ---
 const isFavorite = ref(false)
-const isSaving = ref(false) // State chống spam click lúc đang lưu
+const isSaving = ref(false) 
 const isLiked = ref(false)
 const isLikeLoading = ref(false)
 const isLikeAnimating = ref(false)
@@ -194,17 +193,24 @@ const isFetchingLikes = ref(false)
 const displayCategory = computed(() => (props.post.categoryName || props.post.category || 'MÓN NGON').toUpperCase())
 const formattedDate = computed(() => {
   const ds = props.post.publishDate || props.post.createdAt;
-  return ds ? new Date(ds).toLocaleDateString('vi-VN') : new Date().toLocaleDateString('vi-VN');
+  return ds ? new Date(ds).toLocaleDateString('vi-VN') : 'Đã đăng';
 })
 const isNewToday = computed(() => {
   const ds = props.post.publishDate || props.post.createdAt;
-  if (!ds) return true;
+  if (!ds) return false;
   return new Date(ds).toDateString() === new Date().toDateString();
 })
 const formatNumber = (n) => n >= 1000 ? (n / 1000).toFixed(1) + 'k' : (n || 0)
 
+// 🔥 COMPUTED KIỂM TRA QUYỀN TƯƠNG TÁC BÀI VIẾT
+const isPostInteractive = computed(() => {
+  if (!props.post) return false;
+  return Number(props.post.isActive ?? 1) === 1 && Number(props.post.isApproved ?? 1) === 1;
+});
+
 // --- ACTIONS ---
 const openShareModal = () => {
+    if (!isPostInteractive.value) { toast.warn('Bài viết đang bị ẩn hoặc chờ duyệt, không thể chia sẻ!'); return; }
     if (!authStore.isAuthenticated) {
         window.dispatchEvent(new CustomEvent('ui:open-login'))
         return
@@ -212,7 +218,9 @@ const openShareModal = () => {
     showShareModal.value = true
 }
 const goToProfile = (id) => { showLikesModal.value = false; router.push(`/profile/${id}`); }
+
 const openReportModal = () => {
+  if (!isPostInteractive.value) { toast.warn('Bài viết đang bị ẩn hoặc chờ duyệt, không thể thao tác!'); return; }
   if (!authStore.isAuthenticated) {
     window.dispatchEvent(new CustomEvent('ui:open-login'))
     return
@@ -279,6 +287,8 @@ onUnmounted(() => {
 
 // --- XỬ LÝ NÚT LIKE ---
 const handleLike = async () => {
+  if (!isPostInteractive.value) { toast.warn('Bài viết đang bị ẩn hoặc chờ duyệt, không thể thao tác!'); return; }
+  
   if (!authStore.isAuthenticated) {
     window.dispatchEvent(new CustomEvent('ui:open-login'))
     return
@@ -327,6 +337,8 @@ const handleLike = async () => {
 
 // 🔥 XỬ LÝ NÚT LƯU ĐÃ FIX LỖI BYPASS
 const toggleFavorite = async () => {
+  if (!isPostInteractive.value) { toast.warn('Bài viết đang bị ẩn hoặc chờ duyệt, không thể thao tác!'); return; }
+
   if (!authStore.isAuthenticated) {
     window.dispatchEvent(new CustomEvent('ui:open-login'))
     return
@@ -337,7 +349,6 @@ const toggleFavorite = async () => {
   const pid = props.post.postID || props.post.id;
   if (!pid) return;
 
-  // Ép kiểu an toàn để nhận diện đúng VIP
   const role = String(authStore.user?.role || '').toUpperCase();
   const isPremiumUser = authStore.user?.isPremium === true || authStore.user?.IsPremium === true || role === 'PREMIUM';
   const isAdmin = authStore.user?.isAdmin === true || role === 'ADMIN';
@@ -346,17 +357,13 @@ const toggleFavorite = async () => {
   isSaving.value = true;
   try {
     if (isFavorite.value) {
-      // Bỏ lưu: Chạy luôn không cần check
       await removeFavorite(uid, pid); 
       isFavorite.value = false;
       toast.success("Đã bỏ lưu công thức!");
       window.dispatchEvent(new CustomEvent('sync-favorite', { detail: { id: pid, status: false } }));
     } else {
-      // Lưu mới: Kiểm tra nếu là User thường
       if (!hasUnlimitedSave) {
         const res = await getFavorites(uid);
-        
-        // Bóc tách API an toàn tuyệt đối
         const favData = res?.data?.data || res?.data || res || [];
         const currentCount = Array.isArray(favData) ? favData.length : (favData.totalElements || 0);
 
@@ -364,11 +371,10 @@ const toggleFavorite = async () => {
           toast.warn("Bộ sưu tập đã đầy (5/5)! Nâng cấp Premium để lưu không giới hạn sếp nhé.");
           window.dispatchEvent(new CustomEvent('ui:open-premium'));
           isSaving.value = false;
-          return; // Chặn đứng tại đây
+          return; 
         }
       }
       
-      // Vượt qua cửa ải -> Cho phép lưu
       await addFavorite(uid, pid); 
       isFavorite.value = true; 
       toast.success("Đã lưu vào bộ sưu tập!");
@@ -386,6 +392,13 @@ watch(() => props.post.postID || props.post.id, initData, { immediate: true })
 </script>
 
 <style scoped lang="scss">
+/* --- BỔ SUNG CSS CHO NÚT BỊ DISABLED --- */
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed !important;
+  pointer-events: all; /* Vẫn cho phép nhận event click để báo lỗi toast (tùy thuộc browser, nhưng thường Vue xử lý click trước) */
+}
+
 .hero-section-clean {
   width: 100%;
   background: var(--color-neutral-0, #ffffff);
@@ -410,7 +423,7 @@ watch(() => props.post.postID || props.post.id, initData, { immediate: true })
   .btn-icon-minimal {
     width: 36px; height: 36px; border-radius: var(--radius-circle, 50%); border: 1px solid var(--color-border, #f1f5f9);
     background: transparent; color: var(--color-neutral-300, #cbd5e1); display: flex; align-items: center; justify-content: center;
-    cursor: pointer; transition: 0.2s; &:hover { border-color: var(--color-error, #ef4444); color: var(--color-error, #ef4444); }
+    cursor: pointer; transition: 0.2s; &:hover:not(:disabled) { border-color: var(--color-error, #ef4444); color: var(--color-error, #ef4444); }
   }
 }
 
@@ -446,19 +459,19 @@ watch(() => props.post.postID || props.post.id, initData, { immediate: true })
 
 .btn-like-clean {
   height: 44px; padding: 0 20px; border-radius: var(--radius-pill, 100px); border: 1.5px solid var(--color-neutral-100, #e2e8f0); background: var(--color-neutral-0, #fff); color: var(--color-neutral-800, #1e293b); display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: all var(--duration-fast, 0.2s) ease;
-  &:hover { border-color: var(--color-error, #f43f5e); color: var(--color-error, #f43f5e); }
-  &.is-liked { background: #fff1f2; border-color: var(--color-error, #f43f5e); color: var(--color-error, #f43f5e); }
+  &:hover:not(:disabled) { border-color: var(--color-error, #f43f5e); color: var(--color-error, #f43f5e); }
+  &.is-liked:not(:disabled) { background: #fff1f2; border-color: var(--color-error, #f43f5e); color: var(--color-error, #f43f5e); }
 }
 
 .btn-save-clean {
   width: 44px; height: 44px; border-radius: var(--radius-circle, 50%); border: 1.5px solid var(--color-neutral-100, #e2e8f0); background: var(--color-neutral-0, #fff); color: var(--color-neutral-500, #64748b); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all var(--duration-fast, 0.2s) ease;
-  &:hover { border-color: var(--color-primary-500, #ea580c); color: var(--color-primary-500, #ea580c); }
-  &.active { background: var(--color-primary-500, #ea580c); color: #fff; border-color: var(--color-primary-500, #ea580c); box-shadow: var(--shadow-neon, 0 4px 12px rgba(234, 88, 12, 0.3)); }
+  &:hover:not(:disabled) { border-color: var(--color-primary-500, #ea580c); color: var(--color-primary-500, #ea580c); }
+  &.active:not(:disabled) { background: var(--color-primary-500, #ea580c); color: #fff; border-color: var(--color-primary-500, #ea580c); box-shadow: var(--shadow-neon, 0 4px 12px rgba(234, 88, 12, 0.3)); }
 }
 
 .btn-share-clean {
   width: 44px; height: 44px; border-radius: var(--radius-circle, 50%); border: 1.5px solid var(--color-neutral-100, #e2e8f0); background: var(--color-neutral-0, #fff); color: var(--color-neutral-500, #64748b); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all var(--duration-fast, 0.2s) ease;
-  &:hover { border-color: var(--color-neutral-900, #0f172a); color: var(--color-neutral-900, #0f172a); background: var(--color-neutral-50, #f8fafc); }
+  &:hover:not(:disabled) { border-color: var(--color-neutral-900, #0f172a); color: var(--color-neutral-900, #0f172a); background: var(--color-neutral-50, #f8fafc); }
 }
 
 .liked-by-stack {
@@ -466,7 +479,7 @@ watch(() => props.post.postID || props.post.id, initData, { immediate: true })
   &:hover { background: var(--color-neutral-50, #f8fafc); }
   
   .avatar-stack {
-    display: flex; flex-direction: row-reverse; /* Để ảnh sau đè lên ảnh trước */
+    display: flex; flex-direction: row-reverse; 
     img { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #fff; margin-left: -10px; object-fit: cover; }
     .more-avt { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #fff; margin-left: -10px; background: var(--color-neutral-100, #f1f5f9); color: var(--color-neutral-600, #475569); font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; z-index: 1; }
   }
@@ -537,9 +550,67 @@ watch(() => props.post.postID || props.post.id, initData, { immediate: true })
 .custom-scroll::-webkit-scrollbar { width: 6px; }
 .custom-scroll::-webkit-scrollbar-thumb { background: var(--color-neutral-300, #cbd5e1); border-radius: 10px; }
 
+/* =======================================================
+   🔥 HỆ THỐNG RESPONSIVE (TỐI ƯU MỌI THIẾT BỊ)
+   ======================================================= */
+
+/* --- 1. Màn hình Laptop nhỏ & Tablet ngang (Dưới 1024px) --- */
 @media (max-width: 1024px) {
-  .hero-container-inner { grid-template-columns: 1fr; gap: 40px; }
+  .hero-container-inner { 
+    grid-template-columns: 1fr; 
+    gap: 40px; 
+  }
+  
   .recipe-title-display { font-size: 2.8rem; }
-  .clean-image-frame { height: 400px; border-radius: var(--radius-xl, 24px); }
+  .clean-image-frame { height: 450px; border-radius: var(--radius-xl, 24px); }
+  .recipe-desc-text { max-width: 100%; }
+}
+
+/* --- 2. Tablet dọc & Mobile ngang (Dưới 768px) --- */
+@media (max-width: 768px) {
+  .hero-section-clean { padding: 20px 0 40px; }
+  .hero-container-inner { gap: 30px; }
+
+  .top-nav-bar { margin-bottom: 20px; }
+  .recipe-title-display { font-size: 2.2rem; margin-bottom: 12px; line-height: 1.25; }
+  .recipe-desc-text { font-size: 1rem; margin-bottom: 25px; }
+
+  .recipe-stats-group { gap: 12px; margin-bottom: 30px; }
+  .stat-card-clean { flex: 1; min-width: 120px; padding: 10px 12px; }
+
+  .hero-footer-actions { padding-top: 20px; gap: 20px; }
+  .social-actions-row { flex-direction: column; align-items: flex-start; gap: 16px; }
+  
+  .action-btn-group { width: 100%; display: flex; gap: 10px; }
+  .btn-like-clean { flex: 1; justify-content: center; }
+
+  .clean-image-frame { height: 320px; border-radius: 20px; }
+  .badge-new-top-left { top: 16px; left: 16px; padding: 4px 12px; font-size: 0.7rem; }
+  
+  .bottom-glass-stats { bottom: 16px; width: 90%; justify-content: center; padding: 8px 16px; gap: 12px; border-radius: 16px; }
+  .bottom-glass-stats .stat-item { font-size: 0.75rem; }
+}
+
+/* --- 3. Mobile nhỏ (Dưới 480px) --- */
+@media (max-width: 480px) {
+  .hero-container-inner { padding: 0 16px; }
+  
+  .recipe-title-display { font-size: 1.8rem; }
+  .recipe-desc-text { font-size: 0.95rem; }
+
+  .recipe-stats-group { flex-direction: column; }
+  .stat-card-clean { width: 100%; justify-content: flex-start; }
+
+  .author-info-block .avatar-container img { width: 38px; height: 38px; }
+  .author-info-block .auth-text .auth-name { font-size: 0.9rem; }
+
+  .action-btn-group { flex-wrap: wrap; }
+  .btn-like-clean { width: 100%; flex: none; } 
+
+  .liked-by-stack { flex-wrap: wrap; padding: 0; background: transparent; }
+  .liked-by-stack .liked-text { font-size: 0.8rem; }
+
+  .clean-image-frame { height: 240px; }
+  .bottom-glass-stats { flex-direction: column; gap: 6px; padding: 10px; }
 }
 </style>

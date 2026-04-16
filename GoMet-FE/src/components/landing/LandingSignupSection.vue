@@ -335,7 +335,6 @@ const registerForm = reactive({
   agreeTerms: false 
 })
 
-// State cho Quên mật khẩu
 const forgotIdentifier = ref('')
 const forgotState      = ref('idle') 
 const forgotError      = ref('')
@@ -346,8 +345,6 @@ const switchTab = (tab) => {
   isBannedBoxVisible.value = false;
   bannedDetails.value = null;
   forgotError.value = '';
-  
-  // 🔥 Đã FIX: Reset đếm lỗi sai pass khi chuyển tab
   if (tab === 'login') {
     wrongPasswordCount.value = 0;
   }
@@ -380,7 +377,6 @@ onUnmounted(() => {
   window.removeEventListener('switch-auth-tab', switchTabListener)
 })
 
-// Tự dọn dẹp lỗi khi khách hàng gõ chữ mới
 watch([() => loginForm.email, () => loginForm.password], () => {
   if (loginError.value || isBannedBoxVisible.value) {
     loginError.value = ''
@@ -426,8 +422,8 @@ const processBannedError = (errData, errorMessage) => {
   let rawTimeStr = '';
   
   if (errData.bannedAt) {
-     const d = new Date(errData.bannedAt);
-     rawTimeStr = `${d.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})} ngày ${d.toLocaleDateString('vi-VN')}`;
+      const d = new Date(errData.bannedAt);
+      rawTimeStr = `${d.toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})} ngày ${d.toLocaleDateString('vi-VN')}`;
   }
   bannedDetails.value = { reason: banReason, by: bannedBy, time: rawTimeStr };
   toast.error(`🚨 Đăng nhập thất bại do tài khoản đã bị khóa!`, { timeout: 8000 })
@@ -451,7 +447,6 @@ const processDeactivatedError = (errData) => {
 }
 
 const handleSubmit = async () => {
-  // Xử lý Gửi Quên Mật Khẩu
   if (activeTab.value === 'forgot-password') {
     forgotError.value = ''
     if (!forgotIdentifier.value.trim()) return
@@ -462,26 +457,35 @@ const handleSubmit = async () => {
       toast.success('Đã gửi Email khôi phục!')
     } catch (err) {
       forgotState.value = 'idle'
-      // 🔥 Đã FIX: Móc đúng fullData
       forgotError.value = err.fullData?.message || err.response?.data?.message || 'Có lỗi xảy ra khi gửi yêu cầu.'
       toast.error(forgotError.value)
     }
     return
   }
 
-  // Xử lý Đăng Nhập
   if (activeTab.value === 'login') {
     isLoading.value = true
-    isBannedBoxVisible.value = false // 🔥 Đã FIX: Đảm bảo dọn hộp cũ trước khi gọi API mới
+    isBannedBoxVisible.value = false
     
     try {
       const role = await authStore.login(loginForm.email, loginForm.password)
       toast.success('Đăng nhập thành công!')
-      wrongPasswordCount.value = 0 // 🔥 Đã FIX: Đăng nhập thành công thì reset đếm
+      wrongPasswordCount.value = 0
       sessionStorage.setItem('just_logged_in', 'true')
-      router.push(role === 'admin' ? '/admin' : '/home')
+      
+      // 🔥 LOGIC ĐIỀU HƯỚNG MỚI: Chặn Admin vào dashboard trên Mobile/Tablet
+      if (role === 'admin') {
+        if (window.innerWidth < 1024) {
+          toast.info('Bạn đang dùng thiết bị di động, hệ thống sẽ chuyển bạn vào trang người dùng nhé! 📱');
+          router.push('/home');
+        } else {
+          router.push('/admin');
+        }
+      } else {
+        router.push('/home');
+      }
+      
     } catch (err) {
-      // 🔥 Đã FIX: Móc đúng fullData
       const errData = err.fullData || err.response?.data || {}
       const backendMsg = errData.message || err.message || ''
       const errorString = backendMsg.toUpperCase()
@@ -499,7 +503,6 @@ const handleSubmit = async () => {
       isLoading.value = false
     }
 
-  // Xử lý Đăng Ký
   } else if (activeTab.value === 'register') {
     if (!registerForm.agreeTerms) {
       toast.warn('Vui lòng đồng ý với điều khoản dịch vụ!')
@@ -516,7 +519,6 @@ const handleSubmit = async () => {
       otpCode.value = ''
       showOtpModal.value = true
     } catch (err) {
-      // 🔥 Đã FIX: Móc đúng fullData
       toast.error(err.fullData?.message || err.response?.data?.message || 'Có lỗi xảy ra khi gửi OTP.')
     } finally {
       isLoading.value = false
@@ -538,14 +540,13 @@ const handleVerifyOtp = async () => {
     sessionStorage.setItem('just_logged_in', 'true')
     router.push('/home')
   } catch (err) {
-    // 🔥 Đã FIX: Móc đúng fullData
     toast.error(err.fullData?.message || err.response?.data?.message || 'Mã xác nhận không đúng hoặc đã hết hạn.')
   }
 }
 
 const handleGoogleCallback = async (response) => {
   loginError.value = ''
-  isBannedBoxVisible.value = false // 🔥 Đã FIX: Dọn dẹp trước khi gọi
+  isBannedBoxVisible.value = false
   
   try {
     if (!response || !response.credential) {
@@ -558,12 +559,20 @@ const handleGoogleCallback = async (response) => {
 
     toast.success('Đăng nhập Google thành công!')
     sessionStorage.setItem('just_logged_in', 'true')
-    router.push(authStore.user.role === 'admin' ? '/admin' : '/home')
+
+    // 🔥 LOGIC ĐIỀU HƯỚNG MỚI CHO GOOGLE LOGIN
+    if (authStore.user.role === 'admin') {
+      if (window.innerWidth < 1024) {
+        router.push('/home');
+      } else {
+        router.push('/admin');
+      }
+    } else {
+      router.push('/home');
+    }
 
   } catch (err) {
     console.error("Google Login Error:", err)
-    
-    // 🔥 Đã FIX: Móc đúng fullData
     const errData = err.fullData || err.response?.data || err?.data || err || {}
     const errorMessage = errData.message || err.message || String(err)
     const errorString = errorMessage.toUpperCase()
@@ -582,6 +591,79 @@ const handleGoogleCallback = async (response) => {
 
 <style scoped lang="scss" src="./LandingSignupSection.scss"></style>
 <style scoped>
+/* =======================================================
+   🔥 HỆ THỐNG RESPONSIVE (TỐI ƯU MỌI THIẾT BỊ)
+   ======================================================= */
+
+/* --- 1. Màn hình Tablet & Laptop nhỏ (Dưới 1200px) --- */
+@media (max-width: 1200px) {
+  .main-layout { gap: 40px; }
+  .main-title { font-size: 2.8rem; }
+  .description { font-size: 1rem; }
+  .auth-card { padding: 30px; }
+}
+
+/* --- 2. Màn hình Tablet dọc & Mobile ngang (Dưới 1024px) --- */
+@media (max-width: 1024px) {
+  .signup-section { padding: 60px 0; }
+  .main-layout { 
+    flex-direction: column; 
+    align-items: center; 
+    text-align: center;
+    gap: 50px;
+  }
+  
+  .info-side { 
+    max-width: 100%; 
+    padding-right: 0; 
+  }
+  
+  .brand-header { justify-content: center; }
+  .stats-grid { justify-content: center; margin: 0 auto; }
+  
+  .form-side { width: 100%; max-width: 450px; }
+  
+  /* Ẩn bớt cột ảnh nền để giảm lag trên mobile */
+  .bg-column.mobile-hidden { display: none; }
+}
+
+/* --- 3. Màn hình Mobile lớn (Dưới 768px) --- */
+@media (max-width: 768px) {
+  .main-title { font-size: 2.2rem; }
+  .description { font-size: 0.95rem; }
+  
+  .stats-grid { gap: 15px; }
+  .stat-item strong { font-size: 1.2rem; }
+  .stat-item span { font-size: 0.7rem; }
+  
+  .auth-card { border-radius: 24px; padding: 25px 20px; }
+  .tab-btn { font-size: 0.9rem; padding: 12px; }
+}
+
+/* --- 4. Màn hình Mobile cực nhỏ (Dưới 480px - Vd: iPhone SE) --- */
+@media (max-width: 480px) {
+  .main-title { font-size: 1.8rem; }
+  .description { max-width: 100%; }
+  
+  .stats-grid { 
+    display: grid; 
+    grid-template-columns: 1fr 1fr; 
+    gap: 10px;
+  }
+  .stat-sep { display: none; }
+  .stat-item:last-child { grid-column: span 2; }
+  
+  .form-title { font-size: 1.1rem; }
+  .input-field { padding: 12px; font-size: 0.9rem; }
+  .btn-submit { padding: 14px; font-size: 0.95rem; }
+  
+  .social-btn { font-size: 0.85rem; padding: 10px; }
+  
+  /* Banner báo lỗi thu nhỏ */
+  .banned-header h4 { font-size: 0.85rem; }
+  .banned-msg, .deactivated-msg { font-size: 0.8rem; }
+}
+
 /* --- BANNED ALERT BOX LUXURY (LOCAL) --- */
 .banned-alert-box {
   background: #fff5f5; border: 1px solid #fecaca; border-radius: 16px; padding: 16px; margin: 15px 0 20px;

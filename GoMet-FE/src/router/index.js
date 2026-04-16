@@ -11,12 +11,14 @@ const HomeView = () => import('@/pages/home/HomeView.vue')
 const SearchPage = () => import('@/pages/search/SearchPage.vue')
 const PostDetail = () => import('@/pages/home/PostDetail.vue')
 const CreatePost = () => import('@/pages/CreatePost.vue')
+const EditPost = () => import('@/pages/EditPost.vue') // Đã thêm Import EditPost
 
 // --- 3. USER PAGES ---
 const ProfilePage = () => import('@/pages/profile/ProfilePage.vue')
 const EventList = () => import('@/pages/events/EventPage.vue')
 const EventDetail = () => import('@/pages/events/EventDetail.vue')
 const ComparePage = () => import('@/pages/compare/ComparePage.vue')
+const VideoCall = () => import('@/pages/VideoCall.vue')
 
 // --- 4. PREMIUM FEATURES ---
 const Leaderboard = () => import('@/pages/Leaderboard.vue')
@@ -78,6 +80,12 @@ const routes = [
         path: 'create-post',
         name: 'CreatePost',
         component: CreatePost,
+        meta: { requiresAuth: true }
+      },
+      { // Đã thêm Route cho EditPost
+        path: 'edit-post/:id',
+        name: 'EditPost',
+        component: EditPost,
         meta: { requiresAuth: true }
       },
       {
@@ -148,7 +156,12 @@ const routes = [
   // 4. STANDALONE PAGES
   { path: '/verify-email', component: () => import('@/pages/VerifyEmailPage.vue') },
   { path: '/reset-password', component: () => import('@/pages/ResetPasswordPage.vue') },
-
+  { 
+    path: '/call/:roomID', 
+    name: 'VideoCall', 
+    component: VideoCall,
+    meta: { requiresAuth: true } // Bắt buộc đăng nhập mới được gọi
+  },
   // 5. NOT FOUND
   { path: '/:pathMatch(.*)*', name: 'NotFound', component: () => import('@/pages/NotFound.vue') }
 ]

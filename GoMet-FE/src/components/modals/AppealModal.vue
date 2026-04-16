@@ -227,11 +227,67 @@ $border-soft: #f1f5f9;
 @keyframes popIn { 0% { opacity: 0; transform: scale(0.9) translateY(20px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
 @keyframes popOut { 0% { opacity: 1; transform: scale(1) translateY(0); } 100% { opacity: 0; transform: scale(0.95) translateY(10px); } }
 
-/* RESPONSIVE */
-@media (max-width: 640px) {
-  .modal-lux-card { padding: 30px 20px; border-radius: 24px; }
-  .appeal-header-lux .appeal-title { font-size: 1.4rem; }
+/* =======================================================
+   🔥 HỆ THỐNG RESPONSIVE (TỐI ƯU MỌI THIẾT BỊ)
+   ======================================================= */
+
+/* Thiết lập chiều cao tối đa cho Modal để chống tràn trên mọi thiết bị */
+.modal-lux-card {
+  max-height: 90vh;
+  overflow-y: auto;
+  /* Tùy chỉnh thanh cuộn siêu mỏng cho form */
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+}
+
+/* --- 1. Màn hình Tablet dọc & Mobile ngang (Dưới 768px) --- */
+@media (max-width: 768px) {
+  .modal-lux-card {
+    padding: 32px 24px;
+    border-radius: 24px;
+  }
+  .appeal-header-lux .icon-danger-circle { width: 56px; height: 56px; margin-bottom: 12px; }
+  .appeal-header-lux .icon-danger-circle svg { width: 30px; height: 30px; }
+  .appeal-header-lux .appeal-title { font-size: 1.4rem; margin-bottom: 6px; }
+  .appeal-header-lux .appeal-subtitle { font-size: 0.9rem; }
+}
+
+/* --- 2. Màn hình Mobile Lớn (Dưới 600px) --- */
+@media (max-width: 600px) {
+  .modal-lux-card { padding: 24px 20px; }
+  .btn-x-lux { top: 12px; right: 12px; width: 32px; height: 32px; }
+  
+  /* Ép 2 nút Hủy - Gửi xếp chồng lên nhau để dễ bấm */
   .form-actions-lux { flex-direction: column-reverse; gap: 10px; }
-  .btn-x-lux { top: 15px; right: 15px; }
+  .form-actions-lux .btn-lux { width: 100%; padding: 12px; font-size: 0.9rem; justify-content: center; }
+  
+  /* Thu gọn Input */
+  .input-lux { padding: 12px 14px; font-size: 0.9rem; }
+  .form-group-lux .input-wrapper .input-lux { padding-left: 40px; }
+  .form-group-lux .input-wrapper .input-icon { left: 12px; }
+  .textarea-lux { min-height: 90px; }
+}
+
+/* --- 3. Màn hình Mobile Cực Nhỏ (Dưới 400px - Vd: iPhone SE) --- */
+@media (max-width: 400px) {
+  .modal-lux-card { padding: 20px 16px; border-radius: 20px; }
+  .appeal-header-lux .appeal-title { font-size: 1.25rem; }
+  .appeal-header-lux .appeal-subtitle { font-size: 0.85rem; }
+  .form-group-lux label { font-size: 0.8rem; }
+  .form-group-lux .char-count { font-size: 0.7rem; }
+}
+
+/* --- 4. Xử lý khi xoay ngang điện thoại (Landscape Mobile) --- */
+@media (max-height: 500px) and (orientation: landscape) {
+  .modal-overlay-lux { padding: 10px; align-items: flex-start; } /* Đẩy form lên cao một chút */
+  .modal-lux-card {
+    padding: 20px;
+    max-height: 95vh;
+  }
+  .appeal-header-lux { margin-bottom: 15px; }
+  .appeal-header-lux .icon-danger-circle { display: none; /* Ẩn icon to để tiết kiệm chỗ khi xoay ngang */ }
+  .textarea-lux { min-height: 60px; }
+  .mt-6 { margin-top: 15px; }
 }
 </style>

@@ -25,4 +25,9 @@ public class AuthResponseDTO {
 
     @JsonProperty("token")
     private String token;
+
+    @JsonProperty("point")
+    private Integer point;
+
+    private String provider;
 }

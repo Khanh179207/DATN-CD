@@ -26,8 +26,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/admin/notifications")
 @RequiredArgsConstructor
-@PreAuthorize("isAuthenticated()")
-
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminNotificationController {
 
     private final AdminNotificationService adminNotificationService;
@@ -37,66 +36,23 @@ public class AdminNotificationController {
     private final HttpServletRequest request;
 
     private Optional<Account> getCurrentAuthenticatedAccount() {
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            if (jwtUtils.validateJwtToken(token)) {
-                String email = jwtUtils.getEmailFromJwtToken(token);
-                Optional<Account> byEmailFromToken = accountDAO.findByEmail(email);
-                if (byEmailFromToken.isPresent()) {
-                    return byEmailFromToken;
-                }
-            }
-        }
-
         var authentication = org.springframework.security.core.context.SecurityContextHolder
                 .getContext()
                 .getAuthentication();
 
-        if (authentication == null) {
-            return Optional.empty();
+        if (authentication != null && authentication.isAuthenticated()) {
+            String principalName = authentication.getName();
+            if (principalName != null && !principalName.isBlank()) {
+                return accountDAO.findByEmail(principalName)
+                        .or(() -> accountDAO.findByUsername(principalName));
+            }
         }
-
-        String principalName = authentication.getName();
-        if (principalName == null || principalName.isBlank()) {
-            return Optional.empty();
-        }
-
-        Optional<Account> byEmail = accountDAO.findByEmail(principalName);
-        if (byEmail.isPresent()) {
-            return byEmail;
-        }
-
-        Optional<Account> byUsername = accountDAO.findByUsername(principalName);
-        if (byUsername.isPresent()) {
-            return byUsername;
-        }
-
-        return accountDAO.findByUsernameIgnoreCase(principalName);
-    }
-
-    private ResponseEntity<?> checkAdminAccess() {
-        Optional<Account> currentAccountOpt = getCurrentAuthenticatedAccount();
-        if (currentAccountOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "User not found"));
-        }
-
-        Account currentAccount = currentAccountOpt.get();
-        if (currentAccount.getIsAdmin() == null || currentAccount.getIsAdmin() != 1) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Admin access required"));
-        }
-
-        return null;
+        return Optional.empty();
     }
 
     // GET all notifications (for admin list)
     @GetMapping
     public ResponseEntity<List<AdminNotificationSummaryDTO>> getAll() {
-        ResponseEntity<?> denied = checkAdminAccess();
-        if (denied != null) {
-            return (ResponseEntity<List<AdminNotificationSummaryDTO>>) denied;
-        }
-
         // Return admin notifications but exclude cloned records to avoid duplicates
         List<AdminNotificationSummaryDTO> notifications = notificationDAO
                 .findAdminNotificationsByTypeExcludingClones("ADMIN_MANUAL")
@@ -108,11 +64,6 @@ public class AdminNotificationController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getDetail(@PathVariable Integer id) {
-        ResponseEntity<?> denied = checkAdminAccess();
-        if (denied != null) {
-            return denied;
-        }
-
         return notificationDAO.findByIdWithAccountActorAndPost(id)
                 .map(notification -> {
                     if (notification.getParentNotification() != null ||
@@ -156,11 +107,6 @@ public class AdminNotificationController {
     // Gửi cho tất cả user
     @PostMapping("/all")
     public ResponseEntity<?> sendAll(@RequestBody AdminNotificationDTO dto) {
-        ResponseEntity<?> denied = checkAdminAccess();
-        if (denied != null) {
-            return denied;
-        }
-
         adminNotificationService.sendToAll(dto);
         return ResponseEntity.ok(Map.of("message", "Sent to all users"));
     }
@@ -169,11 +115,6 @@ public class AdminNotificationController {
     @PostMapping("/user/{accountID}")
     public ResponseEntity<?> sendOne(@PathVariable Integer accountID,
             @RequestBody AdminNotificationDTO dto) {
-        ResponseEntity<?> denied = checkAdminAccess();
-        if (denied != null) {
-            return denied;
-        }
-
         adminNotificationService.sendToOne(accountID, dto);
         return ResponseEntity.ok(Map.of("message", "Sent to user " + accountID));
     }
@@ -181,11 +122,6 @@ public class AdminNotificationController {
     // Xóa thông báo
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Integer id) {
-        ResponseEntity<?> denied = checkAdminAccess();
-        if (denied != null) {
-            return denied;
-        }
-
         adminNotificationService.delete(id);
         return ResponseEntity.ok(Map.of("message", "Deleted"));
     }

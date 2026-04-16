@@ -4,6 +4,19 @@ import poly.edu.entity.Notification;
 
 public interface NotificationService {
 
+    /**
+     * Creates a new notification
+     * 
+     * @param title      The notification title
+     * @param content    The notification content
+     * @param type       The notification type
+     * @param receiverId The account ID of the recipient (receiver)
+     * @param actorId    The account ID of the person who triggered the action
+     *                   (actor)
+     * @param postId     The post ID (optional, can be null)
+     * @param link       The link URL (optional, can be null)
+     * @return The created notification
+     */
     Notification createNotification(String title, String content, String type, Integer receiverId, Integer actorId,
             Integer postId, String link);
 

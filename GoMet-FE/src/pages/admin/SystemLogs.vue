@@ -68,42 +68,42 @@
       <table v-else class="logs-table">
         <thead>
           <tr>
-            <th width="15%"><i class="fa-regular fa-clock"></i> THỜI GIAN</th>
-            <th width="20%"><i class="fa-solid fa-user-shield"></i> NGƯỜI THỰC HIỆN</th>
-            <th width="15%"><i class="fa-solid fa-bolt"></i> HÀNH ĐỘNG</th>
-            <th width="12%"><i class="fa-solid fa-cube"></i> ĐỐI TƯỢNG</th>
-            <th width="10%"><i class="fa-solid fa-fingerprint"></i> ID</th>
-            <th width="28%"><i class="fa-solid fa-comment-dots"></i> LÝ DO / GHI CHÚ</th>
+            <th width="15%" class="text-left"><i class="fa-regular fa-clock"></i> THỜI GIAN</th>
+            <th width="20%" class="text-left"><i class="fa-solid fa-user-shield"></i> NGƯỜI THỰC HIỆN</th>
+            <th width="15%" class="text-center"><i class="fa-solid fa-bolt"></i> HÀNH ĐỘNG</th>
+            <th width="15%" class="text-center"><i class="fa-solid fa-cube"></i> ĐỐI TƯỢNG</th>
+            <th width="10%" class="text-center"><i class="fa-solid fa-fingerprint"></i> ID</th>
+            <th width="25%" class="text-left"><i class="fa-solid fa-comment-dots"></i> LÝ DO / GHI CHÚ</th>
           </tr>
         </thead>
         <TransitionGroup tag="tbody" name="list-anim">
           <tr v-for="log in filteredLogs" :key="log.logID" class="table-row">
-            <td class="col-time">{{ formatDate(log.createdAt) }}</td>
+            <td class="col-time text-left">{{ formatDate(log.createdAt) }}</td>
             
-            <td class="col-admin">
+            <td class="col-admin text-left">
               <div class="admin-badge">
                 <i class="fa-solid fa-shield-halved"></i> 
                 <span>{{ log.adminName || 'Admin #' + log.adminID }}</span>
               </div>
             </td>
             
-            <td class="col-action">
+            <td class="col-action text-center">
               <span class="action-tag" :class="getActionClass(log.action)">
                 {{ getActionLabel(log.action) }}
               </span>
             </td>
             
-            <td class="col-type">
+            <td class="col-type text-center">
               <span class="type-tag" :class="log.targetType ? log.targetType.toLowerCase() : ''">
                 {{ getTypeIcon(log.targetType) }} {{ log.targetType }}
               </span>
             </td>
             
-            <td class="col-id">
+            <td class="col-id text-center">
               <span class="id-badge">#{{ log.targetID }}</span>
             </td>
             
-            <td class="col-reason">
+            <td class="col-reason text-left">
               <div class="reason-text" :title="log.reason">
                 {{ log.reason || 'Không có ghi chú' }}
               </div>
@@ -404,23 +404,27 @@ onMounted(() => {
   border-collapse: collapse;
 }
 
+/* 🔥 Đã chỉnh sửa toàn bộ logic căn lề (text-align) */
+.logs-table th, .logs-table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.text-left { text-align: left !important; }
+.text-center { text-align: center !important; }
+
 .logs-table th {
   background: #f8fafc;
-  padding: 16px 20px;
   font-size: 0.8rem;
   font-weight: 700;
   color: #64748b;
   border-bottom: 1px solid #e2e8f0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  white-space: nowrap; /* Đảm bảo tiêu đề không bị rớt dòng ngẫu nhiên */
 }
 .logs-table th i { margin-right: 6px; }
-
-.logs-table td {
-  padding: 16px 20px;
-  border-bottom: 1px solid #f1f5f9;
-  vertical-align: middle;
-}
 
 .table-row { transition: 0.2s; }
 .table-row:hover { background: #f8fafc; }

@@ -67,7 +67,8 @@ export const useProfileActionsStore = defineStore('profileActions', () => {
           id: convData.conversationID,
           name: targetUser.username || targetUser.name,
           avatar: targetUser.avatar,
-          online: true 
+          online: true,
+          partnerID: targetUser.accountID || targetUser.id
         })
       } else {
         toast.error('Không thể khởi tạo cuộc hội thoại.')

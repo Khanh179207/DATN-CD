@@ -387,11 +387,101 @@ onMounted(() => fetchNote())
 @keyframes slideInLeft { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
 @keyframes slideInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 
+/* =======================================================
+   🔥 HỆ THỐNG RESPONSIVE (TỐI ƯU MỌI THIẾT BỊ)
+   ======================================================= */
+
+/* --- 1. Màn hình Laptop nhỏ & Tablet ngang (Dưới 1200px) --- */
+@media (max-width: 1200px) {
+  .dashboard-container-inner {
+    grid-template-columns: 350px 1fr; /* Thu nhỏ cột trái lại một chút */
+    gap: 40px;
+  }
+}
+
+/* --- 2. Màn hình Tablet dọc & Mobile ngang (Dưới 1024px) --- */
 @media (max-width: 1024px) {
-  .dashboard-container-inner { grid-template-columns: 1fr; gap: 40px; padding: 0 16px; }
-  .dashboard-left-col { position: static; max-width: 100%; }
-  .process-header { flex-direction: column; align-items: flex-start; gap: 20px; .serif-title { font-size: 2.2rem; } }
+  .dashboard-container-inner { 
+    grid-template-columns: 1fr; /* Ép về 1 cột (Stacking) */
+    gap: 40px; 
+    padding: 0 20px; 
+  }
+  
+  .dashboard-left-col { 
+    position: static; /* Tắt dính (sticky) trên thiết bị nhỏ */
+    max-width: 100%; 
+  }
+  
+  .process-header { 
+    flex-direction: column; 
+    align-items: flex-start; 
+    gap: 16px; 
+    
+    .serif-title { font-size: 2.2rem; } 
+  }
+  
+  .premium-widget { padding: 24px; }
+  .widget-divider { margin: 0 24px; }
+}
+
+/* --- 3. Màn hình Mobile Lớn (Dưới 768px) --- */
+@media (max-width: 768px) {
+  .cooking-dashboard-premium { padding: 30px 0 80px; }
+  .dashboard-container-inner { gap: 30px; padding: 0 16px; }
+
+  /* Tối ưu Video Card */
+  .video-card-luxury { border-radius: 16px; margin-bottom: 20px; }
+  .card-header-dark { padding: 12px 16px; }
+  
+  /* Tối ưu Widgets (Nguyên liệu, Ghi chú) */
+  .widgets-group { border-radius: 16px; }
   .premium-widget { padding: 20px; }
   .widget-divider { margin: 0 20px; }
+  
+  .widget-header .title-with-icon h3 { font-size: 0.95rem; }
+  .btn-gradient-orange { padding: 12px 20px; font-size: 0.9rem; }
+  .clean-check-row { padding: 6px 8px; }
+  
+  /* Tối ưu Timeline (Quy trình) */
+  .process-header .serif-title { font-size: 1.8rem; }
+  .header-actions { 
+    width: 100%; 
+    justify-content: space-between; /* Đẩy 2 thành phần ra 2 góc */
+  }
+
+  .timeline-step { gap: 16px; } /* Giảm khoảng cách giữa số bước và nội dung */
+  
+  .timeline-marker { width: 28px; }
+  .timeline-marker .t-circle { width: 28px; height: 28px; font-size: 0.9rem; }
+  
+  .timeline-content { padding-bottom: 32px; }
+  .timeline-content .step-subtitle { margin: 4px 0 8px; }
+  .timeline-content .step-desc { font-size: 1rem; line-height: 1.6; margin-bottom: 16px; }
+  
+  /* Ép ảnh minh họa thành 1 cột trên Mobile để nhìn rõ hơn */
+  .timeline-content .step-gallery { 
+    grid-template-columns: 1fr; 
+    gap: 12px;
+  }
+}
+
+/* --- 4. Màn hình Mobile Cực Nhỏ (Dưới 480px - Vd: iPhone SE) --- */
+@media (max-width: 480px) {
+  .process-header .serif-title { font-size: 1.6rem; }
+  
+  /* Nếu màn quá nhỏ, nút "Chế độ nấu" rớt xuống dòng, full width */
+  .header-actions { 
+    flex-direction: column; 
+    align-items: flex-start; 
+    gap: 12px; 
+  }
+  .btn-gradient-dark { 
+    width: 100%; 
+    justify-content: center; 
+    padding: 12px; 
+  }
+
+  .clean-check-row .i-name { font-size: 0.9rem; }
+  .timeline-content .step-desc { font-size: 0.95rem; }
 }
 </style>

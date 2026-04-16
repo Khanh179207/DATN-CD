@@ -86,13 +86,20 @@ public class HistoryController {
         }
 
         // Upsert: if already viewed, only update the timestamp
-        Optional<History> existing =
+        List<History> existing =
                 historyDAO.findByAccount_AccountIDAndPost_PostID(accountID, postID);
 
         History history;
-        if (existing.isPresent()) {
-            history = existing.get();
+        if (!existing.isEmpty()) {
+            history = existing.get(0);
             history.setLastViewedAt(LocalDateTime.now());
+            
+            // 🔥 NẾU LỠ CÓ NHIỀU BẢN GHI (DO BUG CŨ), XÓA CÁC BẢN GHI THỪA
+            if (existing.size() > 1) {
+                for (int i = 1; i < existing.size(); i++) {
+                    historyDAO.delete(existing.get(i));
+                }
+            }
         } else {
             history = History.builder()
                     .account(account)

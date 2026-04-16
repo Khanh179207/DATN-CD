@@ -361,4 +361,98 @@ const filteredPosts = computed(() => {
 @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 .fade-scale { animation: fadeScale 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
 @keyframes fadeScale { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+/* =======================================================
+   🔥 HỆ THỐNG RESPONSIVE (ĐÃ FIX LỖI TRỒNG CHỮ DANH MỤC)
+   ======================================================= */
+
+@media (max-width: 1200px) {
+  .collection-wrapper { padding: 30px 20px; gap: 24px; }
+  .collection-sidebar { width: 260px; }
+  
+  .main-title { font-size: 2rem; }
+  .collection-header { padding: 24px; }
+  
+  .gallery-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 24px; }
+}
+
+@media (max-width: 992px) {
+  .collection-wrapper { flex-direction: column; padding: 20px; gap: 20px; }
+  
+  .collection-sidebar { width: 100%; }
+  .sidebar-sticky { 
+    position: relative; top: 0; 
+    flex-direction: row; flex-wrap: wrap; gap: 16px; 
+    align-items: center; 
+  }
+  
+  .profile-summary { flex: 1; min-width: 250px; padding: 16px 20px; margin: 0; }
+  .stats-box { flex: 1; min-width: 200px; padding: 16px 20px; margin: 0; }
+  
+  /* 🔥 FIX DANH MỤC TRỒNG LÊN NHAU */
+  .filter-group { 
+    width: 100%; padding: 12px 16px; margin: 0; 
+    display: flex; align-items: center; gap: 16px;
+  }
+  .group-title { margin: 0; white-space: nowrap; flex-shrink: 0; } /* Không cho chữ tiêu đề bị ép */
+  .filter-list { 
+    display: flex; /* Bắt buộc để cuộn ngang hoạt động */
+    flex-direction: row; 
+    overflow-x: auto; 
+    -ms-overflow-style: none; scrollbar-width: none; 
+    gap: 8px; width: 100%;
+    padding-bottom: 2px; /* Tránh cắt mất viền/bóng của nút khi cuộn */
+  }
+  .filter-list::-webkit-scrollbar { display: none; }
+  .btn-filter { 
+    padding: 8px 16px; 
+    white-space: nowrap; /* Ép chữ trên 1 hàng */
+    flex-shrink: 0; /* Không cho phép nút bị móp lại */
+    border: 1px solid #E2E8F0; 
+  }
+  
+  .collection-header { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .header-right, .search-bar { width: 100%; }
+  
+  .over-limit-banner { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .btn-upgrade { margin-left: 0; width: 100%; text-align: center; }
+}
+
+@media (max-width: 768px) {
+  .collection-wrapper { padding: 15px; }
+  
+  .sidebar-sticky { flex-direction: column; align-items: stretch; }
+  .profile-summary, .stats-box, .filter-group { min-width: 100%; }
+  
+  /* Đẩy danh mục xuống dưới tiêu đề trên điện thoại để đỡ rối */
+  .filter-group { flex-direction: column; align-items: flex-start; gap: 10px; }
+  
+  .main-title { font-size: 1.6rem; }
+  .brand-tag { font-size: 0.65rem; }
+  
+  .gallery-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+}
+
+@media (max-width: 480px) {
+  .collection-wrapper { padding: 10px; }
+  .premium-card { padding: 16px; border-radius: 16px; }
+  
+  .avatar-ring { width: 48px; height: 48px; }
+  .u-name { font-size: 1rem; }
+  
+  .btn-filter { padding: 6px 12px; font-size: 0.85rem; }
+  .filter-count { padding: 2px 6px; font-size: 0.75rem; }
+  
+  .stat-value { font-size: 1.2rem; }
+  
+  .gallery-grid { grid-template-columns: 1fr; }
+  
+  .empty-state { padding: 40px 20px; }
+  .btn-explore { width: 100%; font-size: 0.9rem; padding: 12px 20px; }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .collection-sidebar { display: none; }
+  .gallery-grid { grid-template-columns: repeat(2, 1fr); }
+}
 </style>

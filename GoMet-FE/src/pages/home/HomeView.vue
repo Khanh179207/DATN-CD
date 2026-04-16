@@ -19,22 +19,22 @@
       <div class="marquee-slim reveal-fade">
         <div class="marquee-track">
           <div class="marquee-group">
-            <span class="marquee-item">ESSENCE OF VIETNAMESE CUISINE <span class="star">✦</span></span>
-            <span class="marquee-item">SPARK YOUR INSPIRATION <span class="star">✦</span></span>
-            <span class="marquee-item">SIGNATURE FLAVORS <span class="star">✦</span></span>
-            <span class="marquee-item">ESSENCE OF VIETNAMESE CUISINE <span class="star">✦</span></span>
-            <span class="marquee-item">SPARK YOUR INSPIRATION <span class="star">✦</span></span>
-            <span class="marquee-item">SIGNATURE FLAVORS <span class="star">✦</span></span>
+            <span class="marquee-item">TINH HOA ẨM THỰC VIỆT <span class="star">✦</span></span>
+            <span class="marquee-item">KHƠI NGUỒN CẢM HỨNG <span class="star">✦</span></span>
+            <span class="marquee-item">HƯƠNG VỊ BẢN SẮC <span class="star">✦</span></span>
+            <span class="marquee-item">TINH HOA ẨM THỰC VIỆT <span class="star">✦</span></span>
+            <span class="marquee-item">KHƠI NGUỒN CẢM HỨNG <span class="star">✦</span></span>
+            <span class="marquee-item">HƯƠNG VỊ BẢN SẮC <span class="star">✦</span></span>
           </div>
         </div>
       </div>
 
       <section class="section-wrapper compact-section">
-        <div class="bg-typo-decor" :style="{ transform: `translate(-50%, ${scrollY * 0.15}px)` }">CATEGORY</div>
+        <div class="bg-typo-decor" :style="{ transform: `translate(-50%, ${scrollY * 0.15}px)` }">DANH MỤC</div>
         
         <div class="section-header text-center reveal-up">
-          <span class="premium-tag">EXPLORE</span>
-          <h2 class="section-title">Diverse <span class="highlight-text">Menu</span></h2>
+          <span class="premium-tag">KHÁM PHÁ</span>
+          <h2 class="section-title">Thực Đơn <span class="highlight-text">Đa Dạng</span></h2>
         </div>
         <div class="reveal-up delay-200"><HomeCategorySection /></div>
       </section>
@@ -42,15 +42,15 @@
       <div class="slogan-strip reveal-scale">
         <div class="slogan-content">
           <h3 class="slogan-text">
-            "Cooking is an art, and the chef is the <span class="glow-text">artist</span>."
+            "Nấu ăn là một nghệ thuật, và đầu bếp chính là một <span class="glow-text">nghệ sĩ</span>."
           </h3>
         </div>
       </div>
 
       <section class="section-wrapper compact-section">
         <div class="section-header text-center reveal-up">
-          <span class="premium-tag">UPDATED DAILY</span>
-          <h2 class="section-title">Latest Creations</h2>
+          <span class="premium-tag">CẬP NHẬT MỖI NGÀY</span>
+          <h2 class="section-title">Tuyệt Tác Mới Nhất</h2>
         </div>
         <div class="reveal-up delay-200"><HomeLatestRecipes /></div>
       </section>
@@ -63,17 +63,17 @@
         <div class="nl-content">
             <div class="nl-row">
                 <div class="nl-info">
-                    <h2 class="nl-heading">Join the <br> <span class="orange-txt">GoMet Kitchen</span></h2>
-                    <p class="nl-desc">Get exclusive secret recipes and kitchen tips delivered weekly.</p>
+                    <h2 class="nl-heading">Hợp Tác Cùng <br> <span class="orange-txt">GoMet</span></h2>
+                    <p class="nl-desc">Bạn là đầu bếp, chuyên gia ẩm thực hay nhãn hàng? Hãy kết nối với chúng tôi để cùng nhau lan tỏa đam mê.</p>
                 </div>
                 <div class="nl-action">
-                    <div class="arty-input">
-                        <input type="email" placeholder="Your email address..." />
-                        <button class="btn-submit magnetic-btn">
-                            SUBSCRIBE
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12H19M12 5L19 12L12 19"/></svg>
-                        </button>
-                    </div>
+                    <a href="mailto:contact@gomet.vn?subject=Yêu cầu hợp tác cùng GoMet" class="btn-partner">
+                        GỬI EMAIL LIÊN HỆ
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                          <line x1="22" y1="2" x2="11" y2="13"></line>
+                          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </a>
                 </div>
             </div>
         </div>
@@ -91,8 +91,6 @@ import HomeHero from '@/components/home/HomeHero.vue'
 import HomeCategorySection from '@/components/home/HomeCategorySection.vue'
 import HomeLatestRecipes from '@/components/home/HomeLatestRecipes.vue'
 
-// Đã dọn dẹp sạch sẽ mớ tàn dư import ảnh cứng
-
 const router = useRouter()
 const showAdPopup = ref(false)
 const scrollY = ref(0) 
@@ -101,11 +99,11 @@ const goToDetail = (id) => {
   router.push({ name: 'PostDetail', params: { id: id } })
 }
 
-// --- ✨ ANIMATION LOGIC ✨ ---
 const handleScroll = (event) => {
   scrollY.value = event.target.scrollTop
 }
 
+// Cấu hình hiệu ứng xuất hiện khi cuộn trang
 const setupIntersectionObserver = () => {
   const scrollContainer = document.getElementById('main-scroll-container')
   const ANIM_CLASSES = '.reveal-up, .reveal-fade, .reveal-scale'
@@ -114,7 +112,6 @@ const setupIntersectionObserver = () => {
     (entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          // respect data-delay attribute for stagger
           const delay = entry.target.dataset.delay || 0
           setTimeout(() => {
             entry.target.classList.add('is-visible')
@@ -136,7 +133,6 @@ const setupIntersectionObserver = () => {
 }
 
 onMounted(() => {
-  // Chờ 2 giây hiện popup. Việc lấy ảnh và hiển thị cứ để thằng AdPopup tự lo.
   setTimeout(() => { showAdPopup.value = true }, 2000)
 
   const scrollContainer = document.getElementById('main-scroll-container')
@@ -146,7 +142,6 @@ onMounted(() => {
     window.addEventListener('scroll', () => { scrollY.value = window.scrollY }, { passive: true })
   }
 
-  // Small delay to allow DOM to paint before attaching observer
   requestAnimationFrame(() => {
     setupIntersectionObserver()
   })
@@ -166,7 +161,6 @@ onUnmounted(() => {
   background-color: #FFFFFF; 
   font-family: 'Mulish', sans-serif;
   color: #1C1917;
-  /* Do not set height/overflow to avoid double scrollbars */
 }
 
 .bg-texture {
@@ -179,11 +173,10 @@ onUnmounted(() => {
 .hero-wrapper { padding-bottom: 0px; }
 
 /* ─────────────────────────────────────────────
-   ANIMATION SYSTEM — smooth, GPU-accelerated
+    ANIMATION SYSTEM 
 ───────────────────────────────────────────── */
 :root { --anim-duration: 0.75s; --anim-ease: cubic-bezier(0.22, 1, 0.36, 1); }
 
-/* Slide up (main reveal) */
 .reveal-up {
   opacity: 0;
   transform: translateY(36px);
@@ -193,7 +186,6 @@ onUnmounted(() => {
 }
 .reveal-up.is-visible { opacity: 1; transform: translateY(0); }
 
-/* Fade only (for marquee, subtle elements) */
 .reveal-fade {
   opacity: 0;
   transition: opacity 0.9s ease;
@@ -201,7 +193,6 @@ onUnmounted(() => {
 }
 .reveal-fade.is-visible { opacity: 1; }
 
-/* Scale (for bold blocks like slogan strip) */
 .reveal-scale {
   opacity: 0;
   transform: scaleY(0.88);
@@ -212,7 +203,6 @@ onUnmounted(() => {
 }
 .reveal-scale.is-visible { opacity: 1; transform: scaleY(1); }
 
-/* Stagger delays */
 .delay-100 { transition-delay: 0.10s; }
 .delay-150 { transition-delay: 0.15s; }
 .delay-200 { transition-delay: 0.20s; }
@@ -246,7 +236,7 @@ onUnmounted(() => {
 .marquee-item:hover { color: #EA580C; transform: scale(1.02); }
 .star { color: #EA580C; font-size: 1rem; }
 
-/* DECOR */
+/* DECOR CHỮ CHÌM */
 .bg-typo-decor {
     position: absolute; top: 0; left: 50%;
     font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 8rem;
@@ -268,28 +258,86 @@ onUnmounted(() => {
 .slogan-text { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 400; color: #F5F5F4; max-width: 850px; margin: 0 auto; line-height: 1.4; letter-spacing: -0.01em; }
 .glow-text { color: #EA580C; font-style: italic; text-shadow: 0 0 15px rgba(234, 88, 12, 0.4); }
 
-/* NEWSLETTER */
+/* PHẦN HỢP TÁC (NÂNG CẤP TỪ NEWSLETTER) */
 .newsletter-immersive { margin-top: 40px; position: relative; }
 .wave-top { display: block; width: 100%; height: 60px; margin-bottom: -1px; }
 .nl-content { background: #1C1917; padding: 30px 24px 80px; }
 .nl-row { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 40px; }
-.nl-heading { font-family: 'Playfair Display', serif; font-size: 3rem; color: white; line-height: 1.08; letter-spacing: -0.02em; margin-bottom: 10px; }
+.nl-heading { font-family: 'Playfair Display', serif; font-size: 3rem; color: white; line-height: 1.08; letter-spacing: -0.02em; margin-bottom: 15px; }
 .orange-txt { color: #EA580C; font-style: italic; }
-.nl-desc { color: #A8A29E; font-size: 1rem; max-width: 400px; }
-.arty-input { display: flex; align-items: center; border-bottom: 2px solid #57534E; padding-bottom: 5px; width: 450px; transition: 0.3s; }
-.arty-input:focus-within { border-color: #EA580C; }
-.arty-input input { background: transparent; border: none; outline: none; flex: 1; color: white; font-size: 1.1rem; padding: 10px 0; }
-.arty-input input::placeholder { color: #57534E; }
-.btn-submit { background: none; border: none; color: #EA580C; font-weight: 800; letter-spacing: 1px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.3s; }
-.btn-submit:hover { color: white; gap: 12px; }
+.nl-desc { color: #A8A29E; font-size: 1.05rem; max-width: 450px; line-height: 1.6; }
+
+/* Nút Gửi Email Hợp Tác */
+.btn-partner {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #EA580C, #f97316);
+  color: white;
+  padding: 18px 45px;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+  box-shadow: 0 10px 30px rgba(234, 88, 12, 0.3);
+}
+
+.btn-partner:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 15px 40px rgba(234, 88, 12, 0.5);
+  color: white;
+}
+.btn-partner svg { transition: transform 0.3s; }
+.btn-partner:hover svg { transform: translate(4px, -4px); } /* Mũi tên bay chéo lên */
 
 @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 
+/* ─────────────────────────────────────────────
+    RESPONSIVE SYSTEM
+───────────────────────────────────────────── */
+
+@media (max-width: 1280px) {
+  .section-wrapper { padding: 0 40px; }
+  .nl-heading { font-size: 2.5rem; }
+}
+
 @media (max-width: 1024px) {
-  .section-title { font-size: 2rem; }
-  .slogan-text { font-size: 1.4rem; }
-  .nl-row { flex-direction: column; text-align: center; }
-  .arty-input { width: 100%; }
-  .bg-typo-decor { font-size: 4rem; top: 10px; }
+  .section-title { font-size: 2.2rem; }
+  .slogan-text { font-size: 1.6rem; padding: 0 20px; }
+  
+  .nl-row { flex-direction: column; text-align: center; gap: 30px; }
+  .nl-desc { margin: 0 auto; }
+  .bg-typo-decor { font-size: 5rem; top: 20px; }
+}
+
+@media (max-width: 768px) {
+  .section-wrapper { padding: 0 20px; }
+  .compact-section { padding: 40px 16px; }
+  
+  .section-title { font-size: 1.8rem; }
+  .premium-tag { font-size: 0.6rem; letter-spacing: 2px; }
+  
+  .marquee-item { font-size: 0.9rem; gap: 15px; }
+  .marquee-group { gap: 30px; padding-right: 30px; }
+  
+  .slogan-strip { padding: 40px 16px; margin: 20px 0; }
+  .slogan-text { font-size: 1.25rem; }
+  
+  .nl-heading { font-size: 2.2rem; }
+  .wave-top { height: 40px; }
+  .nl-content { padding-bottom: 60px; }
+  
+  .btn-partner { padding: 16px 30px; font-size: 0.9rem; width: 100%; justify-content: center;}
+  .bg-typo-decor { opacity: 0.01; } 
+}
+
+@media (max-width: 480px) {
+  .section-title { font-size: 1.6rem; }
+  .nl-heading { font-size: 1.8rem; }
+  .nl-desc { font-size: 0.95rem; }
+  .marquee-slim { margin: 10px 0 20px; padding: 10px 0; }
 }
 </style>

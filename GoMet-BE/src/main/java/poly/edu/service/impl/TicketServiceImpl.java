@@ -51,7 +51,10 @@ public class TicketServiceImpl implements TicketService {
         }
 
         Ticket savedTicket = ticketDAO.save(ticket);
+
+        // Gửi thông báo cho toàn bộ Admin (Từ nhánh dev kia)
         sendAdminAlert(savedTicket);
+
         return savedTicket;
     }
 
@@ -70,7 +73,7 @@ public class TicketServiceImpl implements TicketService {
     }
 
     /**
-     * 🔥 HÀM ĐÃ NÂNG CẤP: Lưu chủ quyền của sếp (Admin)
+     * 🔥 HÀM CỦA SẾP (Giữ nguyên 5 tham số để lưu vết Admin xử lý)
      */
     @Override
     public Ticket updateTicketStatus(Integer ticketId, Integer newStatus, Integer adminId, String adminName,
@@ -80,7 +83,7 @@ public class TicketServiceImpl implements TicketService {
 
         Integer oldStatus = ticket.getStatus();
 
-        // 1. Cập nhật trạng thái và thông tin người xử lý
+        // 1. Cập nhật trạng thái và thông tin người xử lý (Logic của Sếp)
         ticket.setStatus(newStatus);
         ticket.setAdminId(adminId);
         ticket.setAdminName(adminName);
@@ -97,8 +100,8 @@ public class TicketServiceImpl implements TicketService {
 
         Ticket savedTicket = ticketDAO.save(ticket);
 
-        // 3. Gửi thông báo Real-time cho User
-        if (oldStatus != null && !oldStatus.equals(newStatus)) {
+        // 3. Gửi thông báo cho User (Dùng logic của nhánh dev kia)
+        if (oldStatus != null && !oldStatus.equals(newStatus) && (newStatus == 1 || newStatus == 2 || newStatus == 3)) {
             sendUserStatusNotification(savedTicket, newStatus);
         }
 
@@ -106,8 +109,7 @@ public class TicketServiceImpl implements TicketService {
     }
 
     /**
-     * Helper: Chuyển đổi Entity sang DTO (Đã thêm thông tin Admin xử lý để FE hiển
-     * thị)
+     * Helper: Chuyển đổi Entity sang DTO (Đã thêm thông tin Admin xử lý để FE hiển thị)
      */
     private AdminTicketDTO convertToAdminDTO(Ticket ticket) {
         AdminTicketDTO dto = new AdminTicketDTO();
@@ -139,18 +141,17 @@ public class TicketServiceImpl implements TicketService {
         return dto;
     }
 
+    // 🔥 Dùng hàm Notification 7 tham số của bản Dev kia
     private void sendUserStatusNotification(Ticket ticket, Integer newStatus) {
         try {
             if (ticket.getAccount() != null) {
                 notificationService.notifyTicketUpdate(ticket.getTicketID(), newStatus,
                         ticket.getAccount().getAccountID());
             } else {
-                System.err
-                        .println("sendUserStatusNotification: Ticket has no account, skip user notification for ticket "
-                                + ticket.getTicketID());
+                System.err.println("sendUserStatusNotification: Ticket has no account, skip user notification for ticket " + ticket.getTicketID());
             }
         } catch (Exception e) {
-            System.err.println("Failed to send notification: " + e.getMessage());
+            System.err.println("Failed to send ticket status notification: " + e.getMessage());
         }
     }
 
@@ -159,7 +160,7 @@ public class TicketServiceImpl implements TicketService {
             String userUsername = ticket.getAccount() != null ? ticket.getAccount().getUsername() : "Unknown User";
             notificationService.notifyAdminTicket(userUsername, ticket.getTicketID());
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Failed to notify admin about ticket: " + e.getMessage());
         }
     }
 }

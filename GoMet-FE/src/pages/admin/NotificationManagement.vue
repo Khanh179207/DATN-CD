@@ -11,11 +11,10 @@
       </button>
     </div>
 
+    <!-- Stats Dashboard -->
     <div class="stats-grid" v-if="!loading && !error">
       <div class="stat-card">
-        <div class="icon-wrap all">
-          <Layers :size="22" />
-        </div>
+        <div class="icon-wrap all"><Layers :size="22" /></div>
         <div class="stat-info">
           <span class="label">Tổng Thông báo</span>
           <h3 class="value">{{ notifications.length }}</h3>
@@ -23,9 +22,7 @@
       </div>
 
       <div class="stat-card">
-        <div class="icon-wrap broadcast">
-          <Send :size="22" />
-        </div>
+        <div class="icon-wrap broadcast"><Send :size="22" /></div>
         <div class="stat-info">
           <span class="label">Broadcast</span>
           <h3 class="value">{{ broadcastCount }}</h3>
@@ -33,9 +30,7 @@
       </div>
 
       <div class="stat-card highlight-card">
-        <div class="icon-wrap target">
-          <Zap :size="22" />
-        </div>
+        <div class="icon-wrap target"><Zap :size="22" /></div>
         <div class="stat-info">
           <span class="label">Nhắm riêng</span>
           <h3 class="value">{{ targetedCount }}</h3>
@@ -43,6 +38,7 @@
       </div>
     </div>
 
+    <!-- Content List -->
     <div v-if="loading" class="grid-list">
       <div v-for="n in 6" :key="n" class="lux-noti-card skeleton">
         <div class="skel-img"></div>
@@ -67,15 +63,14 @@
             <Megaphone :size="42" />
           </div>
 
-          <div class="post-count-badge">
-            {{ notification.isGlobal ? 'Broadcast' : 'Targeted' }}
+          <div class="post-count-badge" :class="{ 'is-global': notification.isGlobal }">
+            {{ notification.isGlobal ? 'Toàn hệ thống' : 'Nhắm riêng' }}
           </div>
 
           <div class="hidden-badge" v-if="notification.type">{{ notification.type }}</div>
 
           <div class="overlay-actions">
-            <button class="btn-act view" @click.stop="openDetailModal(notification.notificationID)"
-              title="Xem chi tiết">
+            <button class="btn-act view" @click.stop="openDetailModal(notification.notificationID)" title="Xem chi tiết">
               <Eye :size="20" />
             </button>
             <button class="btn-act delete" @click.stop="deleteNotificationItem(notification)" title="Xóa thông báo">
@@ -88,7 +83,7 @@
           <h3 class="cat-name">{{ notification.title || '(Không có tiêu đề)' }}</h3>
           <div class="meta-row">
             <span class="ratio-text">Người nhận</span>
-            <span class="ratio-pct">{{ getRecipientLabel(notification) }}</span>
+            <span class="ratio-pct text-truncate">{{ getRecipientLabel(notification) }}</span>
           </div>
           <p class="content-preview">{{ notification.content || 'Không có nội dung' }}</p>
           <div class="progress-bar">
@@ -98,70 +93,77 @@
         </div>
       </div>
 
-      <div v-if="notifications.length === 0" class="empty-state">
-        Hệ thống chưa có thông báo thủ công nào.
+      <div v-if="notifications.length === 0" class="empty-state-lux">
+        <div class="empty-icon">📭</div>
+        <p>Hệ thống chưa có thông báo thủ công nào. Hãy tạo thông báo đầu tiên Sếp nhé!</p>
       </div>
     </div>
 
+    <!-- Create Modal -->
     <Teleport to="body">
       <Transition name="fade-glass">
         <div v-if="showCreateModal" class="modal-glass-backdrop" @click.self="closeCreateModal">
           <div class="modal-lux-content" @click.stop>
             <div class="modal-header-lux">
               <h3>
-                <Megaphone :size="18" style="vertical-align:middle;margin-right:8px" />
+                <Plus :size="18" style="vertical-align:middle;margin-right:8px" />
                 Khởi tạo Thông báo
               </h3>
-              <button class="btn-x" @click="closeCreateModal">
-                <X :size="24" />
-              </button>
+              <button class="btn-x" @click="closeCreateModal"><X :size="24" /></button>
             </div>
 
-            <div class="modal-body-lux">
+            <div class="modal-body-lux custom-scroll">
               <div class="form-group-lux">
-                <label>Người nhận</label>
+                <label>Đối tượng người nhận</label>
                 <div class="recipient-switch">
-                  <label><input type="radio" value="all" v-model="form.sendTo" /> Toàn bộ người dùng</label>
-                  <label><input type="radio" value="user" v-model="form.sendTo" /> Một tài khoản cụ thể</label>
+                  <label class="radio-tab" :class="{ active: form.sendTo === 'all' }">
+                    <input type="radio" value="all" v-model="form.sendTo" /> 
+                    <span>Tất cả</span>
+                  </label>
+                  <label class="radio-tab" :class="{ active: form.sendTo === 'user' }">
+                    <input type="radio" value="user" v-model="form.sendTo" /> 
+                    <span>Cá nhân</span>
+                  </label>
                 </div>
               </div>
 
-              <div v-if="form.sendTo === 'user'" class="form-group-lux">
-                <label>Tài khoản đích <span class="req">*</span></label>
-                <input v-model="form.targetAccountId" type="number" class="input-lux" placeholder="VD: 123">
+              <div v-if="form.sendTo === 'user'" class="form-group-lux animate-in">
+                <label>Account ID người nhận <span class="req">*</span></label>
+                <input v-model="form.targetAccountId" type="number" class="input-lux" placeholder="Ví dụ: 101">
               </div>
 
               <div class="form-group-lux">
-                <label>Tiêu đề <span class="req">*</span></label>
-                <input v-model="form.title" type="text" class="input-lux" placeholder="VD: Bảo trì hệ thống đêm nay...">
+                <label>Tiêu đề thông báo <span class="req">*</span></label>
+                <input v-model="form.title" type="text" class="input-lux" placeholder="VD: Lịch bảo trì hệ thống GoMet...">
               </div>
 
               <div class="form-group-lux">
-                <label>Nội dung <span class="req">*</span></label>
-                <textarea v-model="form.content" rows="5" class="input-lux"
-                  placeholder="Nhập nội dung thông báo..."></textarea>
+                <label>Nội dung chi tiết <span class="req">*</span></label>
+                <textarea v-model="form.content" rows="4" class="input-lux" placeholder="Nhập nội dung thông báo..."></textarea>
               </div>
 
-              <div class="form-group-lux">
-                <label>Loại</label>
-                <select v-model="form.type" class="input-lux">
-                  <option value="GENERAL">General</option>
-                  <option value="MAINTENANCE">Maintenance</option>
-                  <option value="PROMOTION">Promotion</option>
-                </select>
-              </div>
-
-              <div class="form-group-lux">
-                <label>Link điều hướng</label>
-                <input v-model="form.link" type="text" class="input-lux" placeholder="/post/123 hoặc /admin/...">
+              <div class="form-grid-lux">
+                <div class="form-group-lux">
+                  <label>Phân loại</label>
+                  <select v-model="form.type" class="input-lux">
+                    <option value="GENERAL">General</option>
+                    <option value="MAINTENANCE">Maintenance</option>
+                    <option value="PROMOTION">Promotion</option>
+                    <option value="ADMIN_MANUAL">System Alert</option>
+                  </select>
+                </div>
+                <div class="form-group-lux">
+                  <label>Đường dẫn điều hướng</label>
+                  <input v-model="form.link" type="text" class="input-lux" placeholder="/post/10 hoặc /news">
+                </div>
               </div>
             </div>
 
             <div class="modal-footer-lux">
-              <button @click="closeCreateModal" class="btn-lux btn-reject">Đóng</button>
+              <button @click="closeCreateModal" class="btn-lux btn-reject">Hủy bỏ</button>
               <button @click="submitNotification" class="btn-lux btn-resolve" :disabled="sending">
-                <span v-if="sending" class="spinner"></span>
-                {{ sending ? 'Đang gửi...' : 'Hoàn tất' }}
+                <Loader2 v-if="sending" class="spin-icon" :size="16" />
+                {{ sending ? 'Đang gửi...' : 'Phát hành ngay' }}
               </button>
             </div>
           </div>
@@ -169,102 +171,93 @@
       </Transition>
     </Teleport>
 
+    <!-- Detail Modal -->
     <Teleport to="body">
       <Transition name="fade-glass">
         <div v-if="showDetailModal" class="modal-glass-backdrop" @click.self="closeDetailModal">
           <div class="modal-lux-content detail-modal" @click.stop>
             <div class="modal-header-lux">
               <h3>Chi tiết Thông báo</h3>
-              <button class="btn-x" @click="closeDetailModal">
-                <X :size="24" />
-              </button>
+              <button class="btn-x" @click="closeDetailModal"><X :size="24" /></button>
             </div>
 
             <div v-if="detailLoading" class="detail-state">
-              <Loader2 :size="18" class="spin-icon" />
-              <span>Đang tải chi tiết thông báo...</span>
+              <Loader2 :size="24" class="spin-icon" />
+              <p>Đang truy xuất dữ liệu...</p>
             </div>
 
             <div v-else-if="detailError" class="detail-state error-msg">
-              <AlertTriangle :size="18" />
-              <span>{{ detailError }}</span>
+              <AlertTriangle :size="32" />
+              <p>{{ detailError }}</p>
             </div>
 
-            <div v-else-if="selectedDetail" class="modal-body-lux detail-body">
+            <div v-else-if="selectedDetail" class="modal-body-lux detail-body custom-scroll">
               <div class="detail-summary-card">
                 <div class="detail-headline">
                   <div>
-                    <span class="meta-kicker">Thông tin cơ bản</span>
-                    <h4>{{ selectedDetail.title || '(Không có tiêu đề)' }}</h4>
+                    <span class="meta-kicker">THÔNG TIN TỔNG QUAN</span>
+                    <h4>{{ selectedDetail.title || '(Không tiêu đề)' }}</h4>
                   </div>
                   <span class="manual-badge" :class="{ targeted: !selectedDetail.isGlobal }">
                     {{ selectedDetail.isGlobal ? 'Broadcast' : 'Targeted' }}
                   </span>
                 </div>
 
-                <div class="detail-grid">
+                <div class="detail-grid-v2">
                   <div class="detail-box">
-                    <span class="label">Loại</span>
-                    <strong>{{ selectedDetail.type || 'GENERAL' }}</strong>
+                    <span class="lbl">Loại</span>
+                    <span class="val">{{ selectedDetail.type }}</span>
                   </div>
                   <div class="detail-box">
-                    <span class="label">Thời gian tạo</span>
-                    <strong>{{ formatDate(selectedDetail.createdAt) }}</strong>
+                    <span class="lbl">Ngày tạo</span>
+                    <span class="val">{{ formatDate(selectedDetail.createdAt) }}</span>
                   </div>
                   <div class="detail-box">
-                    <span class="label">Người nhận</span>
-                    <strong>{{ selectedDetail.isGlobal ? 'Toàn bộ người dùng' : (selectedDetail.recipientUsername ||
-                      'Một tài khoản cụ thể') }}</strong>
+                    <span class="lbl">Phạm vi</span>
+                    <span class="val">{{ selectedDetail.isGlobal ? 'Toàn hệ thống' : 'Người dùng cụ thể' }}</span>
                   </div>
                   <div class="detail-box">
-                    <span class="label">Đã đọc</span>
-                    <strong>{{ selectedDetail.readCount || 0 }} người</strong>
+                    <span class="lbl">Lượt xem</span>
+                    <span class="val count">{{ selectedDetail.readCount || 0 }}</span>
                   </div>
                 </div>
 
-                <div class="detail-content-block">
-                  <span class="label">Nội dung</span>
-                  <p>{{ selectedDetail.content || 'Không có nội dung' }}</p>
+                <div class="detail-block">
+                  <label>Nội dung</label>
+                  <p>{{ selectedDetail.content }}</p>
                 </div>
 
-                <div class="detail-content-block">
-                  <span class="label">Link</span>
-                  <p>{{ selectedDetail.link || 'Không có link điều hướng' }}</p>
+                <div v-if="selectedDetail.link" class="detail-block">
+                  <label>Link đích</label>
+                  <code>{{ selectedDetail.link }}</code>
                 </div>
               </div>
 
               <div class="detail-readers-card">
                 <div class="reader-header">
-                  <div>
-                    <span class="meta-kicker">Người đã đọc</span>
-                    <h4>Danh sách tài khoản đã đọc thông báo</h4>
-                  </div>
-                  <span class="reader-count">{{ selectedDetail.readCount || 0 }}</span>
+                  <h4>Danh sách người đã đọc</h4>
+                  <span class="reader-count">{{ selectedDetail.readCount }} lượt</span>
                 </div>
 
                 <div v-if="!selectedDetail.readers?.length" class="empty-reader-state">
-                  Chưa có người dùng nào đọc thông báo này.
+                  Trống. Chưa có ai mở xem thông báo này.
                 </div>
 
-                <div v-else class="reader-list">
-                  <div v-for="reader in selectedDetail.readers" :key="reader.accountID" class="reader-item">
-                    <div class="reader-avatar-wrap">
-                      <img v-if="reader.avatar" :src="reader.avatar" :alt="reader.username || 'User'"
-                        class="reader-avatar">
-                      <div v-else class="reader-avatar fallback-avatar">{{ getInitial(reader.username) }}</div>
+                <div v-else class="reader-list-lux">
+                  <div v-for="reader in selectedDetail.readers" :key="reader.accountID" class="reader-item-lux">
+                    <img :src="reader.avatar || 'https://ui-avatars.com/api/?name='+reader.username" class="r-avatar">
+                    <div class="r-info">
+                      <strong>{{ reader.username }}</strong>
+                      <span>{{ reader.email }}</span>
                     </div>
-                    <div class="reader-info">
-                      <strong>{{ reader.username || 'Unknown user' }}</strong>
-                      <p>{{ reader.email || 'Chưa có email' }}</p>
-                    </div>
-                    <span class="reader-time">{{ formatDate(reader.readAt) }}</span>
+                    <div class="r-time">{{ formatDate(reader.readAt) }}</div>
                   </div>
                 </div>
               </div>
             </div>
 
             <div class="modal-footer-lux">
-              <button @click="closeDetailModal" class="btn-lux btn-reject">Đóng</button>
+              <button @click="closeDetailModal" class="btn-lux btn-reject">Đóng lại</button>
             </div>
           </div>
         </div>
@@ -315,205 +308,136 @@ const form = ref({
   targetAccountId: null,
   title: '',
   content: '',
-  type: 'GENERAL',
+  type: 'ADMIN_MANUAL',
   link: null
 })
 
-const broadcastCount = computed(() => notifications.value.filter(item => item.isGlobal).length)
-const targetedCount = computed(() => notifications.value.filter(item => !item.isGlobal).length)
+const broadcastCount = computed(() => notifications.value.filter(n => n.isGlobal).length)
+const targetedCount = computed(() => notifications.value.filter(n => !n.isGlobal).length)
 
-const formatDate = (value) => {
-  if (!value) return 'N/A'
-  try {
-    return new Date(value).toLocaleString('vi-VN')
-  } catch {
-    return String(value)
-  }
+const formatDate = (val) => {
+  if (!val) return 'N/A'
+  return new Date(val).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
-const getInitial = (value) => String(value || 'U').trim().charAt(0).toUpperCase()
-
-const getRecipientLabel = (notification) => {
-  if (notification.isGlobal) return 'Toàn bộ người dùng'
-  if (notification.recipientUsername) return notification.recipientUsername
-  if (notification.accountID) return `Tài khoản #${notification.accountID}`
-  return 'Nhắm riêng'
+const getRecipientLabel = (n) => {
+  if (n.isGlobal) return 'Toàn bộ GoMeters'
+  if (n.recipientUsername) return n.recipientUsername
+  return `ID: ${n.accountID || '?'}`
 }
 
-const normalizeSummary = (notification = {}) => ({
-  notificationID: getNotificationId(notification),
-  title: notification.title,
-  content: notification.content,
-  type: notification.type || 'GENERAL',
-  createdAt: notification.createdAt,
-  isGlobal: notification.isGlobal === true || notification.isGlobal === 1 || notification.isGlobal === '1',
-  link: resolveNotificationLink(notification),
-  accountID: notification.accountID || null,
-  recipientUsername: notification.recipientUsername || null
-})
-
-const normalizeDetail = (detail = {}) => ({
-  notificationID: detail.notificationID,
-  title: detail.title,
-  content: detail.content,
-  type: detail.type || 'GENERAL',
-  createdAt: detail.createdAt,
-  isGlobal: detail.isGlobal === true || detail.isGlobal === 1 || detail.isGlobal === '1',
-  link: resolveNotificationLink(detail),
-  accountID: detail.accountID || null,
-  recipientUsername: detail.recipientUsername || null,
-  recipientEmail: detail.recipientEmail || null,
-  recipientAvatar: detail.recipientAvatar || null,
-  readCount: detail.readCount || 0,
-  readers: (detail.readers || []).map(reader => ({
-    accountID: reader.accountID,
-    username: reader.username,
-    email: reader.email,
-    avatar: reader.avatar,
-    readAt: reader.readAt
-  }))
+const normalizeSummary = (n = {}) => ({
+  notificationID: getNotificationId(n),
+  title: n.title,
+  content: n.content,
+  type: n.type || 'ADMIN_MANUAL',
+  createdAt: n.createdAt,
+  isGlobal: [true, 1, 'true', '1'].includes(n.isGlobal),
+  link: resolveNotificationLink(n),
+  accountID: n.accountID || null,
+  recipientUsername: n.recipientUsername || null
 })
 
 const fetchNotifications = async () => {
   loading.value = true
   error.value = null
-
   try {
     const data = await getAdminNotifications()
     notifications.value = (data || []).map(normalizeSummary)
   } catch (e) {
-    error.value = 'Hệ thống thông báo đang bận, vui lòng thử lại sau.'
+    error.value = 'Hệ thống đang bận. Vui lòng thử lại sau.'
   } finally {
     loading.value = false
   }
 }
 
 const openCreateModal = () => {
-  form.value = {
-    sendTo: 'all',
-    targetAccountId: null,
-    title: '',
-    content: '',
-    type: 'GENERAL',
-    link: null
-  }
+  form.value = { sendTo: 'all', targetAccountId: null, title: '', content: '', type: 'ADMIN_MANUAL', link: null }
   showCreateModal.value = true
 }
+const closeCreateModal = () => { showCreateModal.value = false }
 
-const closeCreateModal = () => {
-  showCreateModal.value = false
-}
-
-const openDetailModal = async (notificationID) => {
-  selectedNotificationId.value = notificationID
+const openDetailModal = async (id) => {
+  selectedNotificationId.value = id
   detailLoading.value = true
   detailError.value = ''
   selectedDetail.value = null
   showDetailModal.value = true
-
   try {
-    const data = await getAdminNotificationDetail(notificationID)
-    selectedDetail.value = normalizeDetail(data)
+    const data = await getAdminNotificationDetail(id)
+    selectedDetail.value = data
   } catch (e) {
-    detailError.value = 'Không thể tải chi tiết thông báo lúc này.'
+    detailError.value = 'Không thể tải chi tiết thông báo này.'
   } finally {
     detailLoading.value = false
   }
 }
-
-const closeDetailModal = () => {
-  showDetailModal.value = false
-  selectedDetail.value = null
-  detailError.value = ''
-  selectedNotificationId.value = null
-}
+const closeDetailModal = () => { showDetailModal.value = false }
 
 const submitNotification = async () => {
-  if (!form.value.title?.trim() || !form.value.content?.trim()) {
-    toast.warn('Vui lòng nhập đầy đủ tiêu đề và nội dung thông báo!')
+  if (!form.value.title.trim() || !form.value.content.trim()) {
+    toast.warn('Vui lòng nhập Tiêu đề và Nội dung!')
+    return
+  }
+  if (form.value.sendTo === 'user' && !form.value.targetAccountId) {
+    toast.warn('Vui lòng nhập ID người nhận!')
     return
   }
 
-  if (form.value.sendTo === 'user') {
-    const accountId = Number(form.value.targetAccountId)
-    if (!accountId || Number.isNaN(accountId) || accountId <= 0) {
-      toast.warn('Vui lòng nhập Account ID hợp lệ!')
-      return
-    }
-  }
-
   sending.value = true
-
   try {
     const payload = {
       title: form.value.title.trim(),
       content: form.value.content.trim(),
       type: form.value.type,
-      postID: null,
       link: form.value.link?.trim() || null
     }
 
     if (form.value.sendTo === 'all') {
       await sendAdminNotificationToAll(payload)
-      toast.success('Đã gửi thông báo broadcast thành công!')
+      toast.success('Đã phát hành thông báo toàn hệ thống!')
     } else {
-      const accountId = Number(form.value.targetAccountId)
-      await sendAdminNotificationToUser(accountId, payload)
-      toast.success(`Đã gửi thông báo cho tài khoản #${accountId}!`)
+      await sendAdminNotificationToUser(form.value.targetAccountId, payload)
+      toast.success('Đã gửi thông báo cho người dùng thành công!')
     }
-
     closeCreateModal()
-    await fetchNotifications()
+    fetchNotifications()
   } catch (e) {
-    toast.error(e.response?.data?.message || 'Gửi thông báo thất bại.')
+    toast.error('Gửi thất bại. Vui lòng kiểm tra lại.')
   } finally {
     sending.value = false
   }
 }
 
-const deleteNotificationItem = async (notification) => {
-  if (!window.confirm(`Bạn có chắc chắn muốn xóa thông báo "${notification.title || 'không tiêu đề'}" không?`)) {
-    return
-  }
-
+const deleteNotificationItem = async (n) => {
+  if (!confirm(`Xác nhận xóa thông báo: "${n.title}"?`)) return
   try {
-    await deleteAdminNotification(notification.notificationID)
-    notifications.value = notifications.value.filter(item => item.notificationID !== notification.notificationID)
-
-    if (selectedNotificationId.value === notification.notificationID) {
-      closeDetailModal()
-    }
-
-    toast.success('Đã xóa thông báo thành công.')
+    await deleteAdminNotification(n.notificationID)
+    notifications.value = notifications.value.filter(item => item.notificationID !== n.notificationID)
+    toast.success('Xóa thông báo thành công.')
   } catch (e) {
-    toast.error(e.response?.data?.message || 'Không thể xóa thông báo lúc này.')
+    toast.error('Không thể xóa thông báo.')
   }
 }
 
-const handleRealtimeAdminAlert = (event) => {
-  const dto = event.detail || {}
-  if (String(dto.type || '').toUpperCase() !== 'ADMIN_MANUAL') return
-
-  const id = getNotificationId(dto)
-  if (!id || notifications.value.some(item => item.notificationID === id)) return
-
-  notifications.value.unshift(normalizeSummary(dto))
+const handleRealtimeAlert = (event) => {
+  const dto = event.detail
+  if (String(dto.type || '').toUpperCase() === 'ADMIN_MANUAL') {
+    const id = getNotificationId(dto)
+    if (id && !notifications.value.some(n => n.notificationID === id)) {
+      notifications.value.unshift(normalizeSummary(dto))
+    }
+  }
 }
 
-const handleRealtimeAdminNotification = (event) => {
-  handleRealtimeAdminAlert(event)
-}
-
-onMounted(async () => {
-  await fetchNotifications()
+onMounted(() => {
+  fetchNotifications()
   webSocketService.connect()
-  window.addEventListener('admin-alert', handleRealtimeAdminAlert)
-  window.addEventListener('admin-notification', handleRealtimeAdminNotification)
+  window.addEventListener('admin-alert', handleRealtimeAlert)
 })
 
 onUnmounted(() => {
-  window.removeEventListener('admin-alert', handleRealtimeAdminAlert)
-  window.removeEventListener('admin-notification', handleRealtimeAdminNotification)
+  window.removeEventListener('admin-alert', handleRealtimeAlert)
 })
 </script>
 

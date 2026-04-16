@@ -2,6 +2,10 @@ import SockJS from 'sockjs-client'
 import Stomp from 'stompjs'
 import { useAuthStore } from '@/stores/auth'
 
+// 🚀 1. KHỞI TẠO ÂM THANH (PRE-LOAD)
+const globalMsgSound = new Audio('/sounds/ting.mp3');
+const notificationSound = new Audio('/sounds/notification.mp3');
+
 class WebSocketService {
   constructor() {
     this.stompClient = null
@@ -23,7 +27,7 @@ class WebSocketService {
       return
     }
 
-    if (this.connecting || this.stompClient) {
+    if (this.connecting) {
       console.log('WebSocket connection is already being established')
       return
     }
@@ -33,7 +37,7 @@ class WebSocketService {
 
       const socket = new SockJS('http://localhost:8080/ws')
       this.stompClient = Stomp.over(socket)
-      this.stompClient.debug = () => {}
+      this.stompClient.debug = () => {} // Tắt log debug của Stomp
 
       const headers = {}
       if (authStore.user?.token) {
@@ -101,21 +105,31 @@ class WebSocketService {
       return
     }
 
+    // Delay nhỏ để đảm bảo connection đã ổn định
     setTimeout(() => {
       try {
+        // 🔔 1. Thông báo người dùng cụ thể
         this.subscribe('notifications', `/topic/notifications/${accountId}`, (message) => {
           const notification = JSON.parse(message.body)
           this.handleNotification(notification)
         })
 
+        // 🛡️ 2. Thông báo Admin cụ thể
         this.subscribe('admin-notifications', `/topic/admin-notifications/${accountId}`, (message) => {
           const notification = JSON.parse(message.body)
           this.handleAdminNotification(notification)
         })
 
+        // 📢 3. Cảnh báo Admin toàn hệ thống (Broadcast)
         this.subscribe('admin-alerts', '/topic/admin-alerts', (message) => {
           const alert = JSON.parse(message.body)
           this.handleAdminAlert(alert)
+        })
+
+        // 💬 4. Kênh Chat toàn cầu (Báo âm thanh khi có tin nhắn mới)
+        this.subscribe('global-chat', `/topic/global-chat/${accountId}`, (message) => {
+          const chatData = JSON.parse(message.body)
+          this.handleGlobalChatAlert(chatData)
         })
 
         console.log('All WebSocket subscriptions setup successfully')
@@ -130,8 +144,13 @@ class WebSocketService {
     if (!this.stompClient) return
 
     try {
-      this.subscriptions.get(key)?.unsubscribe?.()
-    } catch {}
+      // Unsubscribe cái cũ nếu tồn tại
+      if (this.subscriptions.has(key)) {
+        this.subscriptions.get(key).unsubscribe()
+      }
+    } catch (e) {
+        console.warn(`Error unsubscribing key ${key}:`, e)
+    }
 
     const subscription = this.stompClient.subscribe(destination, (message) => {
       try {
@@ -146,15 +165,34 @@ class WebSocketService {
   }
 
   handleNotification(notificationDTO) {
+    this.playNotificationSound()
     window.dispatchEvent(new CustomEvent('realtime-notification', { detail: notificationDTO }))
   }
 
   handleAdminNotification(notificationDTO) {
+    this.playNotificationSound()
     window.dispatchEvent(new CustomEvent('admin-notification', { detail: notificationDTO }))
   }
 
   handleAdminAlert(alertDTO) {
+    this.playNotificationSound()
     window.dispatchEvent(new CustomEvent('admin-alert', { detail: alertDTO }))
+  }
+
+  handleGlobalChatAlert(chatData) {
+    this.playChatSound()
+    window.dispatchEvent(new CustomEvent('global-chat-alert', { detail: chatData }))
+  }
+
+  playNotificationSound() {
+    notificationSound.currentTime = 0
+    notificationSound.volume = 0.5
+    notificationSound.play().catch(err => console.warn('Notification sound blocked:', err))
+  }
+
+  playChatSound() {
+    globalMsgSound.currentTime = 0
+    globalMsgSound.play().catch(err => console.warn('Chat sound blocked:', err))
   }
 
   send(destination, body = {}) {
@@ -171,5 +209,4 @@ class WebSocketService {
 }
 
 const webSocketService = new WebSocketService()
-
 export default webSocketService

@@ -184,12 +184,31 @@ const formattedRating = computed(() => {
   box-shadow: 0 0 10px rgba(234, 88, 12, 0.4);
 }
 
-/* --- RESPONSIVE MOBILE --- */
+/* =======================================================
+   🔥 HỆ THỐNG RESPONSIVE (TỐI ƯU MỌI THIẾT BỊ)
+   ======================================================= */
+
+/* --- 1. Màn hình Laptop Nhỏ & Tablet Ngang (Dưới 1024px) --- */
+@media (max-width: 1024px) {
+  .review-summary-luxury { 
+    gap: 32px; 
+    padding: 30px; 
+  }
+  .score-box { 
+    padding-right: 32px; 
+  }
+  .big-score { 
+    font-size: 4rem; 
+  }
+}
+
+/* --- 2. Tablet Dọc & Mobile Ngang (Dưới 768px) --- */
 @media (max-width: 768px) {
   .review-summary-luxury { 
-    flex-direction: column; 
+    flex-direction: column; /* Chuyển từ ngang sang dọc */
     gap: 24px; 
     padding: 24px; 
+    margin-bottom: 24px;
   }
   .score-box { 
     border-right: none; 
@@ -198,7 +217,57 @@ const formattedRating = computed(() => {
     padding-bottom: 24px; 
     width: 100%; 
   }
-  .score-glow { left: 50%; }
-  .rating-bars { width: 100%; }
+  .score-glow { 
+    left: 50%; /* Căn giữa lại vầng hào quang */
+  }
+  .big-score { 
+    font-size: 3.8rem; 
+  }
+  .rating-bars { 
+    width: 100%; 
+  }
+}
+
+/* --- 3. Mobile Lớn (Dưới 600px) --- */
+@media (max-width: 600px) {
+  .review-summary-luxury {
+    border-radius: 20px;
+    padding: 20px;
+  }
+  .big-score {
+    font-size: 3.5rem;
+  }
+  .stars-display {
+    font-size: 1.1rem;
+    margin: 8px 0 6px;
+  }
+  .total-reviews {
+    font-size: 0.75rem;
+  }
+  .bar-row {
+    gap: 12px;
+  }
+  .star-label {
+    width: 32px; /* Thu nhỏ label một chút cho thanh bar dài ra */
+    font-size: 0.85rem;
+    gap: 4px;
+    .s { width: 10px; height: 10px; }
+  }
+}
+
+/* --- 4. Mobile Nhỏ (Dưới 400px - Vd: iPhone SE) --- */
+@media (max-width: 400px) {
+  .review-summary-luxury {
+    padding: 16px;
+  }
+  .score-box {
+    padding-bottom: 16px;
+  }
+  .big-score {
+    font-size: 3.2rem;
+  }
+  .progress-bg {
+    height: 6px; /* Làm mỏng lại thanh progress cho tinh tế trên đt nhỏ */
+  }
 }
 </style>

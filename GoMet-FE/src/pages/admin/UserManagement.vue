@@ -81,7 +81,7 @@
             <th width="15%">VAI TRÒ</th>
             <th width="15%">TRẠNG THÁI</th>
             <th width="10%" class="text-center">ĐIỂM</th>
-            <th width="20%" class="text-right">THAO TÁC</th>
+            <th width="20%" class="text-center">THAO TÁC</th>
           </tr>
         </thead>
         <TransitionGroup tag="tbody" name="list-anim">
@@ -115,8 +115,8 @@
             <td class="text-center">
               <span class="point-badge"><Star :size="14" class="icon-star" fill="currentColor" /> {{ user.point ?? 0 }}</span>
             </td>
-            <td class="text-right">
-              <div class="action-group">
+            <td class="text-center">
+              <div class="action-center-group">
                 <button @click="openDetail(user)" class="btn-action view" title="Xem hồ sơ">
                   <Eye :size="16" />
                 </button>
@@ -129,14 +129,17 @@
                   <Unlock v-else :size="16" />
                 </button>
                 
-                <button v-if="isSuperAdmin && user.role !== 'ADMIN'" 
-                        @click="askPromoteAdmin(user)" 
-                        class="btn-action promote" 
-                        title="Thăng cấp Quản trị viên">
-                  <ArrowUpRight :size="16" />
-                </button>
+                <template v-if="isSuperAdmin">
+                  <button v-if="user.role !== 'ADMIN'" 
+                          @click="askPromoteAdmin(user)" 
+                          class="btn-action promote" 
+                          title="Thăng cấp Quản trị viên">
+                    <ArrowUpRight :size="16" />
+                  </button>
+                  <div v-else class="btn-placeholder"></div>
+                </template>
 
-                </div>
+              </div>
             </td>
           </tr>
 
@@ -368,7 +371,7 @@ const filteredUsers = computed(() => {
 const fetchUsers = async () => {
   isLoading.value = true
   try {
-    const res = await api.get('/admin/accounts')
+    const res = await api.get('/api/admin/member-accounts')
     users.value = res.data.map(u => ({
       ...u,
       role: u.role ? String(u.role).toUpperCase() : (u.isAdmin ? 'ADMIN' : 'USER'),
@@ -425,23 +428,23 @@ const executeAction = async () => {
         reason: type === 'ban' ? reason.trim() : ''
       };
       if (type === 'ban') {
-        await api.patch(`/admin/accounts/${accountID}/ban`, payload);
+        await api.patch(`/api/admin/member-accounts/${accountID}/ban`, payload);
         userRef.isActive = -1;
       } else {
-        await api.patch(`/admin/accounts/${accountID}/unban`, payload);
+        await api.patch(`/api/admin/member-accounts/${accountID}/unban`, payload);
         userRef.isActive = 1;
       }
       toast.success('Cập nhật trạng thái thành công!')
     } 
     
-    // 🔥 CALL API THĂNG CẤP ADMIN (Cần cập nhật Backend bằng hàm Save)
+    // 🔥 CALL API THĂNG CẤP ADMIN
     else if (type === 'promote') {
       const dto = {
         accountID: accountID,
         role: "ADMIN",
         isAdmin: 1
       }
-      await api.put(`/admin/accounts/${accountID}`, dto);
+      await api.put(`/api/admin/member-accounts/${accountID}`, dto);
       userRef.role = 'ADMIN';
       toast.success(`Đã thăng cấp ${userRef.username} làm Quản trị viên!`);
     }
@@ -456,7 +459,7 @@ const executeAction = async () => {
 const openDetail = async (user) => {
   detailModal.value = { show: true, loading: true, user: null }
   try {
-    const res = await api.get(`/admin/accounts/${user.accountID}`)
+    const res = await api.get(`/api/admin/member-accounts/${user.accountID}`)
     const u = res.data;
     detailModal.value.user = {
       ...u,
@@ -525,6 +528,7 @@ onMounted(fetchUsers)
 .data-table-lux td { padding: 16px 24px; border-bottom: 1px solid #F1F5F9; vertical-align: middle; }
 .table-row-lux { transition: 0.3s ease; }
 .table-row-lux:hover { background: #FAFAFA; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
+.text-center { text-align: center !important; }
 
 .user-cell { display: flex; align-items: center; gap: 14px; }
 .avatar-ring-lux { position: relative; display: inline-flex; padding: 3px; border-radius: 50%; background: white; }
@@ -553,7 +557,8 @@ onMounted(fetchUsers)
 .point-badge { font-weight: 700; color: #475569; font-size: 0.95rem; }
 .icon-star { color: #F59E0B; }
 
-.action-group { display: flex; justify-content: flex-end; gap: 10px; }
+/* --- CĂN GIỮA TOÀN BỘ CỘT THAO TÁC --- */
+.action-center-group { display: flex; justify-content: center; align-items: center; gap: 10px; }
 .btn-action { width: 38px; height: 38px; border-radius: 12px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); background: #F1F5F9; color: #64748B; }
 .btn-action:hover:not(.disabled) { transform: translateY(-3px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
 .btn-action:active:not(.disabled) { transform: scale(0.9); }
@@ -562,6 +567,9 @@ onMounted(fetchUsers)
 .unban:hover { background: #16A34A; color: white; box-shadow: 0 4px 10px rgba(22, 163, 74, 0.3); }
 .promote:hover { background: #3B82F6; color: white; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); }
 .btn-action.disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Cục gạch tàng hình để giữ chỗ cho những row không có nút Promote */
+.btn-placeholder { width: 38px; height: 38px; pointer-events: none; visibility: hidden; }
 
 /* --- PROFILE MODAL LUXURY --- */
 .modal-overlay-lux { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(8px); }
