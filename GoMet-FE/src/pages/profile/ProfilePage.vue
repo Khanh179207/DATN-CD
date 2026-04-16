@@ -372,7 +372,7 @@ async function loadProfile(forcedId = null) {
       console.error("Lỗi load categories", e)
     }
     
-    if (!isOwnProfile.value && authStore.user) {
+if (!isOwnProfile.value && authStore.user) {
       try { 
         const status = await checkFollow(authStore.user?.accountID, targetId); 
         isFollowing.value = status === true || status?.following === true 
@@ -383,7 +383,7 @@ async function loadProfile(forcedId = null) {
   } catch (err) {
     if (err.response?.status === 404) { 
       toast.error('Tài khoản không tồn tại.'); 
-      router.push('/') 
+      router.push('/home'); // Giữ theo develop để tránh lỗi đường dẫn toàn hệ thống
     }
     postsLoading.value = false
   }
