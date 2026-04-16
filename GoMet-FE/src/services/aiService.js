@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-// 🔥 API_BASE_URL: Trỏ về Backend của sếp
 const API_BASE_URL = 'http://localhost:8080/api/ai/chef-chat'; 
 
 export const chatWithAIChef = async (chatHistory, newText, dbContext = []) => {
@@ -22,7 +21,7 @@ export const chatWithAIChef = async (chatHistory, newText, dbContext = []) => {
 
     // 🛑 CHẶN ĐỨNG NẾU KHÔNG CÓ TOKEN: Để tránh lỗi 403/401
     if (!token || token === 'null' || token === 'undefined') {
-      return "Sếp ơi, sếp chưa đăng nhập nên tôi không biết sếp là ai để phục vụ rồi! 👨‍🍳";
+      return "Bạn ơi, bạn chưa đăng nhập nên tôi không biết bạn là ai để phục vụ rồi! 👨‍🍳";
     }
 
     // 2. Chuẩn bị ngữ cảnh từ Database
@@ -36,7 +35,7 @@ export const chatWithAIChef = async (chatHistory, newText, dbContext = []) => {
       ${recipesFound || "Không có món nào khớp."}
 
       QUY TẮC:
-      - Xưng "Tôi", gọi người dùng là "Sếp".
+      - Xưng "Tôi", gọi người dùng là "Bạn".
       - Dùng Markdown và Emoji.
       - Gắn [LINK:ID] ngay sau tên món có trong danh sách.`
     };
@@ -71,11 +70,11 @@ export const chatWithAIChef = async (chatHistory, newText, dbContext = []) => {
   } catch (error) {
     // Xử lý lỗi 403 (Token lỏ)
     if (error.response?.status === 403 || error.response?.status === 401) {
-      return "Sếp ơi, Token bị lỗi rồi, sếp đăng nhập lại để tôi nhận diện nhé! 👨‍🍳";
+      return "Bạn ơi, Token bị lỗi rồi, bạn đăng nhập lại để tôi nhận diện nhé! 👨‍🍳";
     }
     
     // Xử lý lỗi 400 (Nếu Groq vẫn báo thiếu gì đó)
     console.error("AI Proxy Error:", error.response?.data || error.message);
-    return "Đầu bếp AI đang bị nghẹn, sếp thử lại sau vài giây nhé! 👨‍🍳";
+    return "Đầu bếp AI đang bị nghẹn, bạn thử lại sau vài giây nhé! 👨‍🍳";
   }
 }

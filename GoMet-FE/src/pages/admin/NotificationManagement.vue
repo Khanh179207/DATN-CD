@@ -23,7 +23,7 @@
     <div v-else>
       <div v-if="notifs.length === 0" class="empty-state">
         <div class="empty-icon">📭</div>
-        Chưa có thông báo nào. Hãy tạo thông báo đầu tiên Sếp nhé!
+        Chưa có thông báo nào. Hãy tạo thông báo đầu tiên
       </div>
       
       <div v-for="n in notifs" :key="n.notificationID" class="notif-item">
@@ -145,11 +145,8 @@ const fetchNotifs = async () => {
   }
 }
 
-// ⚠️ LƯU Ý CHO SẾP VỀ NÚT XÓA:
-// Xóa trên giao diện này gọi API theo ID, nhưng thực chất chỉ xóa 1 dòng của 1 User trong DB.
-// Tạm thời trên giao diện nó sẽ ẩn đi để nhìn gọn mắt.
 const deleteNotif = async (item) => {
-  if (!confirm('Sếp có chắc chắn muốn xóa thông báo này không?')) return
+  if (!confirm('Bạn có chắc chắn muốn xóa thông báo này không?')) return
   try {
     // Tạm gọi xóa bản ghi đại diện
     await api.delete(`/api/admin/notifications/${item.notificationID}`)

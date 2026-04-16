@@ -30,10 +30,7 @@ export const checkFavorite = async (accountID, postID) => {
   return res.data?.isFavorite ?? false
 }
 
-
 // ================= FOLLOWS (THEO DÕI USER) =================
-
-// Kiểm tra đã follow chưa (Lấy logic trả về isFollowing của bạn sếp)
 export const checkFollow = async (followerID, followeeID) => {
   const res = await api.get('/api/follows/check', { 
     params: { followerID, followeeID } 
@@ -57,7 +54,6 @@ export const unfollow = async (followerID, followeeID) => {
   return res.data
 }
 
-// Lấy danh sách đang follow (Tính năng mới của bạn sếp, viết lại bằng async/await cho đồng bộ)
 export const getMyFollows = async (followerID) => {
   const res = await api.get('/api/follows/my-follows', { 
     params: { followerID } 

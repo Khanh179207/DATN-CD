@@ -20,8 +20,6 @@ export const ticketService = {
         return response.data
     },
 
-    // 2. Cập nhật trạng thái Ticket (Tiếp nhận/Hoàn thành/Từ chối)
-    // 🔥 ĐÂY LÀ CHỖ FIX LỖI 400 CỦA SẾP
     updateTicketStatus: async (id, status, note = "") => {
         const url = `/api/admin/tickets/${id}/status?status=${status}`
         

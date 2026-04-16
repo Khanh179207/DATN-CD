@@ -166,19 +166,6 @@
             </div>
           </div>
 
-          <div class="r-divider"></div>
-
-          <div class="receipt-footer">
-            <img :src="`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${receiptModal.txn.orderCode}`" alt="QR Code" class="qr-code">
-            <div class="r-footer-text">
-              <strong>GoMet Enterprise</strong>
-              <p>Mã QR dùng để tra cứu giao dịch trên hệ thống.</p>
-            </div>
-          </div>
-
-          <button class="btn-print" @click="printReceipt">
-            <i class="fa-solid fa-print"></i> In Hóa Đơn
-          </button>
         </div>
       </div>
     </Transition>
@@ -282,8 +269,6 @@ const res = await api.get('/api/admin/transactions')
 const openReceipt = (txn) => {
   receiptModal.value = { show: true, txn }
 }
-
-const printReceipt = () => window.print() 
 
 // --- XUẤT EXCEL (REAL) ---
 const exportToExcel = () => {
@@ -420,19 +405,4 @@ onMounted(fetchTransactions)
 .r-value { color: #0f172a; font-weight: 500; text-align: right; max-width: 60%; }
 .monospace { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #0f172a; }
 
-.receipt-footer { display: flex; align-items: center; gap: 16px; background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 20px; }
-.qr-code { width: 64px; height: 64px; border-radius: 4px; }
-.r-footer-text strong { display: block; color: #0f172a; font-size: 0.9rem; margin-bottom: 4px; }
-.r-footer-text p { margin: 0; font-size: 0.75rem; color: #64748b; line-height: 1.4; }
-
-.btn-print { width: 100%; padding: 12px; border-radius: 8px; background: #f1f5f9; color: #0f172a; border: none; font-weight: 600; font-size: 0.95rem; cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; }
-.btn-print:hover { background: #e2e8f0; }
-
-/* PRINT STYLES */
-@media print {
-  body * { visibility: hidden; }
-  .receipt-card, .receipt-card * { visibility: visible; }
-  .receipt-card { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; border: none; padding: 0; }
-  .detail-close, .btn-print { display: none; }
-}
 </style>

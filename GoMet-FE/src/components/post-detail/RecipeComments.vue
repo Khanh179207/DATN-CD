@@ -238,7 +238,7 @@ const canDelete = (cmt) => {
 }
 
 const onDeleteRequest = (id) => {
-  if (confirm('Sếp có chắc chắn muốn xóa bình luận này không?')) emit('delete-comment', id)
+  if (confirm('Bạn có chắc chắn muốn xóa bình luận này không?')) emit('delete-comment', id)
 }
 
 const openImage = (url) => { modalImage.value = url }

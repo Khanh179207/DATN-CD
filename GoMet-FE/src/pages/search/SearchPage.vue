@@ -187,7 +187,7 @@
         <div v-if="paginatedData.length === 0 && !loading" class="empty-state-depth">
           <div class="icon-3d">🕵️‍♂️</div>
           <h3>Không tìm thấy kết quả</h3>
-          <p>Thử sử dụng từ khóa khác hoặc xóa bộ lọc sếp nhé!</p>
+          <p>Thử sử dụng từ khóa khác hoặc xóa bộ lọc nhé!</p>
           <button class="btn-back-all" @click="resetFilters">Xóa hết bộ lọc</button>
         </div>
       </div>
@@ -368,7 +368,7 @@ const totalPages = computed(() => Math.ceil((currentTab.value === 'recipes' ? al
 const visiblePages = computed(() => {
   const pages = [];
   for (let i = 1; i <= totalPages.value; i++) pages.push(i);
-  return pages; // Đơn giản hóa pagination cho sếp
+  return pages;
 })
 
 const goToPage = (p) => { currentPage.value = p; window.scrollTo({ top: 0, behavior: 'smooth' }); }

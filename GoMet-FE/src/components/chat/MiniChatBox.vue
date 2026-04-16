@@ -255,7 +255,7 @@ const handleSendReaction = (msg, emoji) => {
 // 🚀 HÀM XỬ LÝ GỠ TIN NHẮN (OPTIMISTIC UPDATE CỰC CHUẨN)
 const handleUnsend = (msg) => {
   if (msg.messageID > 1000000000000) {
-    toast.warn("Chờ hệ thống xử lý tin nhắn rồi hãy gỡ nhé sếp!");
+    toast.warn("Chờ hệ thống xử lý tin nhắn rồi hãy gỡ nhé!");
     return;
   }
   if (!confirm("Bạn có chắc chắn muốn thu hồi tin nhắn này?")) return;

@@ -19,7 +19,7 @@
           <i class="fas fa-balance-scale-left"></i>
         </div>
         <h3>Chưa có món ăn nào trên bàn cân</h3>
-        <p>Sếp hãy dạo quanh và chọn ít nhất 2 tuyệt tác để so sánh nhé!</p>
+        <p>Bạn hãy dạo quanh và chọn ít nhất 2 tuyệt tác để so sánh nhé!</p>
         <button class="btn-primary" @click="$router.push('/home')">
           Khám Phá Ngay <i class="fas fa-compass"></i>
         </button>

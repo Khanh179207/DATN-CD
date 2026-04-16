@@ -97,7 +97,6 @@ const goToProfile = () => {
 }
 
 const handleContactUser = async () => {
-  // 🔥 CHẶN TÍNH NĂNG NHẮN TIN TRÊN MOBILE/TABLET (Theo đúng yêu cầu của sếp)
   if (window.innerWidth <= 1024) {
     toast.info('Tính năng nhắn tin hiện chỉ hỗ trợ trên Máy tính!')
     return
@@ -111,7 +110,7 @@ const handleContactUser = async () => {
   const currentUserId = authStore.user?.accountID || authStore.user?.id
 
   if (currentUserId === targetId.value) { 
-    toast.info('Sếp không thể tự nhắn tin cho chính mình đâu nha!')
+    toast.info('Bạn không thể tự nhắn tin cho chính mình đâu nha!')
     return 
   }
   
@@ -162,7 +161,6 @@ const toggleFollow = async () => {
 </script>
 
 <style scoped lang="scss">
-/* --- CORE STYLES (GIỮ NGUYÊN GỐC CỦA SẾP) --- */
 .user-card {
   display: flex;
   flex-direction: column;
@@ -303,7 +301,6 @@ const toggleFollow = async () => {
 
 /* --- 1. Màn hình Tablet dọc & Mobile ngang (Dưới 1024px) --- */
 @media (max-width: 1024px) {
-  /* Ẩn nút chat theo yêu cầu của sếp */
   .hide-on-mobile {
     display: none !important;
   }

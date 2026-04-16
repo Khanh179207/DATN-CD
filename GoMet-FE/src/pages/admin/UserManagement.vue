@@ -300,7 +300,6 @@ import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
 
-// 🔥 ĐIỀU KIỆN SẾP TỔNG: Chỉ user có ID = 1 mới được cấp quyền Admin cho người khác
 const isSuperAdmin = computed(() => {
   return authStore.user && (String(authStore.user.accountID) === '1' || String(authStore.user.id) === '1');
 });

@@ -28,7 +28,7 @@
           <span class="badge yellow">HOT</span>
         </div>
         <div class="card-body">
-          <p class="field-desc">Nhập ID của 3 bài viết nổi bật mà sếp muốn hiển thị lớn trên thanh trượt ở trang chủ.</p>
+          <p class="field-desc">Nhập ID của 3 bài viết nổi bật mà bạn muốn hiển thị lớn trên thanh trượt ở trang chủ.</p>
           <div class="hero-post-grid">
             <div v-for="n in 3" :key="n" class="post-id-input">
               <label>Vị trí số {{ n }}</label>
@@ -110,7 +110,7 @@
               <input type="number" v-model="formData.DEFAULT_FREE_VIEWS" placeholder="3" />
               <span class="suffix">BÀI / NGÀY</span>
             </div>
-            <p class="input-hint mt-2">Mặc định là 3. Sếp có thể tăng thêm hoặc giảm xuống tùy ý.</p>
+            <p class="input-hint mt-2">Mặc định là 3. Bạn có thể tăng thêm hoặc giảm xuống tùy ý.</p>
           </div>
         </div>
       </section>

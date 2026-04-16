@@ -66,7 +66,7 @@
                    </div>
                    <div class="m-drop-body custom-scroll">
                       <div v-if="shoppingStore.items.length === 0" class="m-empty-state">
-                        <p>Giỏ trống sếp ơi!</p>
+                        <p>Giỏ trống!</p>
                       </div>
                       <div v-else v-for="(item, idx) in shoppingStore.items" :key="idx" 
                            class="m-list-item" :class="{ 'checked': item.checked }"

@@ -80,7 +80,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ShieldAlert, Plus, Trash2, Loader2, AlertTriangle, CheckCircle, AlertOctagon, ShieldCheck } from 'lucide-vue-next'
-import api from '@/services/api' // Sếp nhớ đảm bảo import này đúng đường dẫn axios của sếp nhé
+import api from '@/services/api'
 
 // --- STATE ---
 const words = ref([])
