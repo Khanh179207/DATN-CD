@@ -193,11 +193,11 @@ const isFetchingLikes = ref(false)
 const displayCategory = computed(() => (props.post.categoryName || props.post.category || 'MÓN NGON').toUpperCase())
 const formattedDate = computed(() => {
   const ds = props.post.publishDate || props.post.createdAt;
-  return ds ? new Date(ds).toLocaleDateString('vi-VN') : new Date().toLocaleDateString('vi-VN');
+  return ds ? new Date(ds).toLocaleDateString('vi-VN') : 'Đã đăng';
 })
 const isNewToday = computed(() => {
   const ds = props.post.publishDate || props.post.createdAt;
-  if (!ds) return true;
+  if (!ds) return false;
   return new Date(ds).toDateString() === new Date().toDateString();
 })
 const formatNumber = (n) => n >= 1000 ? (n / 1000).toFixed(1) + 'k' : (n || 0)

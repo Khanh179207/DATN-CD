@@ -42,11 +42,14 @@
                 />
               </div>
               <transition name="fade">
-                <div v-if="previewData['HERO_POST_' + n]" class="post-preview-card">
+                <div v-if="previewData['HERO_POST_' + n]" class="post-preview-card" :class="{ 'error-border': previewData['HERO_POST_' + n].error }">
                   <Loader2 v-if="previewData['HERO_POST_' + n].loading" :size="16" class="spin-icon text-gray" />
                   
                   <template v-else-if="previewData['HERO_POST_' + n].error">
-                    <span class="text-red">{{ previewData['HERO_POST_' + n].errorMsg || '❌ Không tồn tại' }}</span>
+                    <div class="error-detail">
+                      <span class="text-red">❌ {{ previewData['HERO_POST_' + n].errorMsg || 'Không tồn tại' }}</span>
+                      <small class="tech-code" v-if="previewData['HERO_POST_' + n].status">Mã lỗi: {{ previewData['HERO_POST_' + n].status }}</small>
+                    </div>
                   </template>
 
                   <template v-else>
@@ -91,6 +94,23 @@
               <label>Thời gian Kết thúc</label>
               <input type="datetime-local" v-model="formData.HOLIDAY_END" class="lux-datetime-input focus-anim-pink" />
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="config-card">
+        <div class="card-header">
+          <div class="icon-title"><Users :size="20" class="text-blue" /> <h3>Đặc quyền Hội viên Thường</h3></div>
+          <span class="badge blue">LIMITS</span>
+        </div>
+        <div class="card-body">
+          <div class="input-group">
+            <label>Giới hạn bài viết được xem miễn phí hằng ngày</label>
+            <div class="input-with-suffix focus-anim">
+              <input type="number" v-model="formData.DEFAULT_FREE_VIEWS" placeholder="3" />
+              <span class="suffix">BÀI / NGÀY</span>
+            </div>
+            <p class="input-hint mt-2">Mặc định là 3. Sếp có thể tăng thêm hoặc giảm xuống tùy ý.</p>
           </div>
         </div>
       </section>
@@ -162,14 +182,16 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { Settings, CreditCard, Megaphone, UploadCloud, Save, Loader2, Star, Hash, Trash2, Gift } from 'lucide-vue-next'
+import { Settings, CreditCard, Megaphone, UploadCloud, Save, Loader2, Star, Hash, Trash2, Gift, Users } from 'lucide-vue-next'
 import api from '@/services/api'
 import { uploadMedia } from '@/services/uploadService'
 import { toast } from '@/composables/useToast'
+import { useAuthStore } from '@/stores/auth'
 
 const adsInput = ref(null)
 const isLoading = ref(true)
 const isSaving = ref(false)
+const authStore = useAuthStore()
 
 const packages = [
   { key: 'PREMIUM_PRICE_1_MONTH', label: 'Gói 1 Tháng', placeholder: '49000' },
@@ -183,7 +205,8 @@ const formData = ref({
   ADS_BANNER_IMG: '', ADS_TARGET_URL: '',
   FREE_ACCESS_EVENT: 'FALSE', 
   HOLIDAY_START: '', 
-  HOLIDAY_END: ''
+  HOLIDAY_END: '',
+  DEFAULT_FREE_VIEWS: '3' // 🔥 Mặc định cho tất cả user
 })
 
 const previewData = ref({ HERO_POST_1: null, HERO_POST_2: null, HERO_POST_3: null })
@@ -219,7 +242,8 @@ const handleInputDebounce = (key) => {
 // 🔥 ĐÃ SỬA: Chặn không cho gắn bài ẩn/chưa duyệt
 const fetchPostPreview = async (key, postId) => {
   try {
-    const res = await api.get(`/api/posts/${postId}`);
+    const adminId = authStore.user?.accountID || authStore.user?.id;
+    const res = await api.get(`/api/posts/${postId}`, { params: { accountId: adminId } });
     const p = res.data?.data || res.data;
 
     // Kiểm tra trạng thái bài viết
@@ -250,8 +274,16 @@ const fetchPostPreview = async (key, postId) => {
       author: p.authorName || p.account?.username
     };
   } catch (e) { 
-    previewData.value[key] = { loading: false, error: true, errorMsg: '❌ Không tồn tại' }; 
-    formData.value[key] = ''; // Xóa luôn nếu ID không tồn tại
+    console.error('Lỗi lấy thông tin bài viết:', e);
+    previewData.value[key] = { 
+      loading: false, 
+      error: true,
+      status: e.response?.status,
+      errorMsg: e.response?.data?.message || 'Không tìm thấy bài viết'
+    }; 
+    if (e.response?.status === 404) {
+      formData.value[key] = '';
+    }
   }
 }
 
@@ -442,6 +474,11 @@ onMounted(fetchConfigs)
 .preview-info { display: flex; flex-direction: column; overflow: hidden; }
 .p-title { font-weight: 700; font-size: 0.9rem; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .p-author { font-size: 0.75rem; color: #64748b; margin-top: 2px; }
+
+/* Error Diagnostics Styling */
+.post-preview-card.error-border { border-color: #fecaca; background: #fff1f2; }
+.error-detail { display: flex; flex-direction: column; gap: 2px; text-align: left; }
+.tech-code { font-size: 0.7rem; color: #f87171; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
 
 /* PRICING GRID */
 .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }

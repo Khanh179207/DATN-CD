@@ -225,7 +225,7 @@ const fetchAll = async () => {
     const [postsRes, eventsRes, usersRes, ticketsRes, appealsRes, commentsRes, notifRes] = await Promise.allSettled([
       api.get('/api/admin/posts'),
       api.get('/api/events'),
-      api.get('/admin/accounts'),
+      api.get('/api/admin/member-accounts'),
       api.get('/api/admin/tickets'),
       api.get('/api/admin/appeals'),
       api.get('/api/admin/comments'),

@@ -89,7 +89,7 @@ public class AuthController {
                     finalUsername = finalUsername + "_" + new Random().nextInt(10000);
                 }
 
-                // 🔥 ĐÃ SỬA: Đóng dấu "GOOGLE_" vào trước chuỗi băm để nhận diện
+                // 🔥 TỪ DEVELOP: Đóng dấu "GOOGLE_" vào trước chuỗi băm để nhận diện
                 String randomPassword = "GOOGLE_" + passwordEncoder.encode(UUID.randomUUID().toString());
 
                 acc = Account.builder()
@@ -124,7 +124,7 @@ public class AuthController {
 
         Account acc = opt.get();
 
-        // 🔥 ĐÃ SỬA: Nếu cố tình dùng form login thường cho acc Google chưa đổi pass -> Chặn
+        // 🔥 TỪ DEVELOP: Chặn cố tình dùng form login thường cho acc Google chưa đổi pass
         if (acc.getPassword() != null && acc.getPassword().startsWith("GOOGLE_")) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("message", "Tài khoản của bạn đăng ký qua Google. Vui lòng sử dụng nút 'Đăng nhập bằng Google' hoặc thiết lập mật khẩu mới trong Profile!"));
@@ -279,7 +279,7 @@ public class AuthController {
     }
 
     // ─── ACCOUNT RESTORATION (KHÔI PHỤC TÀI KHOẢN) ──────────────────────────────
-    
+
     /** Bước 1: Gửi OTP khôi phục */
     @PostMapping("/send-restore-otp")
     public ResponseEntity<?> sendRestoreOtp(@RequestBody Map<String, String> req) {
@@ -298,21 +298,21 @@ public class AuthController {
         String email = req.get("email");
         String password = req.get("password");
         String otp = req.get("otp");
-        
-    try {
-        accountService.verifyAndRestore(email, password, otp);
-        
-        // 🔥 Lấy lại tài khoản vừa khôi phục để tạo token đăng nhập luôn
-        Account acc = accountDAO.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản sau khi khôi phục"));
-        
-        String role = (acc.getIsAdmin() != null && acc.getIsAdmin() == 1) ? "ADMIN" : "USER";
-        String jwtToken = jwtUtils.generateJwtToken(acc.getEmail(), acc.getAccountID(), role);
-        
-        return ResponseEntity.ok(buildResponse(acc, jwtToken));
-    } catch (Exception e) {
-        return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
-    }
+
+        try {
+            accountService.verifyAndRestore(email, password, otp);
+
+            // 🔥 Lấy lại tài khoản vừa khôi phục để tạo token đăng nhập luôn
+            Account acc = accountDAO.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản sau khi khôi phục"));
+
+            String role = (acc.getIsAdmin() != null && acc.getIsAdmin() == 1) ? "ADMIN" : "USER";
+            String jwtToken = jwtUtils.generateJwtToken(acc.getEmail(), acc.getAccountID(), role);
+
+            return ResponseEntity.ok(buildResponse(acc, jwtToken));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 
     // ─── HELPERS ─────────────────────────────────────────────────────────────
@@ -326,7 +326,10 @@ public class AuthController {
         res.setIsPremium(acc.getIsPremium());
         res.setToken(jwtToken);
 
-        // 🔥 THÊM ĐÚNG ĐOẠN NÀY ĐỂ FRONTEND BIẾT LÀ ACC GOOGLE
+        // 🔥 Đã phục hồi: Trả về Point như code ban đầu của bạn
+        res.setPoint(acc.getPoint() != null ? acc.getPoint() : 0);
+
+        // 🔥 TỪ DEVELOP: Cấu hình Provider để frontend biết là local hay google
         String currentProvider = "local";
         if (acc.getPassword() != null && acc.getPassword().startsWith("GOOGLE_")) {
             currentProvider = "google";

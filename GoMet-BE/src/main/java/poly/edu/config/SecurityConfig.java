@@ -78,7 +78,7 @@ public class SecurityConfig {
                         ).permitAll()
 
                         // 🔒 PHÂN QUYỀN ĐẶC BIỆT
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
                         // 🔒 TẤT CẢ CÁC REQUEST CÒN LẠI: Phải đăng nhập (Có Token hợp lệ)
                         .anyRequest().authenticated()

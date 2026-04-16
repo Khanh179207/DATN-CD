@@ -209,7 +209,7 @@ const fetchHeroData = async () => {
         .filter(id => id && String(id).trim() !== '' && !isNaN(Number(id)));
 
       if (ids.length > 0) {
-        const promises = ids.map(id => api.get(`/api/posts/${id}`).then(res => res.data?.data || res.data).catch(() => null));
+        const promises = ids.map(id => api.get(`/api/posts/${id}/summary`).then(res => res.data?.data || res.data).catch(() => null));
         const results = await Promise.all(promises);
         fetchedPosts = results.filter(p => p !== null && (p.postID || p.id));
       }
@@ -227,10 +227,10 @@ const fetchHeroData = async () => {
           .filter(lp => !fetchedPosts.find(fp => (fp.postID || fp.id) === (lp.postID || lp.id)))
           .slice(0, needed);
 
-        // 🔥 FIX LỖI SỐ BƯỚC: Gọi API lấy "Chi Tiết" cho các bài bù vào để lấy được mảng steps
+        // 🔥 FIX LỖI 401 & LỖI VIEW LIMIT: Dùng summary thay vì get chi tiết
         const extraPromises = extraSummaries.map(summary => {
             const id = summary.postID || summary.id;
-            return api.get(`/api/posts/${id}`)
+            return api.get(`/api/posts/${id}/summary`)
                       .then(res => res.data?.data || res.data)
                       .catch(() => summary); // Lỗi thì dùng lại bản tóm tắt
         });

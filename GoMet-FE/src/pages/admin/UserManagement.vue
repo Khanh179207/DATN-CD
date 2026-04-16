@@ -371,7 +371,7 @@ const filteredUsers = computed(() => {
 const fetchUsers = async () => {
   isLoading.value = true
   try {
-    const res = await api.get('/admin/accounts')
+    const res = await api.get('/api/admin/member-accounts')
     users.value = res.data.map(u => ({
       ...u,
       role: u.role ? String(u.role).toUpperCase() : (u.isAdmin ? 'ADMIN' : 'USER'),
@@ -428,10 +428,10 @@ const executeAction = async () => {
         reason: type === 'ban' ? reason.trim() : ''
       };
       if (type === 'ban') {
-        await api.patch(`/admin/accounts/${accountID}/ban`, payload);
+        await api.patch(`/api/admin/member-accounts/${accountID}/ban`, payload);
         userRef.isActive = -1;
       } else {
-        await api.patch(`/admin/accounts/${accountID}/unban`, payload);
+        await api.patch(`/api/admin/member-accounts/${accountID}/unban`, payload);
         userRef.isActive = 1;
       }
       toast.success('Cập nhật trạng thái thành công!')
@@ -444,7 +444,7 @@ const executeAction = async () => {
         role: "ADMIN",
         isAdmin: 1
       }
-      await api.put(`/admin/accounts/${accountID}`, dto);
+      await api.put(`/api/admin/member-accounts/${accountID}`, dto);
       userRef.role = 'ADMIN';
       toast.success(`Đã thăng cấp ${userRef.username} làm Quản trị viên!`);
     }
@@ -459,7 +459,7 @@ const executeAction = async () => {
 const openDetail = async (user) => {
   detailModal.value = { show: true, loading: true, user: null }
   try {
-    const res = await api.get(`/admin/accounts/${user.accountID}`)
+    const res = await api.get(`/api/admin/member-accounts/${user.accountID}`)
     const u = res.data;
     detailModal.value.user = {
       ...u,

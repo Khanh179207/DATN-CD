@@ -3,9 +3,19 @@
     { 'is-scrolled': isScrolled },
     { 'is-dark-theme': isDark }
   ]">
-    <SearchBox />
+    <div class="header-left-side">
+      <!-- GoMetCoin Point Display -->
+      <button v-if="authStore.isAuthenticated" class="btn-gomet-coin" @click="uiStore.openStore()">
+        <span class="coin-icon">✨</span>
+        <span class="coin-amount">{{ authStore.user?.point || 0 }}</span>
+        <span class="coin-label">GoMetCoin</span>
+      </button>
+
+      <SearchBox />
+    </div>
 
     <div class="header-right">
+
       <button class="btn-create-post" @click="handleCreatePost">
         <span class="plus-icon">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -164,6 +174,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useChatStore } from '@/stores/chat'
 import { useShoppingStore } from '@/stores/shopping'
+import { useUIStore } from '@/stores/ui'
 import UserMenu from './UserMenu.vue'
 import LangSwitcher from '@/components/common/LangSwitcher.vue'
 import MapModal from '@/components/modals/MapModal.vue'
@@ -173,11 +184,12 @@ import { getNotifications, markNotificationRead, markAllNotificationsRead as api
 import webSocketService from '@/services/webSocketService'
 import { toast } from '@/composables/useToast'
 
-const emit = defineEmits(['open-login', 'open-register', 'open-premium'])
+const emit = defineEmits(['open-login', 'open-register', 'open-premium', 'open-store'])
 
 const authStore = useAuthStore();
 const chatStore = useChatStore();
 const shoppingStore = useShoppingStore();
+const uiStore = useUIStore();
 const router = useRouter();
 const route = useRoute();
 

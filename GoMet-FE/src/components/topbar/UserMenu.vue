@@ -15,7 +15,7 @@
 
     <div v-show="isOpen && authStore.user" class="luxury-compact-dropdown" ref="dropdownPanel">
       
-      <div class="user-header-luxury" :class="{ 'header-premium': isPremiumUser, 'header-admin': isAdminUser, 'header-holiday': isHolidayEventActive && !isPremiumUser && !isAdminUser }">
+      <div class="user-header-luxury" :class="{ 'header-premium': isPremiumUser, 'header-admin': isAdminUser }">
         <div class="header-visual-effect"></div> 
         <div class="header-info-content">
           <div class="header-avt-mini-wrap" :class="{ 'vip-border': isPremiumUser }">
@@ -34,12 +34,22 @@
             <div class="user-id-badge">ID: {{ authStore.user?.id || authStore.user?.accountID }}</div>
             
             <div v-if="!isPremiumUser && !isAdminUser" class="daily-view-limit-info">
-              <span class="limit-label">{{ isHolidayEventActive ? 'Sự kiện :' : 'Lượt xem hôm nay:' }}</span>
-              <span class="limit-count" :class="{ 'text-pink': isHolidayEventActive }">{{ isHolidayEventActive ? 'truy cập thả ga' : `${remainingViews}/3` }}</span>
+              <span class="limit-label">Lượt xem hôm nay:</span>
+              <span class="limit-count" :class="{ 'text-danger': remainingViews === 0 }">{{ remainingViews }}/{{ maxViews }}</span>
               
-              <button v-if="!isHolidayEventActive" @click.stop="authStore.resetViews" class="btn-reset-views-demo" title="Reset (Demo)">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-              </button>
+              <div class="demo-actions">
+                <button @click.stop="fetchViewLimits" class="btn-refresh-views" title="Làm mới">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                  </svg>
+                </button>
+                <button @click.stop="handleResetDemo" class="btn-reset-demo" title="Reset Lượt Xem (Demo)">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -108,25 +118,66 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick, onMounted } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { toast } from '@/composables/useToast'
+import api from '@/services/api'
 import { usePostViewLimit } from '@/composables/usePostViewLimit'
 import gsap from 'gsap'
 
 const authStore = useAuthStore()
 const router = useRouter()
 const isOpen = ref(false)
-const { remainingViews, isHolidayEventActive, checkGlobalHolidayStatus } = usePostViewLimit()
+
+// 🔥 KẾT HỢP: Lấy logic ngày lễ từ develop và logic đồng bộ của sếp
+const { isHolidayEventActive, checkGlobalHolidayStatus } = usePostViewLimit()
+const remainingViews = ref(0)
+const maxViews = ref(0)
 
 const dropdownPanel = ref(null)
 const avatarCircle = ref(null)
 
 const emit = defineEmits(['open-premium', 'open-support', 'switch-account'])
 
-onMounted(() => {
-  checkGlobalHolidayStatus()
+const fetchViewLimits = async () => {
+  if (authStore.user?.accountID) {
+    try {
+      // 🔥 ĐỒNG BỘ LUÔN POINT VÀ PREMIUM TỪ SERVER (Tránh cache localStorage khi sếp sửa SQL)
+      await authStore.refreshProfile();
+
+      const res = await api.get(`/api/users/${authStore.user.accountID}/view-limits`);
+      remainingViews.value = res.data.remainingViews;
+      maxViews.value = res.data.maxViews;
+    } catch(e) { }
+  }
+}
+
+const handleResetDemo = async () => {
+  if (authStore.user?.accountID) {
+    try {
+      await api.post(`/api/users/${authStore.user.accountID}/reset-today-views`);
+      toast.success('Đã reset lượt xem hôm nay (Demo)');
+      fetchViewLimits(); // Lấy lại số lượt xem mới sau khi reset
+    } catch(e) {
+      toast.error('Lỗi khi reset lượt xem');
+    }
+  }
+}
+
+onMounted(async () => {
+  // Check trạng thái ngày lễ trước
+  await checkGlobalHolidayStatus();
+  
+  if (authStore.user?.accountID) {
+    fetchViewLimits();
+  }
+  // 🔥 LẮNG NGHE SỰ KIỆN CẬP NHẬT LƯỢT XEM TỪ CÁC COMPONENT KHÁC
+  window.addEventListener('ui:view-limits-updated', fetchViewLimits);
+})
+
+onUnmounted(() => {
+  window.removeEventListener('ui:view-limits-updated', fetchViewLimits);
 })
 
 const handleToggle = async () => {
@@ -257,7 +308,24 @@ const handleLogout = async () => {
       .limit-label { font-size: 10px; color: #64748b; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       .limit-count { font-size: 11px; color: #EA580C; font-weight: 800; white-space: nowrap; flex-shrink: 0; }
       .limit-count.text-pink { color: #db2777; font-size: 12px; }
-      .btn-reset-views-demo { background: none; border: none; padding: 2px; margin-left: 4px; color: #94a3b8; cursor: pointer; display: flex; align-items: center; transition: color 0.2s, transform 0.2s; &:hover { color: #EA580C; transform: rotate(30deg); } }
+      .demo-actions {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-left: 4px;
+      }
+
+      .btn-refresh-views, .btn-reset-demo {
+        background: none; border: none; padding: 2px;
+        color: #94a3b8; cursor: pointer; display: flex; align-items: center;
+        transition: color 0.2s, transform 0.2s;
+        &:hover { color: #EA580C; transform: rotate(180deg); }
+      }
+      
+      .btn-reset-demo {
+        color: #ef4444; /* Màu đỏ cho nút demo reset */
+        &:hover { color: #f59e0b; transform: scale(1.2) rotate(0deg); }
+      }
     }
   }
 

@@ -109,6 +109,7 @@ export const useAuthStore = defineStore('auth', () => {
       isPremium: data.isPremium,
       token:     data.token || user.value?.token, // Giữ token cũ nếu refresh
       role:      data.isAdmin ? 'admin' : 'user',
+      point:     data.point !== undefined ? data.point : (user.value?.point || 0),
       /* START: Daily View Limit Persistence Logic */
       remainingPostViews: views,
       lastViewDate: today,

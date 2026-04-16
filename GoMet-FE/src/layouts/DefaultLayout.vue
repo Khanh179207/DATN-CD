@@ -42,6 +42,7 @@
         @open-premium="showPremium = true" 
         @open-login="openAuth('login')" 
         @open-register="openAuth('register')" 
+        @open-store="showStoreModal = true"
         @logout="handleLogout"
       />
 
@@ -75,7 +76,14 @@
        <AuthModal v-if="showAuthModal" :initial-view="modalTab" @close="showAuthModal = false" />
        <PremiumModal :is-open="showPremium" @close="handleClosePremium" @upgraded="handleUpgraded" @start-test-timer="handleStartTestTimer" />
        <ExpiredModal :is-open="showExpired" @renew="handleRenew" @cancel="handleCancel" />
-       <MealplanModal v-if="showMealplanModal" :post-data="mealplanData" @close="showMealplanModal = false" />
+       <MealplanModal 
+         v-if="showMealplanModal" 
+         :post-data="mealplanData" 
+         @close="showMealplanModal = false" 
+       />
+       
+       <!-- NEW: GOMET STORE MODAL (Mạng lưới Pinia) -->
+       <StoreModal v-if="uiStore.isStoreOpen" :is-open="uiStore.isStoreOpen" @close="uiStore.closeStore" />
     </Teleport>
   </div>
 </template>
@@ -97,6 +105,9 @@ import AuthModal from '@/components/modals/AuthModal.vue'
 import PremiumModal from '@/components/modals/PremiumModal.vue'
 import ExpiredModal from '@/components/modals/ExpiredModal.vue'
 import MealplanModal from '@/components/modals/MealplanModal.vue'
+// 🔥 IMPORT STORE MODAL & UI STORE
+import StoreModal from '@/components/modals/StoreModal.vue'
+import { useUIStore } from '@/stores/ui'
 
 import MiniChatBox from '@/components/chat/MiniChatBox.vue'
 import ChatSidebar from '@/components/chat/ChatSidebar.vue'
@@ -140,6 +151,9 @@ const showExpired = ref(false);
 const isEnforcingRenewal = ref(false); 
 const modalTab = ref('login'); 
 const aiChatRef = ref(null);
+const uiStore = useUIStore();
+
+// 🔥 TRẠNG THÁI CHO MEALPLAN MODAL
 const showMealplanModal = ref(false);
 const mealplanData = ref(null);
 
@@ -158,6 +172,9 @@ const handleRestorePrompt = (e) => {
 onMounted(() => {
   if (sessionStorage.getItem('just_logged_in') === 'true') startLoadingAnimation();
   window.addEventListener('ui:open-premium', () => { showPremium.value = true; })
+  window.addEventListener('ui:open-store', () => { uiStore.openStore(); })
+  
+  // 🔥 LẮNG NGHE CÁC SỰ KIỆN TỪ HỆ THỐNG
   window.addEventListener('ui:open-mealplan', handleOpenMealplan)
   window.addEventListener('auth:restore-login-prompt', handleRestorePrompt)
   checkScreenSize();
@@ -178,6 +195,7 @@ onUnmounted(() => {
   if (ctx) ctx.revert();
   window.removeEventListener('ui:open-mealplan', handleOpenMealplan);
   window.removeEventListener('auth:restore-login-prompt', handleRestorePrompt);
+  window.removeEventListener('ui:open-store', () => { uiStore.openStore(); }); 
   window.removeEventListener('resize', checkScreenSize);
 })
 

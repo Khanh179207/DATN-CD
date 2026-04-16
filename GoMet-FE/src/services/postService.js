@@ -14,12 +14,11 @@ export const getLatestPosts = (limit = 8) =>
 export const getPosts = (page = 1, size = 12) =>
   api.get('/api/posts', { params: { page, size } }).then(r => r.data)
 
-/**
- * @param {number|string} id
- * @returns {Promise<Object>} PostDetailDTO
- */
-export const getPostById = (id) =>
-  api.get(`/api/posts/${id}`).then(r => r.data)
+export const getPostById = (id) => {
+  const user = JSON.parse(localStorage.getItem('user') || 'null')
+  const accountId = user?.accountID || null
+  return api.get(`/api/posts/${id}`, { params: { accountId } }).then(r => r.data)
+}
 
 // 🔥 CODE MỚI THÊM VÀO: Hàm ghi nhận lượt xem
 /**

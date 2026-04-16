@@ -6,9 +6,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize; // 🔥 IMPORT THẺ BẢO VỆ
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dao.AccountDAO;
+import poly.edu.dao.SystemConfigDAO;
 import poly.edu.dao.FollowDAO;
 import poly.edu.dao.InteractionLogDAO;
 import poly.edu.dao.PostDAO;
@@ -16,6 +17,7 @@ import poly.edu.dao.CommentDAO;
 import poly.edu.dao.TicketDAO;
 import poly.edu.dto.UserProfileDTO;
 import poly.edu.entity.Account;
+import poly.edu.entity.History;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
@@ -36,13 +38,18 @@ public class UserController {
     private final FollowDAO followDAO;
     private final poly.edu.service.AccountService accountService;
 
+    // 🔥 TỪ NHÁNH CỦA BẠN: Các DAO phục vụ điểm thưởng, Premium và Lượt xem
+    private final poly.edu.dao.HistoryDAO historyDAO;
+    private final SystemConfigDAO systemConfigDAO;
+
+    // 🔥 TỪ NHÁNH DEVELOP: Các DAO phục vụ Lịch sử Bình luận và Hỗ trợ
     private final CommentDAO commentDAO;
     private final TicketDAO ticketDAO;
 
     @Autowired
     private InteractionLogDAO interactionLogDAO;
 
-    // 🔥 HÀM HELPER ĐỌ MẬT KHẨU THÔNG MINH (DÙNG CHUNG)
+    // 🔥 HÀM HELPER ĐỌ MẬT KHẨU THÔNG MINH (DÙNG CHUNG TỪ DEVELOP)
     private boolean isPasswordMatch(String rawPassword, String savedPassword) {
         if (rawPassword == null || savedPassword == null) return false;
         if (savedPassword.startsWith("$2a$") || savedPassword.startsWith("$2b$")) {
@@ -51,10 +58,11 @@ public class UserController {
         return rawPassword.equals(savedPassword);
     }
 
-    // 🟢 PUBLIC: Xem profile
+    // 🟢 PUBLIC: Lấy profile
     @GetMapping("/{id}")
     public ResponseEntity<UserProfileDTO> getProfile(@PathVariable Integer id) {
         return accountDAO.findById(id).map(acc -> {
+            // 🛡️ CHỈ CHO PHÉP XEM PROFILE NẾU TÀI KHOẢN ĐANG HOẠT ĐỘNG
             if (acc.getIsActive() != 1) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).<UserProfileDTO>build();
             }
@@ -64,7 +72,7 @@ public class UserController {
     }
 
     // 🟡 USER ONLY: Sửa đổi thông tin cơ bản
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("isAuthenticated()") // 🔥 CHỐT CHẶN VÀNG: Ngăn chặn sửa đổi trái phép
     @PutMapping("/{id}")
     public ResponseEntity<?> updateProfile(
             @PathVariable Integer id,
@@ -76,11 +84,13 @@ public class UserController {
         if (body.containsKey("avatar")) acc.setAvatar(body.get("avatar"));
         if (body.containsKey("bio")) acc.setBio(body.get("bio"));
 
+        // Lưu ý: Đã bỏ cập nhật password ở đây vì DEVELOP đã có API /change-password chuyên dụng
+
         accountDAO.save(acc);
         return ResponseEntity.ok(toDTO(acc));
     }
 
-    // 🟢 PUBLIC: Lấy chỉ số
+    // 🟢 PUBLIC: Lấy chỉ số (Sử dụng hàm đếm mới từ DEVELOP)
     @GetMapping("/{id}/stats")
     public ResponseEntity<?> getStats(@PathVariable Integer id) {
         Account acc = accountDAO.findById(id).orElse(null);
@@ -142,7 +152,7 @@ public class UserController {
         dto.setBio(acc.getBio());
         dto.setCreatedAt(acc.getCreatedAt());
 
-
+        // 🔥 TỪ DEVELOP: Thêm Provider
         String currentProvider = "local";
         if (acc.getPassword() != null && acc.getPassword().startsWith("GOOGLE_")) {
             currentProvider = "google";
@@ -153,6 +163,7 @@ public class UserController {
                 .filter(p -> p.getIsApproved() == 1 && p.getIsActive() == 1).count() : 0;
         dto.setPostCount(postCount);
 
+        // 🔥 TỪ DEVELOP: Đếm Follower tối ưu hơn
         long followerCount = followDAO.countActiveFollowers(acc.getAccountID());
         dto.setFollowerCount(followerCount);
 
@@ -163,6 +174,7 @@ public class UserController {
                 .mapToLong(p -> p.getViews() != null ? p.getViews() : 0).sum() : 0;
         dto.setTotalViews(totalViews);
 
+        // 🔥 TỪ DEVELOP: Thêm Total Likes
         long totalLikes = acc.getPosts() != null ? acc.getPosts().stream()
                 .filter(p -> p.getIsApproved() == 1 && p.getIsActive() == 1)
                 .mapToLong(p -> p.getLikeCount() != null ? p.getLikeCount() : 0).sum() : 0;
@@ -176,8 +188,7 @@ public class UserController {
         return switch (timeframe.toLowerCase()) {
             case "day" -> LocalDateTime.now().with(java.time.LocalTime.MIN);
             case "month" -> LocalDateTime.now().minusMonths(1);
-            case "year" ->
-                    LocalDateTime.now().with(java.time.temporal.TemporalAdjusters.firstDayOfYear()).with(java.time.LocalTime.MIN);
+            case "year" -> LocalDateTime.now().with(java.time.temporal.TemporalAdjusters.firstDayOfYear()).with(java.time.LocalTime.MIN);
             default -> LocalDateTime.now().minusMonths(1);
         };
     }
@@ -190,6 +201,7 @@ public class UserController {
     @PostMapping("/{id}/send-deactivate-otp")
     public ResponseEntity<?> sendDeactivateOtp(@PathVariable Integer id, @RequestBody Map<String, String> body) {
         try {
+            // 🔥 TỪ DEVELOP: Yêu cầu mật khẩu trước khi gửi OTP vô hiệu hóa
             String password = body.get("password");
             accountService.sendDeactivateOTP(id, password);
             return ResponseEntity.ok(Map.of("message", "Mã xác thực đã được gửi về Email của bạn."));
@@ -212,7 +224,7 @@ public class UserController {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 🔥 NEW: API ĐỔI MẬT KHẨU (CHANGE PASSWORD)
+    // 🔥 TỪ DEVELOP: API ĐỔI MẬT KHẨU (CHANGE PASSWORD)
     // ─────────────────────────────────────────────────────────────────────────
 
     @PreAuthorize("isAuthenticated()")
@@ -238,7 +250,7 @@ public class UserController {
             Account acc = accountDAO.findById(id)
                     .orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại."));
 
-            // 1. Kiểm tra mật khẩu cũ (SỬA LẠI: Dùng hàm đọ pass thông minh)
+            // Kiểm tra mật khẩu cũ (Dùng hàm đọ pass thông minh)
             if (!isGoogleUser) {
                 if (oldPassword == null) {
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Vui lòng nhập mật khẩu hiện tại."));
@@ -250,10 +262,10 @@ public class UserController {
                 }
             }
 
-            // 2. Xác thực mã OTP thông qua AccountService
+            // Xác thực mã OTP thông qua AccountService
             accountService.verifyPasswordChangeOTP(id, otp);
 
-            // 3. Tiến hành mã hóa và lưu mật khẩu mới
+            // Tiến hành mã hóa và lưu mật khẩu mới
             acc.setPassword(passwordEncoder.encode(newPassword));
             accountDAO.save(acc);
 
@@ -264,7 +276,7 @@ public class UserController {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // LẤY DANH SÁCH BÌNH LUẬN & PHIẾU HỖ TRỢ
+    // 🔥 TỪ DEVELOP: LẤY DANH SÁCH BÌNH LUẬN & PHIẾU HỖ TRỢ
     // ─────────────────────────────────────────────────────────────────────────
 
     @GetMapping("/{id}/comments")
@@ -284,5 +296,112 @@ public class UserController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("message", "Lỗi lấy phiếu hỗ trợ: " + e.getMessage()));
         }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 🔥 TỪ NHÁNH CỦA BẠN: HỆ THỐNG ĐIỂM THƯỞNG, PREMIUM & LƯỢT XEM
+    // ─────────────────────────────────────────────────────────────────────────
+
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/{id}/unlock-view")
+    public ResponseEntity<?> unlockView(@PathVariable Integer id, @RequestBody Map<String, Integer> body) {
+        Integer postId = body.get("postId");
+        if (postId == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Thiếu postId"));
+        }
+
+        Account acc = accountDAO.findById(id).orElse(null);
+        poly.edu.entity.Post post = postDAO.findById(postId).orElse(null);
+
+        if (acc == null || post == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Tài khoản hoặc Bài viết không tồn tại"));
+        }
+
+        if (acc.getPoint() < 1) {
+            return ResponseEntity.badRequest().body(Map.of("code", "INSUFFICIENT_POINT", "message", "Bạn không đủ GoMetCoin. Hãy tham gia Event hoặc Đăng bài để kiếm thêm!"));
+        }
+
+        // Trừ 1 point
+        acc.setPoint(acc.getPoint() - 1);
+        accountDAO.save(acc);
+
+        // Upsert vào History: Chỉ tạo mới nếu chưa từng xem, nếu đã xem thì update ngày mới nhất
+        List<History> records = historyDAO.findByAccount_AccountIDAndPost_PostID(id, postId);
+        History history;
+        if (!records.isEmpty()) {
+            history = records.get(0);
+        } else {
+            history = new poly.edu.entity.History();
+            history.setAccount(acc);
+            history.setPost(post);
+        }
+        history.setLastViewedAt(LocalDateTime.now());
+        historyDAO.save(history);
+
+        return ResponseEntity.ok(Map.of(
+                "message", "Mở khóa thành công!",
+                "pointRemaining", acc.getPoint()
+        ));
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/{id}/view-limits")
+    public ResponseEntity<?> getViewLimits(@PathVariable Integer id) {
+        LocalDateTime startOfDay = LocalDateTime.now().with(java.time.LocalTime.MIN);
+        LocalDateTime endOfDay = LocalDateTime.now().with(java.time.LocalTime.MAX);
+        long viewsToday = historyDAO.countDistinctPostsViewedToday(id, startOfDay, endOfDay);
+
+        // Lấy giới hạn từ cấu hình hệ thống
+        int maxViews = systemConfigDAO.findById("DEFAULT_FREE_VIEWS")
+                .map(c -> Integer.parseInt(c.getConfigValue()))
+                .orElse(3);
+
+        long remaining = Math.max(0, maxViews - viewsToday);
+        return ResponseEntity.ok(Map.of(
+                "usedViews", viewsToday,
+                "maxViews", maxViews,
+                "remainingViews", remaining
+        ));
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/{id}/reset-today-views")
+    public ResponseEntity<?> resetTodayViews(@PathVariable Integer id) {
+        LocalDateTime startOfDay = LocalDateTime.now().with(java.time.LocalTime.MIN);
+        LocalDateTime endOfDay = LocalDateTime.now().with(java.time.LocalTime.MAX);
+        historyDAO.deleteTodayHistory(id, startOfDay, endOfDay);
+        return ResponseEntity.ok(Map.of("message", "Đã reset lượt xem ngày hôm nay (Demo)"));
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/{id}/buy-premium")
+    public ResponseEntity<?> buyPremium(@PathVariable Integer id, @RequestBody Map<String, Integer> body) {
+        Integer months = body.get("months");
+        if (months == null || (months != 1 && months != 12)) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Gói không hợp lệ"));
+        }
+
+        Account acc = accountDAO.findById(id).orElse(null);
+        if (acc == null) return ResponseEntity.badRequest().body(Map.of("message", "Tài khoản không tồn tại"));
+
+        if (acc.getIsPremium() == 1) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Tài khoản đã là Premium."));
+        }
+
+        int requiredPoints = (months == 1) ? 50 : 200;
+
+        if (acc.getPoint() < requiredPoints) {
+            return ResponseEntity.badRequest().body(Map.of("code", "INSUFFICIENT_POINT", "message", "Bạn không đủ GoMetCoin."));
+        }
+
+        acc.setPoint(acc.getPoint() - requiredPoints);
+        acc.setIsPremium(1);
+        accountDAO.save(acc);
+
+        return ResponseEntity.ok(Map.of(
+                "message", "Nâng cấp Premium thành công!",
+                "pointRemaining", acc.getPoint(),
+                "isPremium", 1
+        ));
     }
 }
