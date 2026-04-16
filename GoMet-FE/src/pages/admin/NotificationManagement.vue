@@ -13,7 +13,9 @@
 
     <div class="stats-grid" v-if="!loading && !error">
       <div class="stat-card">
-        <div class="icon-wrap all"><Layers :size="22" /></div>
+        <div class="icon-wrap all">
+          <Layers :size="22" />
+        </div>
         <div class="stat-info">
           <span class="label">Tổng Thông báo</span>
           <h3 class="value">{{ notifications.length }}</h3>
@@ -21,7 +23,9 @@
       </div>
 
       <div class="stat-card">
-        <div class="icon-wrap broadcast"><Send :size="22" /></div>
+        <div class="icon-wrap broadcast">
+          <Send :size="22" />
+        </div>
         <div class="stat-info">
           <span class="label">Broadcast</span>
           <h3 class="value">{{ broadcastCount }}</h3>
@@ -29,7 +33,9 @@
       </div>
 
       <div class="stat-card highlight-card">
-        <div class="icon-wrap target"><Zap :size="22" /></div>
+        <div class="icon-wrap target">
+          <Zap :size="22" />
+        </div>
         <div class="stat-info">
           <span class="label">Nhắm riêng</span>
           <h3 class="value">{{ targetedCount }}</h3>
@@ -54,12 +60,8 @@
     </div>
 
     <div v-else class="grid-list">
-      <div
-        v-for="notification in notifications"
-        :key="notification.notificationID"
-        class="lux-noti-card clickable-card"
-        @click="openDetailModal(notification.notificationID)"
-      >
+      <div v-for="notification in notifications" :key="notification.notificationID" class="lux-noti-card clickable-card"
+        @click="openDetailModal(notification.notificationID)">
         <div class="card-img-wrap">
           <div class="hero-icon">
             <Megaphone :size="42" />
@@ -72,7 +74,8 @@
           <div class="hidden-badge" v-if="notification.type">{{ notification.type }}</div>
 
           <div class="overlay-actions">
-            <button class="btn-act view" @click.stop="openDetailModal(notification.notificationID)" title="Xem chi tiết">
+            <button class="btn-act view" @click.stop="openDetailModal(notification.notificationID)"
+              title="Xem chi tiết">
               <Eye :size="20" />
             </button>
             <button class="btn-act delete" @click.stop="deleteNotificationItem(notification)" title="Xóa thông báo">
@@ -109,7 +112,9 @@
                 <Megaphone :size="18" style="vertical-align:middle;margin-right:8px" />
                 Khởi tạo Thông báo
               </h3>
-              <button class="btn-x" @click="closeCreateModal"><X :size="24" /></button>
+              <button class="btn-x" @click="closeCreateModal">
+                <X :size="24" />
+              </button>
             </div>
 
             <div class="modal-body-lux">
@@ -133,7 +138,8 @@
 
               <div class="form-group-lux">
                 <label>Nội dung <span class="req">*</span></label>
-                <textarea v-model="form.content" rows="5" class="input-lux" placeholder="Nhập nội dung thông báo..."></textarea>
+                <textarea v-model="form.content" rows="5" class="input-lux"
+                  placeholder="Nhập nội dung thông báo..."></textarea>
               </div>
 
               <div class="form-group-lux">
@@ -169,7 +175,9 @@
           <div class="modal-lux-content detail-modal" @click.stop>
             <div class="modal-header-lux">
               <h3>Chi tiết Thông báo</h3>
-              <button class="btn-x" @click="closeDetailModal"><X :size="24" /></button>
+              <button class="btn-x" @click="closeDetailModal">
+                <X :size="24" />
+              </button>
             </div>
 
             <div v-if="detailLoading" class="detail-state">
@@ -205,7 +213,8 @@
                   </div>
                   <div class="detail-box">
                     <span class="label">Người nhận</span>
-                    <strong>{{ selectedDetail.isGlobal ? 'Toàn bộ người dùng' : (selectedDetail.recipientUsername || 'Một tài khoản cụ thể') }}</strong>
+                    <strong>{{ selectedDetail.isGlobal ? 'Toàn bộ người dùng' : (selectedDetail.recipientUsername ||
+                      'Một tài khoản cụ thể') }}</strong>
                   </div>
                   <div class="detail-box">
                     <span class="label">Đã đọc</span>
@@ -240,7 +249,8 @@
                 <div v-else class="reader-list">
                   <div v-for="reader in selectedDetail.readers" :key="reader.accountID" class="reader-item">
                     <div class="reader-avatar-wrap">
-                      <img v-if="reader.avatar" :src="reader.avatar" :alt="reader.username || 'User'" class="reader-avatar">
+                      <img v-if="reader.avatar" :src="reader.avatar" :alt="reader.username || 'User'"
+                        class="reader-avatar">
                       <div v-else class="reader-avatar fallback-avatar">{{ getInitial(reader.username) }}</div>
                     </div>
                     <div class="reader-info">
