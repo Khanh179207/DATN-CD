@@ -208,7 +208,7 @@ const openAiChat = () => {
       isPremiumUser = user?.isPremium || user?.IsPremium || user?.role === 'PREMIUM' || user?.role === 'ADMIN';
     } catch (e) {}
   }
-  if (!isPremiumUser) { showPremium.value = true; toast.warn("Gomet Assistant dành cho Premium sếp nhé!"); return; }
+  if (!isPremiumUser) { showPremium.value = true; toast.warn("Gomet Assistant dành cho Premium bạn nhé!"); return; }
   if (aiChatRef.value) aiChatRef.value.openChat();
 };
 

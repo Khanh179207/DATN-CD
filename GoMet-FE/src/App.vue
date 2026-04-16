@@ -67,7 +67,6 @@ onMounted(() => {
     router.push('/home')
   }
 
-  // 🚀 2. KHỞI TẠO SIGNALING (Giữ lại bản xịn của sếp)
   if (authStore.user) initCallSignaling()
 })
 

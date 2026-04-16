@@ -112,7 +112,7 @@
         <div v-if="!loading && filteredAppeals.length === 0" class="empty-state-lux">
           <div class="empty-icon">📭</div>
           <h3>Không tìm thấy Khiếu nại nào!</h3>
-          <p>Không có dữ liệu phù hợp với bộ lọc hiện tại của sếp.</p>
+          <p>Không có dữ liệu phù hợp với bộ lọc hiện tại của bạn.</p>
         </div>
       </div>
     </div>
@@ -343,7 +343,7 @@ const confirmApprove = async () => {
 const confirmReject = async () => {
   if (!selectedAppeal.value) return
   if (!updateNote.value || updateNote.value.trim() === '') {
-    toast.error('Sếp phải nhập Lý do từ chối để gửi Email cho User nhé!')
+    toast.error('Bạn phải nhập Lý do từ chối để gửi Email cho User nhé!')
     return
   }
 

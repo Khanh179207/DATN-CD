@@ -130,7 +130,6 @@ const authStore = useAuthStore()
 const router = useRouter()
 const isOpen = ref(false)
 
-// 🔥 KẾT HỢP: Lấy logic ngày lễ từ develop và logic đồng bộ của sếp
 const { isHolidayEventActive, checkGlobalHolidayStatus } = usePostViewLimit()
 const remainingViews = ref(0)
 const maxViews = ref(0)
@@ -143,7 +142,6 @@ const emit = defineEmits(['open-premium', 'open-support', 'switch-account'])
 const fetchViewLimits = async () => {
   if (authStore.user?.accountID) {
     try {
-      // 🔥 ĐỒNG BỘ LUÔN POINT VÀ PREMIUM TỪ SERVER (Tránh cache localStorage khi sếp sửa SQL)
       await authStore.refreshProfile();
 
       const res = await api.get(`/api/users/${authStore.user.accountID}/view-limits`);
@@ -218,7 +216,7 @@ const navigate = (path) => {
   isOpen.value = false;
   
   if (path.startsWith('/admin') && window.innerWidth < 1024) {
-    toast.warn('Trang quản trị yêu cầu màn hình máy tính để thao tác tốt nhất sếp nhé! 🖥️');
+    toast.warn('Trang quản trị yêu cầu màn hình máy tính để thao tác tốt nhất 🖥️');
     return;
   }
   
@@ -234,7 +232,7 @@ const handleLogout = async () => {
   sessionStorage.removeItem('just_logged_in'); 
   authStore.user = null;
   authStore.isAuthenticated = false;
-  toast.success('Đăng xuất thành công. Hẹn gặp lại sếp nhé! 👋');
+  toast.success('Đăng xuất thành công. Hẹn gặp lại bạn nhé! 👋');
   const isMobileOrTablet = window.innerWidth < 1024;
   const redirectPath = isMobileOrTablet ? '/home' : '/';
   await router.push(redirectPath);

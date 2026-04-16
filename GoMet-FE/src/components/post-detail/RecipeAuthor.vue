@@ -119,7 +119,7 @@ const handleContactChef = async () => {
   const chefId = props.post?.authorID || props.post?.authorId
 
   if (currentUserId === chefId) { 
-    toast.info('Sếp không thể tự nhắn tin cho chính mình đâu nha!'); return 
+    toast.info('Bạn không thể tự nhắn tin cho chính mình đâu nha!'); return 
   }
   
   try {

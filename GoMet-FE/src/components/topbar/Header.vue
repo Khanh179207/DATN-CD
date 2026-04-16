@@ -121,7 +121,7 @@
               <div class="dropdown-body scroll-body custom-scroll">
                 <div v-if="notifications.length === 0" class="empty-state-noti">
                   <div class="empty-noti-icon">🔕</div>
-                  <p>Sếp không có thông báo nào mới.</p>
+                  <p>Bạn không có thông báo nào mới.</p>
                 </div>
                 <div v-else>
                   <div v-for="n in notifications" :key="n.id" class="noti-item-v2" :class="{ 'is-unread': !n.isRead }" @click="handleNotiClick(n)">
@@ -263,7 +263,7 @@ const toggleShopping = () => {
   const isAdmin = ( role === 'admin' || ['true', '1', 1, true].includes(authStore.user?.isAdmin) || ['true', '1', 1, true].includes(authStore.user?.IsAdmin) );
   
   if (!isPremiumUser && !isAdmin) {
-    toast.warn('Tính năng Giỏ đi chợ là đặc quyền chỉ dành cho tài khoản Premium sếp nhé!');
+    toast.warn('Tính năng Giỏ đi chợ là đặc quyền chỉ dành cho tài khoản Premium.');
     window.dispatchEvent(new CustomEvent('ui:open-premium'));
     return;
   }

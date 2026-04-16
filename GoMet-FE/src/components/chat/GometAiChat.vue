@@ -115,7 +115,7 @@ const chatInput = ref(null);
 const isTyping = ref(false);
 
 const formatTime = () => new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
-const messages = ref([{ text: '👋 Chào sếp! Sếp cần tìm món gì hôm nay?', isMine: false, timeStr: formatTime() }])
+const messages = ref([{ text: '👋 Chào bạn! Bạn cần tìm món gì hôm nay?', isMine: false, timeStr: formatTime() }])
 
 const parseMsg = (content) => {
   const regex = /\[LINK:(\d+)\]/g;
@@ -164,7 +164,7 @@ const sendMsg = async () => {
     
     if (dbRes.data && dbRes.data.length > 0) {
       messages.value.push({ 
-        text: `Tôi có tìm thấy công thức này cực kỳ hợp lý cho sếp nhé! [LINK:${dbRes.data[0].id}]`, 
+        text: `Tôi có tìm thấy công thức này cực kỳ hợp lý cho bạn nhé! [LINK:${dbRes.data[0].id}]`, 
         isMine: false, 
         timeStr: formatTime() 
       });
@@ -178,7 +178,7 @@ const sendMsg = async () => {
     const reply = await chatWithAIChef(messages.value.slice(-6), text, dbData);
     messages.value.push({ text: reply, isMine: false, timeStr: formatTime() });
   } catch (err) {
-    messages.value.push({ text: '⚠️ Hệ thống đang quá tải, sếp pha tách trà chờ tí rồi hỏi lại nhé!', isMine: false, timeStr: formatTime() });
+    messages.value.push({ text: '⚠️ Hệ thống đang quá tải, bạn pha tách trà chờ tí rồi hỏi lại nhé!', isMine: false, timeStr: formatTime() });
   } finally { isTyping.value = false; scrollToBottom(); }
 }
 defineExpose({ isOpen, openChat })
@@ -293,7 +293,6 @@ defineExpose({ isOpen, openChat })
   }
 }
 
-/* Bóng Chat của Sếp (Mình nhắn) - Giữ màu Cam Gomet */
 .msg-item.mine .bubble { 
   background: linear-gradient(135deg, #ea580c, #f97316) !important; /* Cam Gradient xịn xò */
   color: #ffffff !important; 

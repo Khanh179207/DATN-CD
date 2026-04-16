@@ -368,7 +368,7 @@ const toggleFavorite = async () => {
         const currentCount = Array.isArray(favData) ? favData.length : (favData.totalElements || 0);
 
         if (currentCount >= 5) {
-          toast.warn("Bộ sưu tập đã đầy (5/5)! Nâng cấp Premium để lưu không giới hạn sếp nhé.");
+          toast.warn("Bộ sưu tập đã đầy (5/5)! Nâng cấp Premium để lưu không giới hạn.");
           window.dispatchEvent(new CustomEvent('ui:open-premium'));
           isSaving.value = false;
           return; 

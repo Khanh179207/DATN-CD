@@ -56,7 +56,6 @@ onMounted(() => {
   fetchAdsConfig()
 })
 
-// --- LOGIC KIỂM TRA ĐẶC QUYỀN (GIỮ NGUYÊN CỦA SẾP) ---
 const shouldShowAd = computed(() => {
   if (!props.isVisible) return false;
   
@@ -82,9 +81,6 @@ const closePopup = () => {
 </script>
 
 <style scoped>
-/* =======================================================
-   1. CORE STYLE (GIỮ NGUYÊN CSS GỐC CỦA SẾP)
-   ======================================================= */
 .ad-overlay { 
   position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
   background-color: rgba(15, 23, 42, 0.75); /* Tối ưu màu nền mờ sang trọng hơn */

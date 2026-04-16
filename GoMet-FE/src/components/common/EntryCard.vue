@@ -92,7 +92,7 @@ const handleVote = async () => {
 
   // CHẶN: NẾU CHƯA VOTE BÀI NÀY VÀ ĐÃ ĐẠT GIỚI HẠN VOTE TOÀN SỰ KIỆN
   if (!isVoted.value && props.limitReached) {
-    toast.warn("Sếp đã dùng hết hạn mức phiếu bầu cho sự kiện này!");
+    toast.warn("Bạn đã dùng hết hạn mức phiếu bầu cho sự kiện này!");
     return;
   }
 

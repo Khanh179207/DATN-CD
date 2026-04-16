@@ -269,7 +269,7 @@
                     <div class="logo-dot"></div>
                   </div>
                   <h2 class="art-title">Khôi phục tài khoản</h2>
-                  <p class="art-desc">Chào mừng sếp trở lại! <br> Hãy nhập mã OTP đã được gửi tới email <b>{{ email }}</b> để tiếp tục.</p>
+                  <p class="art-desc">Chào mừng bạn trở lại! <br> Hãy nhập mã OTP đã được gửi tới email <b>{{ email }}</b> để tiếp tục.</p>
                 </div>
 
                 <form @submit.prevent="handleRestoreVerify" class="art-form">
@@ -634,7 +634,7 @@ const handleRestoreVerify = async () => {
   restoreError.value = ''
   try {
     const role = await authStore.restoreAccount(email.value, code)
-    toast.success('Khôi phục thành công! Chào mừng sếp trở lại.')
+    toast.success('Khôi phục thành công! Chào mừng bạn trở lại.')
     emit('close')
     
     // 🔥 SỬ DỤNG HÀM ĐIỀU HƯỚNG MỚI

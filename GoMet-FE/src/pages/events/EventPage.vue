@@ -88,7 +88,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
         </div>
         <h3>Không tìm thấy sự kiện</h3>
-        <p>Thử thay đổi từ khóa hoặc bộ lọc xem sao nhé sếp!</p>
+        <p>Thử thay đổi từ khóa hoặc bộ lọc xem sao nhé!</p>
         <button class="btn-clear-filter" @click="currentFilter = 'all'; searchQuery = ''">Xóa bộ lọc</button>
       </div>
 
@@ -101,7 +101,6 @@
 </template>
 
 <script setup>
-// LOGIC GIỮ NGUYÊN 100% CỦA SẾP
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import EventCard from '@/components/common/EventCard.vue'
@@ -229,9 +228,6 @@ const filteredEvents = computed(() => {
 </script>
 
 <style scoped>
-/* =======================================================
-   1. CORE (BẢO TOÀN STYLE GỐC CỦA SẾP)
-   ======================================================= */
 .events-page-premium {
   font-family: 'Mulish', sans-serif;
   background-color: #FAFAFA;
@@ -372,7 +368,6 @@ const filteredEvents = computed(() => {
   background: #FFFFFF; color: #111827; box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
-/* 🔍 PHỤC HỒI NÚT TÌM KIẾM ĐÚNG CHUẨN GỐC CỦA SẾP */
 .search-box-modern {
   display: flex; align-items: center; gap: 12px;
   background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 100px;

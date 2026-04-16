@@ -15,7 +15,7 @@ export const useCompareStore = defineStore('compare', () => {
       items.value.splice(index, 1) // Already exists, remove it
     } else {
       if (items.value.length >= 3) {
-        alert('You can compare up to 3 dishes at a time!')
+        alert('Bạn có thể so sánh tối đa 3 món ăn cùng một lúc!')
         return
       }
       items.value.push(post) // Not in list yet, add it
