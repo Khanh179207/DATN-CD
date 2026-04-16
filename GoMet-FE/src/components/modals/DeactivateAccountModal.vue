@@ -117,8 +117,6 @@ const otpDigits = ref(['', '', '', '', '', ''])
 const otpCode = computed(() => otpDigits.value.join(''))
 
 const hasPassword = computed(() => {
-  // 🔥 SỬA LỖI: Dùng props.user thay vì authStore.user để có dữ liệu mới nhất
-  // props.user được truyền từ ProfilePage và đã được cập nhật đầy đủ.
   return props.user?.provider !== 'google';
 });
 
@@ -193,7 +191,7 @@ const handleRequestOTP = async () => {
     toast.success('Mã OTP đã được gửi về Email của bạn!')
   } catch (err) {
     // Backend báo lỗi mật khẩu sai sẽ nhảy vào đây
-    toast.error(err.response?.data?.message || 'Có lỗi xảy ra, Sếp kiểm tra lại mật khẩu nhé.');
+    toast.error(err.response?.data?.message || 'Có lỗi xảy ra, Bạn kiểm tra lại mật khẩu nhé.');
     password.value = ''; // Reset pass nếu sai để nhập lại
   } finally {
     loading.value = false
@@ -213,7 +211,7 @@ const handleDeactivate = async () => {
       otp: otpCode.value
     });
 
-    toast.success('Tài khoản đã ẩn thành công. GoMet sẽ rất nhớ Sếp!');
+    toast.success('Tài khoản đã ẩn thành công. GoMet sẽ rất nhớ Bạn!');
     close();
     authStore.logout();
     router.push('/');

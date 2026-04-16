@@ -377,7 +377,7 @@ const toggleSave = async () => {
         const currentFavorites = await getFavorites(uid);
         
         if (currentFavorites && currentFavorites.length >= 5) {
-          toast.warn("Bộ sưu tập đã đầy! Nâng cấp Premium để lưu không giới hạn sếp nhé.");
+          toast.warn("Bộ sưu tập đã đầy! Nâng cấp Premium để lưu không giới hạn.");
           window.dispatchEvent(new CustomEvent('ui:open-premium'));
           isSaving.value = false;
           return; 
@@ -391,7 +391,7 @@ const toggleSave = async () => {
     }
   } catch (error) {
     console.error("Save error:", error);
-    toast.error("Thao tác thất bại, Sếp kiểm tra lại kết nối nhé!");
+    toast.error("Thao tác thất bại, Bạn hãy kiểm tra lại kết nối nhé!");
   } finally {
     isSaving.value = false;
   }
@@ -399,7 +399,7 @@ const toggleSave = async () => {
 
 const handleCompareClick = () => {
   if (!authStore.isAuthenticated) {
-    return toast.warn("Vui lòng đăng nhập để sử dụng tính năng So sánh Sếp nhé!");
+    return toast.warn("Vui lòng đăng nhập để sử dụng tính năng So sánh Bạn nhé!");
   }
 
   const isPremiumUser = authStore.user?.isPremium || authStore.user?.role === 'PREMIUM' || authStore.user?.IsPremium;

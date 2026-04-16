@@ -149,7 +149,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { toast } from '@/composables/useToast'
 import html2canvas from 'html2canvas'
-// import api from '@/services/api' // Nếu sếp muốn gọi API riêng
 
 const route = useRoute()
 const router = useRouter()

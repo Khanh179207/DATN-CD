@@ -89,7 +89,7 @@
           </div>
           <div class="banner-content">
             <h4>Bộ sưu tập đang vượt hạn mức ({{ savedPosts.length }}/5 bài)</h4>
-            <p>Sếp vẫn có thể xem và nấu các công thức cũ, nhưng không thể lưu thêm bài mới. Vui lòng xóa bớt hoặc nâng cấp Premium để trải nghiệm không giới hạn.</p>
+            <p>Bạn vẫn có thể xem và nấu các công thức cũ, nhưng không thể lưu thêm bài mới. Vui lòng xóa bớt hoặc nâng cấp Premium để trải nghiệm không giới hạn.</p>
           </div>
           <button class="btn-upgrade" @click="openPremiumModal">Nâng cấp VIP</button>
         </div>

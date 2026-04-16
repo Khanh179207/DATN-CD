@@ -50,11 +50,10 @@
 
     <div v-else class="grid-list">
       <div 
-        class="lux-cat-card clickable-card" 
+        class="lux-cat-card" 
         v-for="cat in categories" 
         :key="cat.categoryID"
         :class="{ 'is-hidden': cat.isActive === 0 }"
-        @click="goToPostsByCategory(cat)"
       >
         <div class="card-img-wrap">
           <img :src="cat.categoryImage || defaultImage" class="cat-img" :alt="cat.categoryName">
@@ -66,9 +65,6 @@
           <div v-if="cat.isActive === 0" class="hidden-badge">Đang ẩn</div>
 
           <div class="overlay-actions">
-            <button @click.stop="goToPostsByCategory(cat)" class="btn-act view" title="Xem bài viết thuộc danh mục">
-              <FileText :size="20" />
-            </button>
             <button @click.stop="openModal(cat)" class="btn-act edit" title="Sửa">
               <Edit3 :size="20" />
             </button>
@@ -91,7 +87,6 @@
           <div class="progress-bar">
             <div class="fill" :style="{ width: getPercentage(cat.postCount) + '%' }"></div>
           </div>
-          <div class="view-posts-hint">Xem chi tiết bài viết →</div>
         </div>
       </div>
 
@@ -121,8 +116,8 @@
                 <div class="upload-custom-zone" @click="$refs.fileInput.click()">
                   <input type="file" ref="fileInput" @change="handleFileUpload" hidden accept="image/*">
                   <div v-if="!form.imagePreview && !form.categoryImage" class="up-placeholder">
-                     <UploadCloud :size="32" />
-                     <span>Kéo thả hoặc chọn ảnh từ máy</span>
+                      <UploadCloud :size="32" />
+                      <span>Kéo thả hoặc chọn ảnh từ máy</span>
                   </div>
                   <img v-else :src="form.imagePreview || form.categoryImage" class="preview-img-box" />
                   <div class="up-overlay" v-if="form.imagePreview || form.categoryImage">Thay đổi ảnh</div>
@@ -147,7 +142,6 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
 import { 
   Plus, Edit3, Trash2, Eye, EyeOff, FileText, 
   Layers, Zap, AlertTriangle, UploadCloud, X 
@@ -156,7 +150,6 @@ import api from '@/services/api.js'
 import { uploadMedia } from '@/services/uploadService'
 import { toast } from '@/composables/useToast'
 
-const router = useRouter()
 const defaultImage = 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=500'
 
 const categories = ref([])
@@ -234,13 +227,6 @@ const toggleStatus = async (cat) => {
   }
 }
 
-const goToPostsByCategory = (cat) => {
-  router.push({
-    name: 'AdminPosts',
-    query: { categoryID: cat.categoryID, categoryName: cat.categoryName }
-  })
-}
-
 const handleFileUpload = (event) => {
   const file = event.target.files[0]
   if (file) {
@@ -313,7 +299,7 @@ const saveData = async () => {
 
 const deleteCat = async (cat) => {
   if (cat.categoryID === 1) {
-    return toast.error('Không thể xóa Danh mục Mặc định (ID 1)!');
+    return toast.error('Không thể xóa Danh mục Mặc định!');
   }
 
   let confirmMessage = `Bạn có chắc chắn muốn xóa danh mục "${cat.categoryName}" không?`;

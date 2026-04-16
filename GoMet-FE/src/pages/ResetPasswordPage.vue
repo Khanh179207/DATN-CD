@@ -229,7 +229,6 @@ const handleReset = async () => {
 }
 
 const goLogin  = () => router.push({ path: '/', hash: '#sectionsigninlanding' })
-// Giả sử trang quên pass ở màn Signin (sếp có thể điều chỉnh route này nếu cần)
 const goForgot = () => router.push({ path: '/', hash: '#sectionsigninlanding' }) 
 </script>
 

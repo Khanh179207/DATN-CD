@@ -59,10 +59,10 @@
                 </div>
               </div>
               <div class="textarea-wrapper">
-                <textarea v-model="userNote" placeholder="Ghi chú lại bí quyết gia giảm của riêng sếp..."></textarea>
+                <textarea v-model="userNote" placeholder="Ghi chú lại bí quyết gia giảm của riêng bạn..."></textarea>
               </div>
               <div class="note-actions">
-                <span class="lock-text"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> Chỉ mình sếp thấy</span>
+                <span class="lock-text"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> Chỉ mình bạn thấy</span>
                 <button class="btn-text-save" @click="handleSaveNote" :disabled="isSavingNote">
                    {{ isSavingNote ? 'Đang lưu...' : 'Lưu lại' }}
                 </button>
@@ -202,13 +202,13 @@ const handleGoShopping = () => {
   const hasPremiumAccess = isPremiumUser || isAdmin;
 
   if (!hasPremiumAccess) {
-    toast.warn('Tính năng Giỏ đi chợ là đặc quyền chỉ dành cho tài khoản Premium sếp nhé!');
+    toast.warn('Tính năng Giỏ đi chợ là đặc quyền chỉ dành cho tài khoản Premium.');
     window.dispatchEvent(new CustomEvent('ui:open-premium'));
     return;
   }
 
   const selected = ingredientsList.value.filter(i => i.selectedForShopping)
-  if (!selected.length) return toast.warn('Sếp chưa chọn nguyên liệu nào!');
+  if (!selected.length) return toast.warn('Bạn chưa chọn nguyên liệu nào!');
   shoppingStore.addItems(selected, props.post.id)
   toast.success(`Đã thêm ${selected.length} món vào giỏ!`)
 }

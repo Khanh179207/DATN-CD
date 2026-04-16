@@ -14,8 +14,8 @@
           <div v-if="hasSubmitted" class="already-submitted-alert">
             <div class="alert-icon">⚠️</div>
             <div class="alert-content">
-              <h4>Sếp đã nộp bài dự thi!</h4>
-              <p>Mỗi sự kiện chỉ cho phép tham gia 1 bài viết. Sếp có thể xem lại bài đã nộp ở danh sách bài thi.</p>
+              <h4>Bạn đã nộp bài dự thi!</h4>
+              <p>Mỗi sự kiện chỉ cho phép tham gia 1 bài viết. Bạn có thể xem lại bài đã nộp ở danh sách bài thi.</p>
             </div>
           </div>
 
@@ -41,7 +41,7 @@
               </div>
               <div class="text-box">
                 <h4>Chọn từ kho công thức</h4>
-                <p>Sử dụng công thức sếp đã đăng trước đây để nộp.</p>
+                <p>Sử dụng công thức bạn đã đăng trước đây để nộp.</p>
               </div>
               <div class="arrow">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>
@@ -72,7 +72,7 @@
           
           <div v-else class="empty-my-posts">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="8" y1="12" x2="16" y2="12"></line></svg>
-            <p>Sếp chưa có công thức nào cả!</p>
+            <p>Bạn chưa có công thức nào cả!</p>
             <button class="btn-outline-dark" @click="goToCreatePost">Tạo mới ngay</button>
           </div>
         </div>
@@ -143,7 +143,7 @@ const goToSelectPost = async () => {
       return active && approved;
     })
   } catch (e) {
-    toast.error('Lỗi tải danh sách công thức của sếp')
+    toast.error('Lỗi tải danh sách công thức của bạn')
   } finally {
     isLoading.value = false
   }
@@ -164,7 +164,6 @@ const confirmSubmit = async () => {
     emit('submit-success');
     closeModal();
   } catch (e) {
-    // 🔥 HIỂN THỊ LỖI CHI TIẾT TỪ BACKEND TRẢ VỀ (VÍ DỤ: "Sếp đã nộp bài rồi")
     toast.error(e.response?.data?.message || 'Lỗi khi nộp bài!');
   } finally {
     isSubmitting.value = false;

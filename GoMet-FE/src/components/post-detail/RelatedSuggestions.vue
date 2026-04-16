@@ -51,7 +51,7 @@
                 <path d="M12 8v4M12 16h.01"/>
               </svg>
             </div>
-            <p>Đang tìm kiếm món ngon cho sếp...</p>
+            <p>Đang tìm kiếm món ngon cho Bạn...</p>
           </div>
         </template>
         

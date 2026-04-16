@@ -201,7 +201,6 @@ const fetchExpiryDate = async () => {
   try {
     const res = await api.get(`/api/payments/check-expiry/${userStore.user.accountID}`);
     
-    // LOG ĐỂ KIỂM TRA (Sếp mở F12 xem cái này nhé)
     console.log("Dữ liệu ngày hết hạn từ Server:", res.data);
 
     if (res.data && res.data.success && res.data.endAt) {

@@ -21,8 +21,8 @@
             <transition name="fade">
               <div v-if="isLoading" class="loading-overlay">
                 <div class="radar-spinner"></div>
-                <p>Đang quét các khu chợ quanh Sếp...</p>
-                <span class="sub-text">Sếp nhớ bấm "Cho phép" (Allow) quyền vị trí trên trình duyệt nhé!</span>
+                <p>Đang quét các khu chợ quanh Bạn...</p>
+                <span class="sub-text">Bạn nhớ bấm "Cho phép" (Allow) quyền vị trí trên trình duyệt nhé!</span>
               </div>
             </transition>
 
@@ -69,26 +69,23 @@ onMounted(() => {
 const getUserLocation = () => {
   if ("geolocation" in navigator) {
     navigator.geolocation.getCurrentPosition(
-      // 1. NẾU SẾP CHO PHÉP
       (position) => {
         const lat = position.coords.latitude
         const lng = position.coords.longitude
-        
-        // 🔥 Đã fix: Dùng query "near" kết hợp tọa độ thực tế của sếp
+
         mapUrl.value = `https://maps.google.com/maps?q=siêu+thị,+chợ+near+${lat},${lng}&hl=vi&z=15&output=embed`
         
         locationError.value = false
         isLoading.value = false
-        toast.success('Đã bắt được tọa độ của Sếp! 🚀')
+        toast.success('Đã bắt được tọa độ của Bạn! 🚀')
       },
-      // 2. NẾU SẾP TỪ CHỐI HOẶC LỖI
       (error) => {
         console.warn("Lỗi lấy vị trí:", error.message)
         locationError.value = true
         isLoading.value = false
         // Fallback: Chỉ search "siêu thị chợ gần đây" dựa vào IP mạng
         mapUrl.value = 'https://maps.google.com/maps?q=siêu+thị,+chợ+gần+đây&hl=vi&z=14&output=embed'
-        toast.warn('Sếp chưa cấp quyền vị trí, hệ thống đang dùng vị trí ước tính nhé!')
+        toast.warn('Bạn chưa cấp quyền vị trí, hệ thống đang dùng vị trí ước tính nhé!')
       },
       { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
     )

@@ -30,7 +30,7 @@
                 <polyline points="17 8 12 3 7 8"></polyline>
                 <line x1="12" y1="3" x2="12" y2="15"></line>
               </svg>
-              <span>{{ hasSubmitted ? 'Sếp đã tham gia sự kiện' : 'Nộp bài dự thi ngay' }}</span>
+              <span>{{ hasSubmitted ? 'Bạn đã tham gia sự kiện' : 'Nộp bài dự thi ngay' }}</span>
             </button>
             <button v-else class="btn-disabled" disabled>
               {{ eventData.category === 'upcoming' ? 'Sự kiện chưa mở cổng nộp bài' : 'Sự kiện đã kết thúc' }}
@@ -128,7 +128,7 @@
                 
                 <div class="voting-progress-block" v-if="votingStatus.type === 'active'">
                   <div class="progress-header">
-                    <span class="progress-text">Sếp đã bầu chọn:</span>
+                    <span class="progress-text">Bạn đã bầu chọn:</span>
                     <span class="progress-nums"><strong>{{ votedCount }}</strong> / {{ eventData.maxVotes }} phiếu</span>
                   </div>
                   <div class="progress-bar-bg">
@@ -140,7 +140,7 @@
                 </div>
 
                 <p class="vote-note" v-if="votingStatus.type === 'active'">
-                  * Sếp có tối đa <strong>{{ eventData.maxVotes }} phiếu bầu</strong> cho mỗi sự kiện. Hãy chọn kỹ nhé!
+                  * Bạn có tối đa <strong>{{ eventData.maxVotes }} phiếu bầu</strong> cho mỗi sự kiện. Hãy chọn kỹ nhé!
                 </p>
               </div>
             </div>
@@ -178,7 +178,7 @@
 
               <div v-else class="empty-entries">
                 <div class="icon">📭</div>
-                <p>Chưa có bài dự thi nào. Sếp nộp bài để nhận giải ngay!</p>
+                <p>Chưa có bài dự thi nào. Bạn nộp bài để nhận giải ngay!</p>
               </div>
             </div>
           </div>
@@ -207,7 +207,7 @@ import { getEventById } from '@/services/eventService'
 import { useAuthStore } from '@/stores/auth'
 import { toast } from '@/composables/useToast'
 import SubmitEntryModal from '@/components/modals/SubmitEntryModal.vue'
-import ContestEntryCard from '@/components/common/EntryCard.vue' // Sửa đúng đường dẫn file của sếp
+import ContestEntryCard from '@/components/common/EntryCard.vue'
 
 const emit = defineEmits(['ui:open-login'])
 
