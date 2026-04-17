@@ -68,7 +68,7 @@ public class PostServiceImpl implements PostService {
             if (!lastPosts.isEmpty() && lastPosts.get(0).getCreatedAt() != null) {
                 long seconds = Duration.between(lastPosts.get(0).getCreatedAt(), LocalDateTime.now()).getSeconds();
                 if (seconds < 180) {
-                    throw new RuntimeException("Hệ thống chống Spam: Sếp đăng bài quá nhanh! Vui lòng đợi "
+                    throw new RuntimeException("Hệ thống chống Spam: Bạn đăng bài quá nhanh! Vui lòng đợi "
                             + (180 - seconds) + " giây nữa.");
                 }
             }
