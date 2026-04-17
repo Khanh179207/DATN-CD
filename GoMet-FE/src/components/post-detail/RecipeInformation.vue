@@ -170,7 +170,6 @@ const handleSaveNote = async () => {
   }
   isSavingNote.value = true
   try {
-    // ✅ CHUẨN XỊN: Dùng api.post (Đã tự động đính kèm Token)
     await api.post('/api/notes/save', { 
       accountId: authStore.user.accountID, 
       postId: props.post.id, 
@@ -195,11 +194,15 @@ const handleGoShopping = () => {
     return
   }
 
-  // Kiểm tra quyền Premium
-  const role = String(authStore.user?.role || '').toUpperCase();
-  const isPremiumUser = authStore.user?.isPremium === true || authStore.user?.IsPremium === true || role === 'PREMIUM';
-  const isAdmin = authStore.user?.isAdmin === true || role === 'ADMIN';
-  const hasPremiumAccess = isPremiumUser || isAdmin;
+  // 🔥 ĐÃ SỬA: Kiểm tra quyền Premium thông minh hơn
+  const user = authStore.user;
+  const role = String(user?.role || '').toUpperCase();
+  
+  // Kiểm tra đa dạng kiểu dữ liệu (boolean, string, number) để không bị sót
+  const isPremiumVal = [true, 'true', 1, '1'].includes(user?.isPremium) || [true, 'true', 1, '1'].includes(user?.IsPremium);
+  const isAdminVal = [true, 'true', 1, '1'].includes(user?.isAdmin) || role === 'ADMIN';
+  
+  const hasPremiumAccess = isPremiumVal || role === 'PREMIUM' || isAdminVal;
 
   if (!hasPremiumAccess) {
     toast.warn('Tính năng Giỏ đi chợ là đặc quyền chỉ dành cho tài khoản Premium.');
@@ -221,7 +224,7 @@ onMounted(() => fetchNote())
 /* --- LAYOUT CHÍNH --- */
 .cooking-dashboard-premium {
   width: 100%;
-  background-color: #fafaf9; /* Nền xám siêu nhạt giúp các khối trắng nổi lên */
+  background-color: #fafaf9; 
   padding: 40px 0 100px;
   font-family: var(--font-ui, 'Mulish', sans-serif);
 }
@@ -231,24 +234,19 @@ onMounted(() => fetchNote())
   margin: 0 auto;
   padding: 0 24px;
   display: grid;
-  grid-template-columns: 420px 1fr; /* Thu gọn cột trái một chút cho thanh thoát */
+  grid-template-columns: 420px 1fr; 
   gap: 64px;
   align-items: start;
   transition: all 0.4s ease;
 }
 
-/* THEATER MODE */
 .theater-mode-on {
   .dashboard-container-inner { grid-template-columns: 1fr; max-width: 1000px; gap: 40px; }
   .dashboard-left-col { max-width: 1000px; margin: 0 auto; width: 100%; }
 }
 
-/* =========================================
-   CỘT TRÁI (WIDGETS)
-   ========================================= */
 .dashboard-left-col { position: sticky; top: 100px; }
 
-/* 1. Video Player */
 .video-card-luxury {
   background: #0f172a; 
   border-radius: 20px;
@@ -266,13 +264,12 @@ onMounted(() => fetchNote())
   .video-aspect-frame { position: relative; padding-bottom: 56.25%; height: 0; background: #000; iframe, .html5-player { position: absolute; inset: 0; width: 100%; height: 100%; border: none; } }
 }
 
-/* 2. Group Widgets (Giỏ hàng & Ghi chú) */
 .widgets-group {
   background: #ffffff;
   border-radius: 24px;
   border: 1px solid #e2e8f0;
   box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-  overflow: hidden; /* Gộp chung thành 1 khối nhìn rất clean */
+  overflow: hidden; 
 }
 
 .premium-widget { padding: 28px; }
@@ -288,7 +285,6 @@ onMounted(() => fetchNote())
   }
 }
 
-/* Buttons trong Widget */
 .text-btn-soft { background: transparent; border: none; color: #64748b; font-weight: 700; font-size: 0.85rem; cursor: pointer; padding: 4px 8px; transition: 0.2s; &:hover { color: #ea580c; } }
 .btn-gradient-orange {
   padding: 14px 24px; border-radius: 16px; border: none;
@@ -300,7 +296,6 @@ onMounted(() => fetchNote())
   &.w-full { width: 100%; }
 }
 
-/* Ingredients Checkbox (Bo tròn mềm mại) */
 .ingredients-list-clean {
   display: flex; flex-direction: column; gap: 4px; margin-bottom: 24px;
   .clean-check-row {
@@ -308,7 +303,7 @@ onMounted(() => fetchNote())
     &:hover { background: #f8fafc; }
     input { display: none; }
     .checkbox-visual {
-      width: 22px; height: 22px; border: 2px solid #cbd5e1; border-radius: 50%; /* Tròn xoe thanh lịch */
+      width: 22px; height: 22px; border: 2px solid #cbd5e1; border-radius: 50%; 
       display: flex; align-items: center; justify-content: center; transition: 0.2s;
       svg { width: 12px; opacity: 0; transform: scale(0.5); transition: 0.2s; }
     }
@@ -317,7 +312,6 @@ onMounted(() => fetchNote())
   }
 }
 
-/* Note Widget */
 .note-widget {
   .textarea-wrapper {
     background: #f8fafc; border: 1px solid transparent; border-radius: 16px; padding: 16px; transition: 0.3s;
@@ -329,9 +323,6 @@ onMounted(() => fetchNote())
   .btn-text-save { background: transparent; border: none; color: #3b82f6; font-weight: 800; font-size: 0.9rem; cursor: pointer; transition: 0.2s; &:hover { color: #2563eb; transform: translateY(-1px); } }
 }
 
-/* =========================================
-   CỘT PHẢI (TIMELINE CLEAN)
-   ========================================= */
 .dashboard-right-col { min-width: 0; padding-top: 10px; }
 
 .process-header {
@@ -350,7 +341,6 @@ onMounted(() => fetchNote())
   &:hover { background: #ea580c; transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(234, 88, 12, 0.3); }
 }
 
-/* TIMELINE */
 .modern-timeline { display: flex; flex-direction: column; }
 
 .timeline-step {
@@ -380,35 +370,28 @@ onMounted(() => fetchNote())
   }
 }
 
-/* ANIMATIONS */
 @keyframes pulse { 0% { opacity: 0.7; } 50% { opacity: 1; box-shadow: 0 0 15px #ea580c; } 100% { opacity: 0.7; } }
 .slide-in-left { animation: slideInLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
 .slide-in-up { animation: slideInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
 @keyframes slideInLeft { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
 @keyframes slideInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 
-/* =======================================================
-   🔥 HỆ THỐNG RESPONSIVE (TỐI ƯU MỌI THIẾT BỊ)
-   ======================================================= */
-
-/* --- 1. Màn hình Laptop nhỏ & Tablet ngang (Dưới 1200px) --- */
 @media (max-width: 1200px) {
   .dashboard-container-inner {
-    grid-template-columns: 350px 1fr; /* Thu nhỏ cột trái lại một chút */
+    grid-template-columns: 350px 1fr; 
     gap: 40px;
   }
 }
 
-/* --- 2. Màn hình Tablet dọc & Mobile ngang (Dưới 1024px) --- */
 @media (max-width: 1024px) {
   .dashboard-container-inner { 
-    grid-template-columns: 1fr; /* Ép về 1 cột (Stacking) */
+    grid-template-columns: 1fr; 
     gap: 40px; 
     padding: 0 20px; 
   }
   
   .dashboard-left-col { 
-    position: static; /* Tắt dính (sticky) trên thiết bị nhỏ */
+    position: static; 
     max-width: 100%; 
   }
   
@@ -424,16 +407,13 @@ onMounted(() => fetchNote())
   .widget-divider { margin: 0 24px; }
 }
 
-/* --- 3. Màn hình Mobile Lớn (Dưới 768px) --- */
 @media (max-width: 768px) {
   .cooking-dashboard-premium { padding: 30px 0 80px; }
   .dashboard-container-inner { gap: 30px; padding: 0 16px; }
 
-  /* Tối ưu Video Card */
   .video-card-luxury { border-radius: 16px; margin-bottom: 20px; }
   .card-header-dark { padding: 12px 16px; }
   
-  /* Tối ưu Widgets (Nguyên liệu, Ghi chú) */
   .widgets-group { border-radius: 16px; }
   .premium-widget { padding: 20px; }
   .widget-divider { margin: 0 20px; }
@@ -442,14 +422,13 @@ onMounted(() => fetchNote())
   .btn-gradient-orange { padding: 12px 20px; font-size: 0.9rem; }
   .clean-check-row { padding: 6px 8px; }
   
-  /* Tối ưu Timeline (Quy trình) */
   .process-header .serif-title { font-size: 1.8rem; }
   .header-actions { 
     width: 100%; 
-    justify-content: space-between; /* Đẩy 2 thành phần ra 2 góc */
+    justify-content: space-between; 
   }
 
-  .timeline-step { gap: 16px; } /* Giảm khoảng cách giữa số bước và nội dung */
+  .timeline-step { gap: 16px; } 
   
   .timeline-marker { width: 28px; }
   .timeline-marker .t-circle { width: 28px; height: 28px; font-size: 0.9rem; }
@@ -458,18 +437,15 @@ onMounted(() => fetchNote())
   .timeline-content .step-subtitle { margin: 4px 0 8px; }
   .timeline-content .step-desc { font-size: 1rem; line-height: 1.6; margin-bottom: 16px; }
   
-  /* Ép ảnh minh họa thành 1 cột trên Mobile để nhìn rõ hơn */
   .timeline-content .step-gallery { 
     grid-template-columns: 1fr; 
     gap: 12px;
   }
 }
 
-/* --- 4. Màn hình Mobile Cực Nhỏ (Dưới 480px - Vd: iPhone SE) --- */
 @media (max-width: 480px) {
   .process-header .serif-title { font-size: 1.6rem; }
   
-  /* Nếu màn quá nhỏ, nút "Chế độ nấu" rớt xuống dòng, full width */
   .header-actions { 
     flex-direction: column; 
     align-items: flex-start; 
