@@ -342,7 +342,14 @@ const handleSaveToPlan = () => {
     window.dispatchEvent(new CustomEvent('ui:open-login'))
     return
   }
+    const isPremiumUser = authStore.user?.isPremium || authStore.user?.role === 'PREMIUM' || authStore.user?.IsPremium;
+  const isAdmin = authStore.user?.isAdmin || authStore.user?.role === 'ADMIN' || authStore.user?.role === 'admin';
   
+  if (!isPremiumUser && !isAdmin) {
+    toast.warn('Tính năng So sánh Công thức đặc quyền chỉ dành cho tài khoản Premium!');
+    window.dispatchEvent(new CustomEvent('ui:open-premium'));
+    return;
+  }
   emit('save-to-plan', props.post); 
   // Chú ý: Bọc props.post vào trong object { post: ... } để App.vue lấy đúng e.detail.post
   window.dispatchEvent(new CustomEvent('ui:open-mealplan', { 

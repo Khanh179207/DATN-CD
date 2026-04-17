@@ -131,7 +131,8 @@ export function normalizePost(dto) {
     isPremium: dto.isPremium || false, // Top level for card styling
     category: dto.categoryName || '',
     isActive: dto.isActive !== undefined ? dto.isActive : 1, // 🔥 Trạng thái ẩn/hiện
-    isApproved: dto.isApproved ?? 1
+    isApproved: dto.isApproved ?? 1, // 🔥 Trạng thái duyệt bài
+    createdAt: dto.createdAt ? new Date(dto.createdAt) : null
   }
 }
 
