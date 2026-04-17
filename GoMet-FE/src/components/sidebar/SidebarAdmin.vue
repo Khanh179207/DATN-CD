@@ -107,16 +107,6 @@
             </div>
             <span class="link-text" v-if="!isCollapsed">Quản lý Sự kiện</span>
           </router-link>
-
-          <router-link to="/admin/achievements" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Quản lý Thành tích' : ''">
-            <div class="icon-orb">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <circle cx="12" cy="8" r="7"></circle>
-                <polyline points="8.21 13.89 7 22 12 17 17 22 15.79 13.88"></polyline>
-              </svg>
-            </div>
-            <span class="link-text" v-if="!isCollapsed">Quản lý Thành tích</span>
-          </router-link>
         </div>
 
         <div class="nav-section anim-stagger" style="--d: 0.3s">
@@ -140,7 +130,6 @@
               </svg>
             </div>
             <span class="link-text" v-if="!isCollapsed">Hỗ trợ & Phản hồi</span>
-            <span class="count-badge" v-if="!isCollapsed">5</span>
             <span class="count-badge-dot" v-else></span>
           </router-link>
 
@@ -151,6 +140,16 @@
               </svg>
             </div>
             <span class="link-text" v-if="!isCollapsed">Xử lý Khiếu nại</span>
+          </router-link>
+
+          <router-link to="/admin/notifications" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Thông báo Hệ thống' : ''">
+            <div class="icon-orb">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              </svg>
+            </div>
+            <span class="link-text" v-if="!isCollapsed">Thông báo Hệ thống</span>
+            <div class="lux-alert-dot"></div>
           </router-link>
         </div>
 
@@ -168,25 +167,6 @@
             <span class="link-text" v-if="!isCollapsed">Quản lý Giao dịch</span>
           </router-link>
 
-          <router-link to="/admin/notifications" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Thông báo Hệ thống' : ''">
-            <div class="icon-orb">
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-              </svg>
-            </div>
-            <span class="link-text" v-if="!isCollapsed">Thông báo Hệ thống</span>
-            <div class="lux-alert-dot"></div>
-          </router-link>
-
-          <router-link to="/admin/blacklist" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Bộ lọc Từ khóa' : ''">
-            <div class="icon-orb">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                <line x1="2" y1="2" x2="22" y2="22"></line>
-              </svg>
-            </div>
-            <span class="link-text" v-if="!isCollapsed">Bộ lọc Từ khóa</span>
-          </router-link>
 
           <router-link to="/admin/system-logs" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Nhật ký Hệ thống' : ''">
             <div class="icon-orb">
@@ -200,6 +180,17 @@
             </div>
             <span class="link-text" v-if="!isCollapsed">Nhật ký Hệ thống</span>
           </router-link>
+
+          <router-link to="/admin/system-settings" class="nav-link-lux" active-class="active" :title="isCollapsed ? 'Vận Hành Hệ Thống' : ''">
+            <div class="icon-orb">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+            </div>
+            <span class="link-text" v-if="!isCollapsed">Vận Hành Hệ Thống</span>
+          </router-link>
+
         </div>
       </div> 
     </nav> 
@@ -219,12 +210,14 @@
     </div>
   </aside>
 </template>
-
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useAuthStore } from '@/stores/auth';
 
 // Khai báo sự kiện để báo cho Layout cha (AdminLayout) biết Sidebar đang ở trạng thái nào
 const emit = defineEmits(['toggle-collapse']);
+
+const authStore = useAuthStore();
 
 // Đọc trạng thái từ LocalStorage để giữ nguyên khi F5 trang
 const isCollapsed = ref(localStorage.getItem('gomet_admin_sidebar_collapsed') === 'true');

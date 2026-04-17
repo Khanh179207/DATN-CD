@@ -1,12 +1,11 @@
 <template>
   <div class="ticket-sovereign-wrapper">
-    
     <div class="page-header-lux">
       <div>
         <h1 class="page-title">Trung tâm Phản hồi</h1>
         <p class="page-subtitle">Hệ thống xử lý khiếu nại và tối ưu hóa cộng đồng GOMET</p>
       </div>
-      <button class="btn-refresh-lux" @click="fetchTickets" :disabled="loading">
+      <button class="btn-refresh-lux" @click="loadTickets" :disabled="loading">
         <svg :class="{ 'spinning': loading }" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
         </svg>
@@ -64,23 +63,19 @@
             </tr>
           </thead>
           <transition-group name="list-slide" tag="tbody">
-            <tr v-for="ticket in filteredTickets" :key="ticket.ticketID || ticket.id" class="lux-row" @click="viewDetail(ticket)">
-              <td class="id-col">#{{ ticket.ticketID || ticket.id }}</td>
-              <td class="user-name">
-                {{ ticket.account?.username || ticket.username || 'Người dùng ẩn' }}
-              </td>
+            <tr v-for="ticket in filteredTickets" :key="ticket.ticketID" class="lux-row" @click="viewDetail(ticket)">
+              <td class="id-col">#{{ ticket.ticketID }}</td>
+              <td class="user-name">{{ ticket.username || 'Người dùng ẩn' }}</td>
               <td>
                 <span class="badge-type" :class="(ticket.ticketType || '').toLowerCase()">
                   {{ formatType(ticket.ticketType) }}
                 </span>
               </td>
               <td>
-                <span v-if="ticket.targetPostId || ticket.targetPostID" class="target-badge">
-                  Post: #{{ ticket.targetPostId || ticket.targetPostID }}
-                </span>
+                <span v-if="ticket.targetPostId" class="target-badge">Post: #{{ ticket.targetPostId }}</span>
                 <span v-else class="text-muted">—</span>
               </td>
-              <td class="title-cell">{{ truncateText(ticket.title, 50) || '—' }}</td>
+              <td class="title-cell">{{ truncateText(ticket.title, 50) }}</td>
               <td class="time-cell">{{ formatDate(ticket.createdAt) }}</td>
               <td>
                 <span class="badge-status" :class="'status-' + ticket.status">
@@ -88,7 +83,7 @@
                 </span>
               </td>
               <td class="text-right">
-                <button class="btn-refresh-lux btn-sm-action" @click.stop="handleRowAction(ticket)">Xử lý</button>
+                <button class="btn-refresh-lux btn-sm-action" @click.stop="viewDetail(ticket)">Xử lý</button>
               </td>
             </tr>
           </transition-group>
@@ -97,7 +92,6 @@
         <div v-if="!loading && filteredTickets.length === 0" class="empty-state-lux">
           <div class="empty-icon">🗂️</div>
           <h3>Không tìm thấy Ticket nào!</h3>
-          <p>Hãy thử thay đổi bộ lọc hoặc từ khóa tìm kiếm sếp nhé.</p>
           <button class="btn-refresh-lux btn-outline" @click="resetFilters">Xóa bộ lọc</button>
         </div>
       </div>
@@ -108,7 +102,7 @@
         <div v-if="showModal && selectedTicket" class="modal-glass-backdrop" @click="closeModal">
           <div class="modal-lux-content" @click.stop>
             <div class="modal-header-lux">
-              <h3>Chi tiết Ticket #{{ selectedTicket.ticketID || selectedTicket.id }}</h3>
+              <h3>Chi tiết Ticket #{{ selectedTicket.ticketID }}</h3>
               <button class="btn-x" @click="closeModal">×</button>
             </div>
 
@@ -116,22 +110,20 @@
               <div class="split-left">
                 <div class="desc-box-lux highlight">
                   <label>Tiêu đề người dùng nhập</label>
-                  <strong>{{ selectedTicket.title || 'Phản hồi từ cộng đồng' }}</strong>
+                  <strong>{{ selectedTicket.title }}</strong>
                 </div>
 
                 <div class="desc-box-lux">
                   <label>Nội dung chi tiết</label>
-                  <div class="detail-text">{{ selectedTicket.description || 'Không có mô tả chi tiết' }}</div>
+                  <div class="detail-text">{{ selectedTicket.description }}</div>
                 </div>
 
                 <div class="evidence-section">
                   <label class="section-label">Bằng chứng hình ảnh</label>
                   <div class="evidence-wrapper" v-if="selectedTicket.attachment">
-                     <img :src="selectedTicket.attachment" alt="Bằng chứng" class="img-evidence" @error="(e) => e.target.src = 'https://placehold.co/600x400?text=Khong+tai+duoc+anh'"/>
+                    <img :src="selectedTicket.attachment" class="img-evidence" @click="window.open(selectedTicket.attachment, '_blank')"/>
                   </div>
-                  <div class="no-evidence" v-else>
-                    <i class="fas fa-image-slash"></i> Không có ảnh bằng chứng đính kèm
-                  </div>
+                  <div class="no-evidence" v-else>Không có ảnh đính kèm</div>
                 </div>
 
                 <div class="timeline-logs">
@@ -140,21 +132,29 @@
                     <div class="log-dot gray"></div>
                     <div class="log-content">
                       <span class="log-time">{{ formatDate(selectedTicket.createdAt) }}</span>
-                      <span class="log-action">Người dùng <span class="log-actor">{{ selectedTicket.account?.username || selectedTicket.username }}</span> đã gửi yêu cầu.</span>
+                      <span class="log-action">Người dùng <span class="log-actor">{{ selectedTicket.username }}</span> đã gửi yêu cầu.</span>
                     </div>
                   </div>
-                  <div class="log-item" v-if="selectedTicket.processedAt || selectedTicket.ProcessedAt">
+                  <div class="log-item" v-if="selectedTicket.processedAt">
                     <div class="log-dot blue"></div>
                     <div class="log-content">
-                      <span class="log-time">{{ formatDate(selectedTicket.processedAt || selectedTicket.ProcessedAt) }}</span>
-                      <span class="log-action">Admin đã <span class="log-actor">Tiếp nhận xử lý</span>.</span>
+                      <span class="log-time">{{ formatDate(selectedTicket.processedAt) }}</span>
+                      <span class="log-action">
+                        Quản trị viên <span class="log-actor">{{ selectedTicket.adminName || 'hệ thống' }}</span> đã <span class="log-actor">Tiếp nhận xử lý</span>.
+                      </span>
                     </div>
                   </div>
-                  <div class="log-item" v-if="selectedTicket.status >= 2 && selectedTicket.resolvedAt">
-                    <div class="log-dot green"></div>
+                  <div class="log-item" v-if="selectedTicket.status >= 2">
+                    <div class="log-dot" :class="selectedTicket.status === 2 ? 'green' : 'red'"></div>
                     <div class="log-content">
                       <span class="log-time">{{ formatDate(selectedTicket.resolvedAt) }}</span>
-                      <span class="log-action">Ticket đã được đóng bởi <span class="log-actor">Quản trị viên</span>.</span>
+                      <span class="log-action">
+                        Ticket đã được {{ selectedTicket.status === 2 ? 'hoàn thành' : 'từ chối' }} bởi 
+                        <span class="log-actor">{{ selectedTicket.adminName || 'Quản trị viên' }}</span>.
+                      </span>
+                      <div v-if="selectedTicket.adminNote" class="admin-note-reply" :class="{ 'rejected': selectedTicket.status === 3 }">
+                        <strong>Phản hồi:</strong> {{ selectedTicket.adminNote }}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -163,8 +163,8 @@
               <div class="split-right">
                 <div class="meta-card-lux">
                   <div class="meta-item">
-                    <label>Người gửi phản hồi</label>
-                    <p>👤 {{ selectedTicket.account?.username || selectedTicket.username || 'Không rõ' }}</p>
+                    <label>Người gửi</label>
+                    <p>👤 {{ selectedTicket.username }}</p>
                   </div>
                   <div class="meta-item">
                     <label>Thời gian tạo</label>
@@ -173,31 +173,27 @@
                 </div>
 
                 <div v-if="selectedTicket.ticketType === 'REPORT'" class="violation-card-lux red-theme">
-                  <div class="v-header">
-                    <span>⚠️ Nội dung bị báo cáo</span>
-                  </div>
+                  <div class="v-header"><span>⚠️ Nội dung bị báo cáo</span></div>
                   <div class="v-body">
                     <span class="lbl">Mã bài viết:</span>
-                    <span class="v-id">#{{ selectedTicket.targetPostId || selectedTicket.targetPostID }}</span>
-                    <button class="btn-go-post-lux" @click="goToPost(selectedTicket.targetPostId || selectedTicket.targetPostID)">
-                       Xem bài viết ngay ↗
-                    </button>
-
+                    <span class="v-id">#{{ selectedTicket.targetPostId }}</span>
+                    <button class="btn-go-post-lux" @click="goToPost(selectedTicket.targetPostId)">Xem bài viết ↗</button>
+                    
                     <div class="quick-mod-bar-vertical">
-                      <button class="btn-mod btn-kill-post" @click="openConfirmModal('DELETE_POST', selectedTicket.targetPostId || selectedTicket.targetPostID)" :disabled="isProcessingAction">
-                        🗑️ Xóa bài viết ngay
+                      <div v-if="selectedTicket.status === 0" class="action-warning">
+                         Vui lòng bấm "Tiếp nhận" để mở khóa chức năng xử lý vi phạm.
+                      </div>
+                      <button class="btn-mod btn-kill-post" 
+                              @click="openActionModal('DELETE_POST', selectedTicket.targetPostId)" 
+                              :disabled="isProcessingAction || selectedTicket.status !== 1">
+                        🗑️ Gỡ bỏ bài viết
                       </button>
-                      <button class="btn-mod btn-ban-user" @click="openConfirmModal('BAN_USER', selectedTicket.targetPostId || selectedTicket.targetPostID)" :disabled="isProcessingAction">
+                      <button class="btn-mod btn-ban-user" 
+                              @click="openActionModal('BAN_USER', selectedTicket.targetPostId)" 
+                              :disabled="isProcessingAction || selectedTicket.status !== 1">
                         🚫 Khóa tài khoản Tác giả
                       </button>
                     </div>
-                  </div>
-                </div>
-
-                <div v-else class="type-info-card">
-                  <label>Phân loại yêu cầu</label>
-                  <div class="type-display" :class="selectedTicket.ticketType.toLowerCase()">
-                    {{ formatType(selectedTicket.ticketType) }}
                   </div>
                 </div>
               </div>
@@ -206,9 +202,9 @@
             <div class="modal-footer-lux">
               <button @click="closeModal" class="btn-lux btn-close-modal">Đóng</button>
               <div class="main-actions">
-                <button v-if="selectedTicket.status === 0" class="btn-lux btn-process" @click="updateStatus(1)">Tiếp nhận</button>
-                <button v-if="selectedTicket.status < 2" class="btn-lux btn-reject" @click="updateStatus(3)">Từ chối</button>
-                <button v-if="selectedTicket.status === 1" class="btn-lux btn-resolve" @click="updateStatus(2)">Giải quyết xong</button>
+                <button v-if="selectedTicket.status === 0" class="btn-lux btn-process" @click="handleUpdateStatus(1)">Tiếp nhận</button>
+                <button v-if="selectedTicket.status < 2" class="btn-lux btn-reject" @click="openActionModal('REJECT_TICKET', selectedTicket.ticketID)">Từ chối Ticket</button>
+                <button v-if="selectedTicket.status === 1" class="btn-lux btn-resolve" @click="handleUpdateStatus(2, 'Đã giải quyết ổn thỏa')">Giải quyết xong</button>
               </div>
             </div>
           </div>
@@ -216,39 +212,46 @@
       </transition>
 
       <transition name="fade-glass">
-        <div v-if="confirmModal.show" class="modal-glass-backdrop confirm-overlay" @click="closeConfirmModal">
-          <div class="confirm-dialog-card" @click.stop>
-            <div class="icon-danger-circle">
-              <svg v-if="confirmModal.type === 'DELETE_POST'" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-              <svg v-if="confirmModal.type === 'BAN_USER'" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
+        <div v-if="actionModal.show" class="modal-glass-backdrop confirm-overlay" @click="closeActionModal">
+          <div class="confirm-dialog-card luxury-reject-form" @click.stop>
+            <div class="form-header">
+               <div class="icon-danger-circle">
+                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+               </div>
+               <h3 class="confirm-title">{{ actionModal.title }}</h3>
             </div>
-            <h3 class="confirm-title">{{ confirmModal.title }}</h3>
-            <p class="confirm-desc">{{ confirmModal.message }}</p>
             
+            <p class="confirm-desc">{{ actionModal.message }}</p>
+            
+            <div class="input-group">
+                <label>Lý do xử lý <span class="required">*</span></label>
+                <textarea v-model="actionModal.reason" class="note-input-lux" placeholder="Vui lòng nhập chi tiết lý do vi phạm..." rows="4"></textarea>
+                <span class="char-count" :class="{'text-red-500': actionModal.reason.length > 500}">{{ actionModal.reason.length }}/500</span>
+            </div>
+
             <div class="confirm-actions">
-              <button class="btn-cancel-action" @click="closeConfirmModal" :disabled="isProcessingAction">Hủy bỏ</button>
-              <button class="btn-danger-action" @click="executeAction" :disabled="isProcessingAction">
-                <span v-if="!isProcessingAction">Xác nhận</span>
-                <span v-else>Đang xử lý...</span>
+              <button class="btn-cancel-action" @click="closeActionModal" :disabled="isProcessingAction">Hủy thao tác</button>
+              <button class="btn-danger-action" @click="executeAdminAction" :disabled="!actionModal.reason.trim() || isProcessingAction || actionModal.reason.length > 500">
+                  <span v-if="!isProcessingAction">Xác nhận</span>
+                  <span v-else>Đang xử lý...</span>
               </button>
             </div>
           </div>
         </div>
       </transition>
     </Teleport>
-
-  </div> </template>
+  </div>
+</template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { toast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
-import './TicketManagement.scss' // 🔥 IMPORT FILE SCSS Ở ĐÂY SẾP NHÉ
+import ticketService from '@/services/ticketService'
+import api from '@/services/api' 
+import './TicketManagement.scss'
 
 const authStore = useAuthStore()
-const router = useRouter()
-
 const tickets = ref([])
 const loading = ref(false)
 const showModal = ref(false)
@@ -258,117 +261,143 @@ const currentTypeFilter = ref('ALL')
 const searchQuery = ref('') 
 const isProcessingAction = ref(false)
 
-const confirmModal = ref({
-  show: false, type: '', targetId: null, title: '', message: ''
-})
+const actionModal = ref({ show: false, type: '', targetId: null, title: '', message: '', reason: '' })
 
-const openConfirmModal = (type, targetId) => {
-  if (!targetId) return toast.error('Không tìm thấy ID bài viết!');
-  confirmModal.value.type = type;
-  confirmModal.value.targetId = targetId;
-  confirmModal.value.show = true;
-  if (type === 'DELETE_POST') {
-    confirmModal.value.title = `Xóa bài viết #${targetId}?`;
-    confirmModal.value.message = 'Bài viết này sẽ bị ẩn khỏi cộng đồng nhưng vẫn được lưu trong hệ thống để đối soát.';
-  } else if (type === 'BAN_USER') {
-    confirmModal.value.title = `Khóa tác giả bài viết #${targetId}?`;
-    confirmModal.value.message = 'Hành động này sẽ đóng băng tài khoản người dùng ngay lập tức. Họ sẽ không thể đăng nhập GOMET được nữa.';
+// 1. DATA LOADING
+const loadTickets = async () => {
+  loading.value = true
+  try {
+    const data = await ticketService.getAllTickets()
+    tickets.value = data
+  } catch (e) {
+    toast.error('Lỗi khi tải dữ liệu từ server!')
+  } finally {
+    loading.value = false
   }
 }
 
-const closeConfirmModal = () => {
-  if (isProcessingAction.value) return;
-  confirmModal.value.show = false;
-}
+// 2. STATUS UPDATE TICKET
+const handleUpdateStatus = async (status, note = "") => {
+  if (!selectedTicket.value) return
+  const id = selectedTicket.value.ticketID
+  
+  isProcessingAction.value = true
+  try {
+    await ticketService.updateTicketStatus(id, status, note)
+    toast.success('Đã cập nhật Ticket thành công!')
+    
+    await loadTickets()
+    const freshTicket = tickets.value.find(t => t.ticketID === id)
+    if (freshTicket) selectedTicket.value = { ...freshTicket }
 
-const executeAction = async () => {
-  if (confirmModal.value.type === 'DELETE_POST') {
-    await deleteViolatingPost(confirmModal.value.targetId);
-  } else if (confirmModal.value.type === 'BAN_USER') {
-    await banViolatingUser(confirmModal.value.targetId);
+  } catch (e) {
+    toast.error('Lỗi khi cập nhật trạng thái!')
+  } finally {
+    isProcessingAction.value = false
   }
 }
 
-const deleteViolatingPost = async (postId) => {
-  isProcessingAction.value = true;
-  try {
-    const res = await fetch(`/api/admin/posts/${postId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${authStore.token}` } });
-    if (res.ok) { toast.success(`Đã trảm bài viết #${postId}!`); await updateStatus(2); closeConfirmModal(); } 
-    else toast.error('Xóa thất bại!');
-  } catch (error) { toast.error('Lỗi hệ thống!'); }
-  finally { isProcessingAction.value = false; }
+// 3. MỞ POPUP NHẬP LÝ DO
+const openActionModal = (type, targetId) => {
+  actionModal.value = {
+    show: true,
+    type,
+    targetId,
+    reason: '',
+    title: type === 'DELETE_POST' ? 'Gỡ bỏ bài viết?' : (type === 'BAN_USER' ? 'Khóa tài khoản?' : 'Từ chối Ticket'),
+    message: type === 'DELETE_POST' 
+      ? 'Bài viết sẽ bị ẩn khỏi hệ thống.' 
+      : (type === 'BAN_USER' ? 'Tài khoản tác giả sẽ bị khóa và bài viết rác cũng sẽ được gỡ.' : 'Ticket này sẽ bị đóng lại.')
+  }
 }
 
-const banViolatingUser = async (postId) => {
-  isProcessingAction.value = true;
+const closeActionModal = () => { actionModal.value.show = false }
+
+// 4. XỬ LÝ VI PHẠM (ĐÃ BỎ GỌI AUDIT LOG Ở FRONTEND)
+const executeAdminAction = async () => {
+  const { type, targetId, reason } = actionModal.value
+  isProcessingAction.value = true
+  
   try {
-    const res = await fetch(`/api/admin/posts/${postId}/ban-author`, { method: 'PUT', headers: { 'Authorization': `Bearer ${authStore.token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
-    if (res.ok) { toast.success('Tài khoản đã bị khóa.'); await updateStatus(2); closeConfirmModal(); } 
-    else { const err = await res.json().catch(()=>({})); toast.error(err.message || 'Khóa thất bại!'); }
-  } catch (error) { toast.error('Lỗi máy chủ!'); } 
-  finally { isProcessingAction.value = false; }
+    if (type === 'REJECT_TICKET') {
+      await handleUpdateStatus(3, reason.trim())
+      closeActionModal()
+      return; 
+    }
+
+    const ticketRef = `#${selectedTicket.value.ticketID}`;
+    const fullReason = `${reason.trim()} (Xử lý từ Ticket ${ticketRef})`;
+
+    const payload = {
+      adminId: authStore.user?.accountID || authStore.user?.id || 0,
+      adminName: authStore.user?.username || authStore.user?.fullName || 'Admin',
+      reason: fullReason
+    };
+
+    if (type === 'DELETE_POST') {
+      // Gọi API Gỡ Bài Viết (Backend tự ghi log)
+      await api.put(`/api/admin/posts/${targetId}/reject`, payload); 
+      
+      await handleUpdateStatus(2, `Đã gỡ bài viết vi phạm. Lý do: ${reason.trim()}`);
+
+    } else if (type === 'BAN_USER') {
+      // 1. Tìm ID Tác Giả
+      const postDetail = await api.get(`/api/posts/${targetId}`);
+      const authorId = postDetail.data?.accountID || postDetail.data?.authorID || postDetail.data?.authorId;
+
+      if (!authorId) throw new Error("Không tìm thấy thông tin tác giả của bài viết này!");
+
+      // 2. Khóa Account (Backend tự ghi log)
+      await api.patch(`/admin/accounts/${authorId}/ban`, payload);
+
+      // 3. Tự động gỡ luôn Bài Viết của nó
+      await api.put(`/api/admin/posts/${targetId}/reject`, payload).catch(() => {}); 
+
+      await handleUpdateStatus(2, `Đã khóa tài khoản và gỡ bài viết. Lý do: ${reason.trim()}`);
+    }
+
+    toast.success('Xử lý vi phạm thành công!')
+    closeActionModal()
+
+  } catch (e) {
+    toast.error('Lỗi hệ thống: ' + (e.response?.data?.message || e.message))
+  } finally {
+    isProcessingAction.value = false
+  }
 }
 
+// 5. COMPUTED & HELPERS
 const filterTabs = [
   { label: 'Tất cả', value: -1 },
   { label: 'Chờ duyệt', value: 0 },
   { label: 'Đang xử lý', value: 1 },
-  { label: 'Đã hoàn thành', value: 2 },
+  { label: 'Hoàn thành', value: 2 },
 ]
-
-const stats = computed(() => [
-  { label: 'Tổng Ticket Chờ', value: tickets.value.filter(t => t.status === 0).length, iconClass: 'all', icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>' },
-  { label: 'Báo Lỗi (Bug)', value: tickets.value.filter(t => t.status === 0 && t.ticketType === 'BUG').length, iconClass: 'bug', icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>' },
-  { label: 'Vi Phạm', value: tickets.value.filter(t => t.status === 0 && t.ticketType === 'REPORT').length, iconClass: 'report', class: 'danger-highlight', icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>' },
-  { label: 'Góp ý', value: tickets.value.filter(t => t.status === 0 && t.ticketType === 'FEEDBACK').length, iconClass: 'feedback', icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>' }
-])
-
-const fetchTickets = async () => {
-  loading.value = true
-  try {
-    const res = await fetch('/api/admin/tickets', { headers: { 'Authorization': `Bearer ${authStore.token}` } })
-    if (res.ok) tickets.value = await res.json()
-  } catch (e) { toast.error('Lỗi server!') }
-  finally { loading.value = false }
-}
-
-const updateStatus = async (newStatus) => {
-  try {
-    const ticketId = selectedTicket.value.ticketID || selectedTicket.value.id
-    const res = await fetch(`/api/admin/tickets/${ticketId}/status?status=${newStatus}`, { method: 'PUT', headers: { 'Authorization': `Bearer ${authStore.token}` } })
-    if (res.ok) { await fetchTickets(); const u = tickets.value.find(t => (t.ticketID || t.id) === ticketId); if(u) selectedTicket.value = {...u}; toast.success('Cập nhật trạng thái thành công!'); }
-  } catch (e) { toast.error('Lỗi xử lý!') }
-}
-
-const goToPost = (id) => { if (id) window.open(`/post/${id}`, '_blank'); }
 
 const filteredTickets = computed(() => {
   return tickets.value.filter(t => {
-    const matchS = currentStatusFilter.value === -1 || t.status === currentStatusFilter.value;
-    const matchT = currentTypeFilter.value === 'ALL' || t.ticketType === currentTypeFilter.value;
-    
-    const query = searchQuery.value.toLowerCase().trim();
-    const title = (t.title || '').toLowerCase();
-    const id = String(t.ticketID || t.id);
-    const matchSearch = query === '' || title.includes(query) || id.includes(query);
-
-    return matchS && matchT && matchSearch;
+    const matchS = currentStatusFilter.value === -1 || t.status === currentStatusFilter.value
+    const matchT = currentTypeFilter.value === 'ALL' || t.ticketType === currentTypeFilter.value
+    const query = searchQuery.value.toLowerCase().trim()
+    const matchSearch = String(t.ticketID).includes(query) || (t.title && t.title.toLowerCase().includes(query))
+    return matchS && matchT && matchSearch
   }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
 })
 
-const resetFilters = () => {
-  currentStatusFilter.value = -1;
-  currentTypeFilter.value = 'ALL';
-  searchQuery.value = '';
-}
+const stats = computed(() => [
+  { label: 'Tổng số Ticket', value: tickets.value.length, iconClass: 'all', icon: '📝' },
+  { label: 'Báo Lỗi (BUG)', value: tickets.value.filter(t => t.ticketType === 'BUG').length, iconClass: 'bug', icon: '🐞' },
+  { label: 'Vi Phạm', value: tickets.value.filter(t => t.ticketType === 'REPORT').length, iconClass: 'report', class: 'danger-highlight', icon: '🚩' },
+  { label: 'Góp ý', value: tickets.value.filter(t => t.ticketType === 'FEEDBACK').length, iconClass: 'feedback', icon: '💡' }
+])
 
-const handleRowAction = (ticket) => { selectedTicket.value = ticket; showModal.value = true; }
-const viewDetail = (ticket) => { selectedTicket.value = ticket; showModal.value = true; }
-const closeModal = () => { showModal.value = false }
+const viewDetail = (ticket) => { selectedTicket.value = ticket; showModal.value = true }
+const closeModal = () => { showModal.value = false; closeActionModal() }
+const goToPost = (id) => window.open(`/post/${id}`, '_blank')
 const truncateText = (t, l) => t?.length > l ? t.substring(0, l) + '...' : t
-const formatDate = (d) => d ? new Date(d).toLocaleString('vi-VN', { hour: '2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric' }) : '—'
+const formatDate = (d) => d ? new Date(d).toLocaleString('vi-VN') : '—'
 const formatType = (t) => ({ BUG: 'Báo Lỗi', REPORT: 'Vi Phạm', FEEDBACK: 'Góp Ý' }[t] || t)
-const formatStatus = (s) => ({ 0: 'Chờ duyệt', 1: 'Đang xử lý', 2: 'Đã giải quyết', 3: 'Đã từ chối' }[s])
+const formatStatus = (s) => ({ 0: 'Chờ duyệt', 1: 'Đang xử lý', 2: 'Hoàn thành', 3: 'Từ chối' }[s])
 
-onMounted(fetchTickets)
+onMounted(loadTickets)
 </script>

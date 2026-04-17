@@ -14,12 +14,19 @@ export const getLatestPosts = (limit = 8) =>
 export const getPosts = (page = 1, size = 12) =>
   api.get('/api/posts', { params: { page, size } }).then(r => r.data)
 
+export const getPostById = (id) => {
+  const user = JSON.parse(localStorage.getItem('user') || 'null')
+  const accountId = user?.accountID || null
+  return api.get(`/api/posts/${id}`, { params: { accountId } }).then(r => r.data)
+}
+
+// 🔥 CODE MỚI THÊM VÀO: Hàm ghi nhận lượt xem
 /**
+ * Ghi nhận 1 lượt xem (View) cho bài viết
  * @param {number|string} id
- * @returns {Promise<Object>} PostDetailDTO
  */
-export const getPostById = (id) =>
-  api.get(`/api/posts/${id}`).then(r => r.data)
+export const recordPostView = (id) =>
+  api.post(`/api/posts/${id}/view`).then(r => r.data)
 
 /**
  * @param {string} keyword
@@ -49,12 +56,6 @@ export const getSuggestedPosts = (params = {}) =>
   api.get('/api/posts/suggest', { params }).then(r => r.data)
 
 /**
- * @param {number} limit
- */
-export const getTrendingPosts = (limit = 10) =>
-  api.get('/api/posts/trending', { params: { limit } }).then(r => r.data)
-
-/**
  * Create a new post (pending approval).
  * @param {object} data - { accountID, categoryID, title, description, ingredients, media, video, level, cookingTime, steps }
  * (Đã thêm trường video vào payload)
@@ -62,6 +63,45 @@ export const getTrendingPosts = (limit = 10) =>
 export const createPost = (data) =>
   api.post('/api/posts', data).then(r => r.data)
 
+/**
+ * Update an existing post.
+ * @param {number|string} id 
+ * @param {object} data - PostDTO
+ */
+export const updatePost = (id, data) =>
+  api.put(`/api/posts/${id}`, data).then(r => r.data)
+
+/**
+ * Toggle post visibility (isActive).
+ * @param {number|string} id 
+ */
+export const togglePostActive = (id) =>
+  api.patch(`/api/posts/${id}/toggle-active`).then(r => r.data)
+
+/**
+ * @param {Array<number|string>} postIds - Mảng các ID bài viết (VD: [1, 2, 3])
+ * @returns {Promise<Object>} Map chứa top comment, key là postID
+ */
+export const getTopCommentsBatch = (postIds = []) => {
+  // Tránh gửi request thừa nếu mảng rỗng
+  if (!postIds || postIds.length === 0) return Promise.resolve({});
+  
+  return api.get('/api/posts/top-comments-batch', { 
+    params: { postIds: postIds.join(',') } 
+  }).then(r => r.data)
+}
+
+export const getTrendingPosts = async (timeframe = 'month', limit = 10) => {
+  try {
+    const response = await api.get('/api/posts/trending', {
+      params: { timeframe, limit }
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi lấy bảng xếp hạng:", error);
+    return [];
+  }
+}
 
 // ── Helpers: map BE DTO fields to FE-compatible shape ──────────────────────
 /**
@@ -85,8 +125,13 @@ export function normalizePost(dto) {
     authorID:   dto.authorID ?? dto.accountID ?? null,
     author: {
       name:   dto.authorName || 'GoMet Chef',
-      avatar: dto.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(dto.authorName||'G')}&background=EA580C&color=fff`
+      avatar: dto.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(dto.authorName||'G')}&background=EA580C&color=fff`,
+      isPremium: dto.isPremium || false
     },
-    category: dto.categoryName || ''
+    isPremium: dto.isPremium || false, // Top level for card styling
+    category: dto.categoryName || '',
+    isActive: dto.isActive !== undefined ? dto.isActive : 1, // 🔥 Trạng thái ẩn/hiện
+    isApproved: dto.isApproved ?? 1
   }
 }
+

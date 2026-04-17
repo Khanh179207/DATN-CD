@@ -3,23 +3,24 @@ package poly.edu.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import poly.edu.dao.AccountDAO;
-import poly.edu.dao.CommentDAO;
-import poly.edu.dao.PostDAO;
-import poly.edu.dao.CommentLikeDAO;
+import poly.edu.dao.*;
 import poly.edu.dto.AdminCommentDTO;
 import poly.edu.dto.CommentDTO;
 import poly.edu.entity.Account;
 import poly.edu.entity.Comment;
+import poly.edu.entity.InteractionLog;
 import poly.edu.entity.Post;
 import poly.edu.service.CommentService;
-import poly.edu.service.ModerationLogService; // 🔥 IMPORT MỚI
+import poly.edu.service.ModerationLogService;
 import poly.edu.service.NotificationService;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,8 +32,8 @@ public class CommentServiceImpl implements CommentService {
     private final AccountDAO accountDAO;
     private final CommentLikeDAO commentLikeDAO;
     private final NotificationService notificationService;
+    private final InteractionLogDAO interactionLogDAO;
 
-    // 🔥 INJECT THÊM MÁY NGHE LÉN
     private final ModerationLogService moderationLogService;
 
     @Override
@@ -87,9 +88,8 @@ public class CommentServiceImpl implements CommentService {
         if (post == null)
             throw new RuntimeException("Không tìm thấy bài viết");
 
-        // 🔥 CHỐT CHẶN BẢO MẬT: CHỐNG SPAM RATING (Mỗi bài chỉ rate 1 lần) 🔥
+        // 🔥 CHỐT CHẶN BẢO MẬT: CHỐNG SPAM RATING
         if (finalRating != null && finalRating > 0) {
-            // Đếm xem user này đã từng rate bài này (với isActive = 1) chưa
             long existingRatings = commentDAO.countRatingsByUserAndPost(post.getPostID(), account.getAccountID());
             if (existingRatings > 0) {
                 throw new RuntimeException("Bạn đã đánh giá bài viết này rồi! Mỗi bài viết chỉ được đánh giá 1 lần.");
@@ -104,39 +104,79 @@ public class CommentServiceImpl implements CommentService {
                 .rating(finalRating)
                 .attachments(req.getImageUrls())
                 .likes(0)
-                .isActive(1) // Mặc định 1: Đang hoạt động
+                .isActive(1)
                 .build();
 
         Comment saved = commentDAO.save(comment);
 
-        if (post.getAccount() != null && !account.getAccountID().equals(post.getAccount().getAccountID())) {
-            notificationService.notifyComment(
+        // Lưu InteractionLog của Sếp
+        try {
+            if (finalRating != null && finalRating > 0) {
+                InteractionLog log = new InteractionLog();
+                log.setPostID(post.getPostID());
+                log.setType("RATING");
+                log.setValue(finalRating);
+                log.setCreatedAt(LocalDateTime.now());
+                log.setReferenceId(saved.getCommentID());
+                interactionLogDAO.save(log);
+            }
+        } catch (Exception e) {
+            System.err.println("Lỗi lưu InteractionLog: " + e.getMessage());
+        }
+
+        // 🔥 THÊM LOGIC THÔNG BÁO TỪ NHÁNH CỦA BẠN ĐÓ (KÈM CHỐT CHẶN AN TOÀN)
+        try {
+            if (post.getAccount() != null && !account.getAccountID().equals(post.getAccount().getAccountID())
+                    && parentComment == null) {
+                notificationService.notifyComment(
+                        account.getUsername(),
+                        post.getAccount().getAccountID(),
+                        post.getPostID(),
+                        saved.getCommentID()
+                );
+            }
+        } catch (Exception e) {
+            System.err.println("Lỗi gửi thông báo comment: " + e.getMessage());
+        }
+
+        // Send reply notification
+        if (parentComment != null && parentComment.getAccount() != null
+                && !account.getAccountID().equals(parentComment.getAccount().getAccountID())) {
+            notificationService.notifyCommentReply(
                     account.getUsername(),
-                    post.getAccount().getAccountID(),
+                    parentComment.getAccount().getAccountID(),
                     post.getPostID(),
                     saved.getCommentID());
         }
 
+        // Notify mentioned users
+        extractAndNotifyMentions(req.getContent(), account.getUsername(), post.getPostID(), saved.getCommentID());
+
         return toDTO(saved);
     }
 
-    // 🔥 ADMIN XÓA BÌNH LUẬN (-1) VÀ GHI LOG
     @Override
     @Transactional
     public void delete(Integer id, Integer adminId, String adminName) {
         Comment comment = commentDAO.findById(id)
                 .orElseThrow(() -> new RuntimeException("Bình luận không tồn tại"));
 
+        interactionLogDAO.deleteByReference(id, "RATING");
+
         comment.setIsActive(-1);
         commentDAO.save(comment);
 
-        // Tự động cắt 50 ký tự đầu tiên của bình luận để làm lý do ghi Log
         String content = comment.getContent() != null ? comment.getContent() : "[Chỉ có hình ảnh/Đánh giá]";
-        if (content.length() > 50) content = content.substring(0, 50) + "...";
+        if (content.length() > 50)
+            content = content.substring(0, 50) + "...";
         String autoReason = "Xóa bình luận vi phạm: '" + content + "'";
 
-        // Ghi thẳng vào Sổ Nam Tào
         moderationLogService.logAction(id, "COMMENT", "DELETE", adminId, adminName, autoReason);
+
+        // Notify the author
+        if (comment.getAccount() != null) {
+            notificationService.notifyCommentStatusChange(id, comment.getAccount().getAccountID(), "DELETE");
+        }
     }
 
     @Override
@@ -146,12 +186,11 @@ public class CommentServiceImpl implements CommentService {
         if (!comment.getAccount().getAccountID().equals(userId)) {
             throw new RuntimeException("Bạn không có quyền!");
         }
-        // User tự xóa (0)
+        interactionLogDAO.deleteByReference(id, "RATING");
         comment.setIsActive(0);
         commentDAO.save(comment);
     }
 
-    // 🔥 ADMIN KHÔI PHỤC BÌNH LUẬN (1) VÀ GHI LOG
     @Override
     @Transactional
     public void restore(Integer id, Integer adminId, String adminName) {
@@ -161,8 +200,12 @@ public class CommentServiceImpl implements CommentService {
         comment.setIsActive(1);
         commentDAO.save(comment);
 
-        // Ghi thẳng vào Sổ Nam Tào
         moderationLogService.logAction(id, "COMMENT", "RESTORE", adminId, adminName, "Khôi phục bình luận bị xóa nhầm");
+
+        // Notify the author
+        if (comment.getAccount() != null) {
+            notificationService.notifyCommentStatusChange(id, comment.getAccount().getAccountID(), "RESTORE");
+        }
     }
 
     @Override
@@ -178,9 +221,7 @@ public class CommentServiceImpl implements CommentService {
                     dto.setCreatedAt(c.getCreatedAt());
                     dto.setImageUrls(c.getAttachments());
 
-                    // Trả về đúng trạng thái (1, 0, -1)
                     dto.setIsActive(c.getIsActive() != null ? c.getIsActive() : 1);
-
                     dto.setRating(c.getRating() != null ? c.getRating() : 0);
                     dto.setLikes(c.getLikes() != null ? c.getLikes() : 0);
                     dto.setHasAttachments(c.getAttachments() != null && !c.getAttachments().isEmpty());
@@ -262,5 +303,22 @@ public class CommentServiceImpl implements CommentService {
 
         dto.setCreatedAt(c.getCreatedAt());
         return dto;
+    }
+
+    private void extractAndNotifyMentions(String content, String mentioner, Integer postId, Integer commentId) {
+        if (content == null || content.isEmpty())
+            return;
+        Pattern pattern = Pattern.compile("(?<=^|(?<=[^a-zA-Z0-9-_\\.]))@([A-Za-z0-9_]+)");
+        Matcher matcher = pattern.matcher(content);
+        List<String> mentionedUsernames = new ArrayList<>();
+        while (matcher.find()) {
+            String username = matcher.group(1);
+            if (!mentionedUsernames.contains(username) && !username.equals(mentioner)) {
+                mentionedUsernames.add(username);
+                accountDAO.findByUsername(username).ifPresent(acc -> {
+                    notificationService.notifyMention(mentioner, acc.getAccountID(), postId, commentId);
+                });
+            }
+        }
     }
 }

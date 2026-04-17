@@ -9,7 +9,8 @@ import router from './router'
 import i18n from './i18n'
 import vue3GoogleLogin from 'vue3-google-login'
 
-
+// 🔥 CHÈN DÒNG NÀY VÀO ĐÂY ĐỂ FIX LỖI "TIMER" CỦA TEMPLATE
+window.timer = window.timer || {}; 
 
 const app = createApp(App)
 

@@ -5,33 +5,44 @@
         <div class="map-modal-content">
           
           <div class="map-header">
-            <h3>📍 Siêu thị & Chợ quanh đây</h3>
-            <button class="btn-close-map" @click="$emit('close')">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            <div class="header-left">
+              <div class="icon-pulse" :class="{ 'is-active': !isLoading && !locationError, 'is-warning': locationError }">
+                <div class="dot"></div>
+                <div class="ring"></div>
+              </div>
+              <h3>{{ isLoading ? 'Đang định vị...' : '📍 Đi chợ cùng Gomet' }}</h3>
+            </div>
+            <button class="btn-close-map" @click="$emit('close')" title="Đóng">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
           </div>
 
           <div class="map-body">
+            <transition name="fade">
+              <div v-if="isLoading" class="loading-overlay">
+                <div class="radar-spinner"></div>
+                <p>Đang quét các khu chợ quanh Bạn...</p>
+                <span class="sub-text">Bạn nhớ bấm "Cho phép" (Allow) quyền vị trí trên trình duyệt nhé!</span>
+              </div>
+            </transition>
+
             <iframe 
-              width="100%" 
-              height="100%" 
+              v-show="!isLoading"
+              class="google-map-iframe"
+              :src="mapUrl" 
+              allow="geolocation" 
               frameborder="0" 
-              style="border:0;" 
-              referrerpolicy="no-referrer-when-downgrade"
-              src="https://maps.google.com/maps?q=siêu+thị,+chợ+tươi+sống&t=&z=14&ie=UTF8&iwloc=&output=embed" 
-              allowfullscreen>
+              allowfullscreen
+              referrerpolicy="no-referrer-when-downgrade">
             </iframe>
           </div>
 
-          <div class="map-footer">
-            <button class="btn-action outline" @click="handleShare">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
-              Chia sẻ link
-            </button>
-            <button class="btn-action solid" @click="handleSave">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
-              Lưu bản đồ
-            </button>
+          <div class="map-footer-minimal">
+            <div class="location-status" :class="{ 'error': locationError }">
+              <svg v-if="!locationError" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+              <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+              <span>{{ locationError ? 'Chưa có quyền GPS - Đang hiển thị vị trí ước tính' : 'Đã đồng bộ vệ tinh GPS - Hiển thị chợ & siêu thị gần nhất' }}</span>
+            </div>
           </div>
 
         </div>
@@ -41,82 +52,118 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
-import { toast } from '@/composables/useToast' // Kéo súng ống (Toast) vào đây
+import { ref, onMounted } from 'vue'
+import { toast } from '@/composables/useToast'
 
 defineEmits(['close'])
 
-// TÍCH HỢP 1: Vừa mở Popup là bắn thông báo màu cam (Info)
+const isLoading = ref(true)
+const locationError = ref(false)
+const mapUrl = ref('')
+
 onMounted(() => {
-  toast.info('Đang tìm kiếm siêu thị và chợ gần bạn nhất...')
+  getUserLocation()
 })
 
-// TÍCH HỢP 2: Bấm nút Lưu -> Bắn thông báo màu xanh (Success)
-const handleSave = () => {
-  toast.success('Đã lưu vị trí siêu thị vào danh sách yêu thích của bạn!')
-}
+// HÀM LẤY VỊ TRÍ CHUẨN XÁC
+const getUserLocation = () => {
+  if ("geolocation" in navigator) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude
+        const lng = position.coords.longitude
 
-// TÍCH HỢP 3: Bấm nút Chia sẻ -> Bắn thông báo màu xanh (Success)
-const handleShare = () => {
-  toast.success('Đã sao chép đường dẫn bản đồ vào khay nhớ tạm!')
+        mapUrl.value = `https://maps.google.com/maps?q=siêu+thị,+chợ+near+${lat},${lng}&hl=vi&z=15&output=embed`
+        
+        locationError.value = false
+        isLoading.value = false
+        toast.success('Đã bắt được tọa độ của Bạn! 🚀')
+      },
+      (error) => {
+        console.warn("Lỗi lấy vị trí:", error.message)
+        locationError.value = true
+        isLoading.value = false
+        // Fallback: Chỉ search "siêu thị chợ gần đây" dựa vào IP mạng
+        mapUrl.value = 'https://maps.google.com/maps?q=siêu+thị,+chợ+gần+đây&hl=vi&z=14&output=embed'
+        toast.warn('Bạn chưa cấp quyền vị trí, hệ thống đang dùng vị trí ước tính nhé!')
+      },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+    )
+  } else {
+    // 3. TRÌNH DUYỆT CÙI
+    isLoading.value = false
+    locationError.value = true
+    mapUrl.value = 'https://maps.google.com/maps?q=siêu+thị,+chợ+gần+đây&hl=vi&z=14&output=embed'
+    toast.error('Trình duyệt không hỗ trợ định vị GPS!')
+  }
 }
 </script>
 
 <style scoped>
 .map-modal-overlay {
   position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-  background: rgba(17, 24, 39, 0.75); backdrop-filter: blur(6px);
+  background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(8px);
   display: flex; align-items: center; justify-content: center; z-index: 9999;
 }
 .map-modal-content {
-  width: 90%; max-width: 900px; height: 85vh; max-height: 750px;
-  background: white; border-radius: 20px; display: flex; flex-direction: column;
+  width: 95%; max-width: 1100px; height: 88vh; max-height: 850px;
+  background: white; border-radius: 24px; display: flex; flex-direction: column;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-  animation: scaleUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); /* Animation nẩy giống Toast của Sếp */
+  animation: scaleUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
 }
+
+/* HEADER CAO CẤP */
 .map-header {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 18px 24px; border-bottom: 1px solid #E5E7EB; background: #FFF7ED;
-  border-radius: 20px 20px 0 0;
+  padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FFFFFF;
 }
-.map-header h3 { margin: 0; font-family: 'Mulish', sans-serif; color: #EA580C; font-size: 1.25rem; font-weight: 800; }
+.header-left { display: flex; align-items: center; gap: 12px; }
+.map-header h3 { margin: 0; font-family: 'Mulish', sans-serif; color: #0F172A; font-size: 1.3rem; font-weight: 900; }
+
+/* CHẤM ĐỎ NHẤP NHÁY (PULSE) */
+.icon-pulse { position: relative; width: 12px; height: 12px; display: flex; align-items: center; justify-content: center; }
+.icon-pulse .dot { width: 10px; height: 10px; background: #EA580C; border-radius: 50%; z-index: 2; transition: 0.3s; }
+.icon-pulse .ring { position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 2px solid #EA580C; animation: radarPing 1.5s infinite ease-out; }
+.icon-pulse.is-active .dot { background: #10B981; }
+.icon-pulse.is-active .ring { border-color: #10B981; animation: none; opacity: 0.2; }
+.icon-pulse.is-warning .dot { background: #F59E0B; }
+.icon-pulse.is-warning .ring { border-color: #F59E0B; animation: none; opacity: 0.2; }
+
 .btn-close-map {
-  background: white; border: 1px solid #D1D5DB; width: 36px; height: 36px;
+  background: #F1F5F9; border: none; width: 36px; height: 36px;
   border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  cursor: pointer; color: #4B5563; transition: 0.2s;
+  cursor: pointer; color: #64748B; transition: 0.2s;
 }
-.btn-close-map:hover { background: #FEE2E2; color: #EF4444; border-color: #EF4444; transform: rotate(90deg); }
+.btn-close-map:hover { background: #FEE2E2; color: #EF4444; transform: rotate(90deg); }
 
-.map-body { flex: 1; width: 100%; overflow: hidden; background: #E5E7EB; }
+/* BODY MAP */
+.map-body { flex: 1; width: 100%; position: relative; background: #F8FAFC; }
+.google-map-iframe { width: 100%; height: 100%; border: 0; }
 
-/* CSS MỚI CHO FOOTER CHỨA NÚT TEST TOAST */
-.map-footer {
-  padding: 16px 24px;
-  background: #ffffff;
-  border-top: 1px solid #F3F4F6;
-  border-radius: 0 0 20px 20px;
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
+/* MÀN HÌNH LOADING RADAR */
+.loading-overlay {
+  position: absolute; inset: 0; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(5px);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10;
 }
-.btn-action {
-  display: flex; align-items: center; gap: 8px;
-  padding: 10px 20px; border-radius: 10px;
-  font-family: 'Mulish', sans-serif; font-weight: 700; font-size: 0.95rem;
-  cursor: pointer; transition: 0.2s;
-}
-.btn-action.outline {
-  background: white; border: 1.5px solid #E5E7EB; color: #374151;
-}
-.btn-action.outline:hover { background: #F3F4F6; border-color: #D1D5DB; }
+.loading-overlay p { font-size: 1.2rem; font-weight: 800; color: #0F172A; margin: 20px 0 8px; }
+.loading-overlay .sub-text { font-size: 0.95rem; color: #64748B; font-weight: 600; }
 
-.btn-action.solid {
-  background: #111827; border: 1.5px solid #111827; color: white;
+.radar-spinner {
+  width: 64px; height: 64px; border: 4px solid #FFEDD5; border-top-color: #EA580C;
+  border-radius: 50%; animation: spin 1s linear infinite;
 }
-.btn-action.solid:hover { background: #EA580C; border-color: #EA580C; box-shadow: 0 4px 12px rgba(234, 88, 12, 0.3); transform: translateY(-2px); }
 
-@keyframes scaleUp {
-  from { opacity: 0; transform: scale(0.95) translateY(20px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
+/* FOOTER TỐI GIẢN */
+.map-footer-minimal {
+  padding: 12px 24px; background: #F8FAFC; border-top: 1px solid #E2E8F0;
+  display: flex; justify-content: center; align-items: center;
 }
+.location-status { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 800; color: #10B981; }
+.location-status.error { color: #F59E0B; }
+
+/* ANIMATIONS */
+@keyframes scaleUp { from { opacity: 0; transform: scale(0.95) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+@keyframes radarPing { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(3); opacity: 0; } }
 </style>

@@ -26,7 +26,11 @@
     <template v-else>
       <div class="post-content-wrapper fade-in">
         
-        <RecipeHero :post="post" />
+        <RecipeHero 
+          :post="post"
+          :display-avg-rating="displayAvgRating"
+          :display-rating-count="displayRatingCount"
+        />
         <RecipeInformation :post="post" />
         
         <div class="author-full-width-section">
@@ -45,21 +49,37 @@
                 <p class="section-subtitle">Chia sẻ cảm nhận và hình ảnh thực tế của bạn</p>
               </div>
 
+              <div v-if="!isPostInteractive" class="status-alert-banner">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                  <line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                <span>{{ postStatusMessage }}</span>
+              </div>
+
               <ReviewSummary 
                 :avgRating="avgRating" 
                 :totalRatings="totalRatings" 
                 :ratingDistribution="ratingDistribution" 
               />
 
-              <div class="review-input-luxury">
+              <div class="review-input-luxury" v-if="isPostInteractive">
                 <div class="input-header">
                   <img :src="currentUserAvatar" class="current-user-avt" alt="User">
                   
                   <div class="rating-selector" v-if="!hasUserRated">
                     <span class="prompt-text">Bạn chấm món này mấy sao?</span>
-                    <div class="star-rating-input">
-                      <span v-for="star in 5" :key="star" @click="userRating = star" :class="{ active: star <= userRating }">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    <div class="star-rating-input" @mouseleave="hoverRating = 0">
+                      <span 
+                        v-for="star in 5" 
+                        :key="star" 
+                        @click="userRating = star"
+                        @mouseenter="hoverRating = star"
+                        :class="{ active: star <= (hoverRating > 0 ? hoverRating : userRating) }"
+                      >
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
                       </span>
                     </div>
                   </div>
@@ -133,13 +153,24 @@
         
       </div>
     </template>
+
+    <!-- NEW: Giới hạn lượt xem Modal -->
+    <Teleport to="body">
+      <ViewLimitModal
+        v-if="showLimitModal"
+        :is-open="showLimitModal"
+        :post-id="Number(route.params.id)"
+        @close="showLimitModal = false; router.push('/home')"
+        @unlocked="showLimitModal = false; loadPost(route.params.id)"
+        @open-store="openStoreFromLimit"
+      />
+    </Teleport>
   </div>
 </template>
 
 <script setup>
 import { ref, watch, onMounted, computed, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import axios from 'axios'
 import { toast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
 
@@ -150,24 +181,19 @@ import RecipeAuthor from '@/components/post-detail/RecipeAuthor.vue'
 import ReviewSummary from '@/components/post-detail/ReviewSummary.vue'
 import RecipeComments from '@/components/post-detail/RecipeComments.vue' 
 import RelatedSuggestions from '@/components/post-detail/RelatedSuggestions.vue'
+import ViewLimitModal from '@/components/modals/ViewLimitModal.vue'
 
 // --- IMPORT SERVICES ---
-import { getPostById, getRelatedPosts, normalizePost } from '@/services/postService'
+import api from '@/services/api'
+import { getPostById, getRelatedPosts, normalizePost, recordPostView } from '@/services/postService'
 import { uploadMedia } from '@/services/uploadService'
 import { recordHistory } from '@/services/interactionService'
 
-/* START: Daily View Limit */
-import { usePostViewLimit } from '@/composables/usePostViewLimit'
-/* END */
+const diffMap = { 1: 'Easy', 2: 'Medium', 3: 'Hard' }
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
-
-/* START: Daily View Limit */
-const { checkAndChargeView, remainingViews } = usePostViewLimit()
-/* END */
-const diffMap = { 1: 'Easy', 2: 'Medium', 3: 'Hard' }
 
 const post = ref(null)
 const relatedPosts = ref([])
@@ -175,11 +201,21 @@ const relatedPosts = ref([])
 // --- STATE QUẢN LÝ COMMENTS & FORM ---
 const rawCommentsList = ref([])
 const isCommentsLoading = ref(false)
+const hasFetchedComments = ref(false)
 const commentInputRef = ref(null)
 const newComment = ref('')
 const userRating = ref(0)
+const hoverRating = ref(0)
 const selectedPhotos = ref([])
 const isUploading = ref(false)
+
+const showLimitModal = ref(false)
+
+const openStoreFromLimit = () => {
+  showLimitModal.value = false;
+  // Gửi event lên window để trigger DefaultLayout hoặc Header mở StoreModal
+  window.dispatchEvent(new CustomEvent('ui:open-store'));
+}
 
 const currentUserAvatar = computed(() => authStore.user?.avatar || 'https://ui-avatars.com/api/?name=U&background=EA580C&color=fff')
 
@@ -199,6 +235,23 @@ const avgRating = computed(() => {
   return (sum / ratedComments.value.length).toFixed(1)
 })
 
+const liveAvgRating = computed(() => {
+  if (hasFetchedComments.value && totalRatings.value > 0) {
+    return avgRating.value;
+  }
+  return post.value?.avgRating > 0 ? Number(post.value.avgRating).toFixed(1) : 'Mới';
+})
+
+const liveRatingCount = computed(() => {
+  if (hasFetchedComments.value && totalRatings.value > 0) {
+    return totalRatings.value;
+  }
+  return post.value?.ratingCount || 0;
+})
+
+const displayAvgRating = computed(() => liveAvgRating.value)
+const displayRatingCount = computed(() => liveRatingCount.value)
+
 const totalRatings = computed(() => ratedComments.value.length)
 
 const ratingDistribution = computed(() => {
@@ -213,10 +266,32 @@ const isSubmitDisabled = computed(() => {
   const hasText = !!newComment.value.trim();
   const hasPhoto = selectedPhotos.value.length > 0;
   
-  if (userRating.value > 0 && userRating.value < 3 && !hasText) return true; // Dưới 3 sao bắt buộc phải nhập text
-  if (!hasText && !hasPhoto && userRating.value === 0) return true; // Trống rỗng thì không cho gửi
+  if (userRating.value > 0 && userRating.value < 3 && !hasText) return true;
+  if (!hasText && !hasPhoto && userRating.value === 0) return true;
   return false;
 });
+
+// --- COMPUTED: KIỂM SOÁT TRẠNG THÁI VÀ QUYỀN TƯƠNG TÁC BÀI VIẾT ---
+const isPostInteractive = computed(() => {
+  if (!post.value) return false;
+  return post.value.isActive === 1 && post.value.isApproved === 1;
+});
+
+const postStatusMessage = computed(() => {
+  if (!post.value || isPostInteractive.value) return '';
+  
+  const isActive = post.value.isActive;
+  const isApproved = post.value.isApproved;
+
+  if (isActive === 1 && isApproved === 0) return 'Bài viết đang chờ Admin duyệt. Bạn có thể xem nhưng không thể tương tác lúc này.';
+  if (isActive === 0 && isApproved === 0) return 'Bài viết đã được bạn ẩn trong lúc chờ duyệt. Không thể tương tác.';
+  if (isActive === 0 && isApproved === 1) return 'Bài viết đang được bạn cấu hình ẩn. Không thể tương tác.';
+  if (isActive === -1 && isApproved === 1) return 'Bài viết đã bị Admin gỡ khỏi hệ thống hiển thị. Không thể tương tác.';
+  if (isActive === -1 && isApproved === 0) return 'Bài viết đã bị Admin từ chối phê duyệt. Không thể tương tác.';
+  
+  return 'Bài viết hiện không khả dụng để tương tác.';
+});
+
 
 // --- TIỆN ÍCH FORM ---
 const autoResize = () => {
@@ -231,7 +306,10 @@ const clearForm = () => {
   if (commentInputRef.value) commentInputRef.value.style.height = 'auto';
 }
 const onPhotosSelected = (e) => {
-  if (!authStore.isAuthenticated) { toast.warn('Vui lòng đăng nhập!'); return }
+  if (!authStore.isAuthenticated) {
+    window.dispatchEvent(new CustomEvent('ui:open-login'))
+    return
+  }
   Array.from(e.target.files || []).forEach(file => {
     selectedPhotos.value.push({ file, preview: URL.createObjectURL(file) })
   })
@@ -245,15 +323,15 @@ const fetchComments = async (postId) => {
   isCommentsLoading.value = true
   try {
     const uid = authStore.user?.accountID || authStore.user?.id || '';
-    const { data } = await axios.get(`http://localhost:8080/api/comments/post/${postId}`, { params: { currentAccountID: uid } });
+    const { data } = await api.get(`/api/comments/post/${postId}`, { params: { currentAccountID: uid } });
     rawCommentsList.value = Array.isArray(data) ? data : []
   } catch (err) {
     console.error('Lỗi tải bình luận:', err)
     rawCommentsList.value = []
   } finally {
     isCommentsLoading.value = false
+    hasFetchedComments.value = true
 
-    // Cuộn đến và làm nổi bật bình luận nếu có hash trên URL
     const targetHash = route.hash || window.location.hash;
     if (targetHash && targetHash.startsWith('#comment-')) {
       let attempts = 0
@@ -263,16 +341,16 @@ const fetchComments = async (postId) => {
           clearInterval(findAndScroll)
           element.scrollIntoView({ behavior: 'smooth', block: 'center' })
           element.style.transition = 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)'
-          element.style.backgroundColor = '#fff7ed' // Màu cam siêu nhạt highlight
+          element.style.backgroundColor = '#fff7ed'
           element.style.borderRadius = '16px'
-          element.style.boxShadow = '0 0 0 12px #fff7ed' // Phủ tràn viền bo góc
+          element.style.boxShadow = '0 0 0 12px #fff7ed'
           setTimeout(() => {
             element.style.backgroundColor = 'transparent'
             element.style.boxShadow = '0 0 0 0 transparent'
-          }, 3000) // Tắt highlight sau 3s
+          }, 3000)
         }
         attempts++
-        if (attempts > 10) { // Thử tìm tối đa 10 lần (5 giây), nếu không có thì bỏ qua
+        if (attempts > 10) { 
           clearInterval(findAndScroll)
         }
       }, 500)
@@ -283,16 +361,6 @@ const fetchComments = async (postId) => {
 async function loadPost(id) {
   try {
     const dto = await getPostById(id)
-
-    /* START: Daily View Limit Check */
-    const canAccess = checkAndChargeView(Number(id), dto.authorID)
-    if (!canAccess) {
-      toast.warn('Bạn đã hết lượt xem bài viết miễn phí trong ngày hôm nay! Vui lòng nâng cấp Premium.')
-      router.push('/home')
-      window.dispatchEvent(new CustomEvent('ui:open-premium'))
-      return
-    }
-    /* END */
 
     post.value = {
       id: dto.postID,
@@ -314,6 +382,15 @@ async function loadPost(id) {
       ratingCount: dto.ratingCount || 0,
       favoriteCount: dto.favoriteCount || 0,
       views: dto.views || 0,
+      isPremium: dto.isPremium || dto.IsPremium || false,
+      
+      // 🔥 LẤY NGÀY ĐĂNG BÀI TỪ API:
+      createdAt: dto.createdAt || dto.createdDate || dto.publishDate,
+      
+      // 🔥 BỔ SUNG LẤY 2 TRƯỜNG STATUS NÀY TỪ API:
+      isActive: dto.isActive ?? dto.IsActive ?? 1, 
+      isApproved: dto.isApproved ?? dto.IsApproved ?? 1,
+
       steps: (dto.steps || []).map(s => ({
         stepNumber: s.stepNumber,
         desc: s.content || '',
@@ -322,18 +399,44 @@ async function loadPost(id) {
       }))
     }
 
+    // 🔥 LOGIC CHẶN TRUY CẬP BÀI VIẾT KHÔNG CÔNG KHAI
+    const currentUserId = authStore.user?.accountID || authStore.user?.id;
+    const isAuthor = currentUserId === post.value.authorID;
+    const isAdmin = authStore.user?.isAdmin || authStore.user?.role === 'ADMIN' || authStore.user?.role === 'admin';
+
+    // Nếu bài viết KHÔNG phải (1, 1) VÀ người xem KHÔNG phải Tác giả VÀ KHÔNG phải Admin
+    if (!isPostInteractive.value && !isAuthor && !isAdmin) {
+      toast.error('Bài viết này không tồn tại, đang chờ duyệt hoặc đã bị ẩn!');
+      router.push('/home'); // Đẩy người dùng lạ về trang chủ
+      return; // Dừng luôn việc tải bình luận và các bài viết liên quan
+    }
+
     const related = await getRelatedPosts(id, 4)
-    relatedPosts.value = related.map(normalizePost)
+    
+    relatedPosts.value = related.map(dto => {
+      const normPost = normalizePost(dto) || {};
+      return {
+        ...normPost,
+        authorID: dto.authorID || dto.accountID || normPost.authorID,
+        isPremium: dto.isPremium || dto.IsPremium || normPost.isPremium || false, 
+        likes: dto.likes ?? dto.Likes ?? dto.likeCount ?? dto.favoriteCount ?? 0
+      };
+    });
 
     await fetchComments(id)
+    recordPostView(id).catch(err => console.warn('Không ghi nhận được view:', err));
 
-    const user = authStore.user || authStore.currentUser;
-    if (user && (user.accountID || user.id)) {
-      const uid = user.accountID || user.id;
-      recordHistory(uid, Number(id)).catch(() => { })
-    }
+    // 🔥 CẬP NHẬT LƯỢT XEM TRÊN TOPBAR NGAY LẬP TỨC
+    window.dispatchEvent(new CustomEvent('ui:view-limits-updated'));
+    console.log("Dữ liệu gốc từ API trả về:", dto);
   } catch (err) {
-    console.warn('PostDetail: load error', err)
+    if (err.response?.data?.code === 'LIMIT_EXCEEDED') {
+      showLimitModal.value = true;
+    } else {
+      console.warn('PostDetail: load error', err)
+      toast.error('Không thể tải bài viết')
+      router.push('/home')
+    }
   }
 }
 
@@ -341,16 +444,18 @@ async function loadPost(id) {
 const checkContentPolicy = async (text) => {
   if (!text) return false;
   try {
-    const res = await axios.post('http://localhost:8080/api/admin/blacklist/check', { content: text });
+    const res = await api.post('/api/blacklist/check', { content: text });
     return res.data.hasBadWord; 
   } catch (error) {
     console.warn("Lỗi kiểm duyệt nội dung:", error);
-    return false;
+    return false; 
   }
 };
 
 // --- LOGIC API ---
 const submitComment = async () => {
+  if (!isPostInteractive.value) { toast.warn('Không thể thao tác trên bài viết này!'); return; }
+
   let content = newComment.value.trim()
   
   if (userRating.value > 0 && userRating.value < 3 && !content) {
@@ -359,16 +464,17 @@ const submitComment = async () => {
   }
 
   if (!content && selectedPhotos.value.length === 0 && userRating.value === 0) return
-  if (!authStore.isAuthenticated) { toast.warn('Vui lòng đăng nhập!'); return }
+  if (!authStore.isAuthenticated) {
+    window.dispatchEvent(new CustomEvent('ui:open-login'))
+    return
+  }
   
   isUploading.value = true
 
-  // Kiểm tra từ khóa cấm ở Frontend
   const isViolating = await checkContentPolicy(content);
   if (isViolating) {
-    toast.error('Bình luận vi phạm tiêu chuẩn cộng đồng!');
-    isUploading.value = false;
-    return;
+    content = "chỉ cần bạn đăng bài, ngon hay dở không quan trong!";
+    toast.info("Bình luận của bạn đã được hệ thống tự động làm sạch!");
   }
 
   try {
@@ -386,7 +492,7 @@ const submitComment = async () => {
       imageUrls: imageUrls
     };
 
-    await axios.post('http://localhost:8080/api/comments', payload);
+    await api.post('/api/comments', payload);
     clearForm(); 
     await fetchComments(postID); 
     toast.success('Đã gửi đánh giá thành công!');
@@ -397,15 +503,19 @@ const submitComment = async () => {
 }
 
 const handleSubmitReply = async ({ parentId, content }) => {
+  if (!isPostInteractive.value) { toast.warn('Không thể thao tác trên bài viết này!'); return; }
+
   let textContent = content;
   if (!textContent || !textContent.trim()) return
-  if (!authStore.isAuthenticated) { toast.warn('Vui lòng đăng nhập!'); return }
+  if (!authStore.isAuthenticated) {
+    window.dispatchEvent(new CustomEvent('ui:open-login'))
+    return
+  }
 
-  // Kiểm tra từ khóa cấm cho các Phản hồi (Reply)
   const isViolating = await checkContentPolicy(textContent);
   if (isViolating) {
-    toast.error('Nội dung vi phạm tiêu chuẩn cộng đồng!');
-    return;
+    textContent = "chỉ cần bạn đăng bài, ngon hay dở không quan trong!";
+    toast.info("Nội dung của bạn đã được hệ thống tự động làm sạch!");
   }
 
   try {
@@ -413,7 +523,7 @@ const handleSubmitReply = async ({ parentId, content }) => {
       postID: post.value?.postID || post.value?.id, accountID: authStore.user.accountID || authStore.user.id,
       content: textContent.trim(), cmtid: parentId, rating: null, imageUrls: []
     };
-    await axios.post('http://localhost:8080/api/comments', payload);
+    await api.post('/api/comments', payload);
     await fetchComments(payload.postID); 
     toast.success('Đã gửi câu trả lời!');
   } catch (err) { 
@@ -423,29 +533,37 @@ const handleSubmitReply = async ({ parentId, content }) => {
 }
 
 const handleDeleteComment = async (commentId) => {
-  if (!authStore.isAuthenticated) { toast.warn('Vui lòng đăng nhập!'); return; }
+  if (!isPostInteractive.value) { toast.warn('Không thể thao tác trên bài viết này!'); return; }
+
+  if (!authStore.isAuthenticated) {
+    window.dispatchEvent(new CustomEvent('ui:open-login'))
+    return
+  }
+  
   try {
-    // Lấy ID của người dùng đang đăng nhập
     const userId = authStore.user.accountID || authStore.user.id;
+    const adminName = authStore.user.username || authStore.user.fullName || 'Admin';
     const isAdmin = authStore.user.isAdmin || authStore.user.role === 'ADMIN' || authStore.user.role === 'admin';
     
-    // Tìm bình luận mục tiêu
     const targetComment = rawCommentsList.value.find(c => (c.commentID || c.id) === commentId);
     const isOwnComment = targetComment && (targetComment.accountID === userId || targetComment.userId === userId);
 
     if (isAdmin && !isOwnComment) {
-      // Admin xóa bình luận của người khác -> Gọi API Admin và ẩn nội dung
-      await axios.delete(`http://localhost:8080/api/comments/${commentId}`);
+      await api.delete(`/api/comments/${commentId}`, {
+        params: {
+          adminId: userId,
+          adminName: adminName
+        }
+      });
+      
       if (targetComment) {
-        targetComment.content = "Đã ẩn do vi phạm quy tắc cộng đồng";
-        targetComment.imageUrls = []; // Ẩn luôn hình ảnh vi phạm (nếu có)
+        targetComment.content = "[Bình luận này đã bị ẩn vì vi phạm chính sách của GoMet]";
+        targetComment.imageUrls = [];
+        targetComment.rating = 0; 
       }
       toast.success('Đã ẩn bình luận vi phạm!');
     } else {
-      // 🔥 Gọi API dành cho User tự xóa
-      await axios.delete(`http://localhost:8080/api/comments/user/${commentId}?currentAccountID=${userId}`);
-      
-      // Xóa khỏi giao diện
+      await api.delete(`/api/comments/user/${commentId}?currentAccountID=${userId}`);
       rawCommentsList.value = rawCommentsList.value.filter(c => (c.commentID || c.id) !== commentId);
       toast.success('Đã xóa bình luận!');
     }
@@ -455,7 +573,12 @@ const handleDeleteComment = async (commentId) => {
 }
 
 const handleToggleLikeComment = async (comment) => {
-  if (!authStore.isAuthenticated) { toast.warn('Vui lòng đăng nhập để thả tim!'); return; }
+  if (!isPostInteractive.value) { toast.warn('Không thể thao tác trên bài viết này!'); return; }
+
+  if (!authStore.isAuthenticated) {
+    window.dispatchEvent(new CustomEvent('ui:open-login'))
+    return
+  }
   const accountID = authStore.user.accountID || authStore.user.id;
   const commentID = comment.commentID || comment.id;
 
@@ -470,7 +593,7 @@ const handleToggleLikeComment = async (comment) => {
   comment.isLiked = targetComment.isLiked; comment.likes = targetComment.likes;
 
   try {
-    await axios.post(`http://localhost:8080/api/comments/${commentID}/like`, { accountID: accountID });
+    await api.post(`/api/comments/${commentID}/like`, { accountID: accountID });
   } catch (err) {
     targetComment.isLiked = previousIsLiked; targetComment.likes = previousLikesCount;
     comment.isLiked = previousIsLiked; comment.likes = previousLikesCount;
@@ -556,6 +679,26 @@ const goToDetail = (id) => {
   color: #64748b; font-size: 1.05rem; font-weight: 500; margin: 0;
 }
 
+/* --- BANNER CẢNH BÁO TRẠNG THÁI BÀI VIẾT --- */
+.status-alert-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background-color: #fffbeb;
+  border: 1px solid #fcd34d;
+  color: #b45309;
+  padding: 16px 20px;
+  border-radius: 16px;
+  margin-bottom: 24px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.1);
+}
+.status-alert-banner svg {
+  color: #d97706;
+  flex-shrink: 0;
+}
+
 /* --- FORM NHẬP BÌNH LUẬN LUXURY --- */
 .review-input-luxury {
   background: #ffffff;
@@ -584,8 +727,22 @@ const goToDetail = (id) => {
 
 .star-rating-input { 
   display: flex; gap: 6px; 
-  span { color: #e2e8f0; cursor: pointer; transition: 0.2s; 
-    &.active, &:hover { color: #f59e0b; filter: drop-shadow(0 2px 4px rgba(245, 158, 11, 0.3)); } 
+  
+  span { 
+    color: #e2e8f0; // Màu xám mặc định (sao chưa sáng)
+    cursor: pointer; 
+    transition: transform 0.2s ease, color 0.2s ease; 
+    
+    // 🔥 Chỉ dùng hover để phóng to, KHÔNG đổi màu ở đây
+    &:hover {
+      transform: scale(1.2);
+    }
+
+    // 🔥 Màu vàng sẽ do class .active này quyết định cho toàn bộ dải sao
+    &.active { 
+      color: #f59e0b; 
+      filter: drop-shadow(0 0 5px rgba(245, 158, 11, 0.4)); 
+    } 
   } 
 }
 .star-rating-locked { display: flex; gap: 6px; span { color: #f1f5f9; cursor: default; &.filled { color: #f59e0b; } } }
@@ -657,14 +814,104 @@ const goToDetail = (id) => {
 }
 @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
 
+/* =======================================================
+   🔥 HỆ THỐNG RESPONSIVE (TỐI ƯU MỌI THIẾT BỊ)
+   ======================================================= */
+
+/* --- 1. Màn hình Laptop nhỏ & Tablet ngang (Dưới 1200px) --- */
+@media (max-width: 1200px) {
+  .global-container, .split-container-inner, .sk-container-inner { 
+    padding: 0 20px; 
+  }
+  .split-container-inner { 
+    gap: 40px; /* Thu hẹp khoảng cách giữa cột bình luận và cột gợi ý */
+  }
+  .sk-img-box { height: 500px; }
+}
+
+/* --- 2. Màn hình Tablet dọc & Mobile ngang (Dưới 1024px) --- */
 @media (max-width: 1024px) {
-  .split-container-inner { grid-template-columns: 1fr; gap: 60px; }
-  .sticky-sidebar { position: static; } 
-  .sk-container-inner { grid-template-columns: 1fr; gap: 40px; }
+  /* Ép Grid 2 cột thành 1 cột dọc (Stacking) */
+  .split-container-inner { 
+    grid-template-columns: 1fr; 
+    gap: 60px; 
+  }
+  
+  .sticky-sidebar { 
+    position: static; /* Tắt tính năng bám dính của cột Gợi ý */
+  } 
+  
+  /* Skeleton Loading */
+  .sk-container-inner { 
+    grid-template-columns: 1fr; 
+    gap: 40px; 
+  }
   .sk-img-box { height: 400px; }
-  .review-input-luxury { padding: 20px; margin-top: 24px; }
-  .input-header { flex-direction: column; align-items: flex-start; }
-  .action-buttons { width: 100%; flex-direction: column; }
-  .btn-submit-review, .btn-cancel-review { width: 100%; justify-content: center; }
+  .sk-title { height: 40px; }
+}
+
+/* --- 3. Màn hình Mobile Lớn (Dưới 768px) --- */
+@media (max-width: 768px) {
+  .author-full-width-section { padding: 30px 0; margin: 10px 0; }
+  .bottom-split-section { padding: 40px 0 80px; }
+  
+  .section-title { font-size: 1.8rem; margin-bottom: 6px; }
+  .section-subtitle { font-size: 0.95rem; }
+  .reviews-header { margin-bottom: 24px; }
+  
+  /* Form Nhập Đánh Giá (Review Input) */
+  .review-input-luxury { 
+    padding: 20px; 
+    margin: 24px 0 32px 0; 
+    border-radius: 20px;
+  }
+  
+  .input-header { 
+    flex-direction: column; /* Đẩy Avatar lên trên, Sao đánh giá xuống dưới */
+    align-items: flex-start; 
+    gap: 12px;
+  }
+  .current-user-avt { width: 40px; height: 40px; }
+  
+  /* Input Footer (Nút tải ảnh & Gửi) */
+  .input-footer { 
+    flex-direction: column; 
+    align-items: stretch; /* Dàn đều các nút ra full chiều ngang */
+    gap: 16px; 
+  }
+  .comment-upload-btn { justify-content: center; background: #fff4ed; color: #ea580c; border: 1px dashed #fdba74; }
+  
+  .action-buttons { 
+    width: 100%; 
+    flex-direction: column-reverse; /* Nút Gửi nằm trên, Nút Hủy nằm dưới */
+    gap: 10px; 
+  }
+  .btn-submit-review, .btn-cancel-review { 
+    width: 100%; 
+    justify-content: center; 
+    padding: 12px; 
+  }
+  .btn-cancel-review { background: #f8fafc; border: 1px solid #e2e8f0; }
+
+  /* Ảnh Preview */
+  .comment-image-previews { gap: 8px; }
+  .preview-item { width: 64px; height: 64px; border-radius: 10px; }
+}
+
+/* --- 4. Màn hình Mobile Cực Nhỏ (Dưới 480px - Vd: iPhone SE) --- */
+@media (max-width: 480px) {
+  .global-container, .split-container-inner, .sk-container-inner { padding: 0 16px; }
+  
+  .section-title { font-size: 1.6rem; }
+  
+  .review-input-luxury { padding: 16px; border-radius: 16px; }
+  .textarea-box textarea { font-size: 0.95rem; min-height: 60px; }
+  
+  .star-rating-input svg { width: 20px; height: 20px; } /* Thu nhỏ sao một chút cho đỡ chật */
+  .prompt-text { font-size: 0.9rem; }
+  
+  /* Skeleton Mobile */
+  .sk-img-box { height: 250px; border-radius: 20px; }
+  .sk-title { width: 100%; }
 }
 </style>

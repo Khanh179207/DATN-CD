@@ -6,7 +6,7 @@
         <div class="spinner-ring"></div>
       </div>
       
-      <div v-else class="slider-container">
+      <div v-else-if="topThreeEvents.length" class="slider-container">
         <transition-group name="fade-slide" tag="div" class="slides-wrapper">
           <div 
             v-for="(slide, index) in topThreeEvents" 
@@ -17,44 +17,39 @@
           >
             <div class="hero-overlay"></div>
             
-            <div class="hero-content glass-panel">
-              <div class="status-badge" :class="slide.category">
-                <span class="pulse-dot"></span>
-                {{ slide.category === 'active' ? 'ĐANG DIỄN RA' : (slide.category === 'upcoming' ? 'SẮP DIỄN RA' : 'ĐÃ KẾT THÚC') }}
+            <div class="hero-content-wrapper">
+              <div class="glass-panel">
+                <div class="status-badge" :class="slide.category">
+                  <span class="pulse-dot"></span>
+                  {{ slide.category === 'active' ? 'ĐANG DIỄN RA' : (slide.category === 'upcoming' ? 'SẮP DIỄN RA' : 'ĐÃ KẾT THÚC') }}
+                </div>
+                
+                <h1 class="hero-title">{{ slide.title }}</h1>
+                <p class="hero-desc">Tham gia ngay để kết nối và chia sẻ công thức tuyệt đỉnh của bạn cùng cộng đồng GoMet.</p>
+                
+                <div class="hero-meta">
+                  <div class="meta-item"><span class="icon">📅</span> {{ slide.time }}</div>
+                  <div class="meta-item"><span class="icon">👥</span> {{ slide.totalAttendees }} Bài dự thi</div>
+                </div>
+                
+                <button class="btn-hero-primary" v-if="slide.category !== 'ended'">
+                  {{ $t('events.register') }}
+                  <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </button>
               </div>
-              
-              <h1 class="hero-title">{{ slide.title }}</h1>
-              <p class="hero-desc">Tham gia ngay để kết nối và chia sẻ công thức tuyệt đỉnh của bạn cùng cộng đồng GoMet.</p>
-              
-              <div class="hero-meta">
-                <div class="meta-item"><span class="icon">📅</span> {{ slide.time }}</div>
-                <div class="meta-item"><span class="icon">👥</span> {{ slide.totalAttendees }} Bài dự thi</div>
-              </div>
-              
-              <button class="btn-hero-primary" v-if="slide.category !== 'ended'">
-                {{ $t('events.register') }}
-                <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-              </button>
             </div>
           </div>
         </transition-group>
 
         <button class="nav-btn prev-btn" @click="prevSlide">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
         </button>
         <button class="nav-btn next-btn" @click="nextSlide">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </button>
 
         <div class="slider-indicators">
-          <button 
-            v-for="(_, index) in topThreeEvents" 
-            :key="index" 
-            class="indicator-dot" 
-            :class="{ active: currentSlide === index }"
-            @click="goToSlide(index)"
-            :aria-label="`Go to slide ${index + 1}`"
-          >
+          <button v-for="(_, index) in topThreeEvents" :key="index" class="indicator-dot" :class="{ active: currentSlide === index }" @click="goToSlide(index)">
             <span class="progress-bar"></span>
           </button>
         </div>
@@ -63,19 +58,21 @@
 
     <div class="events-toolbar-sticky">
       <div class="toolbar-inner">
-        <div class="segmented-control">
-          <button 
-            v-for="tab in filters" :key="tab.id"
-            class="segment-btn" 
-            :class="{ active: currentFilter === tab.id }"
-            @click="currentFilter = tab.id"
-          >
-            {{ tab.label }}
-          </button>
+        <div class="segmented-wrapper">
+          <div class="segmented-control">
+            <button 
+              v-for="tab in filters" :key="tab.id" 
+              class="segment-btn" 
+              :class="{ active: currentFilter === tab.id }" 
+              @click="currentFilter = tab.id"
+            >
+              {{ tab.label }}
+            </button>
+          </div>
         </div>
 
         <div class="search-box-modern">
-          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
           <input type="text" v-model="searchQuery" :placeholder="$t('events.find_events')">
         </div>
       </div>
@@ -83,21 +80,15 @@
 
     <div class="events-container">
       <transition-group name="stagger-list" tag="div" class="events-grid">
-        <EventCard 
-          v-for="(evt, index) in filteredEvents" 
-          :key="evt.id" 
-          :event="evt" 
-          class="grid-item"
-          :style="{ transitionDelay: `${index * 0.05}s` }"
-        />
+        <EventCard v-for="(evt, index) in filteredEvents" :key="evt.id" :event="evt" class="grid-item" :style="{ transitionDelay: `${index * 0.05}s` }" />
       </transition-group>
-
+      
       <div v-if="filteredEvents.length === 0 && !loading" class="empty-state-modern">
         <div class="empty-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
         </div>
         <h3>Không tìm thấy sự kiện</h3>
-        <p>Thử thay đổi từ khóa hoặc bộ lọc xem sao nhé sếp!</p>
+        <p>Thử thay đổi từ khóa hoặc bộ lọc xem sao nhé!</p>
         <button class="btn-clear-filter" @click="currentFilter = 'all'; searchQuery = ''">Xóa bộ lọc</button>
       </div>
 
@@ -127,8 +118,6 @@ const filters = computed(() => [
 const events = ref([])
 const loading = ref(true)
 const searchQuery = ref('')
-
-// Slider States
 const currentSlide = ref(0)
 let slideInterval = null
 
@@ -156,16 +145,10 @@ const normalizeEvent = (e, index) => {
   const start = e.startAt ? new Date(e.startAt) : null
   const end = e.endAt ? new Date(e.endAt) : null
   const voteEnd = e.voteEndAt ? new Date(e.voteEndAt) : null
-  
   const now = new Date()
-
-  // Thời gian kết thúc cuối cùng của sự kiện là lúc ĐÓNG VOTE
   const finalEndDate = voteEnd && voteEnd > end ? voteEnd : end;
-
-  // Lấy cờ force end (phòng trường hợp backend trả về tên khác)
   const isForceEnded = e.isForceEnded ?? e.forceEnded ?? e.IsForceEnded ?? 0;
 
-  // Xử lý trạng thái hiển thị
   let currentStatus = 'upcoming'
   if (Number(isForceEnded) === 1) {
       currentStatus = 'ended'
@@ -187,26 +170,23 @@ const normalizeEvent = (e, index) => {
     rawEndAt: finalEndDate, 
     location: 'Trực tuyến',
     type: 'online',
-    typeLabel: 'Online',
-    isJoined: false,
-    attendees: [],
     totalAttendees: Number(e.postCount) || 0, 
     category: currentStatus,
-    winner: e.winner || null
   }
 }
 
-// Logic Slider thông minh
 const resetSliderInterval = () => {
   if (slideInterval) clearInterval(slideInterval)
   slideInterval = setInterval(nextSlide, 6000) 
 }
 
 const nextSlide = () => {
+  if (topThreeEvents.value.length === 0) return;
   currentSlide.value = (currentSlide.value + 1) % topThreeEvents.value.length
   resetSliderInterval()
 }
 const prevSlide = () => {
+  if (topThreeEvents.value.length === 0) return;
   currentSlide.value = (currentSlide.value - 1 + topThreeEvents.value.length) % topThreeEvents.value.length
   resetSliderInterval()
 }
@@ -218,43 +198,18 @@ const goToSlide = (index) => {
 onMounted(async () => {
   try {
     const response = await getEvents()
-    
-    let rawData = [];
-    if (Array.isArray(response)) rawData = response;
-    else if (response && Array.isArray(response.content)) rawData = response.content;
-    else if (response && Array.isArray(response.data)) rawData = response.data;
-    
-    // 🔥 LƯỚI LỌC CÚ CHỐT: Bắt ép kiểu Number và soi bằng F12
+    let rawData = Array.isArray(response) ? response : (response?.content || response?.data || []);
     const validData = rawData.filter(e => {
-      let activeVal = e.isActive !== undefined ? e.isActive : (e.active !== undefined ? e.active : e.IsActive);
-      
-      // MÁY QUÉT: Báo cáo ra Console cho sếp xem
-      console.log(`[DEBUG EVENT] Tên: ${e.eventName || e.title} | Giá trị isActive nhận được từ API:`, activeVal);
-
-      if (activeVal !== undefined && activeVal !== null) {
-        // Ép sang số: Nếu bằng 0 thì ẩn đi (return false)
-        return Number(activeVal) !== 0;
-      }
-      
-      // Nếu nhảy xuống đây nghĩa là API trả thiếu biến isActive
-      return true; 
+      let activeVal = e.isActive ?? e.active ?? e.IsActive;
+      return activeVal !== undefined ? Number(activeVal) !== 0 : true;
     })
-    
     events.value = validData.map((e, index) => normalizeEvent(e, index))
-    
-    if (topThreeEvents.value.length > 1) {
-      slideInterval = setInterval(nextSlide, 6000)
-    }
+    if (topThreeEvents.value.length > 1) slideInterval = setInterval(nextSlide, 6000)
   } catch (err) {
-    console.warn('EventList: load error', err)
-  } finally {
-    loading.value = false
-  }
+  } finally { loading.value = false }
 })
 
-onUnmounted(() => {
-  if (slideInterval) clearInterval(slideInterval)
-})
+onUnmounted(() => { if (slideInterval) clearInterval(slideInterval) })
 
 const topThreeEvents = computed(() => {
   const validEvents = events.value.filter(e => e.category !== 'ended')
@@ -263,27 +218,31 @@ const topThreeEvents = computed(() => {
 
 const filteredEvents = computed(() => {
   let list = events.value
-  if (currentFilter.value !== 'all') {
-    list = list.filter(e => e.category === currentFilter.value)
-  }
+  if (currentFilter.value !== 'all') list = list.filter(e => e.category === currentFilter.value)
   if (searchQuery.value.trim()) {
     const q = searchQuery.value.toLowerCase()
-    list = list.filter(e => e.title?.toLowerCase().includes(q) || e.location?.toLowerCase().includes(q))
+    list = list.filter(e => e.title?.toLowerCase().includes(q))
   }
   return list
 })
 </script>
+
 <style scoped>
 .events-page-premium {
   font-family: 'Mulish', sans-serif;
   background-color: #FAFAFA;
   min-height: 100vh;
   padding-bottom: 80px;
+  width: 100%;
+  overflow-x: hidden; /* Chặn cuộn ngang vĩnh viễn toàn trang */
 }
 
+/* =======================================================
+   2. HERO SLIDER
+   ======================================================= */
 .events-hero-slider {
   position: relative;
-  height: 480px; 
+  height: 500px;
   margin: 20px;
   border-radius: 32px;
   overflow: hidden;
@@ -296,17 +255,22 @@ const filteredEvents = computed(() => {
 .slide-item {
   position: absolute; inset: 0;
   background-size: cover; background-position: center;
-  display: flex; align-items: flex-end; padding: 60px;
+  width: 100%; height: 100%;
+  display: flex; align-items: flex-end;
 }
 
 .hero-overlay {
   position: absolute; inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 40%, rgba(0,0,0,0.1) 100%);
+  background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.1) 100%);
   z-index: 1;
 }
 
-.glass-panel {
+.hero-content-wrapper {
   position: relative; z-index: 2;
+  width: 100%; padding: 40px;
+}
+
+.glass-panel {
   max-width: 650px;
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(16px);
@@ -315,15 +279,12 @@ const filteredEvents = computed(() => {
   padding: 40px;
   border-radius: 24px;
   color: white;
-  transform: translateY(0);
-  animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slideUp 0.8s forwards;
 }
 
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(30px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+@keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 
+/* Badge & Status Colors */
 .status-badge {
   display: inline-flex; align-items: center; gap: 8px;
   background: rgba(0,0,0,0.4); padding: 6px 14px; border-radius: 20px;
@@ -331,12 +292,9 @@ const filteredEvents = computed(() => {
 }
 .status-badge.active .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: #22C55E; box-shadow: 0 0 8px #22C55E; animation: pulse 2s infinite; }
 .status-badge.upcoming .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: #3B82F6; }
+.status-badge.ended .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: #6B7280; }
 
-@keyframes pulse {
-  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
-  70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
-}
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
 
 .hero-title { font-family: 'Playfair Display', serif; font-size: 2.8rem; line-height: 1.2; margin: 0 0 15px; font-weight: 800; }
 .hero-desc { font-size: 1.1rem; color: #D1D5DB; line-height: 1.6; margin-bottom: 25px; }
@@ -344,40 +302,33 @@ const filteredEvents = computed(() => {
 .hero-meta { display: flex; gap: 24px; font-weight: 700; margin-bottom: 30px; font-size: 0.95rem; color: #FFF; }
 .meta-item { display: flex; align-items: center; gap: 8px; }
 
+/* 🟠 PHỤC HỒI NÚT ĐĂNG KÝ THAM GIA ĐẸP MẮT NHƯ CŨ */
 .btn-hero-primary {
   display: inline-flex; align-items: center; gap: 10px;
-  background: #EA580C; color: white; border: none;
-  padding: 14px 32px; border-radius: 30px; font-weight: 800; font-size: 1rem;
+  background: #EA580C; /* Màu cam gốc */
+  color: white; border: none;
+  padding: 14px 32px; border-radius: 30px; 
+  font-weight: 800; font-size: 1rem;
   cursor: pointer; transition: all 0.3s;
 }
-.btn-hero-primary:hover { background: #C2410C; transform: scale(1.05); }
+.btn-hero-primary:hover { background: #C2410C; transform: translateY(-3px); box-shadow: 0 10px 20px rgba(234, 88, 12, 0.3); }
 .btn-hero-primary .arrow { width: 18px; height: 18px; transition: transform 0.3s; }
 .btn-hero-primary:hover .arrow { transform: translateX(5px); }
 
+/* Điều hướng Slider */
 .nav-btn {
   position: absolute; top: 50%; transform: translateY(-50%); z-index: 10;
   width: 50px; height: 50px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3);
-  background: rgba(0,0,0,0.3); color: white; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  backdrop-filter: blur(8px); transition: 0.3s; opacity: 0; 
+  background: rgba(0,0,0,0.3); color: white; cursor: pointer; transition: 0.3s;
+  display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px);
+  opacity: 0;
 }
 .events-hero-slider:hover .nav-btn { opacity: 1; }
 .nav-btn:hover { background: white; color: #111827; }
-.prev-btn { left: 30px; }
-.next-btn { right: 30px; }
-
-.slider-indicators {
-  position: absolute; bottom: 30px; right: 60px; z-index: 10;
-  display: flex; gap: 10px;
-}
-.indicator-dot {
-  width: 40px; height: 4px; background: rgba(255,255,255,0.3); border: none; border-radius: 4px;
-  cursor: pointer; padding: 0; position: relative; overflow: hidden;
-}
-.indicator-dot.active .progress-bar {
-  position: absolute; inset: 0; background: #EA580C;
-  animation: progressFill 6s linear forwards;
-}
+.prev-btn { left: 30px; } .next-btn { right: 30px; }
+.slider-indicators { position: absolute; bottom: 30px; right: 60px; z-index: 10; display: flex; gap: 10px; }
+.indicator-dot { width: 40px; height: 4px; background: rgba(255,255,255,0.3); border: none; border-radius: 4px; cursor: pointer; overflow: hidden; position: relative;}
+.indicator-dot.active .progress-bar { position: absolute; inset: 0; background: #EA580C; animation: progressFill 6s linear forwards; }
 @keyframes progressFill { from { transform: scaleX(0); transform-origin: left; } to { transform: scaleX(1); transform-origin: left; } }
 
 .fade-slide-enter-active, .fade-slide-leave-active { transition: all 0.8s ease-in-out; }
@@ -388,34 +339,64 @@ const filteredEvents = computed(() => {
 .spinner-ring { width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.1); border-top-color: #EA580C; border-radius: 50%; animation: spin 1s infinite linear; }
 @keyframes spin { 100% { transform: rotate(360deg); } }
 
+/* =======================================================
+   3. TOOLBAR & SEARCH
+   ======================================================= */
 .events-toolbar-sticky {
-  position: sticky; top: 0; z-index: 50;
+  position: sticky; top: 60px; z-index: 50;
   background: rgba(250, 250, 250, 0.9); backdrop-filter: blur(12px);
-  padding: 20px; margin-bottom: 20px; border-bottom: 1px solid #F3F4F6;
+  padding: 20px; border-bottom: 1px solid #F3F4F6; margin-bottom: 20px;
 }
 
 .toolbar-inner {
-  max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;
+  max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 20px;
 }
 
+/* KHỐI TABS PHÂN LOẠI */
+.segmented-wrapper { 
+  flex: 1; min-width: 0; 
+}
 .segmented-control {
-  display: flex; background: #E5E7EB; padding: 6px; border-radius: 100px;
+  display: inline-flex; background: #E5E7EB; padding: 5px; border-radius: 100px;
 }
 .segment-btn {
   background: transparent; border: none; padding: 10px 28px; border-radius: 100px;
-  font-weight: 800; color: #6B7280; font-size: 0.95rem; cursor: pointer; transition: 0.3s;
+  font-weight: 800; color: #6B7280; font-size: 0.95rem; cursor: pointer; transition: all 0.3s ease;
+  white-space: nowrap; /* Quan trọng: Không cho phép rớt dòng */
 }
-.segment-btn.active { background: #FFFFFF; color: #111827; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+.segment-btn.active {
+  background: #FFFFFF; color: #111827; box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
 
 .search-box-modern {
   display: flex; align-items: center; gap: 12px;
   background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 100px;
-  padding: 10px 24px; width: 350px; transition: 0.3s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+  padding: 8px 12px 8px 24px; /* Chỉnh lại padding để chứa nút vuông */
+  width: 350px; transition: 0.3s; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
 }
 .search-box-modern:focus-within { border-color: #EA580C; box-shadow: 0 0 0 3px rgba(234,88,12,0.1); }
 .search-icon { width: 18px; height: 18px; color: #9CA3AF; }
 .search-box-modern input { border: none; outline: none; width: 100%; font-size: 1rem; color: #111827; background: transparent; }
 
+/* Nút "Tìm kiếm" màu cam nằm gọn bên trong Input */
+.btn-search-submit {
+  background: #EA580C;
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 100px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: 0.3s;
+  white-space: nowrap;
+}
+.btn-search-submit:hover { background: #C2410C; }
+
+
+/* =======================================================
+   4. GRID SỰ KIỆN 
+   ======================================================= */
 .events-container { max-width: 1400px; margin: 0 auto; padding: 0 20px; }
 .events-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 30px; }
 
@@ -424,6 +405,7 @@ const filteredEvents = computed(() => {
 .stagger-list-enter-from { opacity: 0; transform: translateY(30px) scale(0.95); }
 .stagger-list-leave-to { opacity: 0; transform: scale(0.9); position: absolute; }
 
+/* Empty state & Load more */
 .empty-state-modern { text-align: center; padding: 100px 0; }
 .empty-icon { width: 80px; height: 80px; background: #F3F4F6; color: #9CA3AF; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
 .empty-icon svg { width: 40px; height: 40px; }
@@ -436,21 +418,75 @@ const filteredEvents = computed(() => {
 .btn-load-more { background: transparent; border: 2px solid #E5E7EB; color: #4B5563; padding: 14px 40px; border-radius: 30px; font-weight: 800; font-size: 1rem; cursor: pointer; transition: 0.3s; }
 .btn-load-more:hover { border-color: #111827; color: #111827; background: white; }
 
-@media (max-width: 1024px) {
-  .events-hero-slider { height: 400px; }
-  .hero-title { font-size: 2.2rem; }
-  .slider-indicators { right: 30px; }
+/* =======================================================
+   🌟 HỆ THỐNG RESPONSIVE (KHẮC PHỤC DỒN CHỮ & ẨN HERO)
+   ======================================================= */
+
+@media (min-width: 1440px) {
+  .events-hero-slider { height: 560px; }
+  .hero-title { font-size: 3.5rem; }
+  .events-grid { grid-template-columns: repeat(4, 1fr); } 
 }
+
+@media (max-width: 1024px) {
+  /* ❌ ẨN HERO SLIDER TRÊN TABLET (Dưới 1024px) */
+  .events-hero-slider { 
+    display: none !important; 
+  }
+  
+  /* Đẩy padding lên để bù đắp khoảng trống khi mất Hero */
+  .events-page-premium {
+    padding-top: 20px;
+  }
+  
+  .events-grid { grid-template-columns: repeat(2, 1fr); }
+  
+  /* Giữ cho Toolbar đẹp trên Tablet */
+  .events-toolbar-sticky { 
+    top: 60px; /* Cân đối với Header hệ thống */
+  }
+}
+
 @media (max-width: 768px) {
-  .events-hero-slider { height: auto; min-height: 450px; margin: 10px; border-radius: 20px; }
-  .slide-item { padding: 30px 20px; align-items: flex-end; }
-  .glass-panel { padding: 25px; border-radius: 16px; }
-  .hero-title { font-size: 1.8rem; }
-  .events-toolbar-sticky { position: relative; padding: 15px 20px; }
-  .toolbar-inner { flex-direction: column; align-items: stretch; }
-  .segmented-control { overflow-x: auto; white-space: nowrap; }
-  .search-box-modern { width: 100%; }
-  .nav-btn { display: none; }
-  .slider-indicators { left: 50%; right: auto; transform: translateX(-50%); bottom: 15px; }
+  /* ❌ ĐẢM BẢO ẨN HERO SLIDER TRÊN MOBILE */
+  .events-hero-slider { 
+    display: none !important; 
+  }
+
+  /* FIX TOOLBAR MOBILE: Chống dồn chữ */
+  .events-toolbar-sticky { 
+    position: relative; top: 0; padding: 15px; border-radius: 12px; margin: 10px;
+  }
+  .toolbar-inner { flex-direction: column; align-items: stretch; gap: 15px; }
+  
+  /* Thanh nút phân loại cuộn ngang */
+  .segmented-wrapper {
+    width: 100%;
+    overflow-x: auto; 
+    -ms-overflow-style: none; scrollbar-width: none; 
+  }
+  .segmented-wrapper::-webkit-scrollbar { display: none; }
+  
+  .segmented-control { 
+    display: inline-flex; 
+    width: max-content; /* Ép dài ra theo chữ */
+    min-width: 100%;
+  }
+  .segment-btn { 
+    flex: 1; 
+    padding: 10px 20px; 
+    font-size: 0.9rem; 
+    text-align: center;
+  }
+  
+  .search-box-modern { width: 100%; padding: 8px 16px; }
+  
+  .events-grid { grid-template-columns: 1fr; gap: 20px; padding: 0 10px; }
+}
+
+@media (max-width: 480px) {
+  .segment-btn { padding: 8px 16px; font-size: 0.85rem; }
+  .search-box-modern { padding: 6px 10px 6px 16px; }
+  .btn-search-submit { padding: 8px 14px; font-size: 0.85rem; }
 }
 </style>

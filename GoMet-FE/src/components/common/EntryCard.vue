@@ -55,8 +55,11 @@ import { useAuthStore } from '@/stores/auth';
 const props = defineProps({
   post: Object,
   rank: { type: Number, default: 0 },
-  canVote: { type: Boolean, default: false }
+  canVote: { type: Boolean, default: false },
+  limitReached: { type: Boolean, default: false }
 });
+
+const emit = defineEmits(['vote-toggled']);
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -87,6 +90,12 @@ const handleVote = async () => {
     return;
   }
 
+  // CHẶN: NẾU CHƯA VOTE BÀI NÀY VÀ ĐÃ ĐẠT GIỚI HẠN VOTE TOÀN SỰ KIỆN
+  if (!isVoted.value && props.limitReached) {
+    toast.warn("Bạn đã dùng hết hạn mức phiếu bầu cho sự kiện này!");
+    return;
+  }
+
   isProcessing.value = true;
   try {
     // 🔥 GỬI ĐẦY ĐỦ 2 TRƯỜNG LÊN CHO JAVA
@@ -106,6 +115,9 @@ const handleVote = async () => {
     } else {
       toast.warn(res.data.message || "Đã hủy bình chọn!");
     }
+    
+    // Thông báo cho component cha (EventDetail) cập nhật Progress Bar
+    emit('vote-toggled', isVoted.value);
   } catch (err) {
     toast.error(err.response?.data?.message || "Không thể bình chọn lúc này!");
   } finally {
@@ -249,4 +261,77 @@ const formatNumber = (n) => n.toLocaleString();
   animation: spin 0.8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* =======================================================
+   🔥 HỆ THỐNG RESPONSIVE (TỐI ƯU MỌI THIẾT BỊ)
+   ======================================================= */
+
+/* --- 1. Màn hình Tablet & Laptop nhỏ (Dưới 1024px) --- */
+@media (max-width: 1024px) {
+  .gomet-entry-card {
+    .entry-media { height: 200px; }
+    .entry-content { padding: 16px; }
+  }
+}
+
+/* --- 2. Màn hình Mobile lớn (Dưới 768px) --- */
+@media (max-width: 768px) {
+  .gomet-entry-card {
+    .entry-media { height: 180px; }
+    
+    .entry-content {
+      .entry-title { font-size: 1.05rem; margin-bottom: 10px; }
+      .author-info { margin-bottom: 16px; }
+      
+      .vote-footer {
+        .vote-count-group .count-num { font-size: 1.15rem; }
+        .btn-gomet-vote { padding: 8px 16px; font-size: 0.8rem; }
+      }
+    }
+  }
+}
+
+/* --- 3. Màn hình Mobile nhỏ (Dưới 480px - Vd: iPhone SE) --- */
+@media (max-width: 480px) {
+  .gomet-entry-card {
+    border-radius: 16px;
+
+    .rank-badge { padding: 4px 10px; font-size: 0.65rem; }
+    .entry-media { height: 160px; }
+    .entry-media .img-overlay .view-recipe { padding: 6px 12px; font-size: 0.75rem; }
+    
+    .entry-content {
+      padding: 12px;
+      .entry-title { font-size: 0.95rem; }
+      
+      .author-info {
+        gap: 8px; margin-bottom: 12px;
+        .author-avt { width: 24px; height: 24px; }
+        .author-name { font-size: 0.75rem; }
+      }
+      
+      .vote-footer {
+        padding-top: 12px;
+        .vote-count-group .count-num { font-size: 1.05rem; }
+        .btn-gomet-vote { padding: 6px 12px; font-size: 0.75rem; border-radius: 10px; }
+      }
+    }
+  }
+}
+
+/* --- 4. Màn hình siêu nhỏ (Dưới 360px) --- */
+@media (max-width: 360px) {
+  .gomet-entry-card {
+    .entry-content .vote-footer {
+      flex-direction: column; /* Gập nút Vote xuống dưới số phiếu nếu quá chật */
+      align-items: flex-start;
+      gap: 10px;
+      
+      .btn-gomet-vote { 
+        width: 100%; 
+        justify-content: center; 
+      }
+    }
+  }
+}
 </style>

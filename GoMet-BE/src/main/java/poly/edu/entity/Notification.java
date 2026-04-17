@@ -27,8 +27,8 @@ public class Notification {
     private String type;
 
     @ManyToOne
-    @JoinColumn(name = "AccountID", nullable = false)
-    private Account account; // Receiver of notification
+    @JoinColumn(name = "AccountID", nullable = true)
+    private Account account; // Receiver of notification (nullable for global notifications)
 
     @ManyToOne
     @JoinColumn(name = "ActorID", nullable = true)
@@ -38,14 +38,32 @@ public class Notification {
     @JoinColumn(name = "PostID")
     private Post post;
 
-    @Column(nullable = false)
+    @Column(name = "isRead", nullable = false)
     private Integer isRead;
 
+    @Column(name = "ReadAt")
     private LocalDateTime readAt;
 
-    @Column(nullable = false)
+    @Column(name = "CreatedAt", nullable = false)
     private LocalDateTime createdAt;
 
-    @Column(length = 500)
+    @Column(name = "Link", length = 500)
     private String link;
+
+    @Column(name = "IsGlobal", nullable = false)
+    private Boolean isGlobal;
+
+    @ManyToOne
+    @JoinColumn(name = "ParentNotificationID")
+    private Notification parentNotification;
+
+    @PrePersist
+    public void prePersist() {
+        if (this.createdAt == null)
+            this.createdAt = LocalDateTime.now();
+        if (this.isRead == null)
+            this.isRead = 0;
+        if (this.isGlobal == null)
+            this.isGlobal = false;
+    }
 }

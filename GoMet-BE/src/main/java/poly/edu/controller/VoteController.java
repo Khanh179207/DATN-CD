@@ -4,6 +4,7 @@ import poly.edu.dao.*;
 import poly.edu.entity.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize; // 🔥 IMPORT THẺ BẢO VỆ
 import org.springframework.web.bind.annotation.*;
 import poly.edu.service.NotificationService;
 
@@ -13,7 +14,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/votes")
 @RequiredArgsConstructor
-@CrossOrigin("*")
+@PreAuthorize("isAuthenticated()") // 🔥 CHỐT CHẶN VÀNG: Bắt buộc đăng nhập mới được chạm vào hòm phiếu!
 public class VoteController {
 
     private final VoteDAO voteDAO;
@@ -21,6 +22,7 @@ public class VoteController {
     private final AccountDAO accountDAO;
     private final NotificationService notificationService;
 
+    // 🟡 USER ONLY: Thao tác bỏ phiếu hoặc hủy bỏ phiếu
     @PostMapping("/toggle")
     public ResponseEntity<?> toggleVote(@RequestBody Map<String, Object> payload) {
 
@@ -82,10 +84,12 @@ public class VoteController {
             voteDAO.save(v);
             isVotedNow = true;
 
-            // Create notification for the post owner if voter is not the owner
-            Integer postOwnerId = ep.getPost().getAccount().getAccountID();
-            if (!accId.equals(postOwnerId)) {
-                notificationService.notifyEventVote(account.getUsername(), postOwnerId, ep.getPost().getPostID());
+            // Tạo thông báo cho chủ bài viết (nếu người vote không phải chủ bài)
+            if (ep.getPost().getAccount() != null) {
+                Integer postOwnerId = ep.getPost().getAccount().getAccountID();
+                if (!accId.equals(postOwnerId)) {
+                    notificationService.notifyEventVote(account.getUsername(), postOwnerId, ep.getPost().getPostID());
+                }
             }
         }
 

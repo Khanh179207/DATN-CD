@@ -51,7 +51,7 @@
                 <path d="M12 8v4M12 16h.01"/>
               </svg>
             </div>
-            <p>Đang tìm kiếm món ngon cho sếp...</p>
+            <p>Đang tìm kiếm món ngon cho Bạn...</p>
           </div>
         </template>
         
@@ -221,8 +221,78 @@ defineEmits(['click-post', 'see-all'])
 .stagger-list-enter-from { opacity: 0; transform: translateY(40px) scale(0.95); }
 .stagger-list-enter-to { opacity: 1; transform: translateY(0) scale(1); }
 
+/* =======================================================
+   🔥 HỆ THỐNG RESPONSIVE (TỐI ƯU MỌI THIẾT BỊ)
+   ======================================================= */
+
+/* --- 1. Màn hình Laptop nhỏ & Tablet ngang (Dưới 1200px) --- */
+@media (max-width: 1200px) {
+  .related-sidebar-wrapper { padding: 30px 20px; }
+  .main-title { font-size: 1.8rem; }
+  .vertical-list { gap: 20px; }
+}
+
+/* --- 2. Màn hình Tablet dọc & Mobile ngang (Dưới 1024px) --- */
+/* Thường ở mốc này, Sidebar sẽ rớt xuống dưới bài viết chính, nên chuyển thành Grid ngang */
+@media (max-width: 1024px) {
+  .related-sidebar-wrapper {
+    border-radius: 24px;
+    padding: 30px 24px;
+    width: 100%;
+  }
+  
+  .sidebar-header { 
+    margin-bottom: 24px; 
+    text-align: center; /* Căn giữa tiêu đề cho cân đối */
+  }
+  .header-badge { margin: 0 auto 16px; }
+
+  .vertical-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Tách thành 2 cột hiển thị ngang */
+    gap: 20px;
+  }
+
+  .btn-see-all-luxury { 
+    max-width: 400px; 
+    margin: 30px auto 0; /* Căn giữa nút */
+  }
+}
+
+/* --- 3. Màn hình Mobile Lớn (Dưới 768px) --- */
 @media (max-width: 768px) {
-  .related-sidebar-wrapper { padding: 32px 20px; border-radius: 0; border: none; border-top: 1px solid #f1f5f9; box-shadow: none; background: #fff; }
-  .btn-see-all-luxury { padding: 6px 6px 6px 24px; }
+  .related-sidebar-wrapper {
+    padding: 32px 20px;
+    border-radius: 0;
+    border: none;
+    border-top: 1px solid rgba(241, 245, 249, 0.9);
+    box-shadow: none;
+    background: #fff; /* Trả về nền trắng để hòa nhập với giao diện Mobile */
+  }
+
+  .main-title { font-size: 1.6rem; }
+
+  .vertical-list {
+    grid-template-columns: 1fr; /* Trở về 1 cột dọc trên Mobile */
+    gap: 24px;
+  }
+
+  .btn-see-all-luxury {
+    padding: 6px 6px 6px 24px;
+    max-width: 100%;
+  }
+}
+
+/* --- 4. Màn hình Mobile Cực Nhỏ (Dưới 480px - Vd: iPhone SE) --- */
+@media (max-width: 480px) {
+  .related-sidebar-wrapper { padding: 24px 16px; }
+  
+  .sidebar-header { margin-bottom: 20px; }
+  .main-title { font-size: 1.4rem; }
+  .header-badge { font-size: 0.75rem; padding: 6px 12px; }
+
+  .vertical-list { gap: 16px; }
+  
+  .btn-see-all-luxury .btn-text { font-size: 0.9rem; }
 }
 </style>

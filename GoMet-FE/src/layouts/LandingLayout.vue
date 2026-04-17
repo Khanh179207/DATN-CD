@@ -43,7 +43,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import gsap from 'gsap'
 import Lenis from 'lenis'
 import LandingHeader from '@/components/landing/LandingHeader.vue'
@@ -70,6 +70,15 @@ const scrollToTop = () => {
 
 const handleOpenAuth = (v) => { currentAuthView.value = v; showModal.value = true; }
 
+const handleRestorePrompt = (e) => {
+  currentAuthView.value = 'restore-account';
+  showModal.value = true;
+  // 🔥 Đã FIX: Gửi ngược dữ liệu vào AuthModal sau khi nó được Mount (v-if)
+  nextTick(() => {
+    window.dispatchEvent(new CustomEvent('auth:restore-login-data', { detail: e.detail }));
+  });
+}
+
 onMounted(() => {
   // 🔥 MỞ KHÓA CSS TOÀN CỤC CHO RIÊNG LANDING PAGE 🔥
   // Ép HTML và Body dùng lại thanh cuộn mặc định, tắt giới hạn chiều cao
@@ -85,7 +94,7 @@ onMounted(() => {
   lenis.on('scroll', handleScroll)
   gsap.ticker.add((time) => lenis.raf(time * 1000))
   
-  // ĐÃ XÓA: Lời gọi hàm initCursor()
+  window.addEventListener('auth:restore-login-prompt', handleRestorePrompt)
 })
 
 onUnmounted(() => {
@@ -98,6 +107,7 @@ onUnmounted(() => {
   document.body.style.removeProperty('height');
 
   lenis?.destroy() 
+  window.removeEventListener('auth:restore-login-prompt', handleRestorePrompt)
 })
 </script>
 

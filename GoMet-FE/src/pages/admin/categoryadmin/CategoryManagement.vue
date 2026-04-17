@@ -50,11 +50,10 @@
 
     <div v-else class="grid-list">
       <div 
-        class="lux-cat-card clickable-card" 
+        class="lux-cat-card" 
         v-for="cat in categories" 
         :key="cat.categoryID"
         :class="{ 'is-hidden': cat.isActive === 0 }"
-        @click="goToPostsByCategory(cat)"
       >
         <div class="card-img-wrap">
           <img :src="cat.categoryImage || defaultImage" class="cat-img" :alt="cat.categoryName">
@@ -88,7 +87,6 @@
           <div class="progress-bar">
             <div class="fill" :style="{ width: getPercentage(cat.postCount) + '%' }"></div>
           </div>
-          <div class="view-posts-hint">Xem chi tiết bài viết →</div>
         </div>
       </div>
 
@@ -118,8 +116,8 @@
                 <div class="upload-custom-zone" @click="$refs.fileInput.click()">
                   <input type="file" ref="fileInput" @change="handleFileUpload" hidden accept="image/*">
                   <div v-if="!form.imagePreview && !form.categoryImage" class="up-placeholder">
-                     <UploadCloud :size="32" />
-                     <span>Kéo thả hoặc chọn ảnh từ máy</span>
+                      <UploadCloud :size="32" />
+                      <span>Kéo thả hoặc chọn ảnh từ máy</span>
                   </div>
                   <img v-else :src="form.imagePreview || form.categoryImage" class="preview-img-box" />
                   <div class="up-overlay" v-if="form.imagePreview || form.categoryImage">Thay đổi ảnh</div>
@@ -144,7 +142,6 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
 import { 
   Plus, Edit3, Trash2, Eye, EyeOff, FileText, 
   Layers, Zap, AlertTriangle, UploadCloud, X 
@@ -153,7 +150,6 @@ import api from '@/services/api.js'
 import { uploadMedia } from '@/services/uploadService'
 import { toast } from '@/composables/useToast'
 
-const router = useRouter()
 const defaultImage = 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=500'
 
 const categories = ref([])
@@ -164,6 +160,7 @@ const isEditing = ref(false)
 const saving = ref(false)
 const fileInput = ref(null)
 
+// Sử dụng reactive an toàn
 const form = reactive({ 
   categoryID: null, 
   categoryName: '', 
@@ -173,16 +170,21 @@ const form = reactive({
   isActive: 1 
 })
 
-// --- COMPUTED STATS ---
-const totalPosts = computed(() => categories.value.reduce((sum, cat) => sum + (Number(cat.postCount) || 0), 0))
-const topCategory = computed(() => {
-  if (!categories.value.length) return null
-  return categories.value.reduce((prev, curr) => (prev.postCount || 0) > (curr.postCount || 0) ? prev : curr)
+// --- COMPUTED STATS AN TOÀN ---
+const totalPosts = computed(() => {
+  return categories.value.reduce((sum, cat) => sum + (Number(cat.postCount) || 0), 0)
 })
 
+const topCategory = computed(() => {
+  if (!categories.value || categories.value.length === 0) return null
+  return categories.value.reduce((prev, curr) => (Number(prev.postCount) || 0) > (Number(curr.postCount) || 0) ? prev : curr)
+})
+
+// Chống lỗi NaN khi postCount = 0
 const getPercentage = (count) => {
-  if (totalPosts.value === 0) return 0
-  return ((Number(count) || 0) / totalPosts.value * 100).toFixed(1)
+  const safeCount = Number(count) || 0;
+  if (totalPosts.value === 0 || safeCount === 0) return '0.0';
+  return ((safeCount / totalPosts.value) * 100).toFixed(1);
 }
 
 // --- LOGIC FUNCTIONS ---
@@ -191,7 +193,18 @@ const loadCategories = async () => {
   error.value = null
   try {
     const res = await api.get('/api/admin/categories')
-    categories.value = res.data
+    categories.value = res.data.map(cat => {
+      // 🔥 FIX: Lấy thẳng số đếm từ Backend (postCount hoặc totalPosts)
+      // Không lặp qua mảng posts để đếm nữa.
+      let activeCount = Number(cat.postCount || cat.totalPosts || cat.count || 0);
+      
+      // Nếu Backend vẫn đang trả mảng posts (phòng hờ chưa đổi code BE)
+      if (activeCount === 0 && Array.isArray(cat.posts)) {
+        activeCount = cat.posts.filter(p => p.isActive === 1 || p.isActive === true).length;
+      }
+      
+      return { ...cat, postCount: activeCount };
+    })
   } catch (e) {
     error.value = 'Hệ thống GOMET đang bận, vui lòng thử lại sau.'
     toast.error(error.value)
@@ -204,18 +217,14 @@ const toggleStatus = async (cat) => {
   try {
     const res = await api.patch(`/api/admin/categories/${cat.categoryID}/toggle-status`)
     const idx = categories.value.findIndex(c => c.categoryID === cat.categoryID)
-    if (idx !== -1) categories.value[idx] = res.data
-    toast.success('Đã cập nhật trạng thái hiển thị.')
+    if (idx !== -1) {
+      // Giữ lại postCount vì response toggle có thể không chứa list posts
+      categories.value[idx] = { ...res.data, postCount: cat.postCount }
+    }
+    toast.success(`Đã ${res.data.isActive === 1 ? 'hiển thị' : 'ẩn'} danh mục.`)
   } catch (e) {
     toast.error('Không thể thay đổi trạng thái lúc này.')
   }
-}
-
-const goToPostsByCategory = (cat) => {
-  router.push({
-    name: 'AdminPosts',
-    query: { categoryID: cat.categoryID, categoryName: cat.categoryName }
-  })
 }
 
 const handleFileUpload = (event) => {
@@ -226,31 +235,30 @@ const handleFileUpload = (event) => {
   }
 }
 
-// 🔥 SỬA LỖI MỞ MODAL BỊ NHẬN NHẦM EVENT
+// Sửa dứt điểm lỗi mở Modal nhận nhầm Event rác
 const openModal = (item = null) => {
   showModal.value = true
   
-  if (item && !(item instanceof Event)) { 
+  if (item && typeof item === 'object' && 'categoryID' in item) { 
     isEditing.value = true
-    Object.assign(form, {
-      categoryID: item.categoryID,
-      categoryName: item.categoryName,
-      categoryImage: item.categoryImage || '',
-      imageFile: null,
-      imagePreview: '',
-      isActive: item.isActive
-    })
+    form.categoryID = item.categoryID
+    form.categoryName = item.categoryName || ''
+    form.categoryImage = item.categoryImage || ''
+    form.imageFile = null
+    form.imagePreview = ''
+    form.isActive = item.isActive !== undefined ? item.isActive : 1
   } else {
     isEditing.value = false
-    Object.assign(form, { 
-        categoryID: null, 
-        categoryName: '', 
-        categoryImage: '', 
-        imageFile: null, 
-        imagePreview: '', 
-        isActive: 1 
-    })
+    form.categoryID = null
+    form.categoryName = ''
+    form.categoryImage = ''
+    form.imageFile = null
+    form.imagePreview = ''
+    form.isActive = 1
   }
+  
+  // Xóa cache file input để có thể chọn lại cùng 1 ảnh
+  if (fileInput.value) fileInput.value.value = ''
 }
 
 const saveData = async () => {
@@ -264,7 +272,7 @@ const saveData = async () => {
     }
 
     const payload = {
-      categoryName: form.categoryName,
+      categoryName: form.categoryName.trim(),
       categoryImage: finalUrl,
       isActive: form.isActive
     }
@@ -272,33 +280,49 @@ const saveData = async () => {
     if (isEditing.value) {
       const res = await api.put(`/api/admin/categories/${form.categoryID}`, payload)
       const idx = categories.value.findIndex(c => c.categoryID === form.categoryID)
-      if (idx !== -1) categories.value[idx] = res.data
+      if (idx !== -1) {
+        categories.value[idx] = { ...res.data, postCount: categories.value[idx].postCount }
+      }
       toast.success('Cập nhật thành công! ☁️')
     } else {
       const res = await api.post('/api/admin/categories', payload)
-      categories.value.unshift(res.data)
+      categories.value.unshift({ ...res.data, postCount: 0 })
       toast.success('Đã khởi tạo danh mục mới! ✨')
     }
     showModal.value = false
   } catch (e) {
-    toast.error('Lưu dữ liệu thất bại.')
+    toast.error('Lưu dữ liệu thất bại. ' + (e.response?.data?.message || ''))
   } finally {
     saving.value = false
   }
 }
 
 const deleteCat = async (cat) => {
-  if (cat.categoryID === 1) return toast.error('Danh mục Tổng hợp không thể xóa!')
-  if (cat.postCount > 0) return toast.error('Hãy chuyển hết bài viết trước khi xóa!')
+  if (cat.categoryID === 1) {
+    return toast.error('Không thể xóa Danh mục Mặc định!');
+  }
 
-  if (!window.confirm(`Xác nhận xóa vĩnh viễn: ${cat.categoryName}?`)) return
+  let confirmMessage = `Bạn có chắc chắn muốn xóa danh mục "${cat.categoryName}" không?`;
+  
+  if (cat.postCount > 0) {
+    confirmMessage = `Danh mục "${cat.categoryName}" đang có ${cat.postCount} bài viết.\n\nNếu xóa, toàn bộ ${cat.postCount} bài viết này sẽ tự động được chuyển sang Danh mục Mặc định.\n\nBạn vẫn muốn tiếp tục xóa chứ?`;
+  }
+
+  if (!window.confirm(confirmMessage)) return;
 
   try {
-    await api.delete(`/api/admin/categories/${cat.categoryID}`)
-    categories.value = categories.value.filter(c => c.categoryID !== cat.categoryID)
-    toast.success('Đã xóa danh mục.')
+    await api.delete(`/api/admin/categories/${cat.categoryID}`);
+    categories.value = categories.value.filter(c => c.categoryID !== cat.categoryID);
+    
+    if (cat.postCount > 0) {
+      await loadCategories(); 
+      toast.success(`Đã xóa danh mục. ${cat.postCount} bài viết đã chuyển về Danh mục Mặc định.`);
+    } else {
+      toast.success('Đã xóa danh mục thành công.');
+    }
+
   } catch (e) {
-    toast.error('Lỗi khi xóa dữ liệu.')
+    toast.error(e.response?.data?.message || 'Lỗi khi xóa dữ liệu. Vui lòng kiểm tra lại!');
   }
 }
 

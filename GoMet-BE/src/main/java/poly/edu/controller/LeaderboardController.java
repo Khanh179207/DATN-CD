@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/leaderboard")
 @RequiredArgsConstructor
+// 🟢 PUBLIC: Khu vực mở toang. Không gắn @PreAuthorize để ai cũng xem được Bảng vàng!
 public class LeaderboardController {
 
     private final PostDAO postDAO;

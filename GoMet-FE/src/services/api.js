@@ -38,12 +38,11 @@ api.interceptors.response.use(
     console.error('[API Error Details]:', {
       status,
       message,
-      fullData: data, // Sếp F12 lên sẽ thấy trọn bộ data ở đây
+      fullData: data,
       url: err.config?.url,
       method: err.config?.method
     });
 
-    // logic CHỐT CỦA SẾP: Chỉ ép Logout nếu Token hết hạn (401) hoặc Bị Ban (403 + ACCOUNT_BANNED)
     if (status === 401 || (status === 403 && message === 'ACCOUNT_BANNED')) {
       const user = JSON.parse(localStorage.getItem('user') || 'null')
       

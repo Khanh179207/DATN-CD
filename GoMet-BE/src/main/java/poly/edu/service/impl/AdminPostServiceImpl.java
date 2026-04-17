@@ -22,11 +22,8 @@ public class AdminPostServiceImpl implements AdminPostService {
     private final PostDAO postDAO;
     private final AccountDAO accountDAO;
     private final NotificationService notificationService;
-
-    // 🔥 INJECT THÊM MÁY NGHE LÉN ĐỂ GHI LOG
     private final ModerationLogService moderationLogService;
 
-    // Helper map từ Entity sang DTO cho Admin
     private AdminPostDTO toDTO(Post post) {
         AdminPostDTO dto = new AdminPostDTO();
         dto.setPostID(post.getPostID());
@@ -35,8 +32,11 @@ public class AdminPostServiceImpl implements AdminPostService {
         dto.setMedia(post.getMedia());
         dto.setLevel(post.getLevel());
         dto.setViews(post.getViews());
+
+        // 🔥 Đẩy cả 2 trạng thái này lên cho Frontend phân tích ma trận
         dto.setIsActive(post.getIsActive());
         dto.setIsApproved(post.getIsApproved());
+
         dto.setCreatedAt(post.getCreatedAt());
 
         if (post.getAccount() != null) {
@@ -63,71 +63,83 @@ public class AdminPostServiceImpl implements AdminPostService {
         return postDAO.findByIsApproved(isApproved).stream().map(this::toDTO).collect(Collectors.toList());
     }
 
-    // 🔥 LOGIC DUYỆT BÀI (ĐÃ THÊM LƯU LOG & XÓA LÝ DO CŨ)
+    // =========================================================
+    // ADMIN DUYỆT BÀI / KHÔI PHỤC BÀI
+    // =========================================================
     @Override
     @Transactional
     public void approvePost(Integer id, Integer adminId, String adminName) {
         Post post = postDAO.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy bài viết!"));
 
-        // 🔥 LOGIC TÁCH BIỆT LOG:
-        // Nếu bài đang bị ẩn (isActive = 0) thì ghi là RESTORE
-        // Nếu bài đang chờ duyệt bình thường thì ghi là APPROVE
-        String logAction = (post.getIsActive() != null && post.getIsActive() == 0) ? "RESTORE" : "APPROVE";
+        // Nếu bài đang bị Admin gỡ (isActive = -1), khôi phục nó lên thành 1
+        String logAction = (post.getIsActive() != null && post.getIsActive() == -1) ? "RESTORE" : "APPROVE";
         String logNote = logAction.equals("RESTORE") ? "Khôi phục bài viết bị gỡ" : "Duyệt bài viết hiển thị";
 
-        post.setIsApproved(1);
-        post.setIsActive(1);
+        // 🔥 MA TRẬN: Nếu bài đang là -1 thì lên 1. Nếu đang là 0 (User ẩn) thì giữ nguyên 0.
+        if (post.getIsActive() != null && post.getIsActive() == -1) {
+            post.setIsActive(1);
+        }
 
-        // Rửa sạch lý do cũ
+        boolean isFirstTimeApproval = (post.getIsApproved() == null || post.getIsApproved() == 0);
+
+        post.setIsApproved(1);
         post.setRejectReason(null);
-        post.setRejectedAt(null);
+
         postDAO.save(post);
 
-        // Ghi sổ Nam Tào với hành động chuẩn xác
-        moderationLogService.logAction(id, "POST", logAction, adminId, adminName, logNote);
+        // Cộng 1 GoMetCoin cho tác giả nếu đây là lần duyệt đầu tiên (từ 0/null lên 1)
+        if (isFirstTimeApproval) {
+            Account author = post.getAccount();
+            if (author != null) {
+                author.setPoint((author.getPoint() == null ? 0 : author.getPoint()) + 1);
+                accountDAO.save(author);
+            }
+        }
 
+        moderationLogService.logAction(id, "POST", logAction, adminId, adminName, logNote);
         notificationService.notifyPostApproved(id);
     }
 
-    // 🔥 LOGIC TỪ CHỐI / ẨN BÀI (ĐÃ FIX TÁCH BIỆT LOG REJECT VÀ HIDE)
+    // =========================================================
+    // ADMIN TỪ CHỐI / GỠ BÀI (REJECT/BANNED)
+    // =========================================================
     @Override
     @Transactional
     public void rejectPost(Integer id, Integer adminId, String adminName, String reason) {
         Post post = postDAO.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy bài viết!"));
 
-        // KIỂM TRA: Nếu bài đã được duyệt trước đó thì gọi là "HIDE" (GỠ BÀI), nếu chưa duyệt thì gọi là "REJECT" (TỪ CHỐI)
         String logAction = (post.getIsApproved() != null && post.getIsApproved() == 1) ? "HIDE" : "REJECT";
 
-        post.setIsApproved(-1); // Đánh dấu từ chối/gỡ
-        post.setIsActive(0);    // Ẩn luôn khỏi public
-
-        // Lưu lý do để user đọc
+        // 🔥 MA TRẬN: Chỉ set isActive = -1. Tuyệt đối KHÔNG SỬA isApproved.
+        post.setIsActive(-1);
         post.setRejectReason(reason);
-        post.setRejectedAt(LocalDateTime.now());
+
         postDAO.save(post);
 
-        // Ghi sổ Nam Tào với Action đã phân biệt rõ ràng ở trên
         moderationLogService.logAction(id, "POST", logAction, adminId, adminName, reason);
-
         notificationService.notifyPostRejected(id, reason);
     }
 
     @Override
     @Transactional
     public void deactivePost(Integer id) {
-        Post post = postDAO.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy bài viết!"));
-        post.setIsActive(0);
-        postDAO.save(post);
-        notificationService.notifyPostDisabled(id);
+        // Có thể gọi trực tiếp sang Delete nếu cần, hoặc gỡ bỏ.
+        // Tạm thời em map nó sang logic xóa luôn cho gọn gàng.
+        deletePost(id);
     }
 
     @Override
     @Transactional
     public void deletePost(Integer id) {
         Post post = postDAO.findById(id).orElseThrow(() -> new RuntimeException("Không tìm thấy bài viết!"));
-        post.setIsActive(0);
+
+        // Đánh dấu Xóa hẳn: set cả isActive và isApproved về -1
+        post.setIsActive(-1);
         post.setIsApproved(-1);
         postDAO.save(post);
+
+        // Lưu log (Dùng ID admin mặc định hoặc lấy từ security context nếu Sếp truyền vào)
+        moderationLogService.logAction(id, "POST", "DELETE", null, "Hệ Thống", "Admin xóa bài viết");
     }
 
     @Override
@@ -136,9 +148,12 @@ public class AdminPostServiceImpl implements AdminPostService {
         Post post = postDAO.findById(postId).orElseThrow(() -> new RuntimeException("Không tìm thấy bài viết!"));
         Account author = post.getAccount();
         if (author == null) throw new RuntimeException("Tác giả không tồn tại!");
-        author.setIsActive(0);
-        author.setToken(null);
+
+        // 🔥 Khóa tài khoản User (Admin Ban là -1)
+        author.setIsActive(-1);
         accountDAO.save(author);
-        postDAO.deactivateAllPostsByAccountId(author.getAccountID());
+
+        // 🔥 Gọi đúng hàm mới trong PostDAO để "trảm" toàn bộ bài của user này về -1
+        postDAO.banAllPostsByAccountId(author.getAccountID());
     }
 }

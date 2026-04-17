@@ -1,54 +1,104 @@
 import { ref, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import api from '@/services/api' // 🔥 Import api để lấy cấu hình từ Backend
+
+// Biến global để cache trạng thái ngày lễ cho toàn ứng dụng trong 1 phiên làm việc
+const isHolidayEventActive = ref(null) 
 
 export function usePostViewLimit() {
   const authStore = useAuthStore()
-  
-  // Lấy data từ user trong store. Nếu không có User thì mặc định là vô hạn (hoặc xử lý ở login)
+
+  // 1. Hàm kiểm tra chế độ Ngày lễ từ Backend
+  async function checkGlobalHolidayStatus() {
+    // Nếu đã check rồi thì trả về kết quả cũ luôn cho nhanh
+    if (isHolidayEventActive.value !== null) return isHolidayEventActive.value
+    
+    try {
+      const res = await api.get('/api/system-config')
+      const configs = Array.isArray(res.data) ? res.data : (res.data?.data || [])
+      
+      const getVal = (key) => configs.find(c => (c.configKey || c.ConfigKey) === key)?.configValue || configs.find(c => (c.configKey || c.ConfigKey) === key)?.ConfigValue
+      
+      const manualToggle = getVal('FREE_ACCESS_EVENT') === 'TRUE'
+      const startTimeStr = getVal('HOLIDAY_START')
+      const endTimeStr = getVal('HOLIDAY_END')
+
+      let isTimeMatched = false
+      if (startTimeStr && endTimeStr) {
+        const now = new Date()
+        const startTime = new Date(startTimeStr)
+        const endTime = new Date(endTimeStr)
+        if (!isNaN(startTime) && !isNaN(endTime)) {
+          if (now >= startTime && now <= endTime) {
+            isTimeMatched = true
+          }
+        }
+      }
+      
+      isHolidayEventActive.value = manualToggle || isTimeMatched
+      return isHolidayEventActive.value
+    } catch (e) {
+      console.warn("Lỗi check ngày lễ, dùng mặc định FALSE");
+      return false
+    }
+  }
+
+  // 2. Số lượt xem còn lại (Đã xử lý hiển thị khi vào ngày lễ)
   const remainingViews = computed(() => {
+    // Nếu đang trong ngày lễ, trả về một con số lớn hoặc xử lý ở UI
+    if (isHolidayEventActive.value === true) return 99 
+    
     const val = authStore.user?.remainingPostViews
-    if (val === undefined || val === null || isNaN(val)) return 3 // Dự phòng an toàn
+    if (val === undefined || val === null || isNaN(val)) return 3 
     return Number(val)
   })
+
   const isPremium = computed(() => authStore.user && (String(authStore.user.isPremium) === "1" || authStore.user.role === 'premium'));
   const isAdmin = computed(() => authStore.user?.role === 'admin')
 
-  // Kiểm tra xem có được xem bài viết không
   const canViewPost = computed(() => {
+    if (isHolidayEventActive.value === true) return true // Ngày lễ: Auto TRUE
     if (isAdmin.value || isPremium.value) return true
     return remainingViews.value > 0
   })
 
-  // Hàm kiểm tra và trừ lượt xem
-  function checkAndChargeView(postId, authorId) {
-    if (isAdmin.value || isPremium.value) return true // Admin/VIP luôn OK
+  // 3. Hàm kiểm tra và trừ lượt xem (Đã thêm logic Ngày lễ)
+  async function checkAndChargeView(postId, authorId) {
+    // 🔥 BƯỚC 1: Kiểm tra Ngày lễ trước tiên
+    const holidayStatus = await checkGlobalHolidayStatus()
+    if (holidayStatus === true) {
+      console.log("🎊 Sự kiện đang diễn ra: Mọi bài viết đều MIỄN PHÍ!");
+      return true // Cho qua luôn, không chạy mớ logic trừ điểm ở dưới
+    }
+
+    // BƯỚC 2: Logic cũ (Admin, VIP, Chính mình...)
+    if (isAdmin.value || isPremium.value) return true 
 
     const user = authStore.user
-    if (!user) return true // Chưa login thì có thể xử lý khác, nhưng ở đây giả định đã login
+    if (!user) return true 
 
-    // Đảm bảo kiểu dữ liệu là số
     if (user.remainingPostViews === undefined || user.remainingPostViews === null || isNaN(user.remainingPostViews)) {
       user.remainingPostViews = 3
     }
     user.remainingPostViews = Number(user.remainingPostViews)
 
-    // 1. Nếu là bài chính mình viết -> Không mất lượt
+    // Nếu là bài chính mình viết -> Không mất lượt
     if (String(user.id) === String(authorId) || String(user.accountID) === String(authorId)) {
       return true
     }
 
-    // 2. Nếu bài này đã xem trong ngày hôm nay -> Không mất lượt
+    // Nếu bài này đã xem trong ngày hôm nay -> Không mất lượt
     const viewedIds = user.viewedPostIds || []
     if (viewedIds.includes(postId)) {
       return true
     }
 
-    // 3. Nếu hết lượt -> Trả về false để UI xử lý redirect
+    // Nếu hết lượt
     if (user.remainingPostViews <= 0) {
       return false
     }
 
-    // 4. Trừ lượt và lưu vào danh sách đã xem
+    // Trừ lượt và lưu
     const now = new Date();
     const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     
@@ -57,10 +107,8 @@ export function usePostViewLimit() {
     user.viewedPostIds.push(postId)
     user.lastViewDate = today
     
-    // Cập nhật localStorage cho phiên hiện tại
     localStorage.setItem('user', JSON.stringify(user))
 
-    // Cập nhật Persistent Cache (không bị xóa khi logout)
     const limitsCache = JSON.parse(localStorage.getItem('gomet_view_limits') || '{}');
     const uid = String(user.accountID || user.id);
     limitsCache[uid] = {
@@ -78,6 +126,8 @@ export function usePostViewLimit() {
     isPremium,
     isAdmin,
     canViewPost,
-    checkAndChargeView
+    checkAndChargeView,
+    isHolidayEventActive, // Trả ra thêm biến này để UI dùng
+    checkGlobalHolidayStatus // 🔥 Xuất hàm này để UserMenu gọi lúc load trang
   }
 }

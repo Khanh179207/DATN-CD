@@ -22,7 +22,8 @@
       </div>
 
       <button class="btn-search-action" @click.stop="handleSearch" type="button">
-        <span>{{ $t('nav.search') }}</span>
+        <span class="btn-label">{{ $t('nav.search') }}</span>
+        <svg class="mobile-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
       </button>
 
       <transition name="search-pop">
@@ -70,7 +71,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue' // Đã thêm onMounted, onUnmounted
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
@@ -80,9 +81,7 @@ const { t } = useI18n()
 const router = useRouter()
 const authStore = useAuthStore()
 
-// Ref cho wrapper bao bọc ngoài cùng
 const searchWrapper = ref(null)
-
 const searchKeyword = ref('')
 const searchHistory = ref([])
 const showSearchHistory = ref(false)
@@ -93,14 +92,11 @@ const inputRef = ref(null)
 
 const getAccountId = () => authStore.user?.accountID || authStore.user?.id
 
-// Load dữ liệu
 const loadSearchHistory = async () => {
   const accId = getAccountId()
   if (!accId) return;
-
   isLoadingHistory.value = true
   errorMessage.value = ''
-
   try {
     const res = await api.get(`/api/search-history/${accId}`)
     searchHistory.value = Array.isArray(res.data) ? res.data : []
@@ -112,17 +108,13 @@ const loadSearchHistory = async () => {
   }
 }
 
-// Xử lý gợi ý
 const suggestions = computed(() => {
   const keyword = searchKeyword.value.trim().toLowerCase()
   let filtered = searchHistory.value || []
-
   if (keyword) {
     filtered = filtered.filter(item => item.keyword.toLowerCase().includes(keyword))
   }
-
   filtered = filtered.slice(0, 5).map(item => ({ ...item, type: 'history', id: `hist-${item.searchId}` }))
-
   if (keyword && !filtered.some(item => item.keyword.toLowerCase() === keyword)) {
     if (filtered.length < 5) {
       filtered.push({ type: 'suggest', id: `suggest-${Date.now()}`, keyword: keyword, displayText: `Tìm kiếm "${searchKeyword.value.trim()}"` })
@@ -134,24 +126,29 @@ const suggestions = computed(() => {
 const highlightText = (text) => {
   const keyword = searchKeyword.value.trim()
   if (!keyword) return text
-  const regex = new RegExp(`(${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
-  return text.replace(regex, '<strong>$1</strong>')
+  const escapedText = String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+  try {
+    const regex = new RegExp(`(${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
+    return escapedText.replace(regex, '<strong>$1</strong>')
+  } catch (e) {
+    return escapedText
+  }
 }
 
-// Xử lý Actions
 const handleSearch = () => {
   const query = searchKeyword.value.trim()
   if (!query) return
-
-  // Cập nhật Optimistic UI
   const exists = searchHistory.value.find(h => h.keyword === query)
   if (!exists) {
     searchHistory.value = [{ searchId: Date.now(), keyword: query }, ...searchHistory.value]
   }
-
   const accId = getAccountId()
   if (accId) api.post(`/api/search-history?accountId=${accId}&keyword=${encodeURIComponent(query)}`).catch(() => {})
-
   closeSearch()
   router.push({ name: 'Search', query: { q: query } })
 }
@@ -188,11 +185,7 @@ const closeSearch = () => {
   isSearchFocused.value = false
 }
 
-// ==========================================
-// XỬ LÝ CLICK OUTSIDE (BẤM RA NGOÀI ĐỂ ĐÓNG)
-// ==========================================
 const handleClickOutside = (event) => {
-  // Nếu khung tìm kiếm đang mở VÀ click chuột không nằm trong searchWrapper
   if ((isSearchFocused.value || showSearchHistory.value) && searchWrapper.value && !searchWrapper.value.contains(event.target)) {
     closeSearch()
   }
@@ -205,7 +198,6 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('mousedown', handleClickOutside)
 })
-// ==========================================
 
 watch(() => authStore.user, (newUser) => {
   if (newUser && (newUser.accountID || newUser.id)) {
@@ -221,44 +213,88 @@ watch(() => authStore.user, (newUser) => {
 <style scoped lang="scss">
 @use '../../assets/styles/variables' as *;
 
-.search-premium-container { flex: 1; display: flex; justify-content: center; position: relative; z-index: 1001; }
-.search-pill { display: flex; align-items: center; width: 100%; max-width: 500px; height: 48px; background: var(--color-neutral-100); border-radius: 24px; padding: 4px; border: 1.5px solid transparent; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); position: relative; z-index: 1002; }
+.search-premium-container { flex: 1; display: flex; position: relative; z-index: 1001; min-width: 0; }
+.search-pill { display: flex; align-items: center; width: 100%; max-width: 650px; height: 48px; background: var(--color-neutral-100); border-radius: 24px; padding: 4px; border: 1.5px solid transparent; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); position: relative; z-index: 1002; }
 .search-pill.is-active { background: #ffffff; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); }
-.input-section { display: flex; align-items: center; flex: 1; height: 100%; padding-left: 16px; }
-.icon-prefix { color: var(--color-neutral-400); display: flex; margin-right: 8px; }
-.input-section input { flex: 1; border: none; background: transparent; height: 100%; padding: 0 8px; font-size: 15px; font-weight: 500; color: var(--color-neutral-900); outline: none; }
+.input-section { display: flex; align-items: center; flex: 1; height: 100%; padding-left: 16px; min-width: 0; }
+.icon-prefix { color: var(--color-neutral-400); display: flex; margin-right: 8px; flex-shrink: 0; }
+.input-section input { flex: 1; border: none; background: transparent; height: 100%; padding: 0 8px; font-size: 15px; font-weight: 500; color: var(--color-neutral-900); outline: none; min-width: 0; }
 .input-section input::placeholder { color: var(--color-neutral-400); font-weight: 400; }
-.btn-search-action { height: 40px; padding: 0 24px; background: #ea580c; color: white; border: none; border-radius: 20px; font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(234, 88, 12, 0.2); }
+
+.btn-search-action { 
+  height: 40px; padding: 0 24px; background: #ea580c; color: white; border: none; 
+  border-radius: 20px; font-weight: 700; font-size: 14px; cursor: pointer; 
+  transition: all 0.2s; box-shadow: 0 2px 8px rgba(234, 88, 12, 0.2); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.mobile-search-icon { display: none; } 
+
 .btn-search-action:hover { background: #c2410c; transform: translateY(-1px); }
 .btn-search-action:active { transform: scale(0.98); }
-.btn-clear { background: none; border: none; color: var(--color-neutral-300); display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; transition: all 0.2s; }
+.btn-clear { background: none; border: none; color: var(--color-neutral-300); display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; transition: all 0.2s; flex-shrink: 0; }
 .btn-clear:hover { background: var(--color-neutral-200); color: var(--color-neutral-600); }
-.history-card { position: absolute; top: calc(100% + 12px); left: 0; width: 100%; background: #ffffff; border-radius: 20px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12); border: 1px solid rgba(0, 0, 0, 0.04); overflow: hidden; padding: 8px 0; }
-.card-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 8px; }
-.card-header .label { font-size: 11px; font-weight: 800; color: #a1a1aa; letter-spacing: 0.05em; }
-.card-header .btn-clear-all { font-size: 11px; font-weight: 700; color: #ea580c; cursor: pointer; }
-.card-header .btn-clear-all:hover { text-decoration: underline; }
-.history-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; cursor: pointer; transition: all 0.2s ease; }
-.history-item:hover { background-color: #fdf4f1; }
-.history-item:hover .keyword-text { color: #ea580c; }
-.history-item:hover .btn-delete-single { opacity: 1; }
-.history-item.suggest-item:hover { background-color: #f0f0f0; }
-.history-item.suggest-item:hover .keyword-text { color: #333; }
-.item-content { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
-.item-content .icon-clock, .item-content .icon-search { color: #d4d4d8; flex-shrink: 0; }
-.item-content .keyword-text { font-size: 14px; font-weight: 500; color: #3f3f46; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* --- CSS LỊCH SỬ TÌM KIẾM (MẶC ĐỊNH TRÊN DESKTOP) --- */
+.history-card { 
+  position: absolute; top: calc(100% + 8px); left: 0; right: 0; 
+  background: #ffffff; border-radius: 16px; 
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15); 
+  border: 1px solid rgba(0, 0, 0, 0.05); overflow: hidden; padding: 6px 0; 
+}
+.card-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px 6px; }
+.card-header .label { font-size: 10px; font-weight: 800; color: #a1a1aa; letter-spacing: 0.05em; text-transform: uppercase; }
+.card-header .btn-clear-all { font-size: 10px; font-weight: 700; color: #ea580c; cursor: pointer; }
+
+.history-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; cursor: pointer; transition: 0.2s; }
+.history-item:hover { background-color: #f8fafc; }
+.item-content { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.item-content .keyword-text { font-size: 14px; font-weight: 500; color: #334155; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .item-content .keyword-text :deep(strong) { font-weight: 700; color: #ea580c; }
-.btn-delete-single { background: rgba(0, 0, 0, 0.03); border: none; color: #a1a1aa; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: all 0.2s; }
-.btn-delete-single:hover { background: #fee2e2; color: #ef4444; }
-.history-loading, .history-empty, .history-error { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; font-size: 14px; gap: 12px; }
-.history-loading, .history-empty { color: #a1a1aa; }
-.history-error { color: #ef4444; }
-.btn-retry { padding: 6px 16px; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
-.btn-retry:hover { background: #e5e7eb; }
-.loading-spinner { width: 24px; height: 24px; border: 2px solid #f3f3f3; border-top: 2px solid #ea580c; border-radius: 50%; animation: spin 0.8s linear infinite; }
+.btn-delete-single { background: none; border: none; color: #cbd5e1; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.btn-delete-single:hover { background: #f1f5f9; color: #ef4444; }
+
+.history-loading, .history-empty, .history-error { padding: 20px; text-align: center; font-size: 13px; color: #94a3b8; }
 
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-.search-pop-enter-active { transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.search-pop-enter-active { transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
 .search-pop-enter-from, .search-pop-leave-to { opacity: 0; transform: translateY(10px) scale(0.98); }
+
+/* ============================================================
+   🌟 RESPONSIVE CHO TÌM KIẾM GẦN ĐÂY (MOBILE & TABLET)
+   ============================================================ */
+
+@media (max-width: 768px) {
+  /* Ô Search gọn gàng hơn */
+  .search-pill { height: 40px; }
+  .input-section { padding-left: 12px; }
+  .icon-prefix { display: none; } /* Ẩn icon kính lúp đầu dòng cho rộng chỗ */
+
+  /* Nút search chuyển thành icon tròn */
+  .btn-search-action {
+    width: 32px; height: 32px; padding: 0; border-radius: 50%;
+    .btn-label { display: none; }
+    .mobile-search-icon { display: block; }
+  }
+
+  .history-card {
+    position: fixed;
+    top: 65px;
+    left: 10px;
+    right: 10px;
+    width: auto;
+    max-width: none;
+    border-radius: 12px;
+    z-index: 2000;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  }
+
+  .item-content .keyword-text { font-size: 14px; }
+  .card-header .label, .card-header .btn-clear-all { font-size: 11px; }
+}
+
+@media (max-width: 480px) {
+  .card-header { padding: 12px 16px; }
+  .history-item { padding: 12px 16px; }
+  .input-section input::placeholder { font-size: 12px; }
+}
 </style>

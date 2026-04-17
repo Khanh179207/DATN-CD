@@ -217,10 +217,101 @@ const handlePaste = (event) => {
   to { opacity: 1; transform: scale(1) translateY(0); } 
 }
 
-/* Responsive cho mobile */
+@media (max-width: 768px) {
+  .modal-content {
+    width: 85%;
+    max-width: 400px;
+    padding: 35px 25px;
+    border-radius: 20px;
+  }
+  
+  .icon-ring {
+    width: 60px; height: 60px;
+    margin-bottom: 15px;
+  }
+  .mail-icon { width: 28px; height: 28px; }
+  
+  .modal-title { font-size: 1.6rem; }
+  .modal-desc { font-size: 0.9rem; margin-bottom: 20px; }
+  
+  .otp-group { gap: 8px; margin-bottom: 15px; }
+  .otp-input-box {
+    width: 44px; height: 52px;
+    font-size: 1.4rem;
+    border-radius: 10px;
+  }
+  
+  .modal-footer-text { margin-bottom: 25px; font-size: 0.8rem; }
+  
+  .btn-secondary, .btn-primary { padding: 12px; font-size: 0.9rem; }
+}
+
+/* --- 2. Màn hình Mobile lớn (Dưới 480px) --- */
 @media (max-width: 480px) {
+  .modal-overlay { padding: 15px; }
+  
+  .modal-content {
+    width: 100%;
+    padding: 30px 20px;
+    border-radius: 16px;
+  }
+  
+  .icon-ring { width: 50px; height: 50px; }
+  .mail-icon { width: 24px; height: 24px; }
+  
+  .modal-title { font-size: 1.4rem; }
+  .modal-desc { font-size: 0.85rem; line-height: 1.5; }
+  
   .otp-group { gap: 6px; }
-  .otp-input-box { width: 42px; height: 50px; font-size: 1.3rem; }
-  .modal-content { padding: 30px 20px; }
+  .otp-input-box {
+    width: 40px; height: 48px;
+    font-size: 1.25rem;
+    border-radius: 8px;
+  }
+  
+  /* Ép 2 nút Quay lại & Xác nhận xếp chồng lên nhau trên mobile để dễ bấm */
+  .action-buttons { 
+    flex-direction: column-reverse; /* Nút Xác nhận nằm trên, Quay lại nằm dưới */
+    gap: 10px; 
+  }
+  
+  .btn-secondary, .btn-primary {
+    width: 100%;
+    padding: 12px;
+    font-size: 0.95rem;
+  }
+}
+
+/* --- 3. Màn hình Mobile siêu nhỏ (Dưới 360px - vd iPhone SE) --- */
+@media (max-width: 360px) {
+  .modal-content { padding: 20px 15px; }
+  .modal-title { font-size: 1.25rem; margin-bottom: 5px; }
+  .modal-desc { font-size: 0.8rem; margin-bottom: 15px; }
+  
+  /* Nếu màn hình quá hẹp, thu nhỏ tiếp ô OTP */
+  .otp-group { gap: 4px; }
+  .otp-input-box {
+    width: 36px; height: 44px;
+    font-size: 1.1rem;
+    border-radius: 6px;
+  }
+}
+
+/* --- 4. Xử lý khi xoay ngang điện thoại (Landscape Mobile) --- */
+@media (max-height: 500px) and (orientation: landscape) {
+  .modal-content {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .icon-ring { display: none; /* Ẩn icon để lấy không gian cho form nhập */ }
+  .modal-title { font-size: 1.3rem; margin-bottom: 5px; }
+  .modal-desc { margin-bottom: 10px; }
+  .otp-group { margin-bottom: 10px; }
+  .modal-footer-text { display: none; /* Ẩn text phụ */ }
+  
+  .action-buttons { flex-direction: row; gap: 10px; }
+  .btn-secondary, .btn-primary { padding: 10px; }
 }
 </style>

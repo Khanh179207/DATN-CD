@@ -53,56 +53,90 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue' 
 import { useRouter } from 'vue-router'
 import RecipeCard from '@/components/common/RecipeCard.vue'
 import { getLatestPosts, normalizePost } from '@/services/postService'
-import { getCategories } from '@/services/categoryService'
-import { useI18n } from 'vue-i18n'
-const { t } = useI18n()
+import { getMyFollows } from '@/services/socialService'
+import { useAuthStore } from '@/stores/auth' 
 
 const router = useRouter()
-const activeTab = ref(null) // null = Tất cả (categoryID)
+const authStore = useAuthStore() 
+
+const activeTab = ref('discover') 
 const loading = ref(true)
 const posts = ref([])
-const categories = ref([])
+const myFollowedAccountIDs = ref([]) 
+
+const currentUserId = computed(() => {
+  return authStore.currentUser ? authStore.currentUser.accountID : null;
+})
 
 const tabs = computed(() => [
-  { id: null, name: t('common.category_all') },
-  ...categories.value.map(c => ({ id: c.categoryID, name: c.categoryName }))
+  { id: 'discover', name: 'Khám phá' },
+  { id: 'following', name: 'Người theo dõi' }
 ])
 
 const filteredPosts = computed(() => {
-  if (!activeTab.value) return posts.value
-  return posts.value.filter(p => p._categoryID === activeTab.value)
+  let result = [];
+
+  if (activeTab.value === 'discover') {
+    const allSorted = [...posts.value].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    const premiums = allSorted.filter(p => p.isPremium);
+    const normals = allSorted.filter(p => !p.isPremium);
+
+    const guaranteedPremiums = premiums.slice(0, 2);
+    const remainingPool = [...premiums.slice(2), ...normals].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    const neededSlots = 8 - guaranteedPremiums.length;
+    const additionalPosts = remainingPool.slice(0, neededSlots);
+
+    result = [...guaranteedPremiums, ...additionalPosts].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  } else if (activeTab.value === 'following') {
+    result = posts.value
+      .filter(p => myFollowedAccountIDs.value.includes(p.authorID)) 
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }
+
+  return result.slice(0, 8);
 })
 
 const goToDetail = (id) => router.push({ name: 'PostDetail', params: { id } })
 const goToSearch = () => router.push('/search')
 
-onMounted(async () => {
+const loadData = async () => {
+  loading.value = true;
   try {
-    const [rawPosts, rawCats] = await Promise.all([
-      getLatestPosts(16),
-      getCategories()
-    ])
-    categories.value = rawCats
+    const [rawPosts, realFollowedIds] = await Promise.all([
+      getLatestPosts(50),
+      currentUserId.value ? getMyFollows(currentUserId.value) : [] 
+    ]);
     
-    // 🔥 ĐỒNG BỘ FIX LỖI THỜI GIAN VÀ LƯỢT TIM Ở TRANG CHỦ
+    myFollowedAccountIDs.value = realFollowedIds || [];
+
     posts.value = rawPosts.map(dto => ({
       ...normalizePost(dto),
-      _categoryID: dto.categoryID,
+      authorID: dto.authorID, 
+      isPremium: dto.isPremium || dto.IsPremium || false, 
       createdAt: dto.createdAt || dto.date || new Date().toISOString(),
       likes: dto.likes ?? dto.likeCount ?? dto.favoriteCount ?? 0
     }))
-
-    // Debug thử xem nó đã có ngày chưa sếp nhé
-    console.log("Dữ liệu posts sau khi map:", posts.value[0]);
-
   } catch (err) {
     console.warn('HomeLatestRecipes: API error', err)
   } finally {
     loading.value = false
+  }
+}
+
+onMounted(() => {
+  loadData();
+})
+
+watch(currentUserId, (newId, oldId) => {
+  if (newId !== oldId) {
+    loadData();
   }
 })
 </script>
@@ -131,7 +165,7 @@ onMounted(async () => {
 .tabs-scroll-wrapper { position: relative; max-width: 600px; overflow: hidden; }
 .tabs-scroll { 
   display: flex; gap: 10px; overflow-x: auto; padding: 5px; 
-  scrollbar-width: none; -ms-overflow-style: none; /* Hide scrollbar */
+  scrollbar-width: none; -ms-overflow-style: none;
 }
 .tabs-scroll::-webkit-scrollbar { display: none; }
 
@@ -146,8 +180,11 @@ onMounted(async () => {
   border-color: #D6D3D1; background: #F5F5F4; transform: translateY(-2px); 
 }
 .tab-pill.active { 
-  background: #1C1917; color: white; border-color: #1C1917;
-  box-shadow: 0 4px 15px rgba(28, 25, 23, 0.3); transform: translateY(-2px);
+  background: #EA580C;
+  color: white; 
+  border-color: #EA580C;
+  box-shadow: 0 4px 15px rgba(234, 88, 12, 0.3);
+  transform: translateY(-2px);
 }
 
 .scroll-fade {
@@ -184,16 +221,63 @@ onMounted(async () => {
   box-shadow: 0 4px 15px rgba(0,0,0,0.05); transform: translateY(-2px);
 }
 
-/* RESPONSIVE */
-@media (max-width: 1280px) { .recipe-grid { grid-template-columns: repeat(3, 1fr); } }
-@media (max-width: 1024px) { 
-  .recipe-grid { grid-template-columns: repeat(2, 1fr); } 
-  .section-header { flex-direction: column; align-items: flex-start; }
-  .tabs-scroll-wrapper { max-width: 100%; width: 100%; }
+/* ==========================================================================
+   HỆ THỐNG RESPONSIVE TOÀN DIỆN (NEW)
+   ========================================================================== */
+
+/* 1. Màn hình Laptop nhỏ / Tablet ngang (Dưới 1200px) */
+@media (max-width: 1200px) {
+  .recipe-grid { 
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 20px; 
+  }
+  .section-heading { font-size: 2.2rem; }
 }
-@media (max-width: 640px) { 
-  .recipe-grid { grid-template-columns: 1fr; } 
+
+/* 2. Tablet dọc (Dưới 992px) */
+@media (max-width: 992px) {
+  .recipe-grid { 
+    grid-template-columns: repeat(2, 1fr); 
+  }
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 25px;
+  }
+  .tabs-scroll-wrapper {
+    max-width: 100%;
+    width: 100%;
+  }
+}
+
+/* 3. Điện thoại (Dưới 768px) */
+@media (max-width: 768px) {
+  .section-block {
+    padding: 0 24px;
+    margin-bottom: 60px;
+  }
+  .section-heading { font-size: 1.8rem; }
+  .recipe-grid { gap: 16px; }
+}
+
+/* 4. Điện thoại nhỏ (Dưới 576px) */
+@media (max-width: 576px) {
+  .recipe-grid { 
+    grid-template-columns: 1fr; /* Chuyển về 1 cột để ảnh to, rõ nét */
+  }
   .section-block { padding: 0 20px; }
-  .section-heading { font-size: 2rem; }
+  .btn-load-more {
+    width: 100%; /* Nút bấm chiếm hết chiều ngang trên mobile */
+    justify-content: center;
+  }
+  .tab-pill {
+    padding: 8px 18px;
+    font-size: 0.85rem;
+  }
+}
+
+/* 5. Màn hình siêu nhỏ (Dưới 375px) */
+@media (max-width: 375px) {
+  .section-heading { font-size: 1.6rem; }
 }
 </style>

@@ -26,6 +26,7 @@ public class PostDTO {
 
     private Integer views;
     private Integer likeCount; // 🔥 Rất quan trọng để hiển thị lượt Thích
+    private Integer totalPts;
 
     // Các thông tin phụ để Frontend hiển thị cho đẹp
     private String username;
@@ -34,6 +35,7 @@ public class PostDTO {
     // Trong PostDTO.java và FavoriteDTO.java
     private LocalDateTime createdAt;
     private Integer isApproved;
+    private Integer isActive;
 
     // 🔥 Bây giờ nó sẽ tự động hiểu và dùng cái file StepRequestDTO.java riêng biệt ở trên
     // Trong file PostDTO.java

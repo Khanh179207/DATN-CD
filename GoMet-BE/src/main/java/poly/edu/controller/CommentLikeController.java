@@ -2,6 +2,7 @@ package poly.edu.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize; // 🔥 IMPORT THẺ BẢO VỆ
 import org.springframework.web.bind.annotation.*;
 
 import poly.edu.dto.CommentLikeRequest;   // Import đúng file mới
@@ -10,12 +11,13 @@ import poly.edu.service.CommentLikeService;
 
 @RestController
 @RequestMapping("/api/comments")
-@CrossOrigin("*")
 @RequiredArgsConstructor
 public class CommentLikeController {
 
     private final CommentLikeService commentLikeService;
 
+    // 🟡 USER: Phải có Token (đã đăng nhập) mới được phép thả tim / bỏ tim
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/{commentId}/like")
     public ResponseEntity<CommentLikeResponse> toggleLike(
             @PathVariable Integer commentId,
