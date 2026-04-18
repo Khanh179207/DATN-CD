@@ -171,7 +171,7 @@ const normalizeNotification = (notification = {}) => ({
   title: notification.title || 'Thông báo hệ thống',
   content: notification.content || '',
   username: notification.username || 'System',
-  avatar: notification.avatarUrl || notification.avatar || '/assets/images/logogoc.jpg',
+  avatar: notification.avatarUrl || notification.avatar || '/logogoc.jpg',
   type: notification.type || 'ADMIN',
   isRead: notification.isRead === 1 || notification.isRead === true ? 1 : 0,
   createdAt: notification.createdAt || new Date().toISOString(),
@@ -262,7 +262,7 @@ const showBrowserNotification = (n) => {
   pushBrowserNotification({
     title: n.title,
     body: n.content,
-    icon: n.avatar || '/assets/images/logogoc.jpg',
+    icon: n.avatar || '/logogoc.jpg',
     onClick: () => { if (n.link) router.push(n.link) }
   })
 }

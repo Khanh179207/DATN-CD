@@ -117,7 +117,7 @@ public class AdminNotificationServiceImpl implements AdminNotificationService {
                 .isGlobal(saved.getIsGlobal() != null ? saved.getIsGlobal() : false)
                 .parentNotificationID(saved.getParentNotification() != null ? saved.getParentNotification().getNotificationID() : null)
                 .username("Hệ thống GoMet")
-                .avatarUrl("/assets/images/logogoc.jpg")
+                .avatarUrl("/logogoc.jpg")
                 .build();
     }
 }

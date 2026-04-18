@@ -12,6 +12,7 @@ import poly.edu.entity.Notification;
 import poly.edu.entity.Post;
 import poly.edu.service.NotificationService;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,7 +27,7 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public Notification createNotification(String title, String content, String type, Integer receiverId,
-                                           Integer actorId, Integer postId, String link) {
+            Integer actorId, Integer postId, String link) {
         // Lấy thông tin người nhận. receiverId có thể null đối với thông báo toàn cầu
         Optional<Account> receiverOpt = Optional.empty();
         if (receiverId != null) {
@@ -177,7 +178,8 @@ public class NotificationServiceImpl implements NotificationService {
             String content = " đã gửi 1 phiếu hỗ trợ.";
             String type = "TICKET";
             String link = "/admin/tickets";
-            Notification notification = createNotification(title, content, type, admin.getAccountID(), userId, null, link);
+            Notification notification = createNotification(title, content, type, admin.getAccountID(), userId, null,
+                    link);
             sendAdminAlert(notification);
         }
     }
@@ -196,7 +198,8 @@ public class NotificationServiceImpl implements NotificationService {
             String content = " đã gửi phản hồi.";
             String type = "FEEDBACK";
             String link = "/admin/feedback";
-            Notification notification = createNotification(title, content, type, admin.getAccountID(), userId, null, link);
+            Notification notification = createNotification(title, content, type, admin.getAccountID(), userId, null,
+                    link);
             sendAdminAlert(notification);
         }
     }
@@ -215,7 +218,8 @@ public class NotificationServiceImpl implements NotificationService {
             String content = " đã gửi một báo cáo.";
             String type = "REPORT";
             String link = "/admin/reports";
-            Notification notification = createNotification(title, content, type, admin.getAccountID(), userId, null, link);
+            Notification notification = createNotification(title, content, type, admin.getAccountID(), userId, null,
+                    link);
             sendAdminAlert(notification);
         }
     }
@@ -234,7 +238,8 @@ public class NotificationServiceImpl implements NotificationService {
             String content = " đã tạo một bài viết mới cần được duyệt.";
             String type = "POST_PENDING_APPROVAL";
             String link = "/admin/posts/pending";
-            Notification notification = createNotification(title, content, type, admin.getAccountID(), userId, postId, link);
+            Notification notification = createNotification(title, content, type, admin.getAccountID(), userId, postId,
+                    link);
             sendAdminAlert(notification);
         }
     }
@@ -248,7 +253,8 @@ public class NotificationServiceImpl implements NotificationService {
 
         Post post = postOpt.get();
         Account postOwner = post.getAccount();
-        if (postOwner == null) return;
+        if (postOwner == null)
+            return;
 
         String title = "Bài viết được duyệt";
         String content = "Bài viết của bạn đã được Quản trị viên duyệt.";
@@ -267,7 +273,8 @@ public class NotificationServiceImpl implements NotificationService {
 
         Post post = postOpt.get();
         Account postOwner = post.getAccount();
-        if (postOwner == null) return;
+        if (postOwner == null)
+            return;
 
         String title = "Bài viết bị từ chối";
         String content = reason != null && !reason.trim().isEmpty()
@@ -288,7 +295,8 @@ public class NotificationServiceImpl implements NotificationService {
 
         Post post = postOpt.get();
         Account postOwner = post.getAccount();
-        if (postOwner == null) return;
+        if (postOwner == null)
+            return;
 
         String title = "Bài viết bị vô hiệu hóa";
         String content = "Bài viết của bạn đã bị Quản trị viên vô hiệu hóa.";
@@ -299,9 +307,11 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public void notifyCommentReply(String replierUsername, Integer parentCommentAuthorId, Integer postId, Integer commentId) {
+    public void notifyCommentReply(String replierUsername, Integer parentCommentAuthorId, Integer postId,
+            Integer commentId) {
         Optional<Account> replierOpt = accountDAO.findByUsername(replierUsername);
-        if (replierOpt.isEmpty()) return;
+        if (replierOpt.isEmpty())
+            return;
         Integer replierId = replierOpt.get().getAccountID();
 
         String title = "Trả lời bình luận";
@@ -314,7 +324,8 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public void notifyCommentLike(String likerUsername, Integer commentAuthorId, Integer postId, Integer commentId) {
         Optional<Account> likerOpt = accountDAO.findByUsername(likerUsername);
-        if (likerOpt.isEmpty()) return;
+        if (likerOpt.isEmpty())
+            return;
         Integer likerId = likerOpt.get().getAccountID();
 
         String title = "Lượt thích bình luận";
@@ -327,7 +338,8 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public void notifyMention(String mentionerUsername, Integer mentionedAccountId, Integer postId, Integer commentId) {
         Optional<Account> mentionerOpt = accountDAO.findByUsername(mentionerUsername);
-        if (mentionerOpt.isEmpty()) return;
+        if (mentionerOpt.isEmpty())
+            return;
         Integer mentionerId = mentionerOpt.get().getAccountID();
 
         String title = "Nhắc đến bạn";
@@ -342,7 +354,7 @@ public class NotificationServiceImpl implements NotificationService {
         String title = "Cập nhật phiếu hỗ trợ";
         String content = newStatus == 1 ? "Phiếu hỗ trợ #" + ticketId + " đang được xử lý."
                 : newStatus == 2 ? "Phiếu hỗ trợ #" + ticketId + " đã được giải quyết."
-                : "Phiếu hỗ trợ #" + ticketId + " đã bị từ chối.";
+                        : "Phiếu hỗ trợ #" + ticketId + " đã bị từ chối.";
         String type = "TICKET_UPDATE";
         createNotification(title, content, type, accountId, null, null, null);
     }
@@ -376,9 +388,12 @@ public class NotificationServiceImpl implements NotificationService {
     public void notifyReward(Integer accountId, Integer points, Integer premiumDays, String source) {
         String title = "Nhận thưởng thành công";
         StringBuilder content = new StringBuilder("Bạn vừa nhận được ");
-        if (points != null && points > 0) content.append(points).append(" GoMet Point ");
-        if (points != null && points > 0 && premiumDays != null && premiumDays > 0) content.append("và ");
-        if (premiumDays != null && premiumDays > 0) content.append(premiumDays).append(" ngày Premium ");
+        if (points != null && points > 0)
+            content.append(points).append(" GoMet Point ");
+        if (points != null && points > 0 && premiumDays != null && premiumDays > 0)
+            content.append("và ");
+        if (premiumDays != null && premiumDays > 0)
+            content.append(premiumDays).append(" ngày Premium ");
         content.append("từ ").append(source).append(".");
 
         String type = "REWARD";
@@ -392,6 +407,29 @@ public class NotificationServiceImpl implements NotificationService {
                 : "Giao dịch " + orderCode + " đã thất bại hoặc bị hủy.";
         String type = "PAYMENT_STATUS";
         createNotification(title, content, type, accountId, null, null, isSuccess ? "/premium" : "/upgrade");
+    }
+
+    @Override
+    public void notifyPremiumStatus(Integer accountId, boolean isActivated, LocalDateTime endAt) {
+        String title = isActivated ? "Premium đã được kích hoạt" : "Premium đã hết hạn";
+        String content;
+        String type;
+        String link;
+
+        if (isActivated) {
+            String endAtText = endAt != null
+                    ? endAt.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+                    : "không xác định";
+            content = "Gói Premium của bạn đã được kích hoạt thành công. Thời hạn đến: " + endAtText + ".";
+            type = "PREMIUM_PURCHASED";
+            link = "/profile";
+        } else {
+            content = "Gói Premium của bạn đã hết hạn. Hãy gia hạn để tiếp tục sử dụng các đặc quyền.";
+            type = "PREMIUM_EXPIRED";
+            link = "/upgrade";
+        }
+
+        createNotification(title, content, type, accountId, null, null, link);
     }
 
     @Override
@@ -438,7 +476,7 @@ public class NotificationServiceImpl implements NotificationService {
     private NotificationDTO convertToDTO(Notification notification) {
         Account actor = notification.getActor();
         String username = actor != null ? actor.getUsername() : "Hệ thống GoMet";
-        String avatarUrl = (actor != null && actor.getAvatar() != null) ? actor.getAvatar() : "/assets/images/logogoc.jpg";
+        String avatarUrl = (actor != null && actor.getAvatar() != null) ? actor.getAvatar() : "/logogoc.jpg";
 
         return NotificationDTO.builder()
                 .notificationID(notification.getNotificationID())
@@ -450,7 +488,9 @@ public class NotificationServiceImpl implements NotificationService {
                 .createdAt(notification.getCreatedAt())
                 .isRead(notification.getIsRead())
                 .isGlobal(notification.getIsGlobal() != null ? notification.getIsGlobal() : false)
-                .parentNotificationID(notification.getParentNotification() != null ? notification.getParentNotification().getNotificationID() : null)
+                .parentNotificationID(notification.getParentNotification() != null
+                        ? notification.getParentNotification().getNotificationID()
+                        : null)
                 .username(username)
                 .avatarUrl(avatarUrl)
                 .build();

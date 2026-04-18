@@ -58,7 +58,7 @@ public class AppealServiceImpl implements AppealService {
                 notificationService.createNotification(
                         "Khiếu nại mới",
                         "Người dùng " + trimEmail + " đã nộp khiếu nại: " + reason,
-                        "appeal",
+                        "APPEAL",
                         admin.getAccountID(),
                         null, // actorId - null for system notification
                         null, // postId
