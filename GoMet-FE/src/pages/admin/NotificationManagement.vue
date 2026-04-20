@@ -27,7 +27,7 @@
           <Send :size="22" />
         </div>
         <div class="stat-info">
-          <span class="label">Broadcast</span>
+          <span class="label">Toàn hệ thống</span>
           <h3 class="value">{{ broadcastCount }}</h3>
         </div>
       </div>
@@ -37,7 +37,7 @@
           <Users :size="22" />
         </div>
         <div class="stat-info">
-          <span class="label">Nhắm riêng</span>
+          <span class="label">Nhắn riêng</span>
           <h3 class="value">{{ targetedCount }}</h3>
         </div>
       </div>
@@ -68,7 +68,7 @@
           </div>
 
           <div class="post-count-badge" :class="{ 'is-global': notification.isGlobal }">
-            {{ notification.isGlobal ? 'Toàn hệ thống' : 'Nhắm riêng' }}
+            {{ notification.isGlobal ? 'Toàn hệ thống' : 'Nhắn riêng' }}
           </div>
 
           <div class="hidden-badge" v-if="notification.type">{{ notification.type }}</div>
@@ -91,9 +91,6 @@
             <span class="ratio-pct text-truncate">{{ getRecipientLabel(notification) }}</span>
           </div>
           <p class="content-preview">{{ notification.content || 'Không có nội dung' }}</p>
-          <div class="progress-bar">
-            <div class="fill" :style="{ width: notification.isGlobal ? '100%' : '52%' }"></div>
-          </div>
           <div class="view-posts-hint">{{ formatDate(notification.createdAt) }} →</div>
         </div>
       </div>
@@ -228,7 +225,7 @@
                     <h4>{{ selectedDetail.title || '(Không tiêu đề)' }}</h4>
                   </div>
                   <span class="manual-badge" :class="{ targeted: !selectedDetail.isGlobal }">
-                    {{ selectedDetail.isGlobal ? 'Broadcast' : 'Targeted' }}
+                    {{ selectedDetail.isGlobal ? 'Toàn hệ thống' : 'Nhắn riêng' }}
                   </span>
                 </div>
 
@@ -255,18 +252,10 @@
                     </div>
                   </div>
 
-                  <div class="detail-row">
-                    <div class="form-group-lux">
-                      <label>Phạm vi</label>
-                      <div class="input-lux readonly-input">
-                        {{ selectedDetail.isGlobal ? 'Toàn hệ thống' : 'Người dùng cụ thể' }}
-                      </div>
-                    </div>
-                    <div class="form-group-lux">
-                      <label>Số người đã đọc</label>
-                      <div class="input-lux readonly-input readonly-count">
-                        {{ selectedDetail.readCount || 0 }} lượt
-                      </div>
+                  <div class="form-group-lux">
+                    <label>Phạm vi</label>
+                    <div class="input-lux readonly-input">
+                      {{ selectedDetail.isGlobal ? 'Toàn hệ thống' : 'Người dùng cụ thể' }}
                     </div>
                   </div>
 
