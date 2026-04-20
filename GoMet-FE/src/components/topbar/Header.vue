@@ -94,7 +94,8 @@
 
         <!-- Chat Button with Blinking Effect -->
         <div class="action-wrapper">
-          <button class="btn-icon" :class="{ active: chatStore.isMessengerOpen, 'is-blinking': isChatBlinking }" @click.stop="toggleChat">
+          <button class="btn-icon" :class="{ active: chatStore.isMessengerOpen, 'is-blinking': isChatBlinking }"
+            @click.stop="toggleChat">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
             </svg>
@@ -111,7 +112,7 @@
             </svg>
             <span v-if="unreadNotiCount > 0" class="badge-count">{{ unreadNotiCount }}</span>
           </button>
-          
+
           <transition name="dropdown-anim">
             <div v-if="showNoti" class="common-dropdown noti-width modern-noti-dropdown">
               <div class="dropdown-header">
@@ -119,7 +120,13 @@
                   <h3>{{ $t('header.notifications') }}</h3>
                   <span v-if="unreadNotiCount > 0" class="count-pill">{{ unreadNotiCount }} mới</span>
                 </div>
-                <button v-if="unreadNotiCount > 0" class="action-link" @click="handleMarkAllRead">{{ $t('header.mark_all_read') }}</button>
+                <div class="noti-actions">
+                  <button v-if="unreadNotiCount > 0" class="action-link" @click="handleMarkAllRead">{{
+                    $t('header.mark_all_read') }}</button>
+                  <button v-if="readNotiCount > 0" class="action-link danger-link" @click="handleDeleteRead">
+                    Xóa đã đọc
+                  </button>
+                </div>
               </div>
 
               <div class="dropdown-body scroll-body custom-scroll">
@@ -128,14 +135,32 @@
                   <p>Bạn không có thông báo nào mới.</p>
                 </div>
                 <div v-else>
-                  <div v-for="n in notifications" :key="n.id" class="noti-item-v2" :class="{ 'is-unread': !n.isRead }" @click="handleNotiClick(n)">
+                  <div v-for="n in notifications" :key="n.id" class="noti-item-v2" :class="{ 'is-unread': !n.isRead }"
+                    @click="handleNotiClick(n)">
                     <div class="item-avatar">
-                      <img :src="n.avatar || 'https://ui-avatars.com/api/?name=User&background=EA580C&color=fff'" alt="User avatar">
+                      <img :src="n.avatar || defaultSystemAvatar" alt="User avatar" @error="handleAvatarError">
                       <div class="type-icon" :class="n.type">
-                        <svg v-if="n.type === 'like' || n.type === 'event_vote'" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-                        <svg v-else-if="n.type === 'comment' || n.type === 'rating'" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                        <svg v-else-if="n.type === 'follow'" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="17" y1="11" x2="23" y2="11"></line></svg>
-                        <svg v-else width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                        <svg v-if="n.type === 'like' || n.type === 'event_vote'" width="12" height="12"
+                          viewBox="0 0 24 24" fill="currentColor">
+                          <path
+                            d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
+                          </path>
+                        </svg>
+                        <svg v-else-if="n.type === 'comment' || n.type === 'rating'" width="12" height="12"
+                          viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        <svg v-else-if="n.type === 'follow'" width="12" height="12" viewBox="0 0 24 24"
+                          fill="currentColor">
+                          <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                          <circle cx="8.5" cy="7" r="4"></circle>
+                          <line x1="20" y1="8" x2="20" y2="14"></line>
+                          <line x1="17" y1="11" x2="23" y2="11"></line>
+                        </svg>
+                        <svg v-else width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
                       </div>
                     </div>
                     <div class="item-content">
@@ -154,7 +179,8 @@
       <div class="divider-vertical"></div>
       <LangSwitcher />
 
-      <UserMenu v-if="authStore.isAuthenticated" @open-premium="emit('open-premium')" @open-support="showFeedbackModal = true" />
+      <UserMenu v-if="authStore.isAuthenticated" @open-premium="emit('open-premium')"
+        @open-support="showFeedbackModal = true" />
       <div v-else class="guest-actions">
         <button class="btn-login" @click="emit('open-login')">{{ $t('auth.login') }}</button>
         <button class="btn-signup" @click="emit('open-register')">{{ $t('auth.register') }}</button>
@@ -188,6 +214,7 @@ import {
   getNotificationId,
   markNotificationRead,
   markAllNotificationsRead as apiMarkAllRead,
+  deleteReadNotifications as apiDeleteReadNotifications,
   resolveNotificationLink
 } from '@/services/notificationService'
 import webSocketService from '@/services/webSocketService'
@@ -225,15 +252,24 @@ const isDark = computed(() => {
 });
 
 const unreadNotiCount = computed(() => notifications.value.filter(n => !n.isRead).length);
+const readNotiCount = computed(() => notifications.value.filter(n => n.isRead).length);
+const defaultSystemAvatar = '/logogoc.jpg'
+
+const handleAvatarError = (event) => {
+  if (event?.target) {
+    event.target.src = defaultSystemAvatar
+  }
+}
 
 const normalizeNotification = (notification = {}) => {
   const id = getNotificationId(notification)
+  const username = notification.username || 'Hệ thống GoMet'
   return {
     id,
     title: notification.title,
     content: notification.content,
-    username: notification.username || 'Hệ thống GoMet',
-    avatar: notification.avatarUrl || notification.avatar || '/assets/images/logogoc.jpg',
+    username,
+    avatar: notification.avatarUrl || notification.avatar || defaultSystemAvatar,
     time: notification.createdAt
       ? new Date(notification.createdAt).toLocaleString()
       : new Date().toLocaleString(),
@@ -258,50 +294,78 @@ const updateTabTitle = () => {
   document.title = count > 0 ? `(${count}) ${originalTitle.value}` : originalTitle.value;
 };
 
+const openNotificationLink = (link) => {
+  if (!link) return;
+  try {
+    if (typeof link === 'string' && /^https?:\/\//i.test(link)) {
+      window.open(link, '_blank');
+    } else {
+      router.push(link);
+    }
+  } catch (err) {
+    console.error('Cannot open link', link, err);
+    if (typeof link === 'string' && /^https?:\/\//i.test(link)) {
+      window.location.href = link;
+    }
+  }
+};
+
 const formatNotificationContent = (n) => {
   return `<strong>${n.username}</strong> ${n.content}`;
 }
 
 const handleMarkAllRead = async () => {
   if (!authStore.user?.accountID) return
-  try { 
-    await apiMarkAllRead(authStore.user.accountID); 
+  try {
+    await apiMarkAllRead(authStore.user.accountID);
     notifications.value.forEach(n => n.isRead = true);
     updateTabTitle();
   } catch (err) { }
 }
 
-const toggleShopping = () => { 
+const handleDeleteRead = async () => {
+  if (!authStore.user?.accountID) return
+  try {
+    await apiDeleteReadNotifications(authStore.user.accountID)
+    notifications.value = notifications.value.filter(n => !n.isRead)
+    updateTabTitle()
+    toast.success('Đã xóa các thông báo đã đọc.')
+  } catch (err) {
+    toast.error('Không thể xóa thông báo đã đọc.')
+  }
+}
+
+const toggleShopping = () => {
   if (!authStore.isAuthenticated) { emit('open-login'); return; }
   const role = String(authStore.user?.role || '').toLowerCase();
-  const isPremiumUser = ( role === 'premium' || [1, '1', true].includes(authStore.user?.isPremium));
-  const isAdmin = ( role === 'admin' || [1, '1', true].includes(authStore.user?.isAdmin));
-  
+  const isPremiumUser = (role === 'premium' || [1, '1', true].includes(authStore.user?.isPremium));
+  const isAdmin = (role === 'admin' || [1, '1', true].includes(authStore.user?.isAdmin));
+
   if (!isPremiumUser && !isAdmin) {
     toast.warn('Tính năng Giỏ đi chợ là đặc quyền chỉ dành cho tài khoản Premium.');
     window.dispatchEvent(new CustomEvent('ui:open-premium'));
     return;
   }
-  showNoti.value = false; 
-  showShopping.value = !showShopping.value; 
-  if (showShopping.value) shoppingStore.fetchCart(); 
+  showNoti.value = false;
+  showShopping.value = !showShopping.value;
+  if (showShopping.value) shoppingStore.fetchCart();
 }
 
-const toggleNoti = () => { 
-  showShopping.value = false; 
-  showNoti.value = !showNoti.value; 
-  if (showNoti.value) loadNotifications(); 
+const toggleNoti = () => {
+  showShopping.value = false;
+  showNoti.value = !showNoti.value;
+  if (showNoti.value) loadNotifications();
 }
 
-const toggleChat = () => { 
-  chatStore.isMessengerOpen = !chatStore.isMessengerOpen; 
+const toggleChat = () => {
+  chatStore.isMessengerOpen = !chatStore.isMessengerOpen;
   isChatBlinking.value = false;
-  closeAllDropdowns(); 
+  closeAllDropdowns();
 }
 
-const closeAllDropdowns = () => { 
-  showNoti.value = false; 
-  showShopping.value = false; 
+const closeAllDropdowns = () => {
+  showNoti.value = false;
+  showShopping.value = false;
 }
 
 const closeNotiDropdown = () => { showNoti.value = false; }
@@ -322,7 +386,7 @@ const handleNotiClick = async (n) => {
     updateTabTitle();
   }
   showNoti.value = false;
-  if (n.link) { router.push(n.link); }
+  if (n.link) { openNotificationLink(n.link); }
 }
 
 const handleScroll = () => { isScrolled.value = window.scrollY > 10 }
@@ -344,10 +408,10 @@ const handleRealtimeNotification = (event) => {
   showBrowserNotification({
     title: notificationDTO.title,
     body: notificationDTO.content,
-    icon: notificationDTO.avatarUrl || '/assets/images/logogoc.jpg',
+    icon: notificationDTO.avatarUrl || defaultSystemAvatar,
     onClick: () => {
       const link = resolveNotificationLink(notificationDTO)
-      if (link) router.push(link)
+      if (link) openNotificationLink(link)
     }
   })
 };
@@ -357,7 +421,7 @@ const handleGlobalChatAlert = () => {
   if (chatStore.isMessengerOpen) return;
   isChatBlinking.value = true;
   clearTimeout(blinkTimeout);
-  blinkTimeout = setTimeout(() => { isChatBlinking.value = false; }, 4000); 
+  blinkTimeout = setTimeout(() => { isChatBlinking.value = false; }, 4000);
 };
 
 onMounted(() => {
@@ -366,9 +430,9 @@ onMounted(() => {
 
   if (authStore.isAuthenticated) {
     shoppingStore.fetchCart();
-    loadNotifications(); 
+    loadNotifications();
     webSocketService.connect();
-    
+
     window.addEventListener('realtime-notification', handleRealtimeNotification);
     window.addEventListener('global-chat-alert', handleGlobalChatAlert);
 
@@ -418,22 +482,57 @@ const vClickOutside = {
 <style scoped>
 /* FIX LAYOUT & MODERN UI */
 .empty-state-container {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 40px 20px; text-align: center; min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  min-height: 200px;
 }
-.empty-cart-icon { font-size: 3rem; margin-bottom: 12px; opacity: 0.5; }
-.empty-state-container p { color: #64748b; margin-bottom: 20px; font-weight: 600; }
+
+.empty-cart-icon {
+  font-size: 3rem;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.empty-state-container p {
+  color: #64748b;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
 .btn-go-shop {
-  padding: 10px 24px; background: #f8fafc; border: 1px solid #e2e8f0;
-  border-radius: 100px; font-weight: 700; color: #0f172a; cursor: pointer; transition: all 0.2s ease;
+  padding: 10px 24px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 100px;
+  font-weight: 700;
+  color: #0f172a;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
-.btn-go-shop:hover { background: #ea580c; color: white; border-color: #ea580c; }
+
+.btn-go-shop:hover {
+  background: #ea580c;
+  color: white;
+  border-color: #ea580c;
+}
 
 /* 🚀 HIỆU ỨNG NHÁY NÚT CHAT */
 @keyframes softRipple {
-  0% { box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.4); }
-  70% { box-shadow: 0 0 0 8px rgba(234, 88, 12, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(234, 88, 12, 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.4);
+  }
+
+  70% {
+    box-shadow: 0 0 0 8px rgba(234, 88, 12, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(234, 88, 12, 0);
+  }
 }
 
 .btn-icon.is-blinking {
@@ -442,47 +541,147 @@ const vClickOutside = {
 }
 
 .modern-noti-dropdown .dropdown-header {
-  padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
-.modern-noti-dropdown .header-left { display: flex; align-items: center; gap: 10px; }
-.modern-noti-dropdown .header-left h3 { font-size: 1.1rem; font-weight: 700; }
+
+.modern-noti-dropdown .header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modern-noti-dropdown .noti-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modern-noti-dropdown .header-left h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
 .modern-noti-dropdown .count-pill {
-  background-color: #fff1e9; color: #ea580c; padding: 2px 8px;
-  border-radius: 100px; font-size: 0.75rem; font-weight: 700;
+  background-color: #fff1e9;
+  color: #ea580c;
+  padding: 2px 8px;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 700;
 }
 
 .empty-state-noti {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 40px 20px; text-align: center; min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  min-height: 200px;
 }
-.empty-noti-icon { font-size: 2.5rem; margin-bottom: 12px; opacity: 0.4; }
-.empty-state-noti p { color: #64748b; font-weight: 600; }
+
+.empty-noti-icon {
+  font-size: 2.5rem;
+  margin-bottom: 12px;
+  opacity: 0.4;
+}
+
+.empty-state-noti p {
+  color: #64748b;
+  font-weight: 600;
+}
 
 .noti-item-v2 {
-  display: flex; gap: 14px; padding: 12px 20px; cursor: pointer;
-  transition: background-color 0.2s ease; position: relative;
+  display: flex;
+  gap: 14px;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  position: relative;
 }
-.noti-item-v2:hover { background-color: #f8fafc; }
-.noti-item-v2.is-unread { background-color: #fff7ed; }
 
-.item-avatar { position: relative; flex-shrink: 0; }
-.item-avatar img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
+.noti-item-v2:hover {
+  background-color: #f8fafc;
+}
+
+.noti-item-v2.is-unread {
+  background-color: #fff7ed;
+}
+
+.item-avatar {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.item-avatar img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
 .type-icon {
-  position: absolute; bottom: -2px; right: -2px; width: 22px; height: 22px;
-  border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  color: white; border: 2px solid white;
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  border: 2px solid white;
 }
-.type-icon.like, .type-icon.event_vote { background-color: #ef4444; }
-.type-icon.comment, .type-icon.rating { background-color: #3b82f6; }
-.type-icon.follow { background-color: #16a34a; }
 
-.item-content { flex: 1; min-width: 0; }
-.noti-title { margin: 0 0 4px; font-size: 0.9rem; color: #334155; line-height: 1.4; }
-.noti-title :deep(strong) { font-weight: 700; color: #0f172a; }
-.noti-time { font-size: 0.8rem; color: #94a3b8; font-weight: 500; }
+.type-icon.like,
+.type-icon.event_vote {
+  background-color: #ef4444;
+}
+
+.type-icon.comment,
+.type-icon.rating {
+  background-color: #3b82f6;
+}
+
+.type-icon.follow {
+  background-color: #16a34a;
+}
+
+.item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.noti-title {
+  margin: 0 0 4px;
+  font-size: 0.9rem;
+  color: #334155;
+  line-height: 1.4;
+}
+
+.noti-title :deep(strong) {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.noti-time {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
 
 .unread-dot-pulse {
-  width: 8px; height: 8px; background: #ea580c; border-radius: 50%;
-  align-self: center; margin-left: auto; flex-shrink: 0; animation: softRipple 1.8s infinite;
+  width: 8px;
+  height: 8px;
+  background: #ea580c;
+  border-radius: 50%;
+  align-self: center;
+  margin-left: auto;
+  flex-shrink: 0;
+  animation: softRipple 1.8s infinite;
 }
 </style>

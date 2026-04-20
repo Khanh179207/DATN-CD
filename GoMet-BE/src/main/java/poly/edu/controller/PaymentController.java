@@ -2,7 +2,7 @@ package poly.edu.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize; // 🔥 IMPORT THẺ BẢO VỆ
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -151,8 +151,8 @@ public class PaymentController {
                     Integer accId = ((Number) row[1]).intValue();
                     realPlanType = ((Number) row[2]).intValue();
 
-                    updateAccountToPremium(accId, realPlanType, transId);
-                    notificationService.notifyPaymentStatus(accId, true, vnp_TxnRef);
+                    LocalDateTime premiumEndAt = updateAccountToPremium(accId, realPlanType, transId);
+                    notificationService.notifyPremiumStatus(accId, true, premiumEndAt);
                 }
             } catch (Exception e) {
                 System.err.println("Lỗi DB Callback: " + e.getMessage());
@@ -185,7 +185,7 @@ public class PaymentController {
     // ==========================================
     // 3. LOGIC NÂNG CẤP
     // ==========================================
-    private void updateAccountToPremium(Integer accountId, Integer planType, Integer transactionId) {
+    private LocalDateTime updateAccountToPremium(Integer accountId, Integer planType, Integer transactionId) {
         Object currentStatusObj = entityManager.createNativeQuery(
                 "SELECT isPremium FROM Account WHERE AccountID = :accId")
                 .setParameter("accId", accountId)
@@ -238,6 +238,8 @@ public class PaymentController {
                 .setParameter("end", endDate)
                 .setParameter("transId", transactionId)
                 .executeUpdate();
+
+        return endDate;
     }
 
     // ==========================================
@@ -269,7 +271,8 @@ public class PaymentController {
                     .getSingleResult();
 
             Integer mockTransId = ((Number) newIdObj).intValue();
-            updateAccountToPremium(accId, pType, mockTransId);
+            LocalDateTime premiumEndAt = updateAccountToPremium(accId, pType, mockTransId);
+            notificationService.notifyPremiumStatus(accId, true, premiumEndAt);
 
             return ResponseEntity.ok(Map.of("success", true, "message", "Giả lập thành công: " + mockOrderCode));
         } catch (Exception e) {
@@ -282,11 +285,22 @@ public class PaymentController {
     public void autoCancelExpiredSubscriptions() {
         LocalDateTime now = LocalDateTime.now();
         try {
+            List<?> expiredAccountIds = entityManager
+                    .createNativeQuery(
+                            "SELECT DISTINCT AccountID FROM Subscription WHERE EndAt < :now AND isActive = 1")
+                    .setParameter("now", now)
+                    .getResultList();
+
             entityManager.createNativeQuery("UPDATE Subscription SET isActive = 0 WHERE EndAt < :now AND isActive = 1")
                     .setParameter("now", now).executeUpdate();
             entityManager.createNativeQuery(
                     "UPDATE Account SET isPremium = 0 WHERE AccountID NOT IN (SELECT AccountID FROM Subscription WHERE isActive = 1)")
                     .executeUpdate();
+
+            for (Object accountIdObj : expiredAccountIds) {
+                Integer accountId = ((Number) accountIdObj).intValue();
+                notificationService.notifyPremiumStatus(accountId, false, null);
+            }
         } catch (Exception e) {
         }
     }
