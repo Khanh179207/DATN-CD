@@ -294,6 +294,22 @@ const updateTabTitle = () => {
   document.title = count > 0 ? `(${count}) ${originalTitle.value}` : originalTitle.value;
 };
 
+const openNotificationLink = (link) => {
+  if (!link) return;
+  try {
+    if (typeof link === 'string' && /^https?:\/\//i.test(link)) {
+      window.open(link, '_blank');
+    } else {
+      router.push(link);
+    }
+  } catch (err) {
+    console.error('Cannot open link', link, err);
+    if (typeof link === 'string' && /^https?:\/\//i.test(link)) {
+      window.location.href = link;
+    }
+  }
+};
+
 const formatNotificationContent = (n) => {
   return `<strong>${n.username}</strong> ${n.content}`;
 }
@@ -370,7 +386,7 @@ const handleNotiClick = async (n) => {
     updateTabTitle();
   }
   showNoti.value = false;
-  if (n.link) { router.push(n.link); }
+  if (n.link) { openNotificationLink(n.link); }
 }
 
 const handleScroll = () => { isScrolled.value = window.scrollY > 10 }
@@ -395,7 +411,7 @@ const handleRealtimeNotification = (event) => {
     icon: notificationDTO.avatarUrl || defaultSystemAvatar,
     onClick: () => {
       const link = resolveNotificationLink(notificationDTO)
-      if (link) router.push(link)
+      if (link) openNotificationLink(link)
     }
   })
 };

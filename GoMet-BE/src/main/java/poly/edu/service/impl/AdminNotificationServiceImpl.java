@@ -13,9 +13,7 @@ import poly.edu.entity.Account;
 import poly.edu.entity.Notification;
 import poly.edu.entity.Post;
 import poly.edu.service.AdminNotificationService;
-
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -108,6 +106,7 @@ public class AdminNotificationServiceImpl implements AdminNotificationService {
     }
 
     private NotificationDTO convertToDTO(Notification saved) {
+
         return NotificationDTO.builder()
                 .notificationID(saved.getNotificationID())
                 .title(saved.getTitle())
