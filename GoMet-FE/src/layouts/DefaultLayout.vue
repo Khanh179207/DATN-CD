@@ -204,10 +204,10 @@ watch(() => authStore.isAuthenticated, (val) => {
 })
 
 const openAiChat = () => { 
-  const isPremiumUser = authStore.user?.isPremium || authStore.user?.IsPremium || authStore.user?.role === 'PREMIUM' || authStore.user?.role === 'ADMIN';
+  const isPremiumUser = authStore.user?.isPremium || authStore.user?.isAdmin;
   if (!isPremiumUser) { 
     showPremium.value = true; 
-    toast.warn("Gomet Assistant dành cho Premium sếp nhé!"); 
+    toast.warn("Gomet Assistant dành cho Premium bạn nhé!"); 
     return; 
   }
   if (aiChatRef.value) aiChatRef.value.openChat();

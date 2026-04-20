@@ -32,7 +32,7 @@
                   <div class="meta-item"><span class="icon">👥</span> {{ slide.totalAttendees }} Bài dự thi</div>
                 </div>
                 
-                <button class="btn-hero-primary" v-if="slide.category !== 'ended'">
+                <button class="btn-hero-primary" v-if="slide.category !== 'ended'" @click="goToEventDetail(slide.id)">
                   {{ $t('events.register') }}
                   <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                 </button>
@@ -102,10 +102,12 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router' // Import thêm vue-router
 import { useI18n } from 'vue-i18n'
 import EventCard from '@/components/common/EventCard.vue'
 import { getEvents } from '@/services/eventService'
 
+const router = useRouter() // Khởi tạo router
 const { t } = useI18n()
 const currentFilter = ref('all')
 const filters = computed(() => [
@@ -127,6 +129,12 @@ const fallbackImages = [
   'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=2000',
   'https://images.unsplash.com/photo-1528605105345-5344ea20e269?q=80&w=2000'
 ]
+
+// Hàm chuyển hướng đến trang chi tiết sự kiện
+const goToEventDetail = (id) => {
+  // Thay đổi '/events/' thành route thực tế của trang chi tiết sự kiện nếu bạn đặt tên khác (ví dụ '/event/')
+  router.push(`/events/${id}`) 
+}
 
 const formatDate = (dateObj) => {
   if (!dateObj) return ''

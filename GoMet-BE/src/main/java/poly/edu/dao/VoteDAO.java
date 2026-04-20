@@ -1,5 +1,7 @@
 package poly.edu.dao;
 
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.transaction.annotation.Transactional;
 import poly.edu.entity.Votes;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -19,4 +21,9 @@ public interface VoteDAO extends JpaRepository<Votes, Integer> {
 
     // 🔥 BỔ SUNG THÊM HÀM NÀY: Đếm tổng số vote của 1 bài dự thi
     long countByEventPost_EventPostID(Integer eventPostID);
+
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM Votes v WHERE v.eventPost.eventPostID = :eventPostID")
+    void deleteByEventPostID(@Param("eventPostID") Integer eventPostID);
 }
