@@ -69,7 +69,7 @@ public class AdminNotificationController {
                     if (notification.getParentNotification() != null ||
                             !"ADMIN_MANUAL".equalsIgnoreCase(notification.getType())) {
                         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                                .body(Map.of("message", "Notification not found"));
+                                .body(Map.of("message", "Không tìm thấy thông báo"));
                     }
 
                     List<AdminNotificationReaderDTO> readers = new ArrayList<>();
@@ -101,14 +101,14 @@ public class AdminNotificationController {
                             .build());
                 })
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("message", "Notification not found")));
+                        .body(Map.of("message", "Không tìm thấy thông báo")));
     }
 
     // Gửi cho tất cả user
     @PostMapping("/all")
     public ResponseEntity<?> sendAll(@RequestBody AdminNotificationDTO dto) {
         adminNotificationService.sendToAll(dto);
-        return ResponseEntity.ok(Map.of("message", "Sent to all users"));
+        return ResponseEntity.ok(Map.of("message", "Đã gửi thông báo đến toàn bộ người dùng"));
     }
 
     // Gửi cho 1 user
@@ -116,14 +116,14 @@ public class AdminNotificationController {
     public ResponseEntity<?> sendOne(@PathVariable Integer accountID,
             @RequestBody AdminNotificationDTO dto) {
         adminNotificationService.sendToOne(accountID, dto);
-        return ResponseEntity.ok(Map.of("message", "Sent to user " + accountID));
+        return ResponseEntity.ok(Map.of("message", "Đã gửi thông báo đến người dùng ID " + accountID));
     }
 
     // Xóa thông báo
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable Integer id) {
         adminNotificationService.delete(id);
-        return ResponseEntity.ok(Map.of("message", "Deleted"));
+        return ResponseEntity.ok(Map.of("message", "Đã xóa thông báo"));
     }
 
     private AdminNotificationSummaryDTO toSummaryDTO(Notification notification) {

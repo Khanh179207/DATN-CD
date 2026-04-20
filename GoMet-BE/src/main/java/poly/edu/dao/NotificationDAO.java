@@ -2,6 +2,7 @@ package poly.edu.dao;
 
 import poly.edu.entity.Notification;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
@@ -46,4 +47,10 @@ public interface NotificationDAO extends JpaRepository<Notification, Integer> {
     // Fetch all global notifications
     @Query("SELECT n FROM Notification n WHERE n.isGlobal = true ORDER BY n.createdAt DESC")
     List<Notification> findGlobalNotificationsOrderByCreatedAtDesc();
+
+    List<Notification> findByAccount_AccountIDAndIsRead(Integer accountID, Integer isRead);
+
+    @Modifying
+    @Query("DELETE FROM Notification n WHERE n.parentNotification.notificationID = ?1")
+    int deleteByParentNotificationId(Integer parentNotificationID);
 }

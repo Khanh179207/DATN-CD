@@ -120,8 +120,13 @@
                   <h3>{{ $t('header.notifications') }}</h3>
                   <span v-if="unreadNotiCount > 0" class="count-pill">{{ unreadNotiCount }} mới</span>
                 </div>
-                <button v-if="unreadNotiCount > 0" class="action-link" @click="handleMarkAllRead">{{
-                  $t('header.mark_all_read') }}</button>
+                <div class="noti-actions">
+                  <button v-if="unreadNotiCount > 0" class="action-link" @click="handleMarkAllRead">{{
+                    $t('header.mark_all_read') }}</button>
+                  <button v-if="readNotiCount > 0" class="action-link danger-link" @click="handleDeleteRead">
+                    Xóa đã đọc
+                  </button>
+                </div>
               </div>
 
               <div class="dropdown-body scroll-body custom-scroll">
@@ -209,6 +214,7 @@ import {
   getNotificationId,
   markNotificationRead,
   markAllNotificationsRead as apiMarkAllRead,
+  deleteReadNotifications as apiDeleteReadNotifications,
   resolveNotificationLink
 } from '@/services/notificationService'
 import webSocketService from '@/services/webSocketService'
@@ -246,6 +252,7 @@ const isDark = computed(() => {
 });
 
 const unreadNotiCount = computed(() => notifications.value.filter(n => !n.isRead).length);
+const readNotiCount = computed(() => notifications.value.filter(n => n.isRead).length);
 const defaultSystemAvatar = '/logogoc.jpg'
 
 const handleAvatarError = (event) => {
@@ -298,6 +305,18 @@ const handleMarkAllRead = async () => {
     notifications.value.forEach(n => n.isRead = true);
     updateTabTitle();
   } catch (err) { }
+}
+
+const handleDeleteRead = async () => {
+  if (!authStore.user?.accountID) return
+  try {
+    await apiDeleteReadNotifications(authStore.user.accountID)
+    notifications.value = notifications.value.filter(n => !n.isRead)
+    updateTabTitle()
+    toast.success('Đã xóa các thông báo đã đọc.')
+  } catch (err) {
+    toast.error('Không thể xóa thông báo đã đọc.')
+  }
 }
 
 const toggleShopping = () => {
@@ -513,6 +532,12 @@ const vClickOutside = {
 }
 
 .modern-noti-dropdown .header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modern-noti-dropdown .noti-actions {
   display: flex;
   align-items: center;
   gap: 10px;

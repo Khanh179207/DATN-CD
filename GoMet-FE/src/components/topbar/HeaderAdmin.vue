@@ -39,9 +39,14 @@
           <div v-if="showNoti" class="panel-zenith noti-panel">
             <div class="z-head">
               <span class="z-title">Thông báo hệ thống</span>
-              <button class="z-mark-read" @click="markAllAsRead" :disabled="unreadCount === 0">
-                Đã đọc hết
-              </button>
+              <div class="z-head-actions">
+                <button class="z-mark-read" @click="markAllAsRead" :disabled="unreadCount === 0">
+                  Đã đọc hết
+                </button>
+                <button class="z-delete-read" @click="deleteAllRead" :disabled="readCount === 0">
+                  Xóa đã đọc
+                </button>
+              </div>
             </div>
             <div class="z-body custom-scroll" v-if="notifications.length > 0">
               <div v-for="notification in notifications" :key="notification.notificationID" class="z-card"
@@ -138,6 +143,7 @@ import {
   getNotificationId,
   markNotificationRead,
   markAllNotificationsRead,
+  deleteReadNotifications,
   resolveNotificationLink
 } from '@/services/notificationService'
 import { ensureBrowserNotificationPermission, showBrowserNotification as pushBrowserNotification } from '@/services/browserNotificationService'
@@ -152,6 +158,7 @@ const isScrolled = ref(false)
 const notifications = ref([])
 
 const unreadCount = computed(() => notifications.value.filter(n => n.isRead === 0).length)
+const readCount = computed(() => notifications.value.filter(n => n.isRead === 1).length)
 
 const updatePageTitle = () => {
   document.title = unreadCount.value > 0 ? `(${unreadCount.value}) Quản trị - GoMet` : 'Quản trị - GoMet'
@@ -170,7 +177,7 @@ const normalizeNotification = (notification = {}) => ({
   notificationID: getNotificationId(notification),
   title: notification.title || 'Thông báo hệ thống',
   content: notification.content || '',
-  username: notification.username || 'System',
+  username: notification.username || 'Hệ thống GoMet',
   avatar: notification.avatarUrl || notification.avatar || '/logogoc.jpg',
   type: notification.type || 'ADMIN',
   isRead: notification.isRead === 1 || notification.isRead === true ? 1 : 0,
@@ -185,7 +192,7 @@ const loadNotifications = async () => {
     notifications.value = data.map(normalizeNotification)
     updatePageTitle()
   } catch (error) {
-    console.error('❌ Failed to load admin notifications:', error)
+    console.error('❌ Không thể tải thông báo quản trị:', error)
   }
 }
 
@@ -244,6 +251,15 @@ const markAllAsRead = async () => {
   } catch (error) { }
 }
 
+const deleteAllRead = async () => {
+  if (!auth.user?.accountID) return
+  try {
+    await deleteReadNotifications(auth.user.accountID)
+    notifications.value = notifications.value.filter(n => n.isRead === 0)
+    updatePageTitle()
+  } catch (error) { }
+}
+
 const handleNotificationClick = async (n) => {
   if (n.isRead === 0) await markAsRead(n.notificationID)
   if (n.link) router.push(n.link)
@@ -270,9 +286,9 @@ const showBrowserNotification = (n) => {
 const timeAgo = (dateString) => {
   const diff = Math.floor((new Date() - new Date(dateString)) / 1000)
   if (diff < 60) return 'Vừa xong'
-  if (diff < 3600) return `${Math.floor(diff / 60)}m trước`
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h trước`
-  return `${Math.floor(diff / 86400)}d trước`
+  if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`
+  if (diff < 86400) return `${Math.floor(diff / 3600)} giờ trước`
+  return `${Math.floor(diff / 86400)} ngày trước`
 }
 
 onMounted(async () => {
@@ -386,8 +402,11 @@ const vClickOutside = {
 
 .z-head { padding: 20px; border-bottom: 1px solid var(--z-panel-border); display: flex; justify-content: space-between; align-items: center; }
 .z-title { font-weight: 800; color: var(--z-text-main); font-size: 15px; }
+.z-head-actions { display: flex; align-items: center; gap: 10px; }
 .z-mark-read { font-size: 12px; color: #ea580c; font-weight: 700; cursor: pointer; border:none; background:none; }
 .z-mark-read:disabled { color: #ccc; cursor: not-allowed; }
+.z-delete-read { font-size: 12px; color: #dc2626; font-weight: 700; cursor: pointer; border:none; background:none; }
+.z-delete-read:disabled { color: #ccc; cursor: not-allowed; }
 
 .z-body { max-height: 400px; overflow-y: auto; }
 .z-card { display: flex; gap: 14px; padding: 16px 20px; cursor: pointer; transition: 0.2s; border-bottom: 1px solid rgba(0,0,0,0.02); }

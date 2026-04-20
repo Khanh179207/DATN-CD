@@ -159,7 +159,7 @@ public class NotificationController {
     public ResponseEntity<?> markRead(@PathVariable Integer id) {
         var accountOpt = getCurrentAuthenticatedAccount();
         if (accountOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "User not found"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Không tìm thấy người dùng"));
         }
         var account = accountOpt.get();
 
@@ -267,6 +267,28 @@ public class NotificationController {
                 "message", "Đã đánh dấu tất cả là đã đọc",
                 "updatedCount", unread.size(),
                 "createdGlobalClones", created));
+    }
+
+    // 🟡 USER/ADMIN: Xóa toàn bộ thông báo đã đọc của chính mình ───────────────
+    @DeleteMapping("/{accountID}/read")
+    @Transactional
+    public ResponseEntity<?> deleteReadNotifications(@PathVariable Integer accountID) {
+        if (isNotOwner(accountID)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", "Từ chối truy cập: Bạn không có quyền thao tác trên dữ liệu của người khác!"));
+        }
+
+        List<Notification> readNotifications = notificationDAO.findByAccount_AccountIDAndIsRead(accountID, 1);
+        if (readNotifications.isEmpty()) {
+            return ResponseEntity.ok(Map.of(
+                    "message", "Không có thông báo đã đọc để xóa",
+                    "deletedCount", 0));
+        }
+
+        notificationDAO.deleteAll(readNotifications);
+        return ResponseEntity.ok(Map.of(
+                "message", "Đã xóa các thông báo đã đọc",
+                "deletedCount", readNotifications.size()));
     }
 
     // 🔥 ĐÃ XÓA HOÀN TOÀN HÀM XÓA THÔNG BÁO THEO CHỈ ĐẠO CỦA SẾP!

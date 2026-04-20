@@ -86,7 +86,10 @@
                    <div class="m-drop-head">
                       <div class="m-head-title">
                         <h3>Thông báo</h3>
-                        <button v-if="unreadNotiCount > 0" class="m-link" @click="handleMarkAllRead">Đánh dấu đã đọc</button>
+                        <div class="m-head-links">
+                          <button v-if="unreadNotiCount > 0" class="m-link" @click="handleMarkAllRead">Đánh dấu đã đọc</button>
+                          <button v-if="readNotiCount > 0" class="m-link danger" @click="handleDeleteRead">Xóa đã đọc</button>
+                        </div>
                       </div>
                       <button class="btn-close-m" @click="closeAll">✖</button>
                    </div>
@@ -119,7 +122,12 @@ import { useAuthStore } from '@/stores/auth'
 import { useShoppingStore } from '@/stores/shopping'
 import SearchBox from '@/components/common/SearchBox.vue'
 import UserMenu from './UserMenu.vue'
-import { getNotifications, markNotificationRead, markAllNotificationsRead as apiMarkAllRead } from '@/services/notificationService'
+import {
+  getNotifications,
+  markNotificationRead,
+  markAllNotificationsRead as apiMarkAllRead,
+  deleteReadNotifications as apiDeleteReadNotifications
+} from '@/services/notificationService'
 import { toast } from '@/composables/useToast'
 
 const emit = defineEmits(['open-login', 'open-premium'])
@@ -135,6 +143,7 @@ const notifications = ref([])
 
 const isDark = computed(() => route.meta?.isDark || route.path.startsWith('/admin'))
 const unreadNotiCount = computed(() => notifications.value.filter(n => !n.isRead).length)
+const readNotiCount = computed(() => notifications.value.filter(n => n.isRead).length)
 
 const openSidebar = () => {
   window.dispatchEvent(new CustomEvent('ui:toggle-sidebar'));
@@ -172,6 +181,17 @@ const handleMarkAllRead = async () => {
     notifications.value.forEach(n => n.isRead = true);
     toast.success("Đã đánh dấu tất cả là đã đọc");
   } catch (err) { }
+}
+
+const handleDeleteRead = async () => {
+  if (!authStore.user?.accountID) return
+  try {
+    await apiDeleteReadNotifications(authStore.user.accountID)
+    notifications.value = notifications.value.filter(n => !n.isRead)
+    toast.success("Đã xóa các thông báo đã đọc")
+  } catch (err) {
+    toast.error("Không thể xóa thông báo đã đọc")
+  }
 }
 
 const loadNotifications = async () => {

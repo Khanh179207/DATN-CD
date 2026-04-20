@@ -501,7 +501,7 @@ const openDetailModal = async (id) => {
   showDetailModal.value = true
   try {
     const data = await getAdminNotificationDetail(id)
-    selectedDetail.value = data
+    selectedDetail.value = { ...data, link: resolveNotificationLink(data) }
   } catch (e) {
     detailError.value = 'Không thể tải chi tiết thông báo này.'
   } finally {

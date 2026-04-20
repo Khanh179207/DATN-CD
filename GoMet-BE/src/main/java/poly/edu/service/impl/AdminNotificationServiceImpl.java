@@ -44,7 +44,8 @@ public class AdminNotificationServiceImpl implements AdminNotificationService {
 
     @Override
     public void sendToAll(AdminNotificationDTO dto) {
-        // 🚀 TỐI ƯU HIỆU NĂNG: Sử dụng thông báo Global (HEAD) thay vì loop lưu từng user (DEVELOP)
+        // 🚀 TỐI ƯU HIỆU NĂNG: Sử dụng thông báo Global (HEAD) thay vì loop lưu từng
+        // user (DEVELOP)
         Post post = null;
         if (dto.getPostID() != null) {
             post = postDAO.findById(dto.getPostID()).orElse(null);
@@ -68,9 +69,9 @@ public class AdminNotificationServiceImpl implements AdminNotificationService {
             // Gửi tín hiệu WebSocket để các Client nhận được thông báo ngay lập tức
             NotificationDTO dtoOut = convertToDTO(saved);
             messagingTemplate.convertAndSend("/topic/admin-alerts", dtoOut);
-            System.out.println("Broadcasted admin alert to /topic/admin-alerts (Global Notification)");
+            System.out.println("Đã phát thông báo admin realtime tới /topic/admin-alerts (global)");
         } catch (Exception e) {
-            System.err.println("Failed to broadcast admin alert: " + e.getMessage());
+            System.err.println("Không thể phát thông báo admin realtime: " + e.getMessage());
         }
     }
 
@@ -90,18 +91,20 @@ public class AdminNotificationServiceImpl implements AdminNotificationService {
         try {
             NotificationDTO dtoOut = convertToDTO(saved);
             messagingTemplate.convertAndSend("/topic/admin-notifications/" + accountID, dtoOut);
-            System.out.println("Sent admin notification to /topic/admin-notifications/" + accountID);
+            System.out.println("Đã gửi thông báo admin realtime tới /topic/admin-notifications/" + accountID);
         } catch (Exception e) {
-            System.err.println("Failed to send admin notification: " + e.getMessage());
+            System.err.println("Không thể gửi thông báo admin realtime: " + e.getMessage());
         }
     }
 
     @Override
     public void delete(Integer id) {
-        // Kiểm tra tồn tại trước khi xóa (Chức năng này dành cho Admin quản lý)
-        if (notificationDAO.existsById(id)) {
-            notificationDAO.deleteById(id);
-        }
+        notificationDAO.findById(id).ifPresent(parent -> {
+            // Xóa thông báo con (clone đọc) trước để đảm bảo toàn vẹn dữ liệu.
+            notificationDAO.deleteByParentNotificationId(parent.getNotificationID());
+            // Sau đó mới xóa thông báo cha do admin tạo.
+            notificationDAO.delete(parent);
+        });
     }
 
     private NotificationDTO convertToDTO(Notification saved) {
@@ -115,7 +118,9 @@ public class AdminNotificationServiceImpl implements AdminNotificationService {
                 .createdAt(saved.getCreatedAt())
                 .isRead(saved.getIsRead())
                 .isGlobal(saved.getIsGlobal() != null ? saved.getIsGlobal() : false)
-                .parentNotificationID(saved.getParentNotification() != null ? saved.getParentNotification().getNotificationID() : null)
+                .parentNotificationID(
+                        saved.getParentNotification() != null ? saved.getParentNotification().getNotificationID()
+                                : null)
                 .username("Hệ thống GoMet")
                 .avatarUrl("/logogoc.jpg")
                 .build();
