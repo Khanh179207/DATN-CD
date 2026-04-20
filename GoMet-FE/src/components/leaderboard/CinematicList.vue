@@ -297,16 +297,19 @@ const goToDetail = () => {
 </script>
 
 <style scoped lang="scss">
-/* 1. CONTAINER CHÍNH */
+/* 1. CONTAINER CHÍNH - ĐÃ FIX RESPONSIVE LỖI CẮT NỘI DUNG */
 .cinematic-horizontal-showcase {
   position: relative;
   width: 100%;
-  height: 100vh;
-  min-height: 700px;
+  min-height: 100vh; /* Sửa height: 100vh thành min-height */
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Tự động căn giữa nếu màn hình lớn */
   background-color: #000;
   overflow: hidden;
   font-family: 'Playfair Display', serif;
-  padding-top: 100px;
+  padding-top: 80px;
+  padding-bottom: 60px; /* Thêm padding-bottom để không bị dính sát mép */
 }
 
 /* 2. LỚP NỀN (BACKGROUND PARALLAX) */
@@ -504,6 +507,16 @@ const goToDetail = () => {
   .carousel-track { gap: 40px; }
   .item-image-wrapper { height: 420px; }
 }
+
+/* FIX CHO MÀN HÌNH LAPTOP PHỔ THÔNG BỊ CẮT */
+@media (max-height: 850px) {
+  .cinematic-horizontal-showcase { padding-top: 60px; padding-bottom: 40px; }
+  .item-image-wrapper { height: 380px; }
+  .header-titles .main-heading { font-size: 2.5rem; }
+  .item-title { font-size: 1.6rem; margin-bottom: 6px; }
+  .carousel-item { flex: 0 0 300px; }
+}
+
 @media (max-width: 1024px) {
   .fx-panel {
     padding: 30px; border-radius: 24px;

@@ -151,15 +151,15 @@
             <div v-if="topEntries.length > 0" class="ranking-section">
               <h3 class="section-title">🏆 {{ eventData.category === 'ended' ? 'Kết quả chung cuộc (Top 3)' : 'Bảng xếp hạng tạm thời' }}</h3>
               <div class="entries-grid">
-<ContestEntryCard 
-  v-for="(entry, index) in topEntries" 
-  :key="'top-' + entry.eventPostID" 
-  :post="entry"
-  :rank="index + 1" 
-  :can-vote="isInVotingPeriod"
-  :limit-reached="isVoteLimitReached"
-  @vote-toggled="entry.voted = $event" 
-/>
+                <ContestEntryCard 
+                  v-for="(entry, index) in topEntries" 
+                  :key="'top-' + entry.eventPostID" 
+                  :post="entry"
+                  :rank="index + 1" 
+                  :can-vote="isInVotingPeriod"
+                  :limit-reached="isVoteLimitReached"
+                  @vote-toggled="(isVoted) => handleVoteToggle(entry, isVoted)" 
+                />
               </div>
             </div>
 
@@ -172,7 +172,7 @@
                   :post="entry"
                   :can-vote="isInVotingPeriod"
                   :limit-reached="isVoteLimitReached"
-                  @vote-toggled="entry.voted = $event" 
+                  @vote-toggled="(isVoted) => handleVoteToggle(entry, isVoted)" 
                 />
               </div>
 
@@ -187,12 +187,12 @@
       </div>
 
       <SubmitEntryModal 
-  :is-open="isModalOpen" 
-  :event-id="eventData.id" 
-  :has-submitted="hasSubmitted" 
-  @close="isModalOpen = false"
-  @submit-success="onEntrySubmitted" 
-/>
+        :is-open="isModalOpen" 
+        :event-id="eventData.id" 
+        :has-submitted="hasSubmitted" 
+        @close="isModalOpen = false"
+        @submit-success="onEntrySubmitted" 
+      />
 
     </template>
   </div>
@@ -317,6 +317,19 @@ const votingStatus = computed(() => {
   if (now > end) return { type: 'ended', message: 'Bình chọn đã đóng' }
   return { type: 'active', message: 'Đang mở bình chọn' }
 })
+
+// --- HÀM XỬ LÝ ĐỒNG BỘ VOTE (THÊM MỚI Ở ĐÂY) ---
+const handleVoteToggle = (entry, isVoted) => {
+  // 1. Cập nhật trạng thái nút
+  entry.voted = isVoted;
+  
+  // 2. Cập nhật cộng/trừ số lượng vote để hiển thị khớp với trạng thái
+  if (isVoted) {
+    entry.voteCount = (Number(entry.voteCount) || 0) + 1;
+  } else {
+    entry.voteCount = Math.max(0, (Number(entry.voteCount) || 0) - 1);
+  }
+}
 
 // --- HELPERS ---
 const formatDate = (dateStr) => {

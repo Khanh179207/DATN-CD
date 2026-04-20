@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import poly.edu.dao.EventDAO;
 import poly.edu.dao.EventPostsDAO;
+import poly.edu.dao.VoteDAO;
 import poly.edu.dto.AdminEventDTO;
 import poly.edu.dto.AdminEventPostDTO;
 import poly.edu.entity.Event;
@@ -24,6 +25,7 @@ public class AdminEventServiceImpl implements AdminEventService {
     private final EventDAO eventDAO;
     private final EventPostsDAO eventPostsDAO;
     private final EventRewardService eventRewardService;
+    private final VoteDAO voteDao;
 
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
 
@@ -63,18 +65,6 @@ public class AdminEventServiceImpl implements AdminEventService {
         if (dto.getEventID() != null) {
             event = eventDAO.findById(dto.getEventID())
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy sự kiện"));
-
-            // 🔥 LOGIC 1: BẢO VỆ TÍNH CÔNG BẰNG (Chỉ chặn sửa Luật/Thưởng khi sự kiện đã bắt đầu)
-            if (event.getStartAt() != null && event.getStartAt().isBefore(LocalDateTime.now())) {
-                String oldDesc = event.getDescription() != null ? event.getDescription() : "";
-                String newDesc = dto.getDescription() != null ? dto.getDescription() : "";
-                String oldReward = event.getReward() != null ? event.getReward() : "";
-                String newReward = dto.getReward() != null ? dto.getReward() : "";
-
-                if (!oldDesc.equals(newDesc) || !oldReward.equals(newReward)) {
-                    throw new RuntimeException("Sự kiện đã bắt đầu, sếp không được chỉnh sửa Luật và Phần thưởng để đảm bảo công bằng!");
-                }
-            }
         } else {
             event = new Event();
             event.setIsActive(1);
@@ -186,6 +176,7 @@ public class AdminEventServiceImpl implements AdminEventService {
     @Override
     @Transactional
     public void removePostFromEvent(Integer eventPostID) {
+        voteDao.deleteByEventPostID(eventPostID);
         eventPostsDAO.deleteById(eventPostID);
     }
 

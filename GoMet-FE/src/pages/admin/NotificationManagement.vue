@@ -95,8 +95,14 @@
         </div>
       </div>
 
+<<<<<<< Updated upstream
       <div v-if="notifications.length === 0" class="empty-state">
         Hệ thống chưa có thông báo thủ công nào.
+=======
+      <div v-if="notifications.length === 0" class="empty-state-lux">
+        <div class="empty-icon">📭</div>
+        <p>Hệ thống chưa có thông báo thủ công nào. Hãy tạo thông báo đầu tiên Bạn nhé!</p>
+>>>>>>> Stashed changes
       </div>
     </div>
 
