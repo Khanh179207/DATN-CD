@@ -72,14 +72,6 @@ const displayName = ref('Sẵn Sàng Khám Phá')
 
 let spinInterval = null
 
-// Bộ ký tự để làm hiệu ứng nhiễu
-const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*!'
-const generateScramble = (length) => {
-  let res = ''
-  for (let i = 0; i < length; i++) res += chars[Math.floor(Math.random() * chars.length)]
-  return res
-}
-
 // Animation xuất hiện ban đầu
 onMounted(() => {
   gsap.fromTo('.machine-core', 
@@ -99,20 +91,20 @@ const startSpin = () => {
   isRevealing.value = false
   
   let currentStep = 0
-  const totalSteps = 45 // Tổng số nhịp quay
-  let baseDelay = 20 // Tốc độ ban đầu rất nhanh (20ms)
+  const totalSteps = 45 
+  let baseDelay = 20 
 
-  // Hàm đệ quy thực hiện vòng quay chậm dần
   const performStep = () => {
-    // 1. Đổi ảnh món ăn liên tục
-    currentDisplayDish.value = props.dishes[Math.floor(Math.random() * props.dishes.length)]
+    // 1. Chọn ngẫu nhiên một món ăn từ props.dishes
+    const randomIndex = Math.floor(Math.random() * props.dishes.length)
+    const randomDish = props.dishes[randomIndex]
     
-    // 2. Chữ nhiễu loạn
-    displayName.value = generateScramble(currentDisplayDish.value.name?.length || 15)
+    // 2. Cập nhật ảnh và TÊN món ăn (Thay vì ký tự lạ)
+    currentDisplayDish.value = randomDish
+    displayName.value = randomDish.name 
 
     currentStep++
 
-    // Thuật toán Ease-out: Càng về cuối càng chậm
     const progress = currentStep / totalSteps
     const nextDelay = baseDelay + (Math.pow(progress, 4) * 500) 
 
@@ -130,29 +122,21 @@ const finalizeSpin = () => {
   isSpinning.value = false
   isRevealing.value = true
   
-  // Hiển thị tên thật với hiệu ứng Decode mượt mà của GSAP
-  const finalName = currentDisplayDish.value.name
-  const decodeObj = { val: 0 }
-  
-  gsap.to(decodeObj, {
-    val: finalName.length,
-    duration: 1,
-    ease: "power2.out",
-    onUpdate: () => {
-      const idx = Math.floor(decodeObj.val)
-      const revealed = finalName.substring(0, idx)
-      const scrambled = generateScramble(finalName.length - idx)
-      displayName.value = revealed + scrambled
-    },
-    onComplete: () => {
-      displayName.value = finalName
-    }
-  })
+  // Hiển thị tên món ăn cuối cùng
+  // Ở đây chúng ta bỏ hiệu ứng "Decode" ký tự lạ để giữ tính nhất quán
+  const finalDish = currentDisplayDish.value
+  displayName.value = finalDish.name
+
+  // Hiệu ứng nhẹ cho chữ khi dừng lại
+  gsap.fromTo('.dish-name-display', 
+    { scale: 0.9, opacity: 0.5 }, 
+    { scale: 1, opacity: 1, duration: 0.5, ease: "back.out(2)" }
+  )
 
   // Đợi chớp sáng xong thì gọi Modal Kết Quả
   setTimeout(() => {
     isRevealing.value = false
-    emit('finish', currentDisplayDish.value)
+    emit('finish', finalDish)
   }, 1500)
 }
 

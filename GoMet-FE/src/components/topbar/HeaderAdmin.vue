@@ -344,9 +344,9 @@ const closeNoti = () => { showNoti.value = false }
 const toggleUser = () => { showUser.value = !showUser.value; showNoti.value = false; }
 const closeUser = () => { showUser.value = false }
 
-const handleLogout = () => { auth.logout(); router.push('/login'); }
+const handleLogout = () => { auth.logout(); router.push('/'); }
 const goToProfile = () => { router.push('/profile'); closeUser(); }
-const goToSettings = () => { router.push('/admin/settings'); closeUser(); }
+const goToSettings = () => { router.push('/admin/system-settings'); closeUser(); }
 
 const vClickOutside = {
   mounted(el, binding) {
