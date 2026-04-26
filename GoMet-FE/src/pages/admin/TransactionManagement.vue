@@ -72,7 +72,7 @@
             <th width="15%">SỐ TIỀN</th>
             <th width="18%">GÓI ĐĂNG KÝ</th>
             <th width="15%">TRẠNG THÁI</th>
-            <th width="12%" class="text-right">CHỨNG TỪ</th>
+            <th width="12%" class="text-center">CHỨNG TỪ</th>
           </tr>
         </thead>
         <TransitionGroup tag="tbody" name="list">
@@ -254,7 +254,7 @@ const filteredTransactions = computed(() => {
 const fetchTransactions = async () => {
   isLoading.value = true
   try {
-const res = await api.get('/api/admin/transactions')
+    const res = await api.get('/api/admin/transactions')
     transactions.value = res.data.map(t => ({
       ...t,
       status: t.status ? String(t.status).toUpperCase() : 'PENDING'
@@ -270,14 +270,12 @@ const openReceipt = (txn) => {
   receiptModal.value = { show: true, txn }
 }
 
-// --- XUẤT EXCEL (REAL) ---
 const exportToExcel = () => {
   if (filteredTransactions.value.length === 0) {
     toast.warn('Không có dữ liệu để xuất!')
     return
   }
 
-  // 1. Chẩn bị dữ liệu để xuất
   const dataToExport = filteredTransactions.value.map((txn, index) => ({
     'STT': index + 1,
     'Mã Giao Dịch': txn.orderCode,
@@ -290,17 +288,13 @@ const exportToExcel = () => {
     'Ngày Thanh Toán': formatDate(txn.paidAt)
   }))
 
-  // 2. Tạo file Excel
   const worksheet = XLSX.utils.json_to_sheet(dataToExport)
-  
-  // Tự động căn chỉnh độ rộng cột
   const wscols = [ {wch:5}, {wch:20}, {wch:25}, {wch:30}, {wch:20}, {wch:15}, {wch:15}, {wch:20}, {wch:20} ]
   worksheet['!cols'] = wscols
 
   const workbook = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(workbook, worksheet, 'Sao_Ke_Giao_Dich')
 
-  // 3. Tải xuống
   const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
   const dataBlob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' })
   saveAs(dataBlob, `GOMET_SAOKE_${new Date().getTime()}.xlsx`)
@@ -357,6 +351,15 @@ onMounted(fetchTransactions)
 .data-table td { padding: 12px 20px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
 .table-row:hover { background: #f8fafc; }
 
+/* CĂN GIỮA CỘT CHỨNG TỪ */
+.text-center { text-align: center !important; }
+
+/* FIX: Để nút chi tiết nằm giữa cột và gần với chữ CHỨNG TỪ */
+.actions { 
+  display: flex; 
+  justify-content: center; 
+}
+
 .txn-code { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: #0f172a; font-size: 0.9rem; }
 .txn-time { font-size: 0.8rem; color: #64748b; margin-top: 4px; }
 
@@ -379,11 +382,10 @@ onMounted(fetchTransactions)
 .status-pill.banned { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; } .status-pill.banned .status-dot { background: #dc2626; }
 .status-pill.warning { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; } .status-pill.warning .status-dot { background: #f59e0b; }
 
-.actions { display: flex; justify-content: flex-end; }
 .btn-action { padding: 6px 12px; border-radius: 6px; border: 1px solid #e2e8f0; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.85rem; background: white; color: #475569; font-weight: 500; }
 .btn-action:hover { background: #f1f5f9; color: #0f172a; }
 
-/* ── RECEIPT MODAL (THỰC TẾ NHƯ APP NGÂN HÀNG) ── */
+/* ── RECEIPT MODAL ── */
 .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.6); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(2px); }
 .receipt-card { background: white; width: 380px; border-radius: 16px; position: relative; box-shadow: 0 20px 40px rgba(0,0,0,0.2); padding: 32px 24px; }
 .detail-close { position: absolute; top: 12px; right: 12px; width: 28px; height: 28px; border-radius: 6px; background: transparent; color: #94a3b8; border: none; cursor: pointer; font-size: 1.2rem; }
