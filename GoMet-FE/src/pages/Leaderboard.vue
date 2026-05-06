@@ -176,6 +176,7 @@ onMounted(() => {
   width: 100%;
   overflow-x: hidden;
   overflow-y: auto; 
+  padding-bottom: 100px; /* 🔥 Tránh đè nội dung với footer */
   position: relative;
   /* Ánh sáng chạy theo chuột nền mờ */
   background-image: radial-gradient(
@@ -255,4 +256,12 @@ onMounted(() => {
   transform: translateY(-20px) scale(0.98);
 }
 
+/* =======================================================
+   🔥 RESPONSIVE
+======================================================= */
+@media (max-width: 768px) {
+  .gomet-hall-master {
+    padding-bottom: 140px; /* Tăng thêm khoảng cách dưới trên mobile do có menu/footer */
+  }
+}
 </style>

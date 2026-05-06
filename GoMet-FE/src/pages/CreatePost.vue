@@ -209,6 +209,7 @@ import { createPost } from '@/services/postService'
 import { uploadMedia } from '@/services/uploadService'
 import api from '@/services/api'
 import { toast } from '@/composables/useToast'
+import { useUploadStore } from '@/stores/uploadStore' // Thêm dòng này
 
 const route = useRoute()
 const router = useRouter()
@@ -311,7 +312,7 @@ const checkContentPolicy = async (text) => {
 };
 
 // ==========================================
-// ĐĂNG BÀI NỀN (BACKGROUND PUBLISH)
+// ĐĂNG BÀI NỀN (BACKGROUND PUBLISH NÂNG CẤP)
 // ==========================================
 const handlePublish = async () => {
   if (!post.value.title.trim()) return toast.warn('Vui lòng nhập tên món ăn!')
@@ -327,7 +328,6 @@ const handlePublish = async () => {
   const accID = currentUser.value.accountID || currentUser.value.id || currentUser.value.accountId;
   if (!accID) return toast.error('Lỗi phiên đăng nhập!');
 
-  // Kiểm tra từ khóa cấm ở Frontend trước khi cho đăng
   const fullText = [
     post.value.title,
     post.value.description,
@@ -341,7 +341,6 @@ const handlePublish = async () => {
     return;
   }
 
-  // 1. Gói dữ liệu
   const payloadData = {
     title: post.value.title.trim(),
     description: post.value.description || '',
@@ -354,11 +353,18 @@ const handlePublish = async () => {
   const filesToUpload = { cover: coverImageFile.value, video: videoFile.value, steps: { ...stepImageFiles.value } };
   const currentEventId = eventId;
 
-  // 2. Hất ra trang chủ ngay lập tức
-  router.push('/home');
-  toast.info('🚀 Đang tải bài viết lên hệ thống trong nền...');
+  // --- KÍCH HOẠT WIDGET TRÔI NỔI (UPLOAD STORE) ---
+  const uploadStore = useUploadStore();
+  // Ưu tiên lấy ảnh cục bộ làm hình thu nhỏ
+  const previewImageUrl = post.value.image || (coverImageFile.value ? URL.createObjectURL(coverImageFile.value) : '');
+  
+  // Bật Widget trạng thái "Đang tải"
+  uploadStore.startUpload(post.value.title, previewImageUrl);
 
-  // 3. Tiến trình upload ngầm
+  // Hất ra trang chủ ngay lập tức
+  router.push('/home');
+
+  // Tiến trình upload ngầm
   (async () => {
     try {
       const uploadTasks = [];
@@ -379,7 +385,6 @@ const handlePublish = async () => {
       });
       payloadData.accountID = parseInt(accID);
 
-      // Gọi API Lưu
       const result = await createPost(payloadData);
       const newPostId = result?.postID || result?.id || result?.data?.postID;
 
@@ -387,16 +392,17 @@ const handlePublish = async () => {
          await api.post(`/api/events/submit`, { EventID: parseInt(currentEventId), PostID: newPostId });
       }
 
-      // Thông báo kết quả
+      // CẬP NHẬT TRẠNG THÁI THÀNH CÔNG CHO WIDGET
       if (result?.isApproved === 1 || result?.data?.isApproved === 1) {
-         toast.success('🎉 Tuyệt vời! Bài viết đã được tự động duyệt và lên sóng!');
+         uploadStore.setSuccess('Duyệt thành công! Đã lên sóng.');
       } else {
-         toast.success('✨ Đã tải bài lên thành công! Đang chờ Admin duyệt.');
+         uploadStore.setSuccess('Tải thành công! Đang chờ duyệt.');
       }
 
     } catch (err) {
-       const msg = err.response?.data?.message || '❌ Bài viết không hợp lệ hoặc thao tác quá nhanh. Vui lòng thử lại sau!';
-       toast.error(msg);
+       const msg = err.response?.data?.message || 'Lỗi mạng hoặc thao tác quá nhanh!';
+       // CẬP NHẬT TRẠNG THÁI LỖI CHO WIDGET
+       uploadStore.setError(msg);
     }
   })();
 }

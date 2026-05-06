@@ -15,7 +15,7 @@
 
     <div v-show="isOpen && authStore.user" class="luxury-compact-dropdown" ref="dropdownPanel">
       
-      <div class="user-header-luxury" :class="{ 'header-premium': isPremiumUser, 'header-admin': isAdminUser }">
+      <div class="user-header-luxury" :class="{ 'header-premium': isPremiumUser, 'header-admin': isAdminUser, 'header-holiday': isHolidayEventActive && !isPremiumUser && !isAdminUser }">
         <div class="header-visual-effect"></div> 
         <div class="header-info-content">
           <div class="header-avt-mini-wrap" :class="{ 'vip-border': isPremiumUser }">
@@ -34,22 +34,28 @@
             <div class="user-id-badge">ID: {{ authStore.user?.id || authStore.user?.accountID }}</div>
             
             <div v-if="!isPremiumUser && !isAdminUser" class="daily-view-limit-info">
-              <span class="limit-label">Lượt xem hôm nay:</span>
-              <span class="limit-count" :class="{ 'text-danger': remainingViews === 0 }">{{ remainingViews }}/{{ maxViews }}</span>
-              
-              <div class="demo-actions">
-                <button @click.stop="fetchViewLimits" class="btn-refresh-views" title="Làm mới">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="23 4 23 10 17 10"></polyline>
-                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-                  </svg>
-                </button>
-                <button @click.stop="handleResetDemo" class="btn-reset-demo" title="Reset Lượt Xem (Demo)">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
-                  </svg>
-                </button>
-              </div>
+              <template v-if="isHolidayEventActive">
+                <span class="limit-label">Sự kiện lễ hội:</span>
+                <span class="limit-count text-pink">Miễn phí ✨</span>
+              </template>
+              <template v-else>
+                <span class="limit-label">Lượt xem hôm nay:</span>
+                <span class="limit-count" :class="{ 'text-danger': remainingViews === 0 }">{{ remainingViews }}/{{ maxViews }}</span>
+                
+                <div class="demo-actions">
+                  <button @click.stop="fetchViewLimits" class="btn-refresh-views" title="Làm mới">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="23 4 23 10 17 10"></polyline>
+                      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                    </svg>
+                  </button>
+                  <button @click.stop="handleResetDemo" class="btn-reset-demo" title="Reset Lượt Xem (Demo)">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                    </svg>
+                  </button>
+                </div>
+              </template>
             </div>
           </div>
         </div>

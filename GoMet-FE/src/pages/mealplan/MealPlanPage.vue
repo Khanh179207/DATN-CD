@@ -307,7 +307,7 @@ $border-glass: rgba(255, 255, 255, 0.05);
 .is-today .day-name { color: $gold; }
 
 /* Danh sách Slot Bữa ăn */
-.slots-container { flex: 1; display: flex; flex-direction: column; gap: 25px; overflow-y: auto; padding-right: 5px; }
+.slots-container { flex: 1; display: flex; flex-direction: column; gap: 25px; overflow-y: auto; padding-right: 5px; padding-bottom: 80px; /* 🔥 Thêm khoảng trống dưới cùng để không bị khuất Bữa Tối */ }
 .slots-container::-webkit-scrollbar { width: 4px; }
 .slots-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
 
@@ -390,7 +390,7 @@ $border-glass: rgba(255, 255, 255, 0.05);
 }
 
 @media (max-width: 1024px) {
-  .gomet-planner-pro { height: auto; min-height: 100vh; overflow-y: auto; }
+  .gomet-planner-pro { height: auto; min-height: 100vh; overflow-y: auto; padding-bottom: 100px; /* Tăng khoảng cách dưới cho Tablet */ }
   .planner-wrapper { height: auto; }
   
   .planner-header { flex-direction: column; align-items: flex-start; gap: 25px; }
@@ -406,7 +406,7 @@ $border-glass: rgba(255, 255, 255, 0.05);
 }
 
 @media (max-width: 480px) {
-  .gomet-planner-pro { padding-top: 60px; }
+  .gomet-planner-pro { padding-top: 60px; padding-bottom: 140px; /* 🔥 Tăng mạnh khoảng cách dưới để né hoàn toàn Mobile Menu */ }
   .planner-header { padding: 20px; border-radius: 20px; }
   
   .main-title { font-size: 2rem; }

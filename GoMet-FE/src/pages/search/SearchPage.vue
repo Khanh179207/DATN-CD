@@ -291,6 +291,12 @@ const removeIncludedIngredient = (ing) => {
 const resetFilters = () => { 
   filters.value = { category: null, difficulty: '', time: '', sort: 'newest', hasVideo: false, includedIngredients: [] }
   ingredientInput.value = '';
+  
+  if (route.query.q) {
+    const newQuery = { ...route.query };
+    delete newQuery.q;
+    router.replace({ query: newQuery });
+  }
 }
 
 // --- DATA FETCHING ---

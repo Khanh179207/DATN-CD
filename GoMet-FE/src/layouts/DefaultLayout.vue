@@ -62,6 +62,9 @@
     <MiniChatBox />
     <CompareFloatingBar />
     <GometAiChat ref="aiChatRef" />
+    
+    <!-- 🔥 THÊM KHUNG UPLOAD TRÔI NỔI Ở ĐÂY -->
+    <UploadWidgetModal />
 
     <button class="float-ai-btn" @click="openAiChat" title="Chat with Gomet AI">
       <div class="ai-icon-bg">
@@ -108,6 +111,9 @@ import ChatSidebar from '@/components/chat/ChatSidebar.vue'
 import TheFooter from '@/components/footer/TheFooter.vue'
 import CompareFloatingBar from '@/components/common/CompareFloatingBar.vue'
 import GometAiChat from '@/components/chat/GometAiChat.vue'
+
+// 🔥 IMPORT COMPONENT UPLOAD WIDGET MODAL
+import UploadWidgetModal from '@/components/modals/UploadWidgetModal.vue'
 
 gsap.registerPlugin(ScrollTrigger)
 
