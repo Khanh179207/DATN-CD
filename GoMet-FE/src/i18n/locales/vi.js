@@ -119,6 +119,17 @@
     reset_error_number: 'Mật khẩu cần có ít nhất một chữ số.',
     reset_error_mismatch: 'Mật khẩu xác nhận không khớp.',
     reset_generic_error: 'Có lỗi xảy ra. Vui lòng thử lại.',
+    
+    // DỊCH VỤ MFA & REMEMBER DEVICE
+    mfa_required_title: 'Xác thực 2 bước (2FA)',
+    mfa_required_sub: 'Tài khoản của bạn được bảo vệ bởi Authenticator.',
+    mfa_code_placeholder: 'Nhập mã 6 số từ ứng dụng...',
+    mfa_remember_device: 'Nhớ thiết bị này (30 ngày)',
+    mfa_verify_btn: 'Xác nhận & Đăng nhập',
+    mfa_setup_title: 'Cài đặt Google Authenticator',
+    mfa_setup_desc: 'Quét mã QR dưới đây bằng ứng dụng Google Authenticator hoặc Authy.',
+    mfa_enable_btn: 'Bật xác thực 2 bước',
+    mfa_disable_btn: 'Tắt xác thực 2 bước',
   },
   common: {
     search_placeholder: 'Tìm kiếm món ăn...',

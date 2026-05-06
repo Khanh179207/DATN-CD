@@ -51,6 +51,15 @@ public class Account {
     @Builder.Default
     private Integer isActive = 1;
 
+    @Column(name = "IsMfaEnabled")
+    private Integer isMfaEnabled;
+
+    @Column(name = "MfaSecret")
+    private String mfaSecret;
+
+    @Column(name = "TrustedDeviceToken")
+    private String trustedDeviceToken;
+
     // 🔥 CHỈ GIỮ LẠI 2 CỘT NÀY ĐỂ BÁO LỖI CHO USER LÚC ĐĂNG NHẬP
     @Column(name = "BanReason", columnDefinition = "NVARCHAR(MAX)")
     private String banReason;

@@ -46,6 +46,8 @@ public class UserController {
     private final CommentDAO commentDAO;
     private final TicketDAO ticketDAO;
 
+    private final poly.edu.service.TotpMfaService totpMfaService;
+
     @Autowired
     private InteractionLogDAO interactionLogDAO;
 
@@ -262,6 +264,17 @@ public class UserController {
                 }
             }
 
+        // 🔥 Kiểm tra MFA nếu User đã bật xác thực 2 lớp (Bảo mật kép lúc đổi pass)
+        if (acc.getIsMfaEnabled() != null && acc.getIsMfaEnabled() == 1) {
+            String mfaCode = (String) body.get("mfaCode");
+            if (mfaCode == null || mfaCode.isBlank()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Vui lòng nhập mã Google Authenticator."));
+            }
+            if (!totpMfaService.verifyCode(acc.getMfaSecret(), mfaCode)) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Mã xác thực Google Authenticator không đúng."));
+            }
+        }
+
             // Xác thực mã OTP thông qua AccountService
             accountService.verifyPasswordChangeOTP(id, otp);
 
@@ -273,6 +286,67 @@ public class UserController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 🔥 TỪ DEVELOP: QUẢN LÝ THIẾT LẬP XÁC THỰC 2 BƯỚC (MFA)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/{id}/mfa/setup")
+    public ResponseEntity<?> setupMfa(@PathVariable Integer id) {
+        Account acc = accountDAO.findById(id).orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại."));
+        if (acc.getIsMfaEnabled() != null && acc.getIsMfaEnabled() == 1) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Xác thực 2 bước đã được bật."));
+        }
+        
+        String secret = totpMfaService.generateSecretKey();
+        acc.setMfaSecret(secret); // Chỉ lưu tạm secret vào Database, chưa kích hoạt
+        accountDAO.save(acc);
+
+        String qrCodeUrl = totpMfaService.getQrCodeUrl(acc.getEmail(), secret);
+        return ResponseEntity.ok(Map.of(
+            "secret", secret,
+            "qrCodeUrl", qrCodeUrl
+        ));
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/{id}/mfa/confirm")
+    public ResponseEntity<?> confirmMfa(@PathVariable Integer id, @RequestBody Map<String, String> body) {
+        String code = body.get("mfaCode");
+        Account acc = accountDAO.findById(id).orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại."));
+
+        if (acc.getMfaSecret() == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Chưa thiết lập MFA. Vui lòng lấy mã QR trước."));
+        }
+
+        if (totpMfaService.verifyCode(acc.getMfaSecret(), code)) {
+            acc.setIsMfaEnabled(1); // Cờ chính thức bật MFA
+            accountDAO.save(acc);
+            return ResponseEntity.ok(Map.of("message", "Bật xác thực 2 bước thành công."));
+        }
+        return ResponseEntity.badRequest().body(Map.of("message", "Mã xác thực không đúng."));
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/{id}/mfa/disable")
+    public ResponseEntity<?> disableMfa(@PathVariable Integer id, @RequestBody Map<String, String> body) {
+        String code = body.get("mfaCode");
+        Account acc = accountDAO.findById(id).orElseThrow(() -> new RuntimeException("Tài khoản không tồn tại."));
+
+        if (acc.getIsMfaEnabled() == null || acc.getIsMfaEnabled() == 0) {
+            return ResponseEntity.badRequest().body(Map.of("message", "MFA chưa được bật."));
+        }
+
+        if (totpMfaService.verifyCode(acc.getMfaSecret(), code)) {
+            acc.setIsMfaEnabled(0);
+            acc.setMfaSecret(null);
+            acc.setTrustedDeviceToken(null); // Reset luôn thiết bị đã nhớ vì vừa tắt bảo mật
+            accountDAO.save(acc);
+            return ResponseEntity.ok(Map.of("message", "Đã tắt xác thực 2 bước an toàn."));
+        }
+        return ResponseEntity.badRequest().body(Map.of("message", "Mã xác thực không đúng."));
     }
 
     // ─────────────────────────────────────────────────────────────────────────

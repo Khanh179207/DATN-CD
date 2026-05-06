@@ -37,6 +37,7 @@ public class AuthController {
     private final GoogleAuthService googleAuthService;
     private final JwtUtils jwtUtils;
     private final poly.edu.service.AccountService accountService;
+    private final poly.edu.service.TotpMfaService totpMfaService;
 
     // Helper tạo Response khi bị khóa hoặc xóa mềm
     private Map<String, Object> buildErrorResponse(Account acc, String type) {
@@ -116,7 +117,7 @@ public class AuthController {
 
     // ─── LOGIN ────────────────────────────────────────────────────────────────
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody AuthRequestDTO req) {
+    public ResponseEntity<?> login(@RequestBody AuthRequestDTO req, HttpServletRequest httpRequest) {
         Optional<Account> opt = accountDAO.findByEmail(req.getEmail());
         if (opt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Email không tồn tại"));
@@ -152,10 +153,62 @@ public class AuthController {
             }
         }
 
+        // 🔥 BƯỚC 1 CỦA MFA: KIỂM TRA XÁC THỰC 2 BƯỚC VÀ "NHỚ THIẾT BỊ"
+        if (acc.getIsMfaEnabled() != null && acc.getIsMfaEnabled() == 1) {
+            String deviceToken = httpRequest.getHeader("X-Device-Token"); // FE sẽ nhét Cookie Token nhớ thiết bị vào Header này
+            // Nếu KHÔNG có token thiết bị hợp lệ -> Chặn lại và yêu cầu nhập mã MFA
+            if (deviceToken == null || !deviceToken.equals(acc.getTrustedDeviceToken())) {
+                // Tạo JWT tạm thời sống 5 phút để xác minh bước 2
+                String tempToken = jwtUtils.generateJwtToken(acc.getEmail(), acc.getAccountID(), "TEMP_MFA");
+                return ResponseEntity.status(HttpStatus.ACCEPTED).body(Map.of(
+                        "code", "MFA_REQUIRED",
+                        "message", "Vui lòng nhập mã xác thực từ Google Authenticator",
+                        "tempToken", tempToken
+                ));
+            }
+        }
+
         String role = (acc.getIsAdmin() != null && acc.getIsAdmin() == 1) ? "ADMIN" : "USER";
         String jwtToken = jwtUtils.generateJwtToken(acc.getEmail(), acc.getAccountID(), role);
 
         return ResponseEntity.ok(buildResponse(acc, jwtToken));
+    }
+
+    // ─── BƯỚC 2: XÁC THỰC MÃ 6 SỐ TỪ APP (MFA) VÀ TẠO NHỚ THIẾT BỊ ─────────────
+    @PostMapping("/login/mfa-verify")
+    public ResponseEntity<?> verifyMfaLogin(@RequestBody Map<String, String> req) {
+        String tempToken = req.get("tempToken");
+        String mfaCode = req.get("mfaCode");
+        boolean rememberDevice = Boolean.parseBoolean(req.getOrDefault("rememberDevice", "false"));
+
+        if (!jwtUtils.validateJwtToken(tempToken)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Phiên đăng nhập hết hạn"));
+        }
+        String email = jwtUtils.getEmailFromJwtToken(tempToken);
+        Account acc = accountDAO.findByEmail(email).orElseThrow(() -> new RuntimeException("Lỗi tài khoản"));
+
+        if (!totpMfaService.verifyCode(acc.getMfaSecret(), mfaCode)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Mã xác thực 6 số không chính xác"));
+        }
+
+        String deviceToken = null;
+        if (rememberDevice) {
+            deviceToken = UUID.randomUUID().toString();
+            acc.setTrustedDeviceToken(deviceToken); // Cập nhật token thiết bị mới cho phép Bypass vào lần đăng nhập tới
+            accountDAO.save(acc);
+        }
+
+        String role = (acc.getIsAdmin() != null && acc.getIsAdmin() == 1) ? "ADMIN" : "USER";
+        String jwtToken = jwtUtils.generateJwtToken(acc.getEmail(), acc.getAccountID(), role);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("token", jwtToken);
+        if (deviceToken != null) {
+            response.put("deviceToken", deviceToken); // Frontend tự lưu chuỗi này vào Cookie hoặc LocalStorage
+        }
+        response.put("user", buildResponse(acc, jwtToken));
+        
+        return ResponseEntity.ok(response);
     }
 
     // ─── REGISTRATION (OTP flow) ──────────────────────────────────────────────

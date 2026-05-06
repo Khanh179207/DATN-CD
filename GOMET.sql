@@ -38,7 +38,12 @@ CREATE TABLE Account (
 	
  -- MỚI THÊM: Lưu thẳng Email Admin (hứng từ Frontend)
     BanReason NVARCHAR(MAX) NULL,      -- Lưu lý do khóa (Admin tự gõ vào)
-    BannedAt DATETIME NULL             -- Đổi dấu chấm phẩy (;) thành bình thường
+    BannedAt DATETIME NULL,            -- Đổi dấu chấm phẩy (;) thành bình thường
+
+    -- 🔥 MFA & BẢO MẬT THIẾT BỊ
+    MfaSecret VARCHAR(64) NULL,        -- Mã bí mật dùng cho Google Authenticator
+    IsMfaEnabled INT DEFAULT 0,        -- 0: Tắt, 1: Bật
+    TrustedDeviceToken VARCHAR(255) NULL -- Token nhớ thiết bị để bypass MFA
 );                                     -- Bổ sung dấu đóng ngoặc tròn và chấm phẩy ở đây
 GO
 
@@ -845,4 +850,3 @@ VALUES
 ('ADS_BANNER_IMG', 'https://res.cloudinary.com/drblrjxan/image/upload/v1/system/ads_default.jpg', 'ADS', N'Link ảnh Banner quảng cáo Popup', GETDATE()),
 ('ADS_TARGET_URL', 'https://gomet.id.vn/premium-info', 'ADS', N'Đường dẫn khi User click vào ảnh quảng cáo', GETDATE());
 GO
-
