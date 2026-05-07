@@ -65,36 +65,39 @@ onMounted(() => {
   getUserLocation()
 })
 
-// HÀM LẤY VỊ TRÍ CHUẨN XÁC
+// HÀM LẤY VỊ TRÍ VÀ THẢ HÀNG LOẠT GHIM CHỢ/SIÊU THỊ
 const getUserLocation = () => {
   if ("geolocation" in navigator) {
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const lat = position.coords.latitude
-        const lng = position.coords.longitude
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
 
-        mapUrl.value = `https://maps.google.com/maps?q=siêu+thị,+chợ+near+${lat},${lng}&hl=vi&z=15&output=embed`
+        // 🔥 CẤU TRÚC URL ĐỂ HIỆN NHIỀU GHIM (SEARCH MODE):
+        // q=chợ+siêu+thị: Từ khóa tìm kiếm để hiện nhiều kết quả
+        // sll=${lat},${lng}: Ép tâm điểm tìm kiếm tại tọa độ GPS của Sếp
+        // z=15: Độ phóng vừa đủ để thấy nhiều ghim
+        mapUrl.value = `https://maps.google.com/maps?q=chợ+siêu+thị&sll=${lat},${lng}&hl=vi&z=15&output=embed`;
         
-        locationError.value = false
-        isLoading.value = false
-        toast.success('Đã bắt được tọa độ của Bạn! 🚀')
+        locationError.value = false;
+        isLoading.value = false;
+        toast.success('Đã quét toàn bộ chợ và siêu thị quanh Sếp! 🛒');
       },
       (error) => {
-        console.warn("Lỗi lấy vị trí:", error.message)
-        locationError.value = true
-        isLoading.value = false
-        // Fallback: Chỉ search "siêu thị chợ gần đây" dựa vào IP mạng
-        mapUrl.value = 'https://maps.google.com/maps?q=siêu+thị,+chợ+gần+đây&hl=vi&z=14&output=embed'
-        toast.warn('Bạn chưa cấp quyền vị trí, hệ thống đang dùng vị trí ước tính nhé!')
+        console.warn("Lỗi vị trí:", error.message);
+        locationError.value = true;
+        isLoading.value = false;
+        // Fallback: Tìm chợ chung chung theo vùng
+        mapUrl.value = `https://maps.google.com/maps?q=chợ+siêu+thị&hl=vi&z=14&output=embed`;
+        toast.warn('Dùng vị trí ước tính để tìm các khu chợ nhé Sếp!');
       },
       { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
     )
   } else {
-    // 3. TRÌNH DUYỆT CÙI
-    isLoading.value = false
-    locationError.value = true
-    mapUrl.value = 'https://maps.google.com/maps?q=siêu+thị,+chợ+gần+đây&hl=vi&z=14&output=embed'
-    toast.error('Trình duyệt không hỗ trợ định vị GPS!')
+    isLoading.value = false;
+    locationError.value = true;
+    mapUrl.value = `https://maps.google.com/maps?q=chợ+siêu+thị&hl=vi&z=14&output=embed`;
+    toast.error('Trình duyệt không hỗ trợ GPS!');
   }
 }
 </script>
