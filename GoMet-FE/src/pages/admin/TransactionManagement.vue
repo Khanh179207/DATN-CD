@@ -72,7 +72,7 @@
             <th width="15%">SỐ TIỀN</th>
             <th width="18%">GÓI ĐĂNG KÝ</th>
             <th width="15%">TRẠNG THÁI</th>
-            <th width="12%" class="text-right">CHỨNG TỪ</th>
+            <th width="12%" class="text-center">CHỨNG TỪ</th>
           </tr>
         </thead>
         <TransitionGroup tag="tbody" name="list">
@@ -176,7 +176,7 @@
 import { ref, computed, onMounted } from 'vue'
 import api from '@/services/api'
 import { toast } from '@/composables/useToast'
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 import { saveAs } from 'file-saver'
 
 // --- STATE ---
@@ -254,7 +254,7 @@ const filteredTransactions = computed(() => {
 const fetchTransactions = async () => {
   isLoading.value = true
   try {
-const res = await api.get('/api/admin/transactions')
+    const res = await api.get('/api/admin/transactions')
     transactions.value = res.data.map(t => ({
       ...t,
       status: t.status ? String(t.status).toUpperCase() : 'PENDING'
@@ -270,42 +270,143 @@ const openReceipt = (txn) => {
   receiptModal.value = { show: true, txn }
 }
 
-// --- XUẤT EXCEL (REAL) ---
-const exportToExcel = () => {
+// --- XUẤT EXCEL CAO CẤP BẰNG EXCELJS ---
+const exportToExcel = async () => {
   if (filteredTransactions.value.length === 0) {
     toast.warn('Không có dữ liệu để xuất!')
     return
   }
 
-  // 1. Chẩn bị dữ liệu để xuất
-  const dataToExport = filteredTransactions.value.map((txn, index) => ({
-    'STT': index + 1,
-    'Mã Giao Dịch': txn.orderCode,
-    'Khách Hàng': txn.username,
-    'Email': txn.email,
-    'Gói Dịch Vụ': txn.planName,
-    'Số Tiền (VNĐ)': txn.amount,
-    'Trạng Thái': getStatusLabel(txn.status),
-    'Ngày Tạo': formatDate(txn.createdAt),
-    'Ngày Thanh Toán': formatDate(txn.paidAt)
-  }))
-
-  // 2. Tạo file Excel
-  const worksheet = XLSX.utils.json_to_sheet(dataToExport)
+  const workbook = new ExcelJS.Workbook()
+  workbook.creator = 'GoMet System'
   
-  // Tự động căn chỉnh độ rộng cột
-  const wscols = [ {wch:5}, {wch:20}, {wch:25}, {wch:30}, {wch:20}, {wch:15}, {wch:15}, {wch:20}, {wch:20} ]
-  worksheet['!cols'] = wscols
+  // Tạo sheet và đóng băng 4 dòng đầu
+  const sheet = workbook.addWorksheet('Sao_Ke_Giao_Dich', {
+    views: [{ state: 'frozen', ySplit: 4 }] 
+  })
 
-  const workbook = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Sao_Ke_Giao_Dich')
+  // 1. Dòng Tiêu đề Báo Cáo
+  sheet.mergeCells('A1:H2')
+  const titleCell = sheet.getCell('A1')
+  titleCell.value = 'BÁO CÁO THỐNG KÊ GIAO DỊCH GOMET\nTrích xuất từ Hệ thống Quản trị'
+  titleCell.font = { name: 'Arial', size: 16, bold: true, color: { argb: 'FFFFFFFF' } }
+  titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEA580C' } } 
+  titleCell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true }
 
-  // 3. Tải xuống
-  const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
-  const dataBlob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' })
-  saveAs(dataBlob, `GOMET_SAOKE_${new Date().getTime()}.xlsx`)
+  // 2. Dòng Thông tin Ngày xuất
+  sheet.mergeCells('A3:H3')
+  const infoCell = sheet.getCell('A3')
+  infoCell.value = `Ngày xuất báo cáo: ${new Date().toLocaleString('vi-VN')} | Tài khoản: Quản trị viên`
+  infoCell.font = { italic: true, color: { argb: 'FF475569' } }
+  infoCell.alignment = { vertical: 'middle', horizontal: 'right' }
+
+  // 3. Cấu hình Cột (Header ở dòng 4)
+  sheet.columns = [
+    { header: 'STT', key: 'stt', width: 8 },
+    { header: 'Mã Giao Dịch', key: 'orderCode', width: 22 },
+    { header: 'Khách Hàng', key: 'username', width: 28 },
+    { header: 'Email', key: 'email', width: 35 },
+    { header: 'Gói Dịch Vụ', key: 'planName', width: 20 },
+    { header: 'Số Tiền (VNĐ)', key: 'amount', width: 22 },
+    { header: 'Trạng Thái', key: 'status', width: 20 },
+    { header: 'Ngày Tạo', key: 'createdAt', width: 22 }
+  ]
+
+  const headerRow = sheet.getRow(4)
+  headerRow.height = 30
+  headerRow.eachCell((cell) => {
+    cell.font = { bold: true, color: { argb: 'FFFFFFFF' } }
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } } // Đen nhám
+    cell.alignment = { vertical: 'middle', horizontal: 'center' }
+    cell.border = { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } }
+  })
+
+  // Bật Auto-Filter cho bảng
+  sheet.autoFilter = 'A4:H4'
+
+  // 4. Bơm Dữ Liệu & Hiệu ứng Ngựa Vằn (Zebra Striping)
+  let calcTotal = 0;
+
+  filteredTransactions.value.forEach((txn, index) => {
+    if (txn.status === 'PAID') calcTotal += (txn.amount || 0);
+
+    const row = sheet.addRow({
+      stt: index + 1,
+      orderCode: txn.orderCode,
+      username: txn.username,
+      email: txn.email,
+      planName: txn.planName,
+      amount: txn.amount || 0, 
+      status: getStatusLabel(txn.status),
+      createdAt: formatDate(txn.createdAt)
+    })
+    
+    row.height = 25
+    
+    // Nền xen kẽ: Trắng và Xám nhạt
+    const rowColor = (index % 2 === 0) ? 'FFFFFFFF' : 'FFF8FAFC'
+
+    row.eachCell((cell, colNumber) => {
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowColor } }
+      cell.border = { top: { style: 'thin', color: { argb: 'FFE2E8F0' } }, bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } }, left: { style: 'thin', color: { argb: 'FFE2E8F0' } }, right: { style: 'thin', color: { argb: 'FFE2E8F0' } } }
+      cell.alignment = { vertical: 'middle', wrapText: true }
+
+      if (colNumber === 1 || colNumber === 8) {
+        cell.alignment = { vertical: 'middle', horizontal: 'center' }
+      }
+      
+      // Cột Số tiền
+      if (colNumber === 6) {
+        cell.numFmt = '#,##0'
+        cell.font = { bold: true, color: { argb: 'FF0F172A' } }
+        if (txn.status === 'FAILED') {
+           cell.font = { color: { argb: 'FF94A3B8' }, strike: true } // Gạch ngang nếu thất bại
+        }
+      }
+
+      // Cột Trạng thái (Tô màu chữ)
+      if (colNumber === 7) {
+        cell.alignment = { vertical: 'middle', horizontal: 'center' }
+        cell.font = { bold: true }
+        if (txn.status === 'PAID') cell.font = { color: { argb: 'FF16A34A' } } // Xanh
+        else if (txn.status === 'FAILED') cell.font = { color: { argb: 'FFDC2626' } } // Đỏ
+        else cell.font = { color: { argb: 'FFD97706' } } // Cam
+      }
+    })
+  })
+
+  // 5. Dòng Tổng Kết (Summary Row)
+  const summaryRow = sheet.addRow({
+    stt: '', orderCode: '', username: '', email: '',
+    planName: 'TỔNG DOANH THU:', amount: calcTotal, status: '', createdAt: ''
+  })
   
-  toast.success('Đã tải xuống file báo cáo Excel!')
+  summaryRow.height = 30
+  summaryRow.eachCell((cell, colNumber) => {
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEF3C7' } } // Vàng nhạt
+    cell.border = { top: { style: 'double', color: { argb: 'FFD97706' } }, bottom: { style: 'double', color: { argb: 'FFD97706' } } }
+    
+    if (colNumber === 5) {
+      cell.font = { bold: true, color: { argb: 'FFB45309' }, size: 12 }
+      cell.alignment = { vertical: 'middle', horizontal: 'right' }
+    }
+    if (colNumber === 6) {
+      cell.numFmt = '#,##0'
+      cell.font = { bold: true, color: { argb: 'FFEA580C' }, size: 12 }
+      cell.alignment = { vertical: 'middle', horizontal: 'left' }
+    }
+  })
+
+  // Xuất file
+  try {
+    const buffer = await workbook.xlsx.writeBuffer()
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    saveAs(blob, `GOMET_SAOKE_${new Date().getTime()}.xlsx`)
+    toast.success('Xuất file Báo cáo Excel thành công!')
+  } catch (error) {
+    console.error("Lỗi xuất Excel:", error)
+    toast.error('Lỗi khi tạo file Excel, vui lòng thử lại!')
+  }
 }
 
 onMounted(fetchTransactions)
@@ -357,6 +458,9 @@ onMounted(fetchTransactions)
 .data-table td { padding: 12px 20px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
 .table-row:hover { background: #f8fafc; }
 
+.text-center { text-align: center !important; }
+.actions { display: flex; justify-content: center; }
+
 .txn-code { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: #0f172a; font-size: 0.9rem; }
 .txn-time { font-size: 0.8rem; color: #64748b; margin-top: 4px; }
 
@@ -379,11 +483,10 @@ onMounted(fetchTransactions)
 .status-pill.banned { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; } .status-pill.banned .status-dot { background: #dc2626; }
 .status-pill.warning { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; } .status-pill.warning .status-dot { background: #f59e0b; }
 
-.actions { display: flex; justify-content: flex-end; }
 .btn-action { padding: 6px 12px; border-radius: 6px; border: 1px solid #e2e8f0; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.85rem; background: white; color: #475569; font-weight: 500; }
 .btn-action:hover { background: #f1f5f9; color: #0f172a; }
 
-/* ── RECEIPT MODAL (THỰC TẾ NHƯ APP NGÂN HÀNG) ── */
+/* ── RECEIPT MODAL ── */
 .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.6); display: flex; align-items: center; justify-content: center; z-index: 9999; backdrop-filter: blur(2px); }
 .receipt-card { background: white; width: 380px; border-radius: 16px; position: relative; box-shadow: 0 20px 40px rgba(0,0,0,0.2); padding: 32px 24px; }
 .detail-close { position: absolute; top: 12px; right: 12px; width: 28px; height: 28px; border-radius: 6px; background: transparent; color: #94a3b8; border: none; cursor: pointer; font-size: 1.2rem; }
@@ -405,4 +508,65 @@ onMounted(fetchTransactions)
 .r-value { color: #0f172a; font-weight: 500; text-align: right; max-width: 60%; }
 .monospace { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #0f172a; }
 
+/* =======================================================
+   🔥 RESPONSIVE (TỐI ƯU MỌI THIẾT BỊ)
+   ======================================================= */
+@media (max-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .page-container { padding: 20px; }
+  
+  .page-header { 
+    flex-direction: column; 
+    align-items: flex-start; 
+    gap: 16px; 
+  }
+  
+  .header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .stats-grid { 
+    grid-template-columns: 1fr; 
+  }
+  
+  .filter-bar { 
+    flex-direction: column; 
+    align-items: stretch; 
+    gap: 16px; 
+  }
+  
+  .tabs {
+    flex-wrap: wrap;
+  }
+  .filter-tab { flex: 1 1 40%; text-align: center; }
+  
+  .search-box { 
+    width: 100%; 
+  }
+  
+  .table-wrapper { 
+    overflow-x: auto; 
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .data-table { 
+    min-width: 900px; /* Đảm bảo bảng không bị bóp nghẹt */
+  }
+}
+
+@media (max-width: 480px) {
+  .page-container { padding: 12px; }
+  .header-actions { flex-direction: column; }
+  .btn-refresh, .btn-export { width: 100%; justify-content: center; }
+  .receipt-card { width: 92%; padding: 24px 16px; }
+  .r-amount-big { font-size: 1.8rem; }
+  .r-info-row { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .r-value { text-align: left; max-width: 100%; }
+}
 </style>

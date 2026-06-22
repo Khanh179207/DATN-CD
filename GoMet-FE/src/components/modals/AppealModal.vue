@@ -41,22 +41,13 @@
             <span>{{ submitError }}</span>
           </div>
 
-          <div v-if="submitSuccess" class="alert-box success-alert mt-4">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            <span>Yêu cầu đã được gửi thành công! Admin sẽ phản hồi bạn qua Email trong 24h tới.</span>
-          </div>
-
           <div class="form-actions-lux mt-6">
-            <button v-if="!submitSuccess" type="button" class="btn-lux btn-cancel" @click="$emit('close')">
+            <button type="button" class="btn-lux btn-cancel" @click="$emit('close')" :disabled="isSubmitting">
               Hủy bỏ
             </button>
-            <button v-if="!submitSuccess" type="submit" class="btn-lux btn-submit" :disabled="isSubmitting || !formData.email.trim() || !formData.reason.trim()">
+            <button type="submit" class="btn-lux btn-submit" :disabled="isSubmitting || !formData.email.trim() || !formData.reason.trim()">
               <svg v-if="isSubmitting" class="spinner" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>
-              {{ isSubmitting ? 'Đang gửi đi...' : 'Gửi Yêu Cầu Gỡ Ban' }}
-            </button>
-            
-            <button v-if="submitSuccess" type="button" class="btn-lux btn-submit w-full" @click="$emit('close')">
-              Xong & Đóng Cửa Sổ
+              {{ isSubmitting ? 'Đang gửi đi...' : 'Gửi Yêu Cầu Khiếu nại' }}
             </button>
           </div>
         </form>
@@ -76,7 +67,6 @@ const overlayRef = ref(null)
 const isOpen = ref(false)
 const isSubmitting = ref(false)
 const submitError = ref('')
-const submitSuccess = ref(false)
 
 const formData = ref({
   email: '',
@@ -97,24 +87,14 @@ const handleSubmit = async () => {
       email: formData.value.email.trim(),
       reason: formData.value.reason.trim()
     })
-
-    submitSuccess.value = true
-    
-    // Auto close sau 4 giây
-    setTimeout(() => {
-      emit('close')
-    }, 4000)
   } catch (error) {
-    if (error.response?.status === 404) {
-      submitSuccess.value = true
-      toast.success('Khiếu nại đã gửi! (Test Mode)')
-      setTimeout(() => emit('close'), 3000)
-      return
-    }
-
-    submitError.value = error.response?.data?.message || error.message || 'Lỗi khi gửi khiếu nại. Vui lòng thử lại.'
+    // Bỏ qua lỗi (đặc biệt là lỗi 404 - không tìm thấy user) để kẻ gian không thể dò tìm xem email có tồn tại hay không
+    console.warn("Appeal submission:", error.message)
   } finally {
     isSubmitting.value = false
+    emit('close')
+    // Hiện thông báo chung chung không khẳng định việc email có tồn tại hay không
+    toast.success('Yêu cầu đã được ghi nhận. Nếu tài khoản đang bị ban, Quản trị viên sẽ xem xét và phản hồi bạn qua Email.')
   }
 }
 

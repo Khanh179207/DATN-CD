@@ -1,6 +1,7 @@
 package poly.edu.service;
 
 import poly.edu.entity.Notification;
+import java.time.LocalDateTime;
 
 public interface NotificationService {
 
@@ -59,6 +60,8 @@ public interface NotificationService {
     void notifyReward(Integer accountId, Integer points, Integer premiumDays, String source);
 
     void notifyPaymentStatus(Integer accountId, boolean isSuccess, String orderCode);
+
+    void notifyPremiumStatus(Integer accountId, boolean isActivated, LocalDateTime endAt);
 
     void notifyEventWinner(Integer accountId, Integer eventId, Integer rank);
 

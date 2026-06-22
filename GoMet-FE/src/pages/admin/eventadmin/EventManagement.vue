@@ -136,7 +136,6 @@
                     <option value="points">Points (Nhập riêng cho Top 1, 2, 3)</option>
                   </select>
 
-                  <!-- PREMIUM 1 MONTH -->
                   <div v-if="form.rewardType === 'premium_1m'" class="form-group mt-3">
                     <div class="reward-info-box">
                       <i class="fas fa-info-circle"></i>
@@ -144,7 +143,6 @@
                     </div>
                   </div>
 
-                  <!-- PREMIUM 1 YEAR -->
                   <div v-if="form.rewardType === 'premium_1y'" class="form-group mt-3">
                     <div class="reward-info-box">
                       <i class="fas fa-info-circle"></i>
@@ -152,7 +150,6 @@
                     </div>
                   </div>
 
-                  <!-- POINTS -->
                   <div v-if="form.rewardType === 'points'" class="form-group mt-3">
                     <label>Phần thưởng Points</label>
 
@@ -170,16 +167,24 @@
               <div class="form-column">
                 <h4 class="column-title">⏳ Thiết lập thời gian</h4>
                 <div class="form-group">
-                  <label>Bắt đầu nhận bài</label><input v-model="form.startAt" type="datetime-local"
-                    :disabled="isViewOnly" />
+                  <label>Bắt đầu nhận bài</label>
+                  <input v-model="form.startAt" type="datetime-local"
+                    :disabled="isStartAtLocked" />
+                  <small v-if="isStartAtLocked && !isViewOnly" style="color: #ea580c; font-size: 0.75rem; font-style: italic; margin-top: 6px; display: block;">
+                    * Khóa chỉnh sửa do sự kiện đã có người nộp bài hoặc bình chọn.
+                  </small>
                 </div>
                 <div class="form-group">
                   <label>Kết thúc nhận bài</label><input v-model="form.endAt" type="datetime-local"
                     :disabled="isViewOnly" />
                 </div>
                 <div class="form-group">
-                  <label>Bắt đầu bình chọn</label><input v-model="form.voteStartAt" type="datetime-local"
-                    :disabled="isViewOnly" />
+                  <label>Bắt đầu bình chọn</label>
+                  <input v-model="form.voteStartAt" type="datetime-local"
+                    :disabled="isVoteStartAtLocked" />
+                  <small v-if="isVoteStartAtLocked && !isViewOnly" style="color: #ea580c; font-size: 0.75rem; font-style: italic; margin-top: 6px; display: block;">
+                    * Khóa chỉnh sửa do sự kiện đã có người tham gia bình chọn.
+                  </small>
                 </div>
                 <div class="form-group">
                   <label>Kết thúc bình chọn</label><input v-model="form.voteEndAt" type="datetime-local"
@@ -371,6 +376,8 @@ const form = reactive({
   winner: null,
   isActive: 1,
   isForceEnded: 0,
+  postCount: 0, // Thêm trường theo dõi bài viết
+  voteCount: 0, // Thêm trường theo dõi lượt vote
 });
 
 
@@ -437,6 +444,22 @@ const isRulesLocked = computed(() => {
   const status = getStatusHelper(form);
   return status === 'active' || status === 'ended' || form.isForceEnded === 1;
 });
+
+// --- LOGIC KHÓA THỜI GIAN THEO TƯƠNG TÁC (YÊU CẦU MỚI) ---
+const isStartAtLocked = computed(() => {
+  if (isViewOnly.value) return true; // View mode luôn khóa
+  if (!isEditing.value) return false; // Tạo mới thì không khóa
+  // Khóa Bắt đầu nhận bài nếu có bài viết HOẶC có người bình chọn
+  return form.postCount > 0 || form.voteCount > 0;
+});
+
+const isVoteStartAtLocked = computed(() => {
+  if (isViewOnly.value) return true;
+  if (!isEditing.value) return false;
+  // Khóa Bắt đầu bình chọn nếu đã có người bình chọn
+  return form.voteCount > 0;
+});
+
 
 const handleFileUpload = (event) => {
   const file = event.target.files[0];
@@ -562,6 +585,8 @@ const openCreateModal = () => {
     winner: null,
     isActive: 1,
     isForceEnded: 0,
+    postCount: 0,
+    voteCount: 0,
   });
   showModal.value = true;
 };
@@ -587,6 +612,9 @@ const openEditModal = (ev) => {
     pointsTop1: parsedReward.pointsTop1,
     pointsTop2: parsedReward.pointsTop2,
     pointsTop3: parsedReward.pointsTop3,
+    // Lấy số liệu đếm để làm logic lock
+    postCount: ev.postCount || 0,
+    voteCount: ev.voteCount || ev.totalVotes || 0,
   });
   imagePreview.value = getImageUrl(ev.bannerImage);
   showModal.value = true;
@@ -611,6 +639,8 @@ const openViewModal = (ev) => {
     pointsTop1: parsedReward.pointsTop1,
     pointsTop2: parsedReward.pointsTop2,
     pointsTop3: parsedReward.pointsTop3,
+    postCount: ev.postCount || 0,
+    voteCount: ev.voteCount || ev.totalVotes || 0,
   });
   imagePreview.value = getImageUrl(ev.bannerImage);
   showModal.value = true;

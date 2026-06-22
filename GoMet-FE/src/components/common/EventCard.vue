@@ -81,10 +81,15 @@ const statusText = computed(() => {
 })
 
 const goToDetail = () => {
-  if (props.event?.id) router.push({ name: 'EventDetail', params: { id: props.event.id } })
+  if (props.event?.id) {
+    router.push({ name: 'EventDetail', params: { id: props.event.id } })
+  }
 }
 
-const handleJoin = () => console.log('Toggle join event:', props.event.id)
+const handleJoin = () => {
+  console.log('Chuyển hướng đến sự kiện:', props.event.id)
+  goToDetail()
+}
 </script>
 
 <style scoped>

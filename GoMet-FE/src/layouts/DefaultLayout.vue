@@ -62,6 +62,9 @@
     <MiniChatBox />
     <CompareFloatingBar />
     <GometAiChat ref="aiChatRef" />
+    
+    <!-- 🔥 THÊM KHUNG UPLOAD TRÔI NỔI Ở ĐÂY -->
+    <UploadWidgetModal />
 
     <button class="float-ai-btn" @click="openAiChat" title="Chat with Gomet AI">
       <div class="ai-icon-bg">
@@ -108,6 +111,9 @@ import ChatSidebar from '@/components/chat/ChatSidebar.vue'
 import TheFooter from '@/components/footer/TheFooter.vue'
 import CompareFloatingBar from '@/components/common/CompareFloatingBar.vue'
 import GometAiChat from '@/components/chat/GometAiChat.vue'
+
+// 🔥 IMPORT COMPONENT UPLOAD WIDGET MODAL
+import UploadWidgetModal from '@/components/modals/UploadWidgetModal.vue'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -204,10 +210,10 @@ watch(() => authStore.isAuthenticated, (val) => {
 })
 
 const openAiChat = () => { 
-  const isPremiumUser = authStore.user?.isPremium || authStore.user?.IsPremium || authStore.user?.role === 'PREMIUM' || authStore.user?.role === 'ADMIN';
+  const isPremiumUser = authStore.user?.isPremium || authStore.user?.isAdmin;
   if (!isPremiumUser) { 
     showPremium.value = true; 
-    toast.warn("Gomet Assistant dành cho Premium sếp nhé!"); 
+    toast.warn("Gomet Assistant dành cho Premium bạn nhé!"); 
     return; 
   }
   if (aiChatRef.value) aiChatRef.value.openChat();

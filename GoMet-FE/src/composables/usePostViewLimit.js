@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
-import api from '@/services/api' // 🔥 Import api để lấy cấu hình từ Backend
+import api from '@/services/api' 
 
 // Biến global để cache trạng thái ngày lễ cho toàn ứng dụng trong 1 phiên làm việc
 const isHolidayEventActive = ref(null) 
@@ -8,44 +8,28 @@ const isHolidayEventActive = ref(null)
 export function usePostViewLimit() {
   const authStore = useAuthStore()
 
-  // 1. Hàm kiểm tra chế độ Ngày lễ từ Backend
+  // 1. Hàm kiểm tra chế độ Ngày lễ từ Backend (ĐÃ TỐI ƯU)
   async function checkGlobalHolidayStatus() {
     // Nếu đã check rồi thì trả về kết quả cũ luôn cho nhanh
     if (isHolidayEventActive.value !== null) return isHolidayEventActive.value
     
     try {
-      const res = await api.get('/api/system-config')
-      const configs = Array.isArray(res.data) ? res.data : (res.data?.data || [])
+      // 🔥 GỌI TRỰC TIẾP API CHUYÊN BIỆT CHÚNG TA VỪA TẠO Ở BACKEND
+      const res = await api.get('/api/system-config/holiday-status')
       
-      const getVal = (key) => configs.find(c => (c.configKey || c.ConfigKey) === key)?.configValue || configs.find(c => (c.configKey || c.ConfigKey) === key)?.ConfigValue
+      // Backend đã tính toán hết logic công tắc & thời gian, chỉ cần lấy kết quả
+      isHolidayEventActive.value = res.data.isHolidayActive === true;
       
-      const manualToggle = getVal('FREE_ACCESS_EVENT') === 'TRUE'
-      const startTimeStr = getVal('HOLIDAY_START')
-      const endTimeStr = getVal('HOLIDAY_END')
-
-      let isTimeMatched = false
-      if (startTimeStr && endTimeStr) {
-        const now = new Date()
-        const startTime = new Date(startTimeStr)
-        const endTime = new Date(endTimeStr)
-        if (!isNaN(startTime) && !isNaN(endTime)) {
-          if (now >= startTime && now <= endTime) {
-            isTimeMatched = true
-          }
-        }
-      }
-      
-      isHolidayEventActive.value = manualToggle || isTimeMatched
       return isHolidayEventActive.value
     } catch (e) {
-      console.warn("Lỗi check ngày lễ, dùng mặc định FALSE");
+      console.warn("Lỗi check ngày lễ từ server, dùng mặc định FALSE", e);
+      isHolidayEventActive.value = false;
       return false
     }
   }
 
-  // 2. Số lượt xem còn lại (Đã xử lý hiển thị khi vào ngày lễ)
+  // 2. Số lượt xem còn lại 
   const remainingViews = computed(() => {
-    // Nếu đang trong ngày lễ, trả về một con số lớn hoặc xử lý ở UI
     if (isHolidayEventActive.value === true) return 99 
     
     const val = authStore.user?.remainingPostViews
@@ -57,21 +41,21 @@ export function usePostViewLimit() {
   const isAdmin = computed(() => authStore.user?.role === 'admin')
 
   const canViewPost = computed(() => {
-    if (isHolidayEventActive.value === true) return true // Ngày lễ: Auto TRUE
+    if (isHolidayEventActive.value === true) return true 
     if (isAdmin.value || isPremium.value) return true
     return remainingViews.value > 0
   })
 
-  // 3. Hàm kiểm tra và trừ lượt xem (Đã thêm logic Ngày lễ)
+  // 3. Hàm kiểm tra và trừ lượt xem
   async function checkAndChargeView(postId, authorId) {
-    // 🔥 BƯỚC 1: Kiểm tra Ngày lễ trước tiên
+    // Kiểm tra Ngày lễ trước tiên
     const holidayStatus = await checkGlobalHolidayStatus()
     if (holidayStatus === true) {
       console.log("🎊 Sự kiện đang diễn ra: Mọi bài viết đều MIỄN PHÍ!");
-      return true // Cho qua luôn, không chạy mớ logic trừ điểm ở dưới
+      return true 
     }
 
-    // BƯỚC 2: Logic cũ (Admin, VIP, Chính mình...)
+    // Logic bình thường (Admin, VIP, Chính mình...)
     if (isAdmin.value || isPremium.value) return true 
 
     const user = authStore.user
@@ -127,7 +111,7 @@ export function usePostViewLimit() {
     isAdmin,
     canViewPost,
     checkAndChargeView,
-    isHolidayEventActive, // Trả ra thêm biến này để UI dùng
-    checkGlobalHolidayStatus // 🔥 Xuất hàm này để UserMenu gọi lúc load trang
+    isHolidayEventActive, 
+    checkGlobalHolidayStatus 
   }
 }

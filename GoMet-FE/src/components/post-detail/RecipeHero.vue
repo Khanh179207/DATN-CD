@@ -480,8 +480,8 @@ button:disabled {
   
   .avatar-stack {
     display: flex; flex-direction: row-reverse; 
-    img { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #fff; margin-left: -10px; object-fit: cover; }
-    .more-avt { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #fff; margin-left: -10px; background: var(--color-neutral-100, #f1f5f9); color: var(--color-neutral-600, #475569); font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; z-index: 1; }
+    img { width: 28px; height: 28px; min-width: 28px; flex-shrink: 0; border-radius: 50%; border: 2px solid #fff; margin-left: -10px; object-fit: cover; }
+    .more-avt { width: 28px; height: 28px; min-width: 28px; flex-shrink: 0; border-radius: 50%; border: 2px solid #fff; margin-left: -10px; background: var(--color-neutral-100, #f1f5f9); color: var(--color-neutral-600, #475569); font-size: 10px; font-weight: 800; display: flex; align-items: center; justify-content: center; z-index: 1; }
   }
   .liked-text { font-size: 0.85rem; color: var(--color-neutral-500, #64748b); b { color: var(--color-neutral-800, #1e293b); } }
 }

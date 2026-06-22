@@ -214,8 +214,17 @@ $surface-glass: rgba(255, 255, 255, 0.02);
 $border-glass: rgba(255, 255, 255, 0.05);
 
 .gomet-planner-pro {
-  width: 100%; height: 100vh; padding-top: 80px; overflow: hidden; position: relative;
-  background-color: $bg-deep; color: #F4F0EA; font-family: 'Mulish', sans-serif;
+  width: 100%; 
+  height: 100vh; 
+  box-sizing: border-box; /* 🔥 ĐÃ FIX: Ép padding không làm tăng chiều cao tổng */
+  padding-top: 80px; 
+  overflow: hidden; 
+  position: relative;
+  background-color: $bg-deep; 
+  color: #F4F0EA; 
+  font-family: 'Mulish', sans-serif;
+  display: flex; 
+  flex-direction: column; 
 }
 
 /* 1. BACKGROUND LAYER */
@@ -232,22 +241,25 @@ $border-glass: rgba(255, 255, 255, 0.05);
 
 /* 2. WRAPPER & HEADER KÍNH MỜ */
 .planner-wrapper {
-  max-width: 1800px; height: calc(100vh - 80px); margin: 0 auto; padding: 20px 40px 40px; position: relative; z-index: 10;
+  max-width: 1800px; width: 100%; flex: 1; margin: 0 auto; padding: 20px 40px; position: relative; z-index: 10;
+  display: flex; flex-direction: column; min-height: 0; 
 }
-.planner-content { height: 100%; display: flex; flex-direction: column; gap: 25px; }
+.planner-content { flex: 1; display: flex; flex-direction: column; gap: 20px; min-height: 0; }
 
 .planner-header {
   display: flex; justify-content: space-between; align-items: flex-end;
   background: linear-gradient(135deg, rgba(20, 20, 22, 0.6), rgba(10, 10, 12, 0.8)); 
-  padding: 25px 40px; border-radius: 24px; border: 1px solid $border-glass; 
+  padding: 20px 40px; /* Thu gọn padding header */
+  border-radius: 24px; border: 1px solid $border-glass; 
   box-shadow: 0 15px 35px rgba(0,0,0,0.5); backdrop-filter: blur(20px);
+  flex-shrink: 0; /* Không cho header bị bóp méo */
 }
 
 .brand-tag { 
   display: inline-flex; align-items: center; gap: 8px; font-size: 0.75rem; font-weight: 800; color: $gold; 
-  letter-spacing: 3px; margin-bottom: 12px; text-transform: uppercase;
+  letter-spacing: 3px; margin-bottom: 8px; text-transform: uppercase;
 }
-.main-title { font-family: 'Playfair Display', serif; font-size: 3.2rem; font-weight: 900; color: #FFF; margin: 0; line-height: 1; letter-spacing: -1px; }
+.main-title { font-family: 'Playfair Display', serif; font-size: 2.8rem; font-weight: 900; color: #FFF; margin: 0; line-height: 1; letter-spacing: -1px; }
 .text-serif { font-style: italic; color: $gold; font-weight: 400;}
 
 /* Toggle Tuần (Apple Style) */
@@ -268,18 +280,22 @@ $border-glass: rgba(255, 255, 255, 0.05);
 /* 3. BENTO GRID LỊCH TRÌNH 7 NGÀY */
 .grid-wrapper { 
   flex: 1; overflow-x: auto; overflow-y: hidden;
-  padding-bottom: 20px; 
+  padding-bottom: 10px; min-height: 0; 
 }
 .blueprint-grid { 
-  display: grid; grid-template-columns: repeat(7, 1fr); gap: 20px; height: 100%; min-width: 1400px; 
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 15px; /* Giảm gap giữa các ngày */
+  height: 100%; min-width: 1400px; 
 }
 
 /* Cột Ngày */
 .day-column { 
-  display: flex; flex-direction: column; gap: 20px;
+  display: flex; flex-direction: column; gap: 15px; 
   background: $surface-glass; border: 1px solid $border-glass;
-  border-radius: 24px; padding: 25px 20px; backdrop-filter: blur(10px);
+  border-radius: 24px; padding: 20px 15px; /* Giảm padding */
+  backdrop-filter: blur(10px);
   transition: 0.4s ease;
+  min-height: 0; 
+  height: 100%; /* Ép chiếm đủ 100% chiều cao grid */
   
   &:hover { border-color: rgba($gold, 0.25); background: rgba(255, 255, 255, 0.04); transform: translateY(-3px);}
   &.is-today { 
@@ -291,34 +307,43 @@ $border-glass: rgba(255, 255, 255, 0.05);
 /* 🌟 TIÊU ĐỀ CỘT CĂN GIỮA TUYỆT ĐỐI */
 .col-header { 
   display: flex; flex-direction: column; justify-content: center; align-items: center; 
-  padding-bottom: 20px; border-bottom: 1px dashed rgba(255, 255, 255, 0.1); text-align: center;
+  padding-bottom: 15px; border-bottom: 1px dashed rgba(255, 255, 255, 0.1); text-align: center;
+  flex-shrink: 0;
 }
 
 .today-badge { 
   background: transparent; color: $gold; padding: 2px 12px; border-radius: 12px; 
   font-size: 0.65rem; font-weight: 800; letter-spacing: 2px; border: 1px solid rgba($gold, 0.4);
-  margin-bottom: 12px; box-shadow: 0 0 10px rgba($gold, 0.1);
+  margin-bottom: 10px; box-shadow: 0 0 10px rgba($gold, 0.1);
 }
 
 .day-indicator { display: flex; flex-direction: column; align-items: center; gap: 5px; }
 .day-name { font-size: 0.8rem; font-weight: 800; color: #a1a1aa; letter-spacing: 2px; text-transform: uppercase; }
-.day-date { font-family: 'Playfair Display', serif; font-size: 3.5rem; font-weight: 900; color: #FFF; line-height: 1; text-shadow: 0 5px 15px rgba(0,0,0,0.5);}
-
+.day-date { font-family: 'Playfair Display', serif; font-size: 3rem; font-weight: 900; color: #FFF; line-height: 1; text-shadow: 0 5px 15px rgba(0,0,0,0.5);}
 .is-today .day-name { color: $gold; }
 
-/* Danh sách Slot Bữa ăn */
-.slots-container { flex: 1; display: flex; flex-direction: column; gap: 25px; overflow-y: auto; padding-right: 5px; }
-.slots-container::-webkit-scrollbar { width: 4px; }
-.slots-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+/* 🔥 ĐÃ FIX LỖI SCROLLBAR XẤU XÍ */
+.slots-container { 
+  flex: 1; display: flex; flex-direction: column; gap: 15px; 
+  overflow-y: auto; padding-bottom: 10px; min-height: 0;
+  
+  /* Ẩn thanh cuộn dọc nhưng VẪN CHO PHÉP cuộn bằng chuột */
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+  &::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+  }
+}
 
-.meal-slot { display: flex; flex-direction: column; gap: 12px; }
+.meal-slot { display: flex; flex-direction: column; gap: 10px; }
 .slot-header { display: flex; align-items: center; gap: 10px; }
 .slot-label { font-size: 0.75rem; font-weight: 800; color: $gold; text-transform: uppercase; letter-spacing: 2px; }
 .slot-line { flex: 1; height: 1px; background: linear-gradient(90deg, rgba($gold, 0.3), transparent); }
 
 /* Thẻ Món Ăn Kính Mờ */
 .dish-card { 
-  position: relative; height: 160px; border-radius: 20px; overflow: hidden; cursor: pointer; 
+  position: relative; height: 140px; /* Thu gọn thẻ món ăn một chút */
+  border-radius: 16px; overflow: hidden; cursor: pointer; 
   border: 1px solid $border-glass; transition: 0.4s cubic-bezier(0.19, 1, 0.22, 1); 
   background: #000; display: flex; flex-direction: column; justify-content: flex-end;
   
@@ -339,38 +364,38 @@ $border-glass: rgba(255, 255, 255, 0.05);
 .dish-bg { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.6); transition: 0.7s cubic-bezier(0.19, 1, 0.22, 1); }
 .dish-overlay { position: absolute; inset: 0; background: linear-gradient(0deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.3) 60%, transparent 100%); }
 
-.dish-content { position: relative; z-index: 2; padding: 20px; }
-.dish-cat { font-size: 0.7rem; font-weight: 800; color: $gold; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; display: block; opacity: 0.9;}
-.dish-name { font-size: 1.15rem; font-weight: 700; color: #FFF; margin: 0; line-height: 1.3; font-family: 'Playfair Display', serif;}
+.dish-content { position: relative; z-index: 2; padding: 15px; }
+.dish-cat { font-size: 0.7rem; font-weight: 800; color: $gold; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; display: block; opacity: 0.9;}
+.dish-name { font-size: 1.05rem; font-weight: 700; color: #FFF; margin: 0; line-height: 1.3; font-family: 'Playfair Display', serif;}
 
 /* Nút Action trên Thẻ */
 .btn-action { 
-  position: absolute; top: 12px; width: 36px; height: 36px; border-radius: 50%; 
+  position: absolute; top: 10px; width: 32px; height: 32px; border-radius: 50%; 
   display: flex; align-items: center; justify-content: center; cursor: pointer; 
   transition: 0.3s; border: none; z-index: 10; backdrop-filter: blur(10px);
 }
 .btn-check { 
-  left: 12px; background: rgba(0,0,0,0.5); color: #fff; border: 1px solid rgba(255,255,255,0.2); 
-  .circle-outline { width: 16px; height: 16px; border: 2px solid #fff; border-radius: 50%; }
+  left: 10px; background: rgba(0,0,0,0.5); color: #fff; border: 1px solid rgba(255,255,255,0.2); 
+  .circle-outline { width: 14px; height: 14px; border: 2px solid #fff; border-radius: 50%; }
 }
 .is-completed .btn-check { background: #22c55e; border-color: #22c55e; color: #fff; }
 
 .btn-remove { 
-  right: 12px; background: rgba(239, 68, 68, 0.8); color: #FFF; border: 1px solid #ef4444;
+  right: 10px; background: rgba(239, 68, 68, 0.8); color: #FFF; border: 1px solid #ef4444;
   opacity: 0; transform: scale(0.8); 
   &:hover { background: #ef4444; transform: scale(1.1) !important;}
 }
 
-/* 🌟 Nút Thêm Món (Thiết kế mới tinh tế hơn) */
+/* 🌟 Nút Thêm Món */
 .btn-add-slot { 
-  width: 100%; height: 90px; 
+  width: 100%; height: 80px; 
   border: 1px dashed rgba(255, 255, 255, 0.2); 
   background: rgba(255, 255, 255, 0.015); 
-  border-radius: 20px; cursor: pointer; transition: 0.4s ease; color: #a1a1aa; 
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  border-radius: 16px; cursor: pointer; transition: 0.4s ease; color: #a1a1aa; 
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
   
-  i { font-size: 1.2rem; transition: 0.4s; color: rgba(255,255,255,0.4); }
-  span { font-size: 0.8rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+  i { font-size: 1.1rem; transition: 0.4s; color: rgba(255,255,255,0.4); }
+  span { font-size: 0.75rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
   
   &:hover { 
     background: rgba($gold, 0.05); border-color: rgba($gold, 0.4); color: $gold; 
@@ -383,38 +408,31 @@ $border-glass: rgba(255, 255, 255, 0.05);
    🔥 HỆ THỐNG RESPONSIVE
 ======================================================= */
 @media (max-width: 1440px) {
-  .planner-wrapper { padding: 20px; }
   .blueprint-grid { min-width: 1200px; }
-  .main-title { font-size: 2.8rem; }
-  .day-date { font-size: 3rem; }
+  .day-date { font-size: 2.5rem; }
 }
 
 @media (max-width: 1024px) {
-  .gomet-planner-pro { height: auto; min-height: 100vh; overflow-y: auto; }
+  .gomet-planner-pro { height: auto; min-height: 100vh; overflow-y: auto; padding-bottom: 100px; }
   .planner-wrapper { height: auto; }
-  
-  .planner-header { flex-direction: column; align-items: flex-start; gap: 25px; }
+  .planner-header { flex-direction: column; align-items: flex-start; gap: 20px; }
   .week-selector { width: 100%; justify-content: space-between; }
   .week-info { flex: 1; min-width: auto; }
 }
 
 @media (max-width: 768px) {
   .blueprint-grid { min-width: 1500px; gap: 15px; } 
-  .day-column { padding: 20px 15px; border-radius: 20px;}
-  .day-date { font-size: 2.8rem; }
-  .dish-card { height: 140px; }
+  .dish-card { height: 130px; }
 }
 
 @media (max-width: 480px) {
-  .gomet-planner-pro { padding-top: 60px; }
-  .planner-header { padding: 20px; border-radius: 20px; }
-  
+  .gomet-planner-pro { padding-top: 60px; padding-bottom: 140px; }
+  .planner-header { padding: 15px; border-radius: 20px; }
   .main-title { font-size: 2rem; }
   .btn-arrow { width: 38px; height: 38px; font-size: 0.8rem; }
   .week-display { font-size: 0.95rem; }
-  
   .dish-name { font-size: 1rem; }
-  .btn-add-slot { height: 80px; }
+  .btn-add-slot { height: 70px; }
 }
 
 /* Thanh cuộn ngang thanh lịch */

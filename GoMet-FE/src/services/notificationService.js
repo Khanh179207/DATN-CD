@@ -9,7 +9,23 @@ export const resolveNotificationLink = (notification = {}) => {
     return null
   }
 
-  return notification.link || null
+  const rawLink = notification.link ? String(notification.link).trim() : ''
+  if (!rawLink) {
+    return null
+  }
+
+  // Giữ nguyên link admin nhập; nếu dữ liệu cũ lỡ lưu kèm origin local thì bóc origin ra.
+  if (rawLink.startsWith('http://localhost:5173') || rawLink.startsWith('https://localhost:5173')) {
+    const withoutOrigin = rawLink.replace(/^https?:\/\/localhost:5173/i, '')
+    return withoutOrigin || '/'
+  }
+
+  if (typeof window !== 'undefined' && window.location?.origin && rawLink.startsWith(window.location.origin)) {
+    const withoutCurrentOrigin = rawLink.slice(window.location.origin.length)
+    return withoutCurrentOrigin || '/'
+  }
+
+  return rawLink
 }
 
 export const getNotificationId = (notification = {}) =>
@@ -26,6 +42,10 @@ export const markNotificationRead = (notificationID) =>
 /** Mark ALL notifications as read for a user. */
 export const markAllNotificationsRead = (accountID) =>
   api.put(`/api/notifications/${accountID}/read-all`).then(r => r.data)
+
+/** Delete all read notifications for a user. */
+export const deleteReadNotifications = (accountID) =>
+  api.delete(`/api/notifications/${accountID}/read`).then(r => r.data)
 
 /** Delete a specific notification. */
 export const deleteNotification = (notificationID) =>

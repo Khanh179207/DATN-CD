@@ -33,23 +33,38 @@
             <div class="user-email-pro">{{ authStore.user?.email || 'Chưa cập nhật email' }}</div>
             <div class="user-id-badge">ID: {{ authStore.user?.id || authStore.user?.accountID }}</div>
             
-            <div v-if="!isPremiumUser && !isAdminUser" class="daily-view-limit-info">
-              <span class="limit-label">Lượt xem hôm nay:</span>
-              <span class="limit-count" :class="{ 'text-danger': remainingViews === 0 }">{{ remainingViews }}/{{ maxViews }}</span>
+            <div v-if="!isPremiumUser && !isAdminUser" class="daily-view-limit-info" :class="{ 'is-holiday': isHolidayEventActive }">
               
-              <div class="demo-actions">
-                <button @click.stop="fetchViewLimits" class="btn-refresh-views" title="Làm mới">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="23 4 23 10 17 10"></polyline>
-                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+<!-- TRƯỜNG HỢP 1: ĐANG CÓ SỰ KIỆN LỄ HỘI -->
+              <template v-if="isHolidayEventActive">
+                <div class="badge-icon">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                   </svg>
-                </button>
-                <button @click.stop="handleResetDemo" class="btn-reset-demo" title="Reset Lượt Xem (Demo)">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
-                  </svg>
-                </button>
-              </div>
+                </div>
+                <span class="badge-text">Sự kiện: Không giới hạn!</span>
+                <div class="sparkle-effect"></div>
+              </template>
+              <!-- TRƯỜNG HỢP 2: NGÀY BÌNH THƯỜNG (Bật bộ đếm lượt xem) -->
+              <template v-else>
+                <span class="limit-label">Lượt xem hôm nay:</span>
+                <span class="limit-count" :class="{ 'text-danger': remainingViews === 0 }">{{ remainingViews }}/{{ maxViews }}</span>
+                
+                <div class="demo-actions">
+                  <button @click.stop="fetchViewLimits" class="btn-refresh-views" title="Làm mới">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="23 4 23 10 17 10"></polyline>
+                      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                    </svg>
+                  </button>
+                  <button @click.stop="handleResetDemo" class="btn-reset-demo" title="Reset Lượt Xem (Demo)">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                    </svg>
+                  </button>
+                </div>
+              </template>
+
             </div>
           </div>
         </div>
@@ -303,6 +318,39 @@ const handleLogout = async () => {
       margin-top: 8px; padding: 4px 8px; background: rgba(234, 88, 12, 0.1);
       border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;
       border: 1px solid rgba(234, 88, 12, 0.2); max-width: 100%; overflow: hidden;
+
+      &.is-holiday {
+        background: linear-gradient(135deg, #FF4500, #FF8C00);
+        color: white;
+        border-color: rgba(255, 255, 255, 0.4);
+        box-shadow: 0 2px 8px rgba(255, 69, 0, 0.2);
+        
+        .badge-icon {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          animation: pulse-icon 2s infinite ease-in-out;
+        }
+
+        .badge-text {
+          font-size: 10px;
+          font-weight: 700;
+          position: relative;
+          z-index: 2;
+        }
+        
+        .sparkle-effect {
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 50%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+          transform: skewX(-20deg);
+          animation: shine-badge 3s infinite;
+        }
+      }
+
       .limit-label { font-size: 10px; color: #64748b; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       .limit-count { font-size: 11px; color: #EA580C; font-weight: 800; white-space: nowrap; flex-shrink: 0; }
       .limit-count.text-pink { color: #db2777; font-size: 12px; }
@@ -430,7 +478,60 @@ const handleLogout = async () => {
     .daily-view-limit-info .limit-count { font-size: 10px; }
   }
 }
+/* HIỆU ỨNG CHO HUY HIỆU LỄ HỘI */
+    .holiday-badge-pro {
+      margin-top: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 100px;
+      background: linear-gradient(135deg, #FF4500, #FF8C00); /* Chuyển màu rực rỡ */
+      color: white;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 10px rgba(255, 69, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      
+      .badge-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: pulse-icon 2s infinite ease-in-out;
+      }
 
+      .badge-text {
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        position: relative;
+        z-index: 2;
+      }
+
+      /* Hiệu ứng tia sáng xẹt ngang */
+      .sparkle-effect {
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 50%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+        transform: skewX(-20deg);
+        animation: shine-badge 3s infinite;
+      }
+    }
+
+    @keyframes pulse-icon {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+    }
+
+    @keyframes shine-badge {
+      0% { left: -100%; }
+      20% { left: 200%; }
+      100% { left: 200%; }
+    }
 /* --- DARK MODE THEME --- */
 :deep(.theme-dark) {
   .luxury-compact-dropdown { background: #0f172a; border-color: rgba(255,255,255,0.1); }

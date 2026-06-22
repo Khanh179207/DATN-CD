@@ -15,7 +15,7 @@ import poly.edu.service.NotificationService;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime; // 🔥 Đã đổi sang LocalDateTime
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -98,7 +98,6 @@ public class PostController {
             @RequestParam(required = false) Integer accountId) {
 
         return postDAO.findById(id).map(post -> {
-            // 🔥 ĐÃ FIX: Lấy thông tin người xem (nếu có) trước để kiểm tra quyền Admin
             Account currentAccount = null;
             if (accountId != null) {
                 currentAccount = accountDAO.findById(accountId).orElse(null);
@@ -106,12 +105,10 @@ public class PostController {
 
             boolean isViewerAdmin = currentAccount != null && currentAccount.getIsAdmin() == 1;
 
-            // 🛡️ BẢO VỆ RIÊNG TƯ: Nếu tác giả đã xóa tài khoản thì bài viết cũng phải ẩn (TRỪ KHI ADMIN ĐANG XEM)
             if (!isViewerAdmin && post.getAccount() != null && post.getAccount().getIsActive() != 1) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Bài viết không tồn tại hoặc đã bị ẩn"));
             }
 
-            // Nếu có gửi accountId mà không tìm thấy account và người đó không phải là Admin thì báo lỗi
             if (accountId != null && currentAccount == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Tài khoản không tồn tại"));
             }
@@ -120,18 +117,45 @@ public class PostController {
             boolean isPremium = currentAccount != null && currentAccount.getIsPremium() == 1;
 
             if (!isViewerAdmin && !isAuthor && !isPremium) {
-                // Logic giới hạn lượt xem chỉ áp dụng cho User hoặc Guest thường (KHÔNG ÁP DỤNG CHO ADMIN)
-                if (currentAccount != null) {
+
+                // 🔥 SỬA LỖI LOGIC: NÚT BẬT TẮT LÀ CÔNG TẮC TỔNG
+                boolean isHolidayActive = false;
+                try {
+                    String freeAccess = systemConfigDAO.findById("FREE_ACCESS_EVENT")
+                            .map(c -> c.getConfigValue()).orElse("FALSE");
+
+                    if ("TRUE".equalsIgnoreCase(freeAccess)) {
+                        String startStr = systemConfigDAO.findById("HOLIDAY_START")
+                                .map(c -> c.getConfigValue()).orElse(null);
+                        String endStr = systemConfigDAO.findById("HOLIDAY_END")
+                                .map(c -> c.getConfigValue()).orElse(null);
+
+                        if (startStr != null && endStr != null && !startStr.isBlank() && !endStr.isBlank()) {
+                            LocalDateTime startTime = LocalDateTime.parse(startStr);
+                            LocalDateTime endTime = LocalDateTime.parse(endStr);
+                            LocalDateTime now = LocalDateTime.now();
+
+                            if (!now.isBefore(startTime) && !now.isAfter(endTime)) {
+                                isHolidayActive = true;
+                            }
+                        } else {
+                            isHolidayActive = true; // Bật nhưng không set lịch -> auto kích hoạt
+                        }
+                    }
+                } catch (Exception e) {
+                    log.error("Lỗi kiểm tra chế độ lễ hội: {}", e.getMessage());
+                }
+
+                if (!isHolidayActive && currentAccount != null) {
                     LocalDateTime startOfDay = LocalDateTime.now().with(java.time.LocalTime.MIN);
                     LocalDateTime endOfDay = LocalDateTime.now().with(java.time.LocalTime.MAX);
                     long viewsToday = historyDAO.countDistinctPostsViewedToday(accountId, startOfDay, endOfDay);
-                    
-                    // 🔥 LẤY GIỚI HẠN TỪ CẤU HÌNH HỆ THỐNG (Mặc định là 3 nếu không tìm thấy)
-                    int viewLimit = 3;
+
+                    int viewLimit = 10;
                     try {
                         viewLimit = systemConfigDAO.findById("DEFAULT_FREE_VIEWS")
                                 .map(c -> Integer.parseInt(c.getConfigValue()))
-                                .orElse(3);
+                                .orElse(10);
                     } catch (Exception e) {
                         log.error("Lỗi lấy cấu hình DEFAULT_FREE_VIEWS: {}", e.getMessage());
                     }
@@ -145,13 +169,11 @@ public class PostController {
                 }
             }
 
-            // Nếu hợp lệ -> Ghi lịch sử luôn ở đây! (CHỈ GHI NẾU CÓ TÀI KHOẢN THỰC)
             if (!isAuthor && currentAccount != null) {
                 List<History> existing = historyDAO.findByAccount_AccountIDAndPost_PostID(accountId, id);
                 History history;
                 if (!existing.isEmpty()) {
                     history = existing.get(0);
-                    // 🔥 Xóa các bản ghi thừa nếu có (do bug cũ)
                     if (existing.size() > 1) {
                         for (int i = 1; i < existing.size(); i++) {
                             historyDAO.delete(existing.get(i));
@@ -179,7 +201,7 @@ public class PostController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Bài viết không tồn tại hoặc đã bị ẩn"));
             }
             if (post.getIsActive() != 1 || post.getIsApproved() != 1) {
-                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Bài viết không khả dụng"));
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Bài viết không khả dụng"));
             }
             return ResponseEntity.ok(toPublicDTO(post, accountId));
         }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Bài viết không tồn tại")));
@@ -220,7 +242,6 @@ public class PostController {
         } else if ("rating".equals(sort)) {
             result.sort(Comparator.comparingDouble((PublicPostDTO p) -> p.getAvgRating() != null ? p.getAvgRating() : 0).reversed());
         } else {
-            // 🔥 Sắp xếp theo LocalDateTime (Mới nhất lên đầu)
             result.sort((p1, p2) -> {
                 if (p1.getCreatedAt() == null || p2.getCreatedAt() == null) return 0;
                 return p2.getCreatedAt().compareTo(p1.getCreatedAt());
@@ -248,7 +269,6 @@ public class PostController {
     public ResponseEntity<List<PublicPostDTO>> getByUser(
             @PathVariable Integer accountID,
             @RequestParam(required = false) Integer currentUserId) {
-        // 🔥 TRẢ VỀ TẤT CẢ: Để Frontend tự lọc (Sếp yêu cầu bài ẩn vẫn phải hiện cho chủ sở hữu)
         List<Post> posts = postDAO.findByAccount_AccountIDOrderByCreatedAtDesc(accountID);
         return ResponseEntity.ok(posts.stream().map(p -> toPublicDTO(p, currentUserId)).collect(Collectors.toList()));
     }
@@ -284,9 +304,9 @@ public class PostController {
         dto.setLevel(p.getLevel());
         dto.setCookingTime(p.getCookingTime());
         dto.setViews(p.getViews());
-        dto.setCreatedAt(p.getCreatedAt()); 
-        dto.setIsActive(p.getIsActive());   // 🔥 TRẠNG THÁI ẨN/HIỆN
-        dto.setIsApproved(p.getIsApproved()); // 🔥 TRẠNG THÁI DUYỆT
+        dto.setCreatedAt(p.getCreatedAt());
+        dto.setIsActive(p.getIsActive());
+        dto.setIsApproved(p.getIsApproved());
         dto.setStepCount(p.getCookingSteps() != null ? p.getCookingSteps().size() : 0);
 
         if (p.getAccount() != null) {
@@ -300,7 +320,6 @@ public class PostController {
             dto.setCategoryName(p.getCategory().getCategoryName());
         }
 
-        // --- Rating Logic ---
         List<Comment> ratedComments = p.getComments() != null ?
                 p.getComments().stream()
                         .filter(c -> c.getRating() != null && c.getRating() > 0)
@@ -344,7 +363,7 @@ public class PostController {
         dto.setViews(p.getViews());
         dto.setIsActive(p.getIsActive());
         dto.setIsApproved(p.getIsApproved());
-        dto.setCreatedAt(p.getCreatedAt()); // 🔥 Sẽ tự map LocalDateTime
+        dto.setCreatedAt(p.getCreatedAt());
 
         if (p.getAccount() != null) {
             Account author = p.getAccount();
@@ -369,7 +388,6 @@ public class PostController {
             dto.setEventName(p.getEvent().getEventName());
         }
 
-        // --- Rating Logic ---
         List<Comment> ratedComments = p.getComments() != null ?
                 p.getComments().stream()
                         .filter(c -> c.getRating() != null && c.getRating() > 0)
@@ -433,13 +451,10 @@ public class PostController {
     @PostMapping
     public ResponseEntity<?> createPost(@RequestBody PostDTO postDTO) {
         try {
-            // 🔥 BƯỚC 1: Gọi tầng Service xử lý (Lọc Từ Cấm, Chống Spam, Auto Approve)
             PostDTO createdPost = postService.createPost(postDTO);
 
-            // 🔥 BƯỚC 2: Nếu bài viết rơi vào diện Chờ Duyệt (isApproved = 0), bắn thông báo Admin
             if (createdPost.getIsApproved() != null && createdPost.getIsApproved() == 0) {
                 try {
-                    // Lấy thẳng username từ Database cho chắc chắn
                     Account account = accountDAO.findById(postDTO.getAccountID()).orElse(null);
                     String userUsername = (account != null) ? account.getUsername() : "Unknown User";
                     notificationService.notifyAdminPostPendingApproval(userUsername, createdPost.getPostID());
@@ -448,26 +463,21 @@ public class PostController {
                 }
             }
 
-            // 🔥 BƯỚC 3: Trả kết quả về Frontend
             return ResponseEntity.ok(createdPost);
 
         } catch (RuntimeException e) {
-            // 🛡️ BẮT LỖI TỪ CẤM / SPAM Ở ĐÂY
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of("message", "Lỗi server: " + e.getMessage()));
         }
     }
 
-    // === API BẢNG XẾP HẠNG MÓN ĂN (TOP DISHES) ===
     @GetMapping("/trending")
     public ResponseEntity<?> getTrending(
             @RequestParam(defaultValue = "month") String timeframe,
             @RequestParam(defaultValue = "10") int limit) {
         try {
-            // Gọi Service - lúc này Service đã trả về Map chứa đầy đủ: id, title, image, pts...
             List<Map<String, Object>> result = postService.getLeaderboard(timeframe, limit);
-
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
@@ -476,38 +486,31 @@ public class PostController {
 
     @GetMapping("/top-comments-batch")
     public ResponseEntity<?> getTopCommentsBatch(@RequestParam List<Integer> postIds) {
-        // Nếu không truyền ID nào thì trả về mảng rỗng luôn cho an toàn
         if (postIds == null || postIds.isEmpty()) {
             return ResponseEntity.ok(Collections.emptyMap());
         }
 
         List<Comment> topComments = commentDAO.findTopCommentsByPostIds(postIds);
-
-        // Tạo một Map để map PostID -> Dữ liệu Top Comment
         Map<Integer, Object> resultMap = new HashMap<>();
 
         for (Comment cmt : topComments) {
             Map<String, Object> dto = new HashMap<>();
 
-            // Xử lý cắt chuỗi
             String content = cmt.getContent();
             if (content.length() > 75) {
                 content = content.substring(0, 72) + "...";
             }
             dto.put("content", content);
 
-            // Xử lý Tác giả
             String author = cmt.getAccount().getUsername();
             dto.put("author", author);
 
-            // Xử lý Avatar
             String avatar = cmt.getAccount().getAvatar();
             if (avatar == null || avatar.isEmpty()) {
                 avatar = "https://ui-avatars.com/api/?name=" + URLEncoder.encode(author, StandardCharsets.UTF_8) + "&background=EA580C&color=fff";
             }
             dto.put("avatar", avatar);
 
-            // Gắn vào Map với Key là PostID (Sửa getPost() thành cách gọi tương ứng trong Entity của sếp nếu cần)
             resultMap.put(cmt.getPost().getPostID(), dto);
         }
 

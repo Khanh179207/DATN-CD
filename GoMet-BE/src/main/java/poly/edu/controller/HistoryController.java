@@ -3,11 +3,12 @@ package poly.edu.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize; // 🔥 IMPORT THẺ BẢO VỆ
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import poly.edu.dao.AccountDAO;
 import poly.edu.dao.HistoryDAO;
 import poly.edu.dao.PostDAO;
+import poly.edu.dao.SystemConfigDAO;
 import poly.edu.dto.PublicPostDTO;
 import poly.edu.entity.Account;
 import poly.edu.entity.History;
@@ -29,13 +30,14 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/history")
 @RequiredArgsConstructor
-@PreAuthorize("isAuthenticated()") // 🔥 CHỐT CHẶN VÀNG: Toàn bộ Lịch sử đều cần đăng nhập
+@PreAuthorize("isAuthenticated()")
 public class HistoryController {
 
     private final HistoryDAO    historyDAO;
     private final AccountDAO    accountDAO;
     private final PostDAO       postDAO;
     private final PostController postController;
+    private final SystemConfigDAO systemConfigDAO;
 
     // 🟡 USER: Test endpoint
     @GetMapping("/test")
@@ -57,7 +59,6 @@ public class HistoryController {
                         && h.getPost().getIsApproved() == 1
                         && h.getPost().getIsActive() == 1)
                 .limit(limit)
-                // 🔥 ĐÃ FIX LỖI Ở ĐÂY: Truyền thêm accountID vào để check trạng thái Like
                 .map(h -> postController.toPublicDTO(h.getPost(), accountID))
                 .collect(Collectors.toList());
 
@@ -76,6 +77,40 @@ public class HistoryController {
                     .body(Map.of("message", "accountID and postID are required"));
         }
 
+        // 🔥 SỬA LỖI LOGIC: NÚT BẬT TẮT LÀ CÔNG TẮC TỔNG
+        boolean isHolidayActive = false;
+        try {
+            String freeAccess = systemConfigDAO.findById("FREE_ACCESS_EVENT")
+                    .map(c -> c.getConfigValue()).orElse("FALSE");
+
+            if ("TRUE".equalsIgnoreCase(freeAccess)) {
+                String startStr = systemConfigDAO.findById("HOLIDAY_START")
+                        .map(c -> c.getConfigValue()).orElse(null);
+                String endStr = systemConfigDAO.findById("HOLIDAY_END")
+                        .map(c -> c.getConfigValue()).orElse(null);
+
+                if (startStr != null && endStr != null && !startStr.isBlank() && !endStr.isBlank()) {
+                    LocalDateTime startTime = LocalDateTime.parse(startStr);
+                    LocalDateTime endTime = LocalDateTime.parse(endStr);
+                    LocalDateTime now = LocalDateTime.now();
+
+                    if (!now.isBefore(startTime) && !now.isAfter(endTime)) {
+                        isHolidayActive = true;
+                    }
+                } else {
+                    isHolidayActive = true; // Bật nhưng không set lịch -> auto kích hoạt
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Lỗi kiểm tra chế độ lễ hội: " + e.getMessage());
+        }
+
+        // Nếu đang lễ hội, trả về OK luôn, không đi tiếp xuống database
+        if (isHolidayActive) {
+            return ResponseEntity.ok(Map.of("message", "Sự kiện lễ hội đang diễn ra, bỏ qua lưu lịch sử"));
+        }
+
+        // 🔥 BƯỚC 2: LOGIC LƯU LỊCH SỬ BÌNH THƯỜNG (Nếu không phải lễ hội)
         Account account = accountDAO.findById(accountID).orElse(null);
         Post    post    = postDAO.findById(postID).orElse(null);
 
@@ -93,8 +128,7 @@ public class HistoryController {
         if (!existing.isEmpty()) {
             history = existing.get(0);
             history.setLastViewedAt(LocalDateTime.now());
-            
-            // 🔥 NẾU LỠ CÓ NHIỀU BẢN GHI (DO BUG CŨ), XÓA CÁC BẢN GHI THỪA
+
             if (existing.size() > 1) {
                 for (int i = 1; i < existing.size(); i++) {
                     historyDAO.delete(existing.get(i));

@@ -39,9 +39,14 @@
           <div v-if="showNoti" class="panel-zenith noti-panel">
             <div class="z-head">
               <span class="z-title">Thông báo hệ thống</span>
-              <button class="z-mark-read" @click="markAllAsRead" :disabled="unreadCount === 0">
-                Đã đọc hết
-              </button>
+              <div class="z-head-actions">
+                <button class="z-mark-read" @click="markAllAsRead" :disabled="unreadCount === 0">
+                  Đã đọc hết
+                </button>
+                <button class="z-delete-read" @click="deleteAllRead" :disabled="readCount === 0">
+                  Xóa đã đọc
+                </button>
+              </div>
             </div>
             <div class="z-body custom-scroll" v-if="notifications.length > 0">
               <div v-for="notification in notifications" :key="notification.notificationID" class="z-card"
@@ -104,18 +109,32 @@
 
             <div class="u-menu-grid">
               <button class="u-menu-item" @click="goToProfile">
-                <div class="i-box"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div>
+                <div class="i-box"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg></div>
                 <span>Hồ sơ cá nhân</span>
               </button>
               <button class="u-menu-item" @click="goToSettings">
-                <div class="i-box"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></div>
+                <div class="i-box"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path
+                      d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                    </path>
+                  </svg></div>
                 <span>Cấu hình hệ thống</span>
               </button>
             </div>
 
             <div class="u-footer">
               <button class="btn-logout" @click="handleLogout">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                  <polyline points="16 17 21 12 16 7"></polyline>
+                  <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
                 Đăng xuất an toàn
               </button>
             </div>
@@ -138,6 +157,7 @@ import {
   getNotificationId,
   markNotificationRead,
   markAllNotificationsRead,
+  deleteReadNotifications,
   resolveNotificationLink
 } from '@/services/notificationService'
 import { ensureBrowserNotificationPermission, showBrowserNotification as pushBrowserNotification } from '@/services/browserNotificationService'
@@ -152,6 +172,7 @@ const isScrolled = ref(false)
 const notifications = ref([])
 
 const unreadCount = computed(() => notifications.value.filter(n => n.isRead === 0).length)
+const readCount = computed(() => notifications.value.filter(n => n.isRead === 1).length)
 
 const updatePageTitle = () => {
   document.title = unreadCount.value > 0 ? `(${unreadCount.value}) Quản trị - GoMet` : 'Quản trị - GoMet'
@@ -170,8 +191,8 @@ const normalizeNotification = (notification = {}) => ({
   notificationID: getNotificationId(notification),
   title: notification.title || 'Thông báo hệ thống',
   content: notification.content || '',
-  username: notification.username || 'System',
-  avatar: notification.avatarUrl || notification.avatar || '/assets/images/logogoc.jpg',
+  username: notification.username || 'Hệ thống GoMet',
+  avatar: notification.avatarUrl || notification.avatar || '/logogoc.jpg',
   type: notification.type || 'ADMIN',
   isRead: notification.isRead === 1 || notification.isRead === true ? 1 : 0,
   createdAt: notification.createdAt || new Date().toISOString(),
@@ -185,7 +206,7 @@ const loadNotifications = async () => {
     notifications.value = data.map(normalizeNotification)
     updatePageTitle()
   } catch (error) {
-    console.error('❌ Failed to load admin notifications:', error)
+    console.error('❌ Không thể tải thông báo quản trị:', error)
   }
 }
 
@@ -244,9 +265,34 @@ const markAllAsRead = async () => {
   } catch (error) { }
 }
 
+const deleteAllRead = async () => {
+  if (!auth.user?.accountID) return
+  try {
+    await deleteReadNotifications(auth.user.accountID)
+    notifications.value = notifications.value.filter(n => n.isRead === 0)
+    updatePageTitle()
+  } catch (error) { }
+}
+
+const openNotificationLink = (link) => {
+  if (!link) return
+  try {
+    if (typeof link === 'string' && /^https?:\/\//i.test(link)) {
+      window.open(link, '_blank')
+    } else {
+      router.push(link)
+    }
+  } catch (err) {
+    console.error('❌ openNotificationLink failed for', link, err)
+    if (typeof link === 'string' && /^https?:\/\//i.test(link)) {
+      window.location.href = link
+    }
+  }
+}
+
 const handleNotificationClick = async (n) => {
   if (n.isRead === 0) await markAsRead(n.notificationID)
-  if (n.link) router.push(n.link)
+  if (n.link) openNotificationLink(n.link)
   showNoti.value = false
 }
 
@@ -254,7 +300,7 @@ const playNotificationSound = () => {
   const sound = document.getElementById("adminNotificationSound")
   if (sound) {
     sound.currentTime = 0
-    sound.play().catch(() => {})
+    sound.play().catch(() => { })
   }
 }
 
@@ -262,17 +308,17 @@ const showBrowserNotification = (n) => {
   pushBrowserNotification({
     title: n.title,
     body: n.content,
-    icon: n.avatar || '/assets/images/logogoc.jpg',
-    onClick: () => { if (n.link) router.push(n.link) }
+    icon: n.avatar || '/logogoc.jpg',
+    onClick: () => { if (n.link) openNotificationLink(n.link) }
   })
 }
 
 const timeAgo = (dateString) => {
   const diff = Math.floor((new Date() - new Date(dateString)) / 1000)
   if (diff < 60) return 'Vừa xong'
-  if (diff < 3600) return `${Math.floor(diff / 60)}m trước`
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h trước`
-  return `${Math.floor(diff / 86400)}d trước`
+  if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`
+  if (diff < 86400) return `${Math.floor(diff / 3600)} giờ trước`
+  return `${Math.floor(diff / 86400)} ngày trước`
 }
 
 onMounted(async () => {
@@ -298,9 +344,9 @@ const closeNoti = () => { showNoti.value = false }
 const toggleUser = () => { showUser.value = !showUser.value; showNoti.value = false; }
 const closeUser = () => { showUser.value = false }
 
-const handleLogout = () => { auth.logout(); router.push('/login'); }
+const handleLogout = () => { auth.logout(); router.push('/'); }
 const goToProfile = () => { router.push('/profile'); closeUser(); }
-const goToSettings = () => { router.push('/admin/settings'); closeUser(); }
+const goToSettings = () => { router.push('/admin/system-settings'); closeUser(); }
 
 const vClickOutside = {
   mounted(el, binding) {
@@ -327,108 +373,486 @@ const vClickOutside = {
   --z-item-hover: #f8fafc;
   --z-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
 
-  height: 85px; padding: 0 45px; background: var(--z-bg);
-  backdrop-filter: blur(25px) saturate(200%); border-bottom: 1px solid var(--z-border);
-  display: flex; align-items: center; justify-content: space-between;
-  position: sticky; top: 0; z-index: 900; font-family: 'Inter', sans-serif; transition: all 0.4s ease;
+  height: 85px;
+  padding: 0 45px;
+  background: var(--z-bg);
+  backdrop-filter: blur(25px) saturate(200%);
+  border-bottom: 1px solid var(--z-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 900;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.4s ease;
 }
 
-.header-admin-zenith.is-scrolled { height: 65px; background: var(--z-bg-scrolled); box-shadow: var(--z-shadow); }
+.header-admin-zenith.is-scrolled {
+  height: 65px;
+  background: var(--z-bg-scrolled);
+  box-shadow: var(--z-shadow);
+}
 
-.breadcrumb-zenith { display: flex; align-items: center; gap: 14px; }
+.breadcrumb-zenith {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
 .cube-icon {
-  width: 36px; height: 36px; border-radius: 10px; color: #ea580c;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  color: #ea580c;
   background: linear-gradient(135deg, rgba(234, 88, 12, 0.1), rgba(251, 146, 60, 0.05));
-  display: flex; align-items: center; justify-content: center; border: 1px solid rgba(234, 88, 12, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(234, 88, 12, 0.15);
 }
-.arrow-divider { color: var(--z-text-sub); display: flex; opacity: 0.5; }
-.route-title { color: var(--z-text-main); font-weight: 800; font-size: 1.05rem; letter-spacing: -0.01em; }
 
-.h-right { display: flex; align-items: center; gap: 20px; }
-.action-wrap { position: relative; }
+.arrow-divider {
+  color: var(--z-text-sub);
+  display: flex;
+  opacity: 0.5;
+}
+
+.route-title {
+  color: var(--z-text-main);
+  font-weight: 800;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+}
+
+.h-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.action-wrap {
+  position: relative;
+}
+
 .btn-radar {
-  width: 44px; height: 44px; border: 1px solid var(--z-border); background: var(--z-btn-bg);
-  border-radius: 14px; color: var(--z-text-sub); display: flex; align-items: center; justify-content: center;
-  cursor: pointer; position: relative; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--z-border);
+  background: var(--z-btn-bg);
+  border-radius: 14px;
+  color: var(--z-text-sub);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.btn-radar:hover, .btn-radar.active { background: var(--z-btn-bg-hover); color: #ea580c; box-shadow: 0 10px 20px -5px rgba(234, 88, 12, 0.15); transform: translateY(-2px); }
 
-.radar-dot { position: absolute; top: 10px; right: 10px; width: 6px; height: 6px; background: #ea580c; border-radius: 50%; z-index: 2; }
-.radar-waves { position: absolute; top: 10px; right: 10px; width: 6px; height: 6px; border-radius: 50%; background: #fb923c; z-index: 1; animation: radarPulse 2s infinite; }
+.btn-radar:hover,
+.btn-radar.active {
+  background: var(--z-btn-bg-hover);
+  color: #ea580c;
+  box-shadow: 0 10px 20px -5px rgba(234, 88, 12, 0.15);
+  transform: translateY(-2px);
+}
+
+.radar-dot {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 6px;
+  height: 6px;
+  background: #ea580c;
+  border-radius: 50%;
+  z-index: 2;
+}
+
+.radar-waves {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fb923c;
+  z-index: 1;
+  animation: radarPulse 2s infinite;
+}
 
 .notification-badge {
-  position: absolute; top: -6px; right: -6px; background: linear-gradient(135deg, #ea580c, #fb923c);
-  color: white; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 50%;
-  min-width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
-  border: 2px solid var(--z-bg-scrolled); box-shadow: 0 2px 8px rgba(234, 88, 12, 0.3); z-index: 3;
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: linear-gradient(135deg, #ea580c, #fb923c);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 50%;
+  min-width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--z-bg-scrolled);
+  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.3);
+  z-index: 3;
 }
 
 .capsule-trigger {
-  display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 5px 14px 5px 5px;
-  border-radius: 50px; background: var(--z-bg-scrolled); border: 1px solid var(--z-panel-border);
-  transition: all 0.4s ease; margin-left: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  padding: 5px 14px 5px 5px;
+  border-radius: 50px;
+  background: var(--z-bg-scrolled);
+  border: 1px solid var(--z-panel-border);
+  transition: all 0.4s ease;
+  margin-left: 8px;
 }
-.capsule-trigger:hover, .capsule-trigger.active { border-color: #ea580c; box-shadow: 0 12px 24px -8px rgba(234, 88, 12, 0.2); }
 
-.cap-avatar { position: relative; width: 38px; height: 38px; }
-.cap-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 2px solid var(--z-bg-scrolled); }
-.cap-status { position: absolute; bottom: 0; right: 0; width: 12px; height: 12px; background: #10b981; border: 2px solid var(--z-bg-scrolled); border-radius: 50%; }
-.cap-mail { font-size: 13px; font-weight: 700; color: var(--z-text-main); }
-.cap-role { font-size: 10px; color: #ea580c; font-weight: 800; text-transform: uppercase; margin-top: -1px; }
+.capsule-trigger:hover,
+.capsule-trigger.active {
+  border-color: #ea580c;
+  box-shadow: 0 12px 24px -8px rgba(234, 88, 12, 0.2);
+}
+
+.cap-avatar {
+  position: relative;
+  width: 38px;
+  height: 38px;
+}
+
+.cap-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--z-bg-scrolled);
+}
+
+.cap-status {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  background: #10b981;
+  border: 2px solid var(--z-bg-scrolled);
+  border-radius: 50%;
+}
+
+.cap-mail {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--z-text-main);
+}
+
+.cap-role {
+  font-size: 10px;
+  color: #ea580c;
+  font-weight: 800;
+  text-transform: uppercase;
+  margin-top: -1px;
+}
 
 .panel-zenith {
-  position: absolute; top: calc(100% + 16px); right: 0; background: var(--z-panel-bg);
-  backdrop-filter: blur(20px); border-radius: 20px; box-shadow: 0 0 0 1px var(--z-border), var(--z-shadow);
-  overflow: hidden; z-index: 1000; transform-origin: top right;
+  position: absolute;
+  top: calc(100% + 16px);
+  right: 0;
+  background: var(--z-panel-bg);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  box-shadow: 0 0 0 1px var(--z-border), var(--z-shadow);
+  overflow: hidden;
+  z-index: 1000;
+  transform-origin: top right;
 }
-.user-panel { width: 300px; }
-.noti-panel { width: 360px; }
 
-.z-head { padding: 20px; border-bottom: 1px solid var(--z-panel-border); display: flex; justify-content: space-between; align-items: center; }
-.z-title { font-weight: 800; color: var(--z-text-main); font-size: 15px; }
-.z-mark-read { font-size: 12px; color: #ea580c; font-weight: 700; cursor: pointer; border:none; background:none; }
-.z-mark-read:disabled { color: #ccc; cursor: not-allowed; }
+.user-panel {
+  width: 300px;
+}
 
-.z-body { max-height: 400px; overflow-y: auto; }
-.z-card { display: flex; gap: 14px; padding: 16px 20px; cursor: pointer; transition: 0.2s; border-bottom: 1px solid rgba(0,0,0,0.02); }
-.z-card:hover { background: var(--z-item-hover); }
-.z-card.unread { background: rgba(234, 88, 12, 0.03); }
+.noti-panel {
+  width: 360px;
+}
 
-.card-avatar { width: 44px; height: 44px; border-radius: 12px; object-fit: cover; }
-.card-avatar-placeholder { width: 44px; height: 44px; border-radius: 12px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+.z-head {
+  padding: 20px;
+  border-bottom: 1px solid var(--z-panel-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 
-.card-desc { flex: 1; min-width: 0; }
-.title-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
-.title-row p { font-size: 13px; line-height: 1.4; color: var(--z-text-main); margin: 0; }
-.badge-new { font-size: 9px; font-weight: 900; color: #ea580c; background: #fff1f2; padding: 2px 5px; border-radius: 4px; }
-.time-txt { font-size: 11px; color: var(--z-text-sub); }
+.z-title {
+  font-weight: 800;
+  color: var(--z-text-main);
+  font-size: 15px;
+}
 
-.z-foot { padding: 15px; text-align: center; border-top: 1px solid var(--z-panel-border); }
-.z-foot button { font-size: 13px; font-weight: 700; color: var(--z-text-sub); background: none; border: none; cursor: pointer; }
+.z-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 
-.u-cover { padding: 30px 20px; text-align: center; background: linear-gradient(180deg, rgba(234, 88, 12, 0.05), transparent); }
-.u-avatar-epic { width: 80px; height: 80px; margin: 0 auto 15px; position: relative; }
-.u-avatar-epic img { width: 100%; height: 100%; border-radius: 50%; border: 4px solid white; box-shadow: 0 10px 20px -5px rgba(0,0,0,0.1); }
-.u-name { font-weight: 800; font-size: 1.1rem; color: var(--z-text-main); margin: 0; }
-.u-email { font-size: 13px; color: var(--z-text-sub); margin: 4px 0 0; }
+.z-mark-read {
+  font-size: 12px;
+  color: #ea580c;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
 
-.u-menu-grid { padding: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.u-menu-item { padding: 15px 10px; border-radius: 15px; border: 1px solid var(--z-panel-border); background: white; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: 0.3s; }
-.u-menu-item:hover { transform: translateY(-3px); border-color: #ea580c; box-shadow: 0 8px 15px -5px rgba(234, 88, 12, 0.1); }
-.i-box { width: 32px; height: 32px; border-radius: 10px; background: #f8fafc; color: #64748b; display: flex; align-items: center; justify-content: center; }
-.u-menu-item:hover .i-box { background: #fff1e9; color: #ea580c; }
-.u-menu-item span { font-size: 11px; font-weight: 700; color: var(--z-text-main); }
+.z-mark-read:disabled {
+  color: #ccc;
+  cursor: not-allowed;
+}
 
-.u-footer { padding: 15px; border-top: 1px solid var(--z-panel-border); }
-.btn-logout { width: 100%; padding: 12px; border-radius: 12px; border: none; background: #fef2f2; color: #ef4444; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: 0.3s; }
-.btn-logout:hover { background: #fee2e2; transform: translateY(-2px); }
+.z-delete-read {
+  font-size: 12px;
+  color: #dc2626;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+.z-delete-read:disabled {
+  color: #ccc;
+  cursor: not-allowed;
+}
+
+.z-body {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.z-card {
+  display: flex;
+  gap: 14px;
+  padding: 16px 20px;
+  cursor: pointer;
+  transition: 0.2s;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.02);
+}
+
+.z-card:hover {
+  background: var(--z-item-hover);
+}
+
+.z-card.unread {
+  background: rgba(234, 88, 12, 0.03);
+}
+
+.card-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.card-avatar-placeholder {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+.card-desc {
+  flex: 1;
+  min-width: 0;
+}
+
+.title-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.title-row p {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--z-text-main);
+  margin: 0;
+}
+
+.badge-new {
+  font-size: 9px;
+  font-weight: 900;
+  color: #ea580c;
+  background: #fff1f2;
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+
+.time-txt {
+  font-size: 11px;
+  color: var(--z-text-sub);
+}
+
+.z-foot {
+  padding: 15px;
+  text-align: center;
+  border-top: 1px solid var(--z-panel-border);
+}
+
+.z-foot button {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--z-text-sub);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.u-cover {
+  padding: 30px 20px;
+  text-align: center;
+  background: linear-gradient(180deg, rgba(234, 88, 12, 0.05), transparent);
+}
+
+.u-avatar-epic {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 15px;
+  position: relative;
+}
+
+.u-avatar-epic img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 4px solid white;
+  box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1);
+}
+
+.u-name {
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--z-text-main);
+  margin: 0;
+}
+
+.u-email {
+  font-size: 13px;
+  color: var(--z-text-sub);
+  margin: 4px 0 0;
+}
+
+.u-menu-grid {
+  padding: 10px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.u-menu-item {
+  padding: 15px 10px;
+  border-radius: 15px;
+  border: 1px solid var(--z-panel-border);
+  background: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.u-menu-item:hover {
+  transform: translateY(-3px);
+  border-color: #ea580c;
+  box-shadow: 0 8px 15px -5px rgba(234, 88, 12, 0.1);
+}
+
+.i-box {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.u-menu-item:hover .i-box {
+  background: #fff1e9;
+  color: #ea580c;
+}
+
+.u-menu-item span {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--z-text-main);
+}
+
+.u-footer {
+  padding: 15px;
+  border-top: 1px solid var(--z-panel-border);
+}
+
+.btn-logout {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  background: #fef2f2;
+  color: #ef4444;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.btn-logout:hover {
+  background: #fee2e2;
+  transform: translateY(-2px);
+}
 
 @keyframes radarPulse {
-  0% { transform: scale(1); opacity: 0.8; }
-  100% { transform: scale(4); opacity: 0; }
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
 }
 
-.zenith-drop-enter-active { animation: zenithDropIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
-.zenith-drop-leave-active { animation: zenithDropIn 0.3s reverse; }
-@keyframes zenithDropIn { from { opacity: 0; transform: translateY(10px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.zenith-drop-enter-active {
+  animation: zenithDropIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.zenith-drop-leave-active {
+  animation: zenithDropIn 0.3s reverse;
+}
+
+@keyframes zenithDropIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
 </style>

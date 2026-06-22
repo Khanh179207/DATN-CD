@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps, ref, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/services/api'
 

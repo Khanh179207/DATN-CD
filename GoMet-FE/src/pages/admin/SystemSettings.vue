@@ -85,16 +85,18 @@
             </div>
           </div>
 
-          <div class="schedule-grid mt-4">
-            <div class="datetime-group">
-              <label>Thời gian Bắt đầu</label>
-              <input type="datetime-local" v-model="formData.HOLIDAY_START" class="lux-datetime-input focus-anim-pink" />
+          <transition name="fade">
+            <div v-if="formData.FREE_ACCESS_EVENT === 'TRUE'" class="schedule-grid mt-4">
+              <div class="datetime-group">
+                <label>Thời gian Bắt đầu</label>
+                <input type="datetime-local" v-model="formData.HOLIDAY_START" class="lux-datetime-input focus-anim-pink" />
+              </div>
+              <div class="datetime-group">
+                <label>Thời gian Kết thúc</label>
+                <input type="datetime-local" v-model="formData.HOLIDAY_END" class="lux-datetime-input focus-anim-pink" />
+              </div>
             </div>
-            <div class="datetime-group">
-              <label>Thời gian Kết thúc</label>
-              <input type="datetime-local" v-model="formData.HOLIDAY_END" class="lux-datetime-input focus-anim-pink" />
-            </div>
-          </div>
+          </transition>
         </div>
       </section>
 
@@ -301,6 +303,24 @@ const clearAds = () => { formData.value.ADS_BANNER_IMG = ''; formData.value.ADS_
 const triggerUpload = (refName) => { if (refName === 'adsInput') adsInput.value.click() }
 
 const saveConfigs = async () => {
+  // Validate thời gian sự kiện
+  if (formData.value.FREE_ACCESS_EVENT === 'TRUE') {
+    if (!formData.value.HOLIDAY_START || !formData.value.HOLIDAY_END) {
+      return toast.warn('Vui lòng chọn đầy đủ thời gian bắt đầu và kết thúc sự kiện!');
+    }
+    
+    const start = new Date(formData.value.HOLIDAY_START);
+    const end = new Date(formData.value.HOLIDAY_END);
+    const now = new Date();
+
+    if (end <= now) {
+      return toast.warn('Thời gian kết thúc sự kiện phải ở trong tương lai!');
+    }
+    if (end <= start) {
+      return toast.warn('Thời gian kết thúc phải sau thời gian bắt đầu!');
+    }
+  }
+
   isSaving.value = true
   try {
     const payload = {};
