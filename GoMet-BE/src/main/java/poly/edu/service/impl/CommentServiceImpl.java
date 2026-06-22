@@ -276,6 +276,7 @@ public class CommentServiceImpl implements CommentService {
         Integer activeStatus = c.getIsActive() != null ? c.getIsActive() : 1;
 
         if (activeStatus == -1) {
+
             dto.setContent("[Bình luận này đã bị ẩn bởi Quản trị viên do vi phạm]");
             dto.setAuthorName("Hệ thống GoMet");
             dto.setAuthorAvatar(null);

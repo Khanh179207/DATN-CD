@@ -151,11 +151,11 @@ public class PostController {
                     LocalDateTime endOfDay = LocalDateTime.now().with(java.time.LocalTime.MAX);
                     long viewsToday = historyDAO.countDistinctPostsViewedToday(accountId, startOfDay, endOfDay);
 
-                    int viewLimit = 3;
+                    int viewLimit = 10;
                     try {
                         viewLimit = systemConfigDAO.findById("DEFAULT_FREE_VIEWS")
                                 .map(c -> Integer.parseInt(c.getConfigValue()))
-                                .orElse(3);
+                                .orElse(10);
                     } catch (Exception e) {
                         log.error("Lỗi lấy cấu hình DEFAULT_FREE_VIEWS: {}", e.getMessage());
                     }

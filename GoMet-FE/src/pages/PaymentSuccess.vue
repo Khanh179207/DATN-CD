@@ -44,7 +44,7 @@
           <div class="redirect-status">
             <span class="label">Hệ thống tự động chuyển hướng sau <b>{{ countdown }}s</b></span>
             <div class="progress-line">
-              <div class="fill" :style="{ width: (countdown / 10) * 100 + '%' }"></div>
+              <div class="fill" :style="{ width: (countdown / 10) * 50 + '%' }"></div>
             </div>
           </div>
         </div>
