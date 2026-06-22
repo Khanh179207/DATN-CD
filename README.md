@@ -1,4 +1,3 @@
-<br/>
 <div align="center">
   <a href="#">
     <img src="https://ui-avatars.com/api/?name=GoMet&background=EA580C&color=fff&size=120&bold=true&rounded=true" alt="Logo" width="120" height="120">
@@ -42,18 +41,33 @@
 ## ✨ Tính năng nổi bật
 
 * 🗓️ **Gomet Planner Pro:** Hệ thống lên kế hoạch bữa ăn 7 ngày (Sáng, Trưa, Tối) với giao diện Bento Grid, hỗ trợ kéo thả và đánh dấu hoàn thành.
-* 🗺️ **Bản đồ đi chợ (Market Map):** Tích hợp GPS và Google Maps Iframe, tự động định vị người dùng và thả ghim (pin) các khu chợ, siêu thị thực phẩm gần nhất.
+* 🗺️ **Bản đồ đi chợ (Market Map):** Tích hợp GPS và Google Maps, tự động định vị người dùng và thả ghim (pin) các khu chợ, siêu thị thực phẩm gần nhất.
 * 🏆 **Bảng xếp hạng (Leaderboard):** Thuật toán tính điểm tự động xếp hạng các món ăn thịnh hành và Đầu bếp (Chefs) xuất sắc nhất theo tuần/tháng.
-* 👑 **Hệ thống phân quyền & Giới hạn lượt xem:** * Tài khoản Guest/Free bị giới hạn lượt xem bài viết mỗi ngày.
-    * Tài khoản Premium (VIP) trải nghiệm không giới hạn.
-    * **Event Mode (Chế độ lễ hội):** Hệ thống Admin có thể kích hoạt giờ vàng đọc miễn phí toàn server thông qua System Config.
+* 👑 **Hệ thống phân quyền & Giới hạn lượt xem:** 
+  * Tài khoản Guest/Free bị giới hạn lượt xem bài viết mỗi ngày.
+  * Tài khoản Premium (VIP) trải nghiệm không giới hạn.
+  * **Event Mode (Chế độ lễ hội):** Hệ thống Admin có thể kích hoạt giờ vàng đọc miễn phí toàn server thông qua System Config.
 * 🎨 **Giao diện Cinematic & Animation:** Giao diện Dark Mode sang trọng (Kính mờ - Glassmorphism) kết hợp cùng thư viện hoạt ảnh GSAP mang lại trải nghiệm 60FPS mượt mà.
+
+---
+
+## 📸 Ảnh chụp màn hình (Screenshots)
+
+Dưới đây là một số hình ảnh thực tế từ ứng dụng GoMet:
+
+| Trang Giới Thiệu (Landing Page) | Trang Chủ (Home) |
+| :---: | :---: |
+| <img src="imgdemo/langdingpage.png" width="500"/> | <img src="imgdemo/home.png" width="500"/> |
+| **Đăng Nhập / Đăng Ký** | **Trang Cá Nhân (Profile)** |
+| <img src="imgdemo/login.png" width="500"/> | <img src="imgdemo/profile.png" width="500"/> |
+| **Chi Tiết Công Thức (Post Detail)** | **Tìm Kiếm (Search Page)** |
+| <img src="imgdemo/postdetail.png" width="500"/> | <img src="imgdemo/sreachpage.png" width="500"/> |
 
 ---
 
 ## 🛠️ Công nghệ sử dụng (Tech Stack)
 
-### Frontend (Client-side)
+### 🖥️ Frontend (Client-side)
 * **Framework:** Vue.js 3 (Composition API) + Vite
 * **State Management:** Pinia
 * **Routing:** Vue Router
@@ -61,7 +75,7 @@
 * **Animation:** GSAP (GreenSock)
 * **HTTP Client:** Axios
 
-### Backend (Server-side)
+### ⚙️ Backend (Server-side)
 * **Framework:** Spring Boot 3, Spring MVC
 * **Language:** Java 17+
 * **Security:** Spring Security, JWT (JSON Web Tokens)
@@ -70,17 +84,26 @@
 
 ---
 
-## 🚀 Hướng dẫn cài đặt (Getting Started)
+## 📂 Cấu trúc thư mục tiêu biểu (Folder Structure)
 
-Để chạy dự án này trên máy tính cá nhân (Localhost), hãy làm theo các bước sau:
-
-### 1. Yêu cầu hệ thống (Prerequisites)
-* [Node.js](https://nodejs.org/) (Phiên bản 18+ trở lên)
-* [Java JDK](https://www.oracle.com/java/technologies/javase-downloads.html) (Phiên bản 17+ trở lên)
-* [Maven](https://maven.apache.org/)
-* [MySQL Server](https://dev.mysql.com/downloads/)
-
-### 2. Cài đặt Backend (Spring Boot)
-1. Clone dự án về máy:
-   ```bash
-   git clone [https://github.com/your-username/gomet-project.git](https://github.com/your-username/gomet-project.git)
+```text
+📦 GoMet-Project
+ ┣ 📂 GoMet-BE (Backend - Spring Boot)
+ ┃ ┣ 📂 src/main/java/poly/edu
+ ┃ ┃ ┣ 📂 controller    # Cung cấp các API Endpoints
+ ┃ ┃ ┣ 📂 service       # Xử lý logic nghiệp vụ
+ ┃ ┃ ┣ 📂 dao           # Tương tác với CSDL (JPA Repositories)
+ ┃ ┃ ┣ 📂 entity        # Lớp thực thể (Models)
+ ┃ ┃ ┗ 📂 dto           # Đối tượng truyền dữ liệu
+ ┃ ┗ 📜 pom.xml         # Cấu hình Maven
+ ┃
+ ┗ 📂 DATN-CD (Frontend - Vue.js)
+   ┣ 📂 src
+   ┃ ┣ 📂 assets        # Hình ảnh, file SCSS toàn cục
+   ┃ ┣ 📂 components    # Các component tái sử dụng (MapModal, Leaderboard...)
+   ┃ ┣ 📂 composables   # Logic dùng chung (usePostViewLimit, useToast...)
+   ┃ ┣ 📂 services      # Cấu hình gọi API (Axios)
+   ┃ ┣ 📂 stores        # Quản lý trạng thái bằng Pinia
+   ┃ ┗ 📂 pages         # Các trang chính của ứng dụng
+   ┣ 📂 imgdemo         # Thư mục chứa ảnh minh họa cho dự án
+   ┗ 📜 package.json    # Cấu hình NPM
